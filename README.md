@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.3.0.zip`.
+1. Descarga `imagina-player-1.3.1.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Ajustes → Imagina Player**.
@@ -14,18 +14,25 @@ código fuente está en la rama de desarrollo.
 
 | | |
 | --- | --- |
-| Versión | `1.3.0` |
-| Fichero | `imagina-player-1.3.0.zip` |
+| Versión | `1.3.1` |
+| Fichero | `imagina-player-1.3.1.zip` |
 | Tamaño | 92 KB |
-| SHA-256 | `4856aaabd0644f7e4aa6e29962c52b733532b3565ebc981740eafa41fd8a778d` |
+| SHA-256 | `c484420804cf563136c5856a6fd6a1c5ddc0a810300a4bb1bfee3509d3e20a73` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.3.0.zip
+sha256sum imagina-player-1.3.1.zip
 ```
+
+## Novedades en 1.3.1
+
+- **Corregido:** la vista previa del bloque sacaba barras de scroll y se quedaba
+  con los clics y el arrastre del editor. Ahora el marco no hace scroll y es
+  inerte: todo clic y arrastre es del editor, como debe ser en algo que solo se
+  mira.
 
 ## Novedades en 1.3.0
 
