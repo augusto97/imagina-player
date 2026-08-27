@@ -30,6 +30,10 @@ final class Icons {
 		'back'     => '<path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/>',
 		'forward'  => '<path d="M12 5V1l5 5-5 5V7a6 6 0 1 0 6 6h2a8 8 0 1 1-8-8z"/>',
 		'spinner'  => '<circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="40 20"/>',
+		'expand'   => '<path d="M4 9V4h5v2H6v3zm11-5h5v5h-2V6h-3zM6 15v3h3v2H4v-5zm12 0h2v5h-5v-2h3z"/>',
+		'collapse' => '<path d="M9 4v5H4V7h3V4zm6 0h2v3h3v2h-5zM4 15h5v5H7v-3H4zm12 2v3h-2v-5h5v2z"/>',
+		'pip'      => '<path d="M3 4h18v10h-2V6H5v10h6v2H3zm10 10h8v6h-8z"/>',
+		'cc'       => '<path d="M3 5h18v14H3zm4.6 4.4a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 2.2-1.2l-1.3-.7a1.1 1.1 0 1 1 0-1.4l1.3-.7a2.6 2.6 0 0 0-2.2-1.2zm7 0a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 2.2-1.2l-1.3-.7a1.1 1.1 0 1 1 0-1.4l1.3-.7a2.6 2.6 0 0 0-2.2-1.2z"/>',
 	);
 
 	public static function get( string $name, string $class = '' ): string {

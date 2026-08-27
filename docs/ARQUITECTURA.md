@@ -242,19 +242,76 @@ Tres decisiones que hacen que el resultado se pueda creer:
 integrado de PHP como suplente fiel del caso nginx —tampoco lee `.htaccess`— y
 un router que deniega la ruta del vault como servidor bien configurado.
 
-## Vídeo (siguiente fase)
+## Vídeo
 
-`Track::is_video()` y el renderizador ya emiten `<video>`, y el núcleo del
-reproductor trabaja contra `HTMLMediaElement`, no contra `HTMLAudioElement`. Lo
-que falta es la capa de UI (pantalla completa, póster, subtítulos, capítulos) y
-un motor enchufable para HLS. La decisión de no depender hoy de ninguna librería
-es precisamente lo que permite adoptar Video.js v10 cuando su API se estabilice
-sin reescribir el plugin.
+`Track::is_video()` decide el camino, y lo decide el **medio**, no el skin: todo
+skin de audio coloca una fila de controles junto a una onda, y un vídeo los
+necesita encima de la imagen. Por eso el renderizador elige el layout
+`theater` en cuanto el archivo es vídeo, sin preguntar por el skin.
+
+`PlayerRenderer` monta ese layout a partir de piezas con nombre, igual que las
+otras tres. Las nuevas son `part_poster`, `part_big_play`, `part_video_controls`
+y `part_layers`, todas dentro de `.imgp__stage`, que es quien lleva la relación
+de aspecto: la caja tiene su altura definitiva antes de que llegue un solo byte
+de vídeo, y la página no salta cuando llega (eso es lo que mide el CLS de
+PageSpeed).
+
+Tres costuras para que crecer no signifique reescribir:
+
+- **`imagina_player_video_controls`** — la barra se construye desde una lista de
+  botones, así que subtítulos, calidad o capítulos son una entrada más y un caso
+  en el módulo, no una reescritura del markup.
+- **`imagina_player_video_layers`** — un contenedor vacío por encima del vídeo y
+  por debajo de los controles. Existe ya, vacío, porque capítulos, CTA y captura
+  de email necesitan todos el mismo contexto de apilamiento, y añadirlo después
+  significaría renumerar todos los `z-index` de la hoja de estilos.
+- **`imagina_player_video_guards`** — los atributos de endurecimiento, en un
+  sitio.
+
+### Peso
+
+El cromo de vídeo vive en `assets/src/frontend/video.ts`, y solo se llega a él
+por un `import()` dinámico desde el núcleo. Webpack lo emite como un chunk
+aparte (`build/imagina-video.js`, ~3.7 KB): **una página que solo tiene audio
+nunca lo pide.** `tests/test-payload.php` lo fija con presupuestos por archivo y
+buscando cadenas que solo existen en el módulo dentro del bundle principal —
+convertir el `import()` dinámico en uno normal no rompe ningún comportamiento,
+así que sin ese test pasaría inadvertido. Lo comprobé haciéndolo: el bundle
+creció y el chunk desapareció.
+
+Webpack calcularía por su cuenta dónde está el chunk, leyendo
+`document.currentScript.src` — y **lanza una excepción** cuando no hay URL que
+leer, que es exactamente lo que pasa si un plugin de optimización inserta el
+bundle dentro de la página. El reproductor moría antes de dibujar nada. Por eso
+`output.publicPath` está fijado a cadena vacía (no emite detección alguna) y
+`frontend/public-path.ts` pone el valor real desde lo que dice WordPress. Si el
+chunk aun así no carga, el módulo devuelve los controles nativos: el visitante
+se queda con un reproductor feo, no con un rectángulo muerto.
+
+### Que no se lo lleven
+
+Por capas, y en orden de lo que realmente hace trabajo:
+
+1. El archivo **no está en una carpeta pública** (el vault) y su URL **caduca**.
+   Esto es lo único que protege de verdad.
+2. `controlslist="nodownload"`, `disableremoteplayback` y el menú contextual
+   propio quitan el camino fácil: el botón de descarga del navegador, «Guardar
+   vídeo como» y mandar la URL cruda a un Chromecast.
+3. Nada de esto impide grabar la pantalla. Tampoco lo impide el DRM. Si en algún
+   sitio decimos lo contrario, es un error de nuestra documentación.
+
+Si el preset ofrece descarga, la capa 2 no se aplica: ofrecer un botón de
+descarga y a la vez esconder el del navegador es teatro.
+
+Falta la capa de UI restante (subtítulos, capítulos, calidades) y HLS mediante
+`hls.js` cargado solo cuando la fuente es `.m3u8`. La decisión de no depender
+hoy de ninguna librería de reproductor es lo que permite adoptar una cuando su
+API se estabilice sin reescribir el plugin.
 
 ## Pruebas
 
 `./tests/run.sh` ejecuta la suite contra stubs de WordPress, sin necesidad de una
-instalación: 313 comprobaciones. Cubre sanitización, codificación de picos,
+instalación: 376 comprobaciones. Cubre sanitización, codificación de picos,
 remuestreo, firma de tokens, escapado del markup, el movimiento real de ficheros
 dentro y fuera del vault, y —con un binario ffmpeg simulado— la extracción de
 picos completa.

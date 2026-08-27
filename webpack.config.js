@@ -18,5 +18,15 @@ module.exports = {
 	output: {
 		...defaultConfig.output,
 		path: path.resolve( __dirname, 'build' ),
+		/*
+		 * Not 'auto'. Webpack's automatic path reads `document.currentScript`
+		 * at startup and *throws* when there is no script URL to read — which
+		 * is what happens the moment an optimisation plugin inlines the bundle
+		 * into the page. The player would die before rendering anything.
+		 *
+		 * An empty string emits no detection code at all; the real value is set
+		 * at runtime from what WordPress tells us, in frontend/public-path.ts.
+		 */
+		publicPath: '',
 	},
 };

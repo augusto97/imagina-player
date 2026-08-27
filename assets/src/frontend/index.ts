@@ -1,3 +1,4 @@
+import './public-path';
 import { Player } from './player';
 import type { RuntimeData } from './types';
 import './style.scss';

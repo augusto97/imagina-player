@@ -63,6 +63,7 @@ final class PlayerRenderer {
 			$track->thumbnail && $config['show_thumbnail'] ? 'imgp--has-thumb' : '',
 			$config['sticky'] ? 'imgp--sticky' : '',
 			$config['sticky'] ? 'imgp--stick-' . $config['sticky_position'] : '',
+			$track->is_video() ? 'imgp--video' : 'imgp--audio',
 			(int) $config['border_radius'] > 0 ? 'imgp--rounded-box' : '',
 			$config['rounded_bars'] ? 'imgp--rounded' : '',
 			$atts['className'],
@@ -90,6 +91,16 @@ final class PlayerRenderer {
 			'protectedId' => Vault::is_protected( $track->attachment_id ) ? $track->attachment_id : 0,
 		);
 
+		// Namespaced rather than flattened: the video module reads `video` and
+		// nothing else, so growing it later cannot collide with an audio key.
+		if ( $track->is_video() ) {
+			$client_config['video'] = array(
+				'ratio'    => $track->aspect_ratio,
+				'poster'   => $track->poster,
+				'hideAfter' => 2600,
+			);
+		}
+
 		/**
 		 * Filter the JSON config handed to the front-end for one player.
 		 *
@@ -99,18 +110,33 @@ final class PlayerRenderer {
 		 */
 		$client_config = apply_filters( 'imagina_player_client_config', $client_config, $atts, $track );
 
-		$style  = Config::style_attribute( Config::css_variables( $config ) );
-		$layout = Skins::layout( (string) $config['skin'] );
+		$style = Config::style_attribute( Config::css_variables( $config ) );
+
+		// Layout follows the *medium*, not the skin. Every audio skin arranges a
+		// row of controls beside a scrubber; a video needs them over the picture,
+		// and no choice of skin changes that.
+		$layout = $track->is_video() ? 'theater' : Skins::layout( (string) $config['skin'] );
 
 		$parts = array(
 			'media'    => $this->part_media( $track, $atts, $config ),
-			'scrubber' => Skins::has_scrubber( (string) $config['skin'] ) ? $this->part_scrubber( $track, $config ) : '',
+			// A video always gets a scrubber. A skin that hides it was designed for
+			// a bar of audio controls, and a video without a seek bar is broken.
+			'scrubber' => $track->is_video() || Skins::has_scrubber( (string) $config['skin'] )
+				? $this->part_scrubber( $track, $config )
+				: '',
 			'thumb'    => $config['show_thumbnail'] && '' !== $track->thumbnail ? $this->part_thumb( $track ) : '',
 			'play'     => $this->part_play(),
 			'meta'     => $this->part_meta( $track, $config ),
 			'controls' => $this->part_controls( $track, $config ),
 			'logo'     => $this->part_logo(),
 		);
+
+		if ( 'theater' === $layout ) {
+			$parts['poster']  = $this->part_poster( $track );
+			$parts['bigplay'] = $this->part_big_play();
+			$parts['video']   = $this->part_video_controls( $config );
+			$parts['layers']  = $this->part_layers( $track, $config, $id );
+		}
 
 		ob_start();
 		?>
@@ -124,9 +150,27 @@ final class PlayerRenderer {
 			<?php endif; ?>
 		>
 			<?php
-			echo $parts['media']; // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
+			// Audio hangs its shell beside the media element; video wraps around
+			// it, because the controls sit on the picture.
+			if ( 'theater' !== $layout ) {
+				echo $parts['media']; // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
+			}
 
-			if ( 'card' === $layout ) {
+			if ( 'theater' === $layout ) {
+				printf(
+					'<div class="imgp__stage" style="--imgp-ratio:%s">%s%s%s%s<div class="imgp__chrome">%s<div class="imgp__bar">%s%s%s%s</div></div></div>',
+					esc_attr( str_replace( ':', ' / ', $track->aspect_ratio ) ),
+					$parts['media'], // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
+					$parts['poster'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['bigplay'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['layers'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['scrubber'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['play'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['controls'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['video'] . $parts['logo'] // phpcs:ignore WordPress.Security.EscapeOutput
+				);
+			} elseif ( 'card' === $layout ) {
 				printf(
 					'%s<div class="imgp__body">%s<div class="imgp__bar">%s%s%s</div></div>',
 					$parts['thumb'], // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
@@ -181,8 +225,12 @@ final class PlayerRenderer {
 	 * @param array<string, mixed> $config Effective settings.
 	 */
 	private function part_media( Track $track, array $atts, array $config ): string {
-		$tag = $track->is_video() ? 'video' : 'audio';
+		$is_video = $track->is_video();
+		$tag      = $is_video ? 'video' : 'audio';
 
+		// Everything here is what the visitor gets if our JavaScript never
+		// arrives: a real media element with native controls. The enhancement
+		// takes the controls off, it does not put the player there.
 		ob_start();
 		?>
 		<<?php echo esc_attr( $tag ); ?>
@@ -194,10 +242,45 @@ final class PlayerRenderer {
 			<?php echo $atts['muted'] ? 'muted' : ''; ?>
 			<?php echo $atts['autoplay'] ? 'autoplay playsinline' : ''; ?>
 			<?php echo '' !== $track->title ? 'title="' . esc_attr( $track->title ) . '"' : ''; ?>
+			<?php if ( $is_video ) : ?>
+				playsinline
+				<?php echo '' !== $track->poster ? 'poster="' . esc_url( $track->poster ) . '"' : ''; ?>
+				<?php echo $this->download_guards( $track, $config ); // phpcs:ignore WordPress.Security.EscapeOutput -- fixed attribute names. ?>
+			<?php endif; ?>
 		></<?php echo esc_attr( $tag ); ?>>
 		<?php
 
 		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Attributes that make the file harder to walk away with.
+	 *
+	 * None of these stop a determined person — a screen recorder always works,
+	 * and nothing short of DRM changes that. What they stop is the easy path:
+	 * the browser's own download button, "Save video as", and casting the raw
+	 * URL to a device. The link expiring is what does the real work; this is
+	 * the layer above it.
+	 *
+	 * @param array<string, mixed> $config Effective settings.
+	 */
+	private function download_guards( Track $track, array $config ): string {
+		if ( ! empty( $config['show_download'] ) ) {
+			// Offering a download and then hiding the browser's own is theatre.
+			return '';
+		}
+
+		$guards = array( 'controlslist="nodownload noplaybackrate"', 'disableremoteplayback' );
+
+		/**
+		 * Filter the hardening attributes placed on a protected video element.
+		 *
+		 * @param array<int, string> $guards Attribute strings.
+		 * @param Track              $track  Resolved track.
+		 */
+		$guards = (array) apply_filters( 'imagina_player_video_guards', $guards, $track );
+
+		return implode( ' ', array_map( 'strval', $guards ) );
 	}
 
 	/**
@@ -206,10 +289,15 @@ final class PlayerRenderer {
 	 * @param array<string, mixed> $config Effective settings.
 	 */
 	private function part_scrubber( Track $track, array $config ): string {
+		// No waveform over a video: it would mean downloading and decoding the
+		// audio of a file the visitor may never play, to draw a picture nobody
+		// looks at while watching one.
+		$waveform = ! $track->is_video() && Skins::uses_waveform( (string) $config['skin'] );
+
 		ob_start();
 		?>
 		<div class="imgp__scrubber">
-			<?php if ( Skins::uses_waveform( (string) $config['skin'] ) ) : ?>
+			<?php if ( $waveform ) : ?>
 				<canvas class="imgp__wave" aria-hidden="true"></canvas>
 			<?php else : ?>
 				<div class="imgp__track" aria-hidden="true"><div class="imgp__progress"></div></div>
@@ -257,6 +345,125 @@ final class PlayerRenderer {
 	/**
 	 * The site's brand mark, when one is configured.
 	 */
+	/**
+	 * The still shown before playback starts.
+	 *
+	 * A real `<img>` rather than the `poster` attribute alone, because the
+	 * attribute gives no control over loading priority or fit — and a poster is
+	 * very often the page's largest contentful paint. `decoding=async` and a
+	 * plain `loading=eager` say what this is: the one image on the page that
+	 * should not be deferred.
+	 */
+	private function part_poster( Track $track ): string {
+		if ( '' === $track->poster ) {
+			return '';
+		}
+
+		return sprintf(
+			'<div class="imgp__poster" aria-hidden="true"><img src="%s" alt="" decoding="async" fetchpriority="high" /></div>',
+			esc_url( $track->poster )
+		);
+	}
+
+	/**
+	 * The play button in the middle of the picture.
+	 *
+	 * A real button, not a click handler on the stage: it is the first thing a
+	 * keyboard reaches, and it is what a screen reader announces.
+	 */
+	private function part_big_play(): string {
+		return sprintf(
+			'<button type="button" class="imgp__bigplay" aria-label="%s">%s%s</button>',
+			esc_attr__( 'Play', 'imagina-player' ),
+			Icons::get( 'play', 'imgp__icon--play' ),
+			Icons::get( 'pause', 'imgp__icon--pause' )
+		);
+	}
+
+	/**
+	 * Controls that only make sense over a picture.
+	 *
+	 * Built from a list rather than written out, so a later control — captions,
+	 * quality, chapters — is an entry here and a case in the module, not a
+	 * rewrite of this markup.
+	 *
+	 * @param array<string, mixed> $config Effective settings.
+	 */
+	private function part_video_controls( array $config ): string {
+		$buttons = array(
+			'pip'        => array(
+				'icons' => array( 'pip' ),
+				'label' => __( 'Picture in picture', 'imagina-player' ),
+			),
+			'fullscreen' => array(
+				'icons' => array( 'expand', 'collapse' ),
+				'label' => __( 'Full screen', 'imagina-player' ),
+			),
+		);
+
+		/**
+		 * Filter the buttons on the video control bar.
+		 *
+		 * Each entry is `key => [ icons: string[], label: string ]`. The module
+		 * binds `.imgp__vbtn--{key}`; a button with no handler does nothing, so
+		 * add both or neither.
+		 *
+		 * @param array<string, array{icons: array<int, string>, label: string}> $buttons Buttons.
+		 * @param array<string, mixed>                                           $config  Effective settings.
+		 */
+		$buttons = (array) apply_filters( 'imagina_player_video_controls', $buttons, $config );
+
+		$html = '';
+
+		foreach ( $buttons as $key => $button ) {
+			$icons = '';
+
+			foreach ( (array) ( $button['icons'] ?? array() ) as $icon ) {
+				$icons .= Icons::get( (string) $icon, 'imgp__icon--' . sanitize_html_class( (string) $icon ) );
+			}
+
+			$html .= sprintf(
+				'<button type="button" class="imgp__vbtn imgp__vbtn--%s" aria-label="%s" hidden>%s</button>',
+				esc_attr( sanitize_html_class( (string) $key ) ),
+				esc_attr( (string) ( $button['label'] ?? '' ) ),
+				$icons
+			);
+		}
+
+		return '' === $html ? '' : '<div class="imgp__vcontrols">' . $html . '</div>';
+	}
+
+	/**
+	 * Where things that sit on top of the picture mount.
+	 *
+	 * Empty today. It exists now because chapters, captions, calls to action and
+	 * an email gate all need the same thing — a stacking context above the video
+	 * and below the controls — and retrofitting one later means moving every
+	 * z-index in the stylesheet.
+	 *
+	 * @param array<string, mixed> $config Effective settings.
+	 */
+	private function part_layers( Track $track, array $config, string $id ): string {
+		$layers = array();
+
+		/**
+		 * Filter the overlay layers rendered above a video.
+		 *
+		 * Each entry is a block of HTML, already escaped by whoever added it.
+		 * Keys are for ordering and de-duplication, not output.
+		 *
+		 * @param array<string, string> $layers Layer markup, keyed by name.
+		 * @param Track                 $track  Resolved track.
+		 * @param array<string, mixed>  $config Effective settings.
+		 * @param string                $id     Player DOM id.
+		 */
+		$layers = (array) apply_filters( 'imagina_player_video_layers', $layers, $track, $config, $id );
+
+		$html = implode( '', array_map( 'strval', $layers ) );
+
+		return '<div class="imgp__layers">' . $html . '</div>';
+	}
+
 	private function part_logo(): string {
 		$branding = Settings::branding();
 		$logo     = (string) ( $branding['logo'] ?? '' );
@@ -399,7 +606,9 @@ final class PlayerRenderer {
 	}
 
 	private function peaks_payload( Track $track, array $config ): array {
-		if ( ! Skins::uses_waveform( (string) $config['skin'] ) ) {
+		// A video never gets peaks — no waveform is drawn over it, so measuring
+		// one would be a download and a decode for nothing.
+		if ( $track->is_video() || ! Skins::uses_waveform( (string) $config['skin'] ) ) {
 			return array(
 				'peaks'       => '',
 				'token'       => '',

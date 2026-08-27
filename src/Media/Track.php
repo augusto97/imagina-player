@@ -23,7 +23,9 @@ final class Track {
 		public readonly string $artist = '',
 		public readonly string $thumbnail = '',
 		public readonly float $duration = 0.0,
-		public readonly string $download_url = ''
+		public readonly string $download_url = '',
+		public readonly string $poster = '',
+		public readonly string $aspect_ratio = '16:9'
 	) {}
 
 	public function is_playable(): bool {
@@ -65,6 +67,9 @@ final class Track {
 		$thumbnail     = (string) ( $atts['thumbnail'] ?? '' );
 		$thumbnail_id  = (int) ( $atts['thumbnailId'] ?? 0 );
 		$download      = (string) ( $atts['downloadUrl'] ?? '' );
+		$poster        = (string) ( $atts['poster'] ?? '' );
+		$poster_id     = (int) ( $atts['posterId'] ?? 0 );
+		$ratio         = (string) ( $atts['aspectRatio'] ?? '16:9' );
 		$mime          = '';
 		$duration      = 0.0;
 
@@ -110,6 +115,19 @@ final class Track {
 			$thumbnail = (string) ( wp_get_attachment_image_url( $thumbnail_id, 'medium' ) ?: '' );
 		}
 
+		if ( '' === $poster && $poster_id > 0 ) {
+			// `large` rather than `full`: a poster is a still behind a player,
+			// not a photograph to be examined, and full size on a 4K upload is
+			// megabytes the visitor pays for before pressing play.
+			$poster = (string) ( wp_get_attachment_image_url( $poster_id, 'large' ) ?: '' );
+		}
+
+		// A video with no poster of its own borrows the cover art. Better than
+		// a black rectangle, and it is the image the author already chose.
+		if ( '' === $poster && str_starts_with( $mime, 'video/' ) ) {
+			$poster = $thumbnail;
+		}
+
 		return new self(
 			src: $src,
 			attachment_id: $attachment_id,
@@ -118,7 +136,9 @@ final class Track {
 			artist: $artist,
 			thumbnail: $thumbnail,
 			duration: $duration,
-			download_url: $download
+			download_url: $download,
+			poster: $poster,
+			aspect_ratio: $ratio
 		);
 	}
 

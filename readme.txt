@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.5.1
+Stable tag: 1.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,20 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.6.0 =
+* New: video. A player built around the picture rather than beside it —
+  poster, play button in the middle, controls over the video that fade while
+  it plays, full screen, picture-in-picture, keyboard shortcuts and touch
+  gestures.
+* New: the video chrome is downloaded only by pages that have a video on them.
+  A page with nothing but audio players is unchanged, to the byte.
+* New: video files are served with the browser's own download button and
+  remote playback turned off, and the right-click menu taken away. This makes
+  the file harder to take, not impossible — nothing short of DRM does that,
+  and the protection that matters is still the vault and the expiring link.
+* Fixed: the bundle would refuse to start if an optimisation plugin inlined it
+  into the page.
 
 = 1.5.1 =
 * Fixed: the JavaScript linter could not run at all — a TypeScript version its

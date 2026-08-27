@@ -112,6 +112,11 @@ final class Assets {
 
 		return array(
 			'restUrl'         => esc_url_raw( rest_url( Rest\PeaksController::REST_NAMESPACE ) ),
+			// The player loads its video chrome on demand. Webpack would work
+			// the location out from the script's own URL, but that throws
+			// outright when an optimisation plugin inlines the bundle — so the
+			// side that actually knows the answer gives it.
+			'assetUrl'        => esc_url_raw( URL . 'build/' ),
 			'lazyInit'        => ! empty( $advanced['lazy_init'] ),
 			'maxComputeBytes' => (int) ( $peaks['max_client_bytes'] ?? 25 * 1024 * 1024 ),
 			'i18n'            => array(

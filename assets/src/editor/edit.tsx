@@ -85,6 +85,17 @@ function humanise( key: string ): string {
 	return labels[ key ] ?? key.replace( /_/g, ' ' );
 }
 
+/**
+ * Shapes offered for a video. Declared as data, and typed as plain strings, so
+ * the control accepts whatever was saved rather than only these four.
+ */
+const RATIOS: Array< { value: string; label: string } > = [
+	{ value: '16:9', label: __( 'Widescreen (16:9)', 'imagina-player' ) },
+	{ value: '4:3', label: __( 'Classic (4:3)', 'imagina-player' ) },
+	{ value: '1:1', label: __( 'Square (1:1)', 'imagina-player' ) },
+	{ value: '9:16', label: __( 'Vertical (9:16)', 'imagina-player' ) },
+];
+
 export function Edit( { attributes, setAttributes }: EditProps ) {
 	const data = editorData();
 	const blockProps = useBlockProps( { className: 'imgp-block-editor' } );
@@ -93,6 +104,12 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 	const preset = String( attributes.preset ?? 'default' );
 	const thumbnail = String( attributes.thumbnail ?? '' );
 	const downloadUrl = String( attributes.downloadUrl ?? '' );
+	const poster = String( attributes.poster ?? '' );
+
+	// From the file, because that is what the renderer decides on too. A URL
+	// pasted from a provider has no attachment to ask, so the extension is all
+	// there is — and it is what `wp_check_filetype()` looks at server-side.
+	const isVideo = /\.(mp4|m4v|webm|ogv|mov)(\?|#|$)/i.test( src );
 
 	const inherited = ( attribute: string, presetKey: string ): boolean => {
 		const override = attributes[ attribute ];
@@ -599,6 +616,102 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 						) }
 					/>
 				</PanelBody>
+
+				{ isVideo && (
+					<PanelBody title={ __( 'Video', 'imagina-player' ) }>
+						<SelectControl
+							__nextHasNoMarginBottom
+							label={ __( 'Shape', 'imagina-player' ) }
+							help={ __(
+								'The player holds this shape before the video loads, so the page does not jump when it arrives.',
+								'imagina-player'
+							) }
+							value={ String( attributes.aspectRatio ?? '16:9' ) }
+							options={ RATIOS }
+							onChange={ ( value: string ) =>
+								setAttributes( { aspectRatio: value } )
+							}
+						/>
+
+						<BaseControl
+							__nextHasNoMarginBottom
+							id="imgp-poster"
+							label={ __( 'Poster', 'imagina-player' ) }
+							help={ __(
+								'Shown before play. Often the largest image on the page, so pick one that is already the right size.',
+								'imagina-player'
+							) }
+						>
+							<div className="imgp-editor__media-picker">
+								{ poster && (
+									<img
+										className="imgp-editor__thumb"
+										src={ poster }
+										alt=""
+									/>
+								) }
+								<MediaUploadCheck>
+									<MediaUpload
+										allowedTypes={ [ 'image' ] }
+										value={ Number(
+											attributes.posterId ?? 0
+										) }
+										onSelect={ ( media: {
+											id?: number;
+											url?: string;
+											sizes?: Record<
+												string,
+												{ url?: string }
+											>;
+										} ) =>
+											setAttributes( {
+												poster:
+													media.sizes?.large?.url ??
+													media.url ??
+													'',
+												posterId: media.id ?? 0,
+											} )
+										}
+										render={ ( {
+											open,
+										}: {
+											open: () => void;
+										} ) => (
+											<Button
+												variant="secondary"
+												onClick={ open }
+											>
+												{ poster
+													? __(
+															'Replace',
+															'imagina-player'
+													  )
+													: __(
+															'Choose from media library',
+															'imagina-player'
+													  ) }
+											</Button>
+										) }
+									/>
+								</MediaUploadCheck>
+								{ poster && (
+									<Button
+										variant="tertiary"
+										isDestructive
+										onClick={ () =>
+											setAttributes( {
+												poster: '',
+												posterId: 0,
+											} )
+										}
+									>
+										{ __( 'Remove', 'imagina-player' ) }
+									</Button>
+								) }
+							</div>
+						</BaseControl>
+					</PanelBody>
+				) }
 			</InspectorControls>
 
 			<Preview

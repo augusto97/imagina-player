@@ -5,7 +5,7 @@ import {
 	sharedPeaks,
 	storePeaks,
 } from './peaks';
-import type { PlayerConfig, RuntimeData } from './types';
+import type { PlayerConfig, RuntimeData, VideoConfig } from './types';
 import { clamp, formatTime, rafThrottle } from './utils';
 import { Waveform } from './waveform';
 
@@ -67,6 +67,9 @@ export class Player {
 
 	private destroyed = false;
 
+	/** Set once the video chunk has loaded; absent for audio, always. */
+	private video: { destroy: () => void } | null = null;
+
 	constructor( root: HTMLElement, runtime: RuntimeData ) {
 		this.root = root;
 		this.runtime = runtime;
@@ -112,7 +115,52 @@ export class Player {
 			this.setupSticky();
 		}
 
+		if ( this.config.video ) {
+			void this.setupVideo( this.config.video );
+		}
+
 		instances.add( this );
+	}
+
+	/**
+	 * Load the video chrome, and only then.
+	 *
+	 * A dynamic import so webpack emits it as its own file: a page with nothing
+	 * but audio players never asks for it, and never pays for it. The import
+	 * failing is survivable — the core player still plays the video, it just
+	 * looks plain — so it is caught rather than allowed to break the page.
+	 * @param config
+	 */
+	private async setupVideo( config: VideoConfig ): Promise< void > {
+		if ( ! ( this.media instanceof HTMLVideoElement ) ) {
+			return;
+		}
+
+		try {
+			const { VideoChrome } = await import(
+				/* webpackChunkName: "imagina-video" */ './video'
+			);
+
+			if ( this.destroyed ) {
+				return;
+			}
+
+			this.video = new VideoChrome(
+				{
+					root: this.root,
+					media: this.media,
+					i18n: this.runtime.i18n,
+					toggle: () => this.toggle(),
+					seekBy: ( seconds: number ) =>
+						this.seekTo( this.media.currentTime + seconds ),
+				},
+				config
+			);
+		} catch {
+			// The video plays without its chrome. Leave the native controls on
+			// rather than leaving the visitor with nothing to press.
+			this.media.setAttribute( 'controls', 'controls' );
+		}
 	}
 
 	private bindMedia(): void {
@@ -773,6 +821,7 @@ export class Player {
 		this.destroyed = true;
 		this.resizeObserver?.disconnect();
 		this.stickyObserver?.disconnect();
+		this.video?.destroy();
 		instances.delete( this );
 	}
 }

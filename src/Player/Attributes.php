@@ -69,6 +69,9 @@ final class Attributes {
 	 *
 	 * @return array<string, array{type: string, default: mixed}>
 	 */
+	/** Landscape 16:9, which is what almost every recording is. */
+	public const DEFAULT_RATIO = '16:9';
+
 	public static function schema(): array {
 		$schema = array(
 			'src'          => array(
@@ -122,6 +125,22 @@ final class Attributes {
 			'className'    => array(
 				'type'    => 'string',
 				'default' => '',
+			),
+
+			// Video. Ignored for audio, which is why they carry empty defaults
+			// rather than being a separate schema: one block, one shape, and a
+			// track that changes kind does not lose its settings.
+			'poster'       => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'posterId'     => array(
+				'type'    => 'int',
+				'default' => 0,
+			),
+			'aspectRatio'  => array(
+				'type'    => 'string',
+				'default' => self::DEFAULT_RATIO,
 			),
 		);
 
@@ -183,6 +202,8 @@ final class Attributes {
 		$out['preset']      = sanitize_key( (string) $out['preset'] ) ?: Settings::DEFAULT_PRESET;
 		$out['className']   = trim( preg_replace( '/[^A-Za-z0-9 _-]/', '', (string) $out['className'] ) ?? '' );
 		$out['startTime']   = max( 0.0, (float) $out['startTime'] );
+		$out['poster']      = self::sanitize_media_url( (string) $out['poster'] );
+		$out['aspectRatio'] = self::sanitize_ratio( (string) $out['aspectRatio'] );
 
 		return $out;
 	}
@@ -199,6 +220,35 @@ final class Attributes {
 		}
 
 		return esc_url_raw( $url, array( 'http', 'https' ) );
+	}
+
+	/**
+	 * An aspect ratio, as `w:h`.
+	 *
+	 * This reaches CSS, so it is rebuilt from two integers rather than escaped:
+	 * a value that arrives as anything other than two numbers cannot leave here
+	 * as anything at all. Bounded because a ratio of 1:900 is a page-breaking
+	 * sliver, not a design choice.
+	 */
+	public static function sanitize_ratio( string $ratio ): string {
+		if ( ! preg_match( '/^\s*(\d{1,4})\s*[:\/]\s*(\d{1,4})\s*$/', $ratio, $parts ) ) {
+			return self::DEFAULT_RATIO;
+		}
+
+		$width  = (int) $parts[1];
+		$height = (int) $parts[2];
+
+		if ( $width < 1 || $height < 1 ) {
+			return self::DEFAULT_RATIO;
+		}
+
+		$factor = $width / $height;
+
+		if ( $factor < 0.25 || $factor > 4.0 ) {
+			return self::DEFAULT_RATIO;
+		}
+
+		return $width . ':' . $height;
 	}
 
 	public static function to_bool( mixed $value ): bool {

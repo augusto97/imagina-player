@@ -701,3 +701,272 @@
 .imgp.is-stuck.imgp--stick-bottom-right {
 	right: 1rem;
 }
+
+/* --- Video: the theater layout ------------------------------------------
+   Controls sit *on* the picture rather than beside it, which is the whole
+   difference between the audio shell and this one. Everything is stacked
+   inside .imgp__stage, and the stage owns the aspect ratio so the box is the
+   right height before a single byte of video has loaded — no layout shift
+   when metadata arrives, which is the part that costs a page its CLS score. */
+
+.imgp--video {
+	--imgp-chrome: rgb(0 0 0 / 78%);
+	--imgp-on-chrome: #fff;
+	--imgp-ratio: 16 / 9;
+}
+
+.imgp__stage {
+	position: relative;
+	aspect-ratio: var(--imgp-ratio);
+	width: 100%;
+	overflow: hidden;
+	background: #000;
+	border-radius: var(--imgp-radius, 0);
+	isolation: isolate;
+}
+
+.imgp--video .imgp__media,
+.imgp.is-enhanced .imgp--video .imgp__media {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	background: #000;
+}
+
+/* --- Poster -------------------------------------------------------------
+   A real image, so it can be given loading priority: the poster is very
+   often the page's largest contentful paint. */
+
+.imgp__poster {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	transition: opacity 0.25s ease;
+}
+
+.imgp__poster img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+
+.imgp--video.is-started .imgp__poster {
+	opacity: 0;
+	pointer-events: none;
+}
+
+/* --- The play button in the middle -------------------------------------- */
+
+.imgp__bigplay {
+	position: absolute;
+	inset: 0;
+	z-index: 4;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--imgp-on-chrome);
+	cursor: pointer;
+	transition: opacity 0.2s ease;
+}
+
+.imgp__bigplay::before {
+	content: "";
+	position: absolute;
+	width: 4.5rem;
+	height: 4.5rem;
+	border-radius: 50%;
+	background: var(--imgp-accent);
+	opacity: 0.92;
+	transition: transform 0.18s ease;
+}
+
+.imgp__bigplay:hover::before {
+	transform: scale(1.06);
+}
+
+.imgp__bigplay svg {
+	position: relative;
+	width: 2rem;
+	height: 2rem;
+	fill: var(--imgp-on-accent, #fff);
+}
+
+.imgp__bigplay .imgp__icon--pause {
+	display: none;
+}
+
+/* Once it is playing the big button stops covering the picture. It stays in
+   the tree — it is the thing a click on the video toggles — but it only shows
+   its glyph while the chrome is up. */
+.imgp--video.is-playing .imgp__bigplay::before,
+.imgp--video.is-playing .imgp__bigplay svg {
+	opacity: 0;
+}
+
+.imgp--video.is-playing.is-chrome-idle .imgp__bigplay {
+	cursor: none;
+}
+
+/* --- Layer slot ---------------------------------------------------------
+   Empty until chapters, captions or a call to action mount here. It carries
+   a z-index now so that adding one later does not mean renumbering. */
+
+.imgp__layers {
+	position: absolute;
+	inset: 0;
+	z-index: 6;
+	pointer-events: none;
+}
+
+.imgp__layers > * {
+	pointer-events: auto;
+}
+
+/* --- Chrome (the control bar over the picture) --------------------------- */
+
+.imgp__chrome {
+	position: absolute;
+	inset: auto 0 0;
+	z-index: 8;
+	padding: 3rem 0.75rem 0.6rem;
+	background: linear-gradient(to top, var(--imgp-chrome), transparent);
+	opacity: 1;
+	transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.imgp--video.is-chrome-idle .imgp__chrome {
+	opacity: 0;
+	transform: translateY(0.5rem);
+	pointer-events: none;
+}
+
+.imgp--video .imgp__bar {
+	margin-top: 0;
+	color: var(--imgp-on-chrome);
+}
+
+.imgp--video .imgp__scrubber {
+	height: auto;
+	margin-bottom: 0.25rem;
+}
+
+.imgp--video .imgp__track {
+	background: rgb(255 255 255 / 30%);
+}
+
+.imgp--video .imgp__title,
+.imgp--video .imgp__artist,
+.imgp--video .imgp__time {
+	color: var(--imgp-on-chrome);
+}
+
+.imgp--video .imgp__play,
+.imgp--video .imgp__controls button,
+.imgp--video .imgp__controls a {
+	color: var(--imgp-on-chrome);
+}
+
+/* --- Video-only buttons -------------------------------------------------
+   Hidden by the server and revealed by the module, one at a time, only where
+   the browser actually supports them: a Picture-in-Picture button that does
+   nothing on Firefox Android is worse than no button. */
+
+.imgp__vcontrols {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.imgp__vbtn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: 0;
+	border-radius: 0.35rem;
+	background: transparent;
+	color: var(--imgp-on-chrome);
+	cursor: pointer;
+}
+
+.imgp__vbtn[hidden] {
+	display: none;
+}
+
+.imgp__vbtn svg {
+	width: 1.15rem;
+	height: 1.15rem;
+	fill: currentcolor;
+}
+
+.imgp__vbtn:hover {
+	background: rgb(255 255 255 / 16%);
+}
+
+.imgp__vbtn .imgp__icon--collapse {
+	display: none;
+}
+
+.imgp--video.is-fullscreen .imgp__vbtn--fullscreen .imgp__icon--expand {
+	display: none;
+}
+
+.imgp--video.is-fullscreen .imgp__vbtn--fullscreen .imgp__icon--collapse {
+	display: block;
+}
+
+/* Full screen: the stage becomes the screen, so its fixed ratio has to go. */
+.imgp--video:fullscreen .imgp__stage,
+.imgp--video:fullscreen {
+	aspect-ratio: auto;
+	height: 100%;
+	width: 100%;
+}
+
+.imgp--video:fullscreen {
+	display: flex;
+	align-items: center;
+	background: #000;
+}
+
+/* On a phone the bar has no room for a title as well as the controls. The
+   title is on the page around the video; the controls are not. */
+@container (max-width: 30rem) {
+
+	.imgp--video .imgp__meta {
+		display: none;
+	}
+
+	.imgp--video .imgp__chrome {
+		padding: 2rem 0.5rem 0.4rem;
+	}
+
+	.imgp__bigplay::before {
+		width: 3.5rem;
+		height: 3.5rem;
+	}
+
+	.imgp__bigplay svg {
+		width: 1.5rem;
+		height: 1.5rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.imgp__chrome,
+	.imgp__poster,
+	.imgp__bigplay::before {
+		transition: none;
+	}
+}

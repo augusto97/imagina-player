@@ -268,3 +268,9 @@ function wp_remote_get( $url, $args = array() ) {
 
 function wp_remote_retrieve_response_code( $response ) { return is_array( $response ) ? (int) ( $response['code'] ?? 0 ) : 0; }
 function wp_remote_retrieve_body( $response ) { return is_array( $response ) ? (string) ( $response['body'] ?? '' ) : ''; }
+
+function sanitize_html_class( $class, $fallback = '' ) {
+	$clean = preg_replace( '/[^A-Za-z0-9_-]/', '', (string) $class );
+
+	return '' === (string) $clean ? (string) $fallback : (string) $clean;
+}
