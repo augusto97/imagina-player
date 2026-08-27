@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,20 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.5.0 =
+* New: a protection self-check. It writes a decoy file into the protected
+  folder, fetches it over real HTTP with no login, and reports what the server
+  actually answered — which is the only way to catch the common failure where
+  nginx never reads the .htaccess the plugin writes and every "protected" file
+  sits in the open.
+* New: the logo is chosen from the media library. It still accepts a pasted
+  URL, since a logo often lives outside the library.
+* Fixed: "ffmpeg was not found" was shown for three different problems with
+  three different fixes — a host that forbids starting processes, a path typed
+  in wrong, and nothing installed. Each now says which one it is.
+* Fixed: saving a new ffmpeg path and re-reading its status happen in one
+  request, and the status came from before the save.
 
 = 1.4.0 =
 * Fixed: the player overflowed its container on phones. Every skin was measured

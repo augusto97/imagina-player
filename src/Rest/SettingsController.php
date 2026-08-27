@@ -17,6 +17,7 @@ namespace ImaginaPlayer\Rest;
 use ImaginaPlayer\Peaks\PeaksGenerator;
 use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Player\Skins;
+use ImaginaPlayer\Protection\SelfCheck;
 use ImaginaPlayer\Protection\Vault;
 use ImaginaPlayer\Render\PlayerRenderer;
 use ImaginaPlayer\Settings;
@@ -54,6 +55,18 @@ final class SettingsController {
 			)
 		);
 
+		// A write method on purpose: it puts a file on disk and makes outbound
+		// requests, so it should not be reachable by a link somebody follows.
+		register_rest_route(
+			PeaksController::REST_NAMESPACE,
+			'/protection/self-check',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'self_check' ),
+				'permission_callback' => $can_manage,
+			)
+		);
+
 		register_rest_route(
 			PeaksController::REST_NAMESPACE,
 			'/preview',
@@ -71,6 +84,10 @@ final class SettingsController {
 				),
 			)
 		);
+	}
+
+	public function self_check(): WP_REST_Response {
+		return new WP_REST_Response( SelfCheck::run(), 200 );
 	}
 
 	public function get_settings(): WP_REST_Response {
@@ -281,6 +298,7 @@ final class SettingsController {
 			'system'     => array(
 				'ffmpeg'        => PeaksGenerator::is_available(),
 				'ffmpegBinary'  => PeaksGenerator::binary(),
+				'ffmpegState'   => PeaksGenerator::diagnosis()['state'],
 				'vaultDir'      => Vault::base_dir(),
 				'vaultName'     => Vault::directory_name(),
 				'htaccess'      => Vault::server_honours_htaccess(),

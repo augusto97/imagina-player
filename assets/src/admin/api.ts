@@ -52,3 +52,24 @@ export function generateWaveform( attachmentId: number ): Promise< unknown > {
 		data: { attachmentId },
 	} );
 }
+
+export interface SelfCheckResult {
+	status: 'pass' | 'fail' | 'warn' | 'skip';
+	summary: string;
+	checks: Array< {
+		id: string;
+		label: string;
+		status: 'pass' | 'fail' | 'warn' | 'skip';
+		detail: string;
+	} >;
+}
+
+/**
+ * Ask the site to try to break into its own vault and report what happened.
+ */
+export function runProtectionSelfCheck(): Promise< SelfCheckResult > {
+	return apiFetch( {
+		path: '/imagina-player/v1/protection/self-check',
+		method: 'POST',
+	} ) as Promise< SelfCheckResult >;
+}

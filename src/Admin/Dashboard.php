@@ -78,6 +78,10 @@ final class Dashboard {
 
 		$asset = self::asset_meta();
 
+		// The logo and cover fields open the same media frame the rest of
+		// wp-admin uses; it is not on a settings screen unless asked for.
+		wp_enqueue_media();
+
 		wp_enqueue_script(
 			self::HANDLE,
 			\ImaginaPlayer\URL . 'build/admin.js',

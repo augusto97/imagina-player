@@ -208,3 +208,107 @@ export function Card( { title, description, children }: { title?: string; descri
 export function Notice( { tone, children }: { tone: 'info' | 'good' | 'warn'; children: ReactNode } ) {
 	return <div className={ `imgpa-notice imgpa-notice--${ tone }` }>{ children }</div>;
 }
+
+/**
+ * The media library, opened from a plain admin screen.
+ *
+ * The block editor has `MediaUpload` for this; a settings page does not — it
+ * gets `wp.media`, the frame the rest of wp-admin uses, which is only present
+ * once the screen calls `wp_enqueue_media()`. If it is missing the field still
+ * works as a URL box rather than showing a button that does nothing.
+ */
+interface MediaFrame {
+	on: ( event: string, handler: () => void ) => void;
+	open: () => void;
+	state: () => { get: ( key: string ) => { first: () => { toJSON: () => MediaAttachment } } };
+}
+
+interface MediaAttachment {
+	url?: string;
+	sizes?: Record< string, { url?: string } >;
+}
+
+type MediaFactory = ( args: Record< string, unknown > ) => MediaFrame;
+
+function mediaFactory(): MediaFactory | null {
+	const media = ( window as unknown as { wp?: { media?: MediaFactory } } ).wp?.media;
+
+	return 'function' === typeof media ? media : null;
+}
+
+export function hasMediaLibrary(): boolean {
+	return null !== mediaFactory();
+}
+
+interface MediaProps {
+	value: string;
+	onChange: ( url: string ) => void;
+	placeholder?: string;
+	/** Restricted to this MIME family, e.g. `image`. */
+	type?: string;
+	title?: string;
+	/** Preferred registered image size; falls back to the full URL. */
+	size?: string;
+}
+
+export function MediaInput( { value, onChange, placeholder, type = 'image', title, size }: MediaProps ) {
+	const factory = mediaFactory();
+
+	const open = (): void => {
+		if ( ! factory ) {
+			return;
+		}
+
+		const frame = factory( {
+			title: title ?? __( 'Choose an image', 'imagina-player' ),
+			library: { type },
+			button: { text: __( 'Use this image', 'imagina-player' ) },
+			multiple: false,
+		} );
+
+		frame.on( 'select', () => {
+			const attachment = frame.state().get( 'selection' ).first().toJSON();
+			const scaled = size ? attachment.sizes?.[ size ]?.url : undefined;
+
+			onChange( scaled ?? attachment.url ?? '' );
+		} );
+
+		frame.open();
+	};
+
+	return (
+		<span className="imgpa-media">
+			{ '' !== value && (
+				<span className="imgpa-media__preview">
+					{ /* eslint-disable-next-line jsx-a11y/alt-text -- decorative echo of the field's own value. */ }
+					<img src={ value } alt="" />
+				</span>
+			) }
+
+			<input
+				type="text"
+				className="imgpa-text imgpa-text--mono"
+				value={ value }
+				placeholder={ placeholder }
+				spellCheck={ false }
+				onChange={ ( event ) => onChange( event.target.value ) }
+			/>
+
+			{ factory && (
+				<button type="button" className="imgpa-btn imgpa-btn--ghost" onClick={ open }>
+					{ __( 'Media library', 'imagina-player' ) }
+				</button>
+			) }
+
+			{ '' !== value && (
+				<button
+					type="button"
+					className="imgpa-btn imgpa-btn--ghost"
+					onClick={ () => onChange( '' ) }
+				>
+					{ __( 'Remove', 'imagina-player' ) }
+				</button>
+			) }
+		</span>
+	);
+}

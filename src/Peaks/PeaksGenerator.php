@@ -48,23 +48,73 @@ final class PeaksGenerator {
 	}
 
 	/**
+	 * Why server-side generation is or is not working, in the host's own terms.
+	 *
+	 * "Not found" covered three different situations with three different fixes:
+	 * a host that forbids running any process at all, a path typed into the
+	 * settings that is wrong, and simply nothing on PATH. Only the last one is
+	 * answered by "ask your host to install ffmpeg".
+	 *
+	 * @return array{state: string, binary: string, configured: string}
+	 */
+	public static function diagnosis(): array {
+		$configured = trim( (string) ( Settings::peaks_settings()['ffmpeg_path'] ?? '' ) );
+		$binary     = self::binary();
+
+		if ( '' !== $binary ) {
+			return array(
+				'state'      => 'ok',
+				'binary'     => $binary,
+				'configured' => $configured,
+			);
+		}
+
+		if ( ! self::can_run_processes() ) {
+			return array(
+				'state'      => 'processes-disabled',
+				'binary'     => '',
+				'configured' => $configured,
+			);
+		}
+
+		if ( '' !== $configured ) {
+			return array(
+				'state'      => str_contains( $configured, '/' ) && ! is_file( $configured ) ? 'path-missing' : 'path-not-ffmpeg',
+				'binary'     => '',
+				'configured' => $configured,
+			);
+		}
+
+		return array(
+			'state'      => 'not-installed',
+			'binary'     => '',
+			'configured' => '',
+		);
+	}
+
+	/**
 	 * Locate the ffmpeg binary, honouring an explicit path from settings.
 	 */
 	public static function binary(): string {
-		static $resolved = null;
+		$peaks_settings = Settings::peaks_settings();
+		$configured     = trim( (string) ( $peaks_settings['ffmpeg_path'] ?? '' ) );
 
-		if ( null !== $resolved ) {
-			return $resolved;
+		// Keyed on the configured path rather than a single slot: saving a new
+		// path and re-reading the status happen in the same request, and a flat
+		// cache answered that with the value from before the save.
+		static $cache = array();
+
+		if ( isset( $cache[ $configured ] ) ) {
+			return $cache[ $configured ];
 		}
 
 		$resolved = '';
 
 		if ( ! self::can_run_processes() ) {
+			$cache[ $configured ] = $resolved;
+
 			return $resolved;
 		}
-
-		$peaks_settings = Settings::peaks_settings();
-		$configured     = trim( (string) ( $peaks_settings['ffmpeg_path'] ?? '' ) );
 
 		$candidates = array_filter( array( $configured, 'ffmpeg', '/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg', '/opt/homebrew/bin/ffmpeg' ) );
 
@@ -81,6 +131,8 @@ final class PeaksGenerator {
 		 * @param string $resolved Binary path or command name.
 		 */
 		$resolved = (string) apply_filters( 'imagina_player_ffmpeg_binary', $resolved );
+
+		$cache[ $configured ] = $resolved;
 
 		return $resolved;
 	}

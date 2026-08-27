@@ -50,6 +50,17 @@ final class Vault {
 	}
 
 	/**
+	 * The address the vault would answer on if the server were not denying it.
+	 *
+	 * Only the self-check has a use for this: to prove that address is refused.
+	 */
+	public static function base_url(): string {
+		$uploads = wp_get_upload_dir();
+
+		return trailingslashit( $uploads['baseurl'] ) . self::directory_name();
+	}
+
+	/**
 	 * Create the directory and drop the deny rules in place.
 	 */
 	public static function ensure(): bool {

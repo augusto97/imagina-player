@@ -1,13 +1,47 @@
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { generateWaveform, listPendingWaveforms } from './api';
-import { Card, ColorInput, Field, Notice, NumberInput, Select, TextInput, Toggle } from './controls';
+import { generateWaveform, listPendingWaveforms, runProtectionSelfCheck } from './api';
+import type { SelfCheckResult } from './api';
+import { Card, ColorInput, Field, MediaInput, Notice, NumberInput, Select, TextInput, Toggle } from './controls';
 import type { SettingsPayload } from './types';
 
 interface PanelProps {
 	settings: SettingsPayload;
 	onChange: ( patch: Partial< SettingsPayload > ) => void;
+}
+
+/**
+ * Why ffmpeg is unavailable, said in terms of what to do about it.
+ *
+ * One message for three situations was the bug: a host that forbids running
+ * any process, a path typed in wrong, and nothing installed all read as
+ * "not found", and only the last one is answered by asking the host to
+ * install it.
+ */
+function ffmpegProblem( state: SettingsPayload[ 'system' ][ 'ffmpegState' ] ): string {
+	switch ( state ) {
+		case 'processes-disabled':
+			return __(
+				'This host does not let PHP start other programs (popen is in disable_functions), so ffmpeg cannot be used even if it is installed.',
+				'imagina-player'
+			);
+		case 'path-missing':
+			return __(
+				'The ffmpeg path set below does not point at a file that exists on this server.',
+				'imagina-player'
+			);
+		case 'path-not-ffmpeg':
+			return __(
+				'The ffmpeg path set below was reachable but did not answer as ffmpeg. Check the path, or clear it to search the usual locations.',
+				'imagina-player'
+			);
+		default:
+			return __(
+				'ffmpeg is not installed on this server. Ask your host to add it, or set its path below if it lives somewhere unusual.',
+				'imagina-player'
+			);
+	}
 }
 
 export function WaveformsPanel( { settings, onChange }: PanelProps ) {
@@ -86,8 +120,9 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 					</Notice>
 				) : (
 					<Notice tone="warn">
+						<strong>{ ffmpegProblem( settings.system.ffmpegState ) }</strong>{ ' ' }
 						{ __(
-							'ffmpeg was not found. Only files small enough to analyse in the visitor’s browser get a waveform; longer recordings show a plain progress bar. Ask your host to install ffmpeg, or set its path below.',
+							'Nothing is broken: files small enough to analyse in the visitor’s browser still get a waveform, and longer recordings show a plain progress bar instead. Server-side generation only removes that limit.',
 							'imagina-player'
 						) }
 					</Notice>
@@ -280,9 +315,95 @@ export function ProtectionPanel( { settings, onChange }: PanelProps ) {
 					</Notice>
 				) }
 			</Card>
+
+			<SelfCheckCard />
 		</>
 	);
 }
+
+/**
+ * Does the protection actually protect?
+ *
+ * Everything above is a statement of intent. Whether the web server enforces it
+ * is a separate question with a well-known wrong answer — nginx never reads the
+ * .htaccess the plugin writes — so this asks the server instead of asking the
+ * settings. It drops a decoy file in the vault, fetches it over real HTTP with
+ * no cookies, and reports the status line.
+ */
+function SelfCheckCard() {
+	const [ result, setResult ] = useState< SelfCheckResult | null >( null );
+	const [ running, setRunning ] = useState( false );
+	const [ error, setError ] = useState( '' );
+
+	const run = async (): Promise< void > => {
+		setRunning( true );
+		setError( '' );
+
+		try {
+			setResult( await runProtectionSelfCheck() );
+		} catch ( failure ) {
+			setResult( null );
+			setError( failure instanceof Error ? failure.message : __( 'The check could not be run.', 'imagina-player' ) );
+		} finally {
+			setRunning( false );
+		}
+	};
+
+	const tone = ( status: SelfCheckResult[ 'status' ] ): 'good' | 'warn' =>
+		'pass' === status ? 'good' : 'warn';
+
+	return (
+		<Card
+			title={ __( 'Check that it works', 'imagina-player' ) }
+			description={ __( 'Tries to reach a protected file the way a stranger would: a real request to this site, from this site, carrying no login. What comes back is what any visitor would get.', 'imagina-player' ) }
+		>
+			<div className="imgpa-row">
+				<button type="button" className="imgpa-btn imgpa-btn--primary" onClick={ run } disabled={ running }>
+					{ running ? __( 'Checking…', 'imagina-player' ) : __( 'Run the check', 'imagina-player' ) }
+				</button>
+				{ result && <span className="imgpa-hint">{ result.summary }</span> }
+			</div>
+
+			{ '' !== error && <Notice tone="warn">{ error }</Notice> }
+
+			{ result && (
+				<>
+					<Notice tone={ tone( result.status ) }>{ result.summary }</Notice>
+
+					<ul className="imgpa-checks">
+						{ result.checks.map( ( check ) => (
+							<li key={ check.id } className={ `imgpa-check imgpa-check--${ check.status }` }>
+								<span className="imgpa-check__mark" aria-hidden="true">
+									{ MARKS[ check.status ] }
+								</span>
+								<span className="imgpa-check__text">
+									<strong>{ check.label }</strong>
+									<span className="imgpa-sr">{ STATUS_LABELS[ check.status ]() }</span>
+									{ '' !== check.detail && <span className="imgpa-check__detail">{ check.detail }</span> }
+								</span>
+							</li>
+						) ) }
+					</ul>
+				</>
+			) }
+		</Card>
+	);
+}
+
+const MARKS: Record< SelfCheckResult[ 'status' ], string > = {
+	pass: '✓',
+	fail: '✕',
+	warn: '!',
+	skip: '–',
+};
+
+/* Read out by a screen reader, which cannot see the colour or the glyph. */
+const STATUS_LABELS: Record< SelfCheckResult[ 'status' ], () => string > = {
+	pass: () => __( 'Passed.', 'imagina-player' ),
+	fail: () => __( 'Failed.', 'imagina-player' ),
+	warn: () => __( 'Needs attention.', 'imagina-player' ),
+	skip: () => __( 'Not checked.', 'imagina-player' ),
+};
 
 /**
  * Site-wide brand defaults.
@@ -320,11 +441,11 @@ export function BrandingPanel( { settings, onChange }: PanelProps ) {
 				title={ __( 'Logo', 'imagina-player' ) }
 				description={ __( 'Shown at the end of the control row on every player. Leave empty for none.', 'imagina-player' ) }
 			>
-				<Field label={ __( 'Image URL', 'imagina-player' ) } wide>
-					<TextInput
+				<Field label={ __( 'Image', 'imagina-player' ) } wide>
+					<MediaInput
 						value={ branding.logo }
-						mono
 						placeholder="https://…/logo.svg"
+						title={ __( 'Choose a logo', 'imagina-player' ) }
 						onChange={ ( logo ) => set( { logo } ) }
 					/>
 				</Field>

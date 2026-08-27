@@ -174,7 +174,10 @@ function trailingslashit( $string ) { return rtrim( (string) $string, '/\\' ) . 
 function untrailingslashit( $string ) { return rtrim( (string) $string, '/\\' ); }
 function wp_get_upload_dir() {
 	$base = $GLOBALS['stub_uploads_dir'] ?? sys_get_temp_dir() . '/imgp-uploads';
-	return array( 'basedir' => $base, 'baseurl' => 'https://example.test/wp-content/uploads' );
+	return array(
+		'basedir' => $base,
+		'baseurl' => $GLOBALS['stub_uploads_url'] ?? 'https://example.test/wp-content/uploads',
+	);
 }
 function wp_mkdir_p( $dir ) { return is_dir( $dir ) || mkdir( $dir, 0777, true ); }
 function home_url( $path = '/' ) { return 'https://example.test' . $path; }
@@ -188,3 +191,80 @@ function wp_update_attachment_metadata( $id, $meta ) { return true; }
 function status_header( $code ) { $GLOBALS['stub_status'] = $code; if ( ! headers_sent() ) { http_response_code( $code ); } }
 function nocache_headers() {}
 function esc_textarea( $text ) { return htmlspecialchars( (string) $text, ENT_QUOTES ); }
+
+function wp_generate_password( $length = 12, $special = true ) {
+	return substr( bin2hex( random_bytes( (int) ceil( $length / 2 ) + 1 ) ), 0, (int) $length );
+}
+
+function wp_list_pluck( $list, $field ) {
+	return array_map( static fn( $row ) => is_array( $row ) ? ( $row[ $field ] ?? null ) : ( $row->$field ?? null ), $list );
+}
+
+function _n( $single, $plural, $number, $domain = 'default' ) {
+	return 1 === (int) $number ? $single : $plural;
+}
+
+/**
+ * Attachments carrying a given meta value.
+ *
+ * Only the shape the self-check asks for: a meta_key/meta_value lookup
+ * returning ids.
+ */
+function get_posts( $args = array() ) {
+	$key   = $args['meta_key'] ?? '';
+	$value = $args['meta_value'] ?? '';
+	$found = array();
+
+	foreach ( (array) ( $GLOBALS['stub_meta'] ?? array() ) as $id => $meta ) {
+		if ( '' !== $key && (string) ( $meta[ $key ] ?? '' ) === (string) $value ) {
+			$found[] = (int) $id;
+		}
+	}
+
+	$limit = (int) ( $args['posts_per_page'] ?? -1 );
+
+	return $limit > 0 ? array_slice( $found, 0, $limit ) : $found;
+}
+
+/**
+ * A real HTTP request, because the self-check's whole value is that it makes
+ * one. Stubbing it out with a canned answer would test nothing.
+ */
+function wp_remote_get( $url, $args = array() ) {
+	$headers = '';
+
+	foreach ( (array) ( $args['headers'] ?? array() ) as $name => $value ) {
+		$headers .= $name . ': ' . $value . "\r\n";
+	}
+
+	$context = stream_context_create(
+		array(
+			'http' => array(
+				'method'          => 'GET',
+				'header'          => $headers,
+				'timeout'         => (float) ( $args['timeout'] ?? 5 ),
+				'follow_location' => 0,
+				'ignore_errors'   => true,
+			),
+		)
+	);
+
+	$body = @file_get_contents( $url, false, $context );
+
+	if ( false === $body ) {
+		return new WP_Error( 'http_request_failed', 'could not connect' );
+	}
+
+	$status = 0;
+
+	foreach ( $http_response_header ?? array() as $line ) {
+		if ( preg_match( '#^HTTP/\S+\s+(\d{3})#', $line, $matches ) ) {
+			$status = (int) $matches[1];
+		}
+	}
+
+	return array( 'code' => $status, 'body' => $body );
+}
+
+function wp_remote_retrieve_response_code( $response ) { return is_array( $response ) ? (int) ( $response['code'] ?? 0 ) : 0; }
+function wp_remote_retrieve_body( $response ) { return is_array( $response ) ? (string) ( $response['body'] ?? '' ) : ''; }

@@ -209,6 +209,39 @@ el reproductor pide una nueva a `/stream-url` y reanuda donde estaba.
 ondas, con un `$context` distinto en cada caso: un token de un propósito nunca
 valida para el otro, y hay un test que lo comprueba.
 
+### Comprobar que protege de verdad
+
+Todo lo anterior es la *intención* del plugin. Que el servidor la aplique es
+otra pregunta, y tiene una forma conocida de fallar: el vault escribe un
+`.htaccess`, nginx no ha leído uno en su vida, y el plugin se declararía sano
+mientras cada archivo está en abierto detrás de un nombre de carpeta.
+
+`Protection\SelfCheck` pregunta al servidor en vez de preguntarle al código.
+Escribe un señuelo dentro del vault, lo pide por HTTP real sin cookies —igual
+que cualquier desconocido— y lee la línea de estado. Un 200 con el contenido
+del señuelo significa que las reglas de denegación no se están aplicando, diga
+lo que diga la pantalla de ajustes. Después borra el señuelo.
+
+Las comprobaciones de token hacen lo mismo contra el endpoint real: sin token,
+con la firma alterada, caducado y emitido para otro archivo. Y la otra mitad de
+la afirmación —que un enlace válido *sí* reproduce—, porque una protección que
+rompe la reproducción tampoco sirve.
+
+Tres decisiones que hacen que el resultado se pueda creer:
+
+- Si el sitio no puede hacerse una petición a sí mismo, el resultado es «no se
+  pudo confirmar», nunca «correcto». Un check que da verde cuando no ha podido
+  medir nada es peor que no tenerlo.
+- El señuelo es un archivo de usar y tirar, no una grabación del cliente: la
+  comprobación funciona en un sitio que aún no ha protegido nada, y un verde
+  nunca depende de que hubiera algo que perder.
+- Si no hay nada protegido, las comprobaciones de token se declaran *no
+  ejecutadas*, no superadas.
+
+`tests/test-selfcheck.php` lo ejecuta contra servidores web reales: el servidor
+integrado de PHP como suplente fiel del caso nginx —tampoco lee `.htaccess`— y
+un router que deniega la ruta del vault como servidor bien configurado.
+
 ## Vídeo (siguiente fase)
 
 `Track::is_video()` y el renderizador ya emiten `<video>`, y el núcleo del
@@ -221,7 +254,7 @@ sin reescribir el plugin.
 ## Pruebas
 
 `./tests/run.sh` ejecuta la suite contra stubs de WordPress, sin necesidad de una
-instalación: 194 comprobaciones. Cubre sanitización, codificación de picos,
+instalación: 313 comprobaciones. Cubre sanitización, codificación de picos,
 remuestreo, firma de tokens, escapado del markup, el movimiento real de ficheros
 dentro y fuera del vault, y —con un binario ffmpeg simulado— la extracción de
 picos completa.

@@ -72,6 +72,7 @@ export interface SettingsPayload {
 	system: {
 		ffmpeg: boolean;
 		ffmpegBinary: string;
+		ffmpegState: 'ok' | 'processes-disabled' | 'path-missing' | 'path-not-ffmpeg' | 'not-installed';
 		vaultDir: string;
 		vaultName: string;
 		htaccess: boolean;

@@ -84,6 +84,7 @@ $payload  = array(
 	'system'     => array(
 		'ffmpeg'       => false,
 		'ffmpegBinary' => '',
+		'ffmpegState'  => 'processes-disabled',
 		'vaultDir'     => '/var/www/uploads/imagina-protected-abc123',
 		'vaultName'    => 'imagina-protected-abc123',
 		'htaccess'     => false,
@@ -158,6 +159,20 @@ window.wp = {
 	}
 };
 window.imaginaPlayerAdmin = {$boot};
+// wp_enqueue_media() puts this on the page. The field has to work either way,
+// so the test records whether the button appears when it is present.
+window.wp.media = function (args) {
+	window.__mediaFrameArgs = args;
+	return {
+		on: function (event, handler) { window.__mediaSelect = handler; },
+		open: function () { window.__mediaOpened = true; },
+		state: function () {
+			return { get: function () { return { first: function () { return { toJSON: function () {
+				return { url: 'https://example.test/wp-content/uploads/picked-logo.png' };
+			} }; } }; } };
+		}
+	};
+};
 </script>
 <script>{$admin_js}</script>
 <script>
@@ -221,10 +236,66 @@ setTimeout(function () {
 			backgroundChoices: text('.imgpa-segment__option')
 		};
 
-		var out = document.createElement('pre');
-		out.id = 'result';
-		out.textContent = 'RESULT:' + JSON.stringify(result);
-		document.body.appendChild(out);
+		// Phase three: Branding, where the logo field lives.
+		var nav = document.querySelectorAll('.imgpa-nav__item');
+
+		if (nav.length >= 2) { nav[1].click(); }
+
+		setTimeout(function () {
+			var media = document.querySelector('.imgpa-media');
+			var button = media
+				? Array.prototype.filter.call(media.querySelectorAll('button'), function (el) {
+					return el.textContent.indexOf('Media library') !== -1;
+				})[0]
+				: null;
+
+			result.branding = {
+				hasMediaField: !!media,
+				hasLibraryButton: !!button,
+				// A plain URL box is still there: a logo often lives outside
+				// the library, and the picker must not take that away.
+				hasUrlBox: !!(media && media.querySelector('input[type="text"]'))
+			};
+
+			if (button) {
+				button.click();
+				result.branding.opened = !!window.__mediaOpened;
+				result.branding.restrictedToImages = window.__mediaFrameArgs
+					&& window.__mediaFrameArgs.library
+					&& window.__mediaFrameArgs.library.type === 'image';
+
+				// What the frame hands back has to reach the field.
+				if (window.__mediaSelect) { window.__mediaSelect(); }
+			}
+
+			setTimeout(function () {
+				var box = document.querySelector('.imgpa-media input[type="text"]');
+				result.branding.valueAfterPick = box ? box.value : '';
+
+				// Phase four: Protection, and the self-check.
+				var nav2 = document.querySelectorAll('.imgpa-nav__item');
+
+				if (nav2.length >= 4) { nav2[3].click(); }
+
+				setTimeout(function () {
+					var cards = Array.prototype.map.call(
+						document.querySelectorAll('.imgpa-card__head h2'),
+						function (el) { return el.textContent.trim(); }
+					);
+					var runner = Array.prototype.filter.call(
+						document.querySelectorAll('.imgpa-card button'),
+						function (el) { return el.textContent.indexOf('Run the check') !== -1; }
+					)[0];
+
+					result.protection = { cards: cards, hasRunButton: !!runner };
+
+					var out = document.createElement('pre');
+					out.id = 'result';
+					out.textContent = 'RESULT:' + JSON.stringify(result);
+					document.body.appendChild(out);
+				}, 400);
+			}, 300);
+		}, 400);
 	}, 400);
 }, 1800);
 </script>
@@ -318,6 +389,38 @@ foreach ( (array) ( $result['contrast'] ?? array() ) as $part => $ratio ) {
 		$ratio . ':1'
 	);
 }
+
+// The logo was the last field still asking for a pasted URL. A settings screen
+// has no MediaUpload — that belongs to the block editor — so it opens wp.media
+// directly, and that only exists once the screen enqueues it.
+$branding = $result['branding'] ?? array();
+
+check( 'the branding logo is a media field', ! empty( $branding['hasMediaField'] ) );
+check( 'it offers the media library', ! empty( $branding['hasLibraryButton'] ) );
+check( 'and still accepts a pasted URL', ! empty( $branding['hasUrlBox'] ) );
+check( 'the button opens the library', ! empty( $branding['opened'] ) );
+check( 'which is restricted to images', ! empty( $branding['restrictedToImages'] ) );
+check(
+	'and what is chosen lands in the field',
+	'https://example.test/wp-content/uploads/picked-logo.png' === ( $branding['valueAfterPick'] ?? '' ),
+	(string) ( $branding['valueAfterPick'] ?? '' )
+);
+
+// The screen has to enqueue the frame, or the button never appears on a real
+// install however well it behaves here.
+check(
+	'the settings screen enqueues the media frame',
+	str_contains( (string) file_get_contents( $root . '/src/Admin/Dashboard.php' ), 'wp_enqueue_media()' )
+);
+
+$protection = $result['protection'] ?? array();
+
+check(
+	'the protection section offers a self-check',
+	in_array( 'Check that it works', $protection['cards'] ?? array(), true ),
+	implode( ' / ', $protection['cards'] ?? array() )
+);
+check( 'with a button to run it', ! empty( $protection['hasRunButton'] ) );
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
 exit( $failures ? 1 : 0 );
