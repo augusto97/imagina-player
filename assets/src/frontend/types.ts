@@ -13,6 +13,8 @@ export interface PlayerConfig {
 	peaksKey: string;
 	peaksToken: string;
 	canCompute: boolean;
+	/** Attachment ID when the file is served through a signed, expiring link. */
+	protectedId: number;
 }
 
 export interface RuntimeData {

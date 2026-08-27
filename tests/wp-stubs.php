@@ -16,9 +16,33 @@ $GLOBALS['stub_actions'] = array();
 $GLOBALS['stub_filters'] = array();
 
 function add_action( $hook, $callback, $priority = 10, $args = 1 ) { $GLOBALS['stub_actions'][ $hook ][] = $callback; }
-function do_action( $hook, ...$args ) {}
-function add_filter( $hook, $callback, $priority = 10, $args = 1 ) { $GLOBALS['stub_filters'][ $hook ][] = $callback; }
-function apply_filters( $hook, $value, ...$args ) { return $value; }
+function do_action( $hook, ...$args ) {
+	foreach ( $GLOBALS['stub_actions'][ $hook ] ?? array() as $callback ) {
+		$callback( ...$args );
+	}
+}
+function add_filter( $hook, $callback, $priority = 10, $args = 1 ) { $GLOBALS['stub_filters'][ $hook ][ $priority ][] = $callback; }
+function remove_all_filters( $hook ) { unset( $GLOBALS['stub_filters'][ $hook ] ); }
+/**
+ * Real dispatch, not a pass-through: the plugin's own filters are part of what
+ * the tests are checking.
+ */
+function apply_filters( $hook, $value, ...$args ) {
+	if ( empty( $GLOBALS['stub_filters'][ $hook ] ) ) {
+		return $value;
+	}
+
+	$by_priority = $GLOBALS['stub_filters'][ $hook ];
+	ksort( $by_priority );
+
+	foreach ( $by_priority as $callbacks ) {
+		foreach ( $callbacks as $callback ) {
+			$value = $callback( $value, ...$args );
+		}
+	}
+
+	return $value;
+}
 function add_shortcode( $tag, $callback ) {}
 function shortcode_atts( $pairs, $atts, $shortcode = '' ) {
 	$out = array();
@@ -71,13 +95,13 @@ function wp_check_filetype( $filename, $mimes = null ) {
 function wp_get_attachment_url( $id ) { return false; }
 function wp_get_attachment_metadata( $id ) { return false; }
 function wp_get_attachment_image_url( $id, $size = '' ) { return false; }
-function get_post_mime_type( $id ) { return ''; }
+function get_post_mime_type( $id ) { return $GLOBALS['stub_posts'][ $id ]['mime'] ?? ''; }
 function get_the_title( $id ) { return ''; }
-function get_post_meta( $id, $key, $single = false ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['get_post_meta']++; } return ''; }
-function update_post_meta( $id, $key, $value ) { return true; }
-function delete_post_meta( $id, $key ) { return true; }
-function get_post_type( $id ) { return ''; }
-function get_attached_file( $id ) { return false; }
+function get_post_meta( $id, $key, $single = false ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['get_post_meta']++; } return $GLOBALS['stub_meta'][ $id ][ $key ] ?? ''; }
+function update_post_meta( $id, $key, $value ) { $GLOBALS['stub_meta'][ $id ][ $key ] = $value; return true; }
+function delete_post_meta( $id, $key ) { unset( $GLOBALS['stub_meta'][ $id ][ $key ] ); return true; }
+function get_post_type( $id ) { return $GLOBALS['stub_posts'][ $id ]['type'] ?? ''; }
+function get_attached_file( $id ) { return $GLOBALS['stub_posts'][ $id ]['file'] ?? false; }
 function current_user_can( $cap ) { return true; }
 function current_time( $type, $gmt = 0 ) { return gmdate( 'Y-m-d H:i:s' ); }
 function rest_url( $path = '' ) { return 'https://example.test/wp-json/' . ltrim( $path, '/' ); }
@@ -102,7 +126,7 @@ function submit_button( ...$a ) {}
 function wp_nonce_field( ...$a ) {}
 function check_admin_referer( ...$a ) { return true; }
 function wp_unslash( $v ) { return $v; }
-function wp_safe_redirect( $l ) {}
+function wp_safe_redirect( $l, $status = 302 ) { $GLOBALS['stub_redirect'] = $l; }
 function wp_die( $m = '' ) { die( $m ); }
 function flush_rewrite_rules() {}
 function is_admin() { return false; }
@@ -124,3 +148,39 @@ class Stub_WPDB {
 }
 
 $GLOBALS['wpdb'] = new Stub_WPDB();
+
+// --- Stubs added for the protected-media tests -----------------------------
+
+class WP_Error {
+	private $code;
+	private $message;
+	private $data;
+	public function __construct( $code = '', $message = '', $data = '' ) {
+		$this->code    = $code;
+		$this->message = $message;
+		$this->data    = $data;
+	}
+	public function get_error_code() { return $this->code; }
+	public function get_error_message() { return $this->message; }
+	public function get_error_data() { return $this->data; }
+}
+
+function is_wp_error( $thing ) { return $thing instanceof WP_Error; }
+function trailingslashit( $string ) { return rtrim( (string) $string, '/\\' ) . '/'; }
+function untrailingslashit( $string ) { return rtrim( (string) $string, '/\\' ); }
+function wp_get_upload_dir() {
+	$base = $GLOBALS['stub_uploads_dir'] ?? sys_get_temp_dir() . '/imgp-uploads';
+	return array( 'basedir' => $base, 'baseurl' => 'https://example.test/wp-content/uploads' );
+}
+function wp_mkdir_p( $dir ) { return is_dir( $dir ) || mkdir( $dir, 0777, true ); }
+function home_url( $path = '/' ) { return 'https://example.test' . $path; }
+function add_query_arg( $args, $url = '' ) {
+	$separator = str_contains( $url, '?' ) ? '&' : '?';
+	return $url . $separator . http_build_query( $args );
+}
+function is_user_logged_in() { return ! empty( $GLOBALS['stub_current_user'] ); }
+function get_current_user_id() { return (int) ( $GLOBALS['stub_current_user'] ?? 0 ); }
+function wp_update_attachment_metadata( $id, $meta ) { return true; }
+function status_header( $code ) { $GLOBALS['stub_status'] = $code; if ( ! headers_sent() ) { http_response_code( $code ); } }
+function nocache_headers() {}
+function esc_textarea( $text ) { return htmlspecialchars( (string) $text, ENT_QUOTES ); }

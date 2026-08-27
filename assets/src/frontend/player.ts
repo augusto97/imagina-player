@@ -51,6 +51,8 @@ export class Player {
 
 	private peaksRequested = false;
 
+	private sourceRefreshed = false;
+
 	private destroyed = false;
 
 	constructor( root: HTMLElement, runtime: RuntimeData ) {
@@ -110,7 +112,9 @@ export class Player {
 		media.addEventListener( 'ended', () => this.onEnded() );
 		media.addEventListener( 'waiting', () => this.root.classList.add( 'is-buffering' ) );
 		media.addEventListener( 'playing', () => this.root.classList.remove( 'is-buffering' ) );
-		media.addEventListener( 'error', () => this.root.classList.add( 'has-error' ) );
+		media.addEventListener( 'error', () => {
+			void this.recoverSource();
+		} );
 
 		if ( this.config.duration > 0 && this.totalTimeEl ) {
 			this.totalTimeEl.textContent = formatTime( this.config.duration );
@@ -574,10 +578,69 @@ export class Player {
 	toggle(): void {
 		if ( this.media.paused ) {
 			void this.media.play().catch( () => {
-				this.root.classList.add( 'has-error' );
+				void this.recoverSource();
 			} );
 		} else {
 			this.media.pause();
+		}
+	}
+
+	/**
+	 * A protected file is served through a signed link that expires. A page held
+	 * in a full-page cache outlives its own URLs, so rather than shortening the
+	 * cache, ask for a fresh link once and pick up where playback stopped.
+	 */
+	private async recoverSource(): Promise< boolean > {
+		if ( ! this.config.protectedId || this.sourceRefreshed || ! this.runtime.restUrl ) {
+			this.root.classList.add( 'has-error' );
+
+			return false;
+		}
+
+		this.sourceRefreshed = true;
+
+		const resumeAt = this.media.currentTime;
+		const wasPlaying = ! this.media.paused;
+
+		try {
+			const response = await fetch(
+				`${ this.runtime.restUrl }/stream-url?id=${ encodeURIComponent( String( this.config.protectedId ) ) }`,
+				{ credentials: 'same-origin' }
+			);
+
+			if ( ! response.ok ) {
+				throw new Error( 'stream-url unavailable' );
+			}
+
+			const data = ( await response.json() ) as { url?: string };
+
+			if ( ! data.url ) {
+				throw new Error( 'stream-url empty' );
+			}
+
+			this.root.classList.remove( 'has-error' );
+			this.media.src = data.url;
+			this.media.load();
+
+			if ( resumeAt > 0 ) {
+				this.media.addEventListener(
+					'loadedmetadata',
+					() => this.seekTo( resumeAt ),
+					{ once: true }
+				);
+			}
+
+			if ( wasPlaying ) {
+				void this.media.play().catch( () => {
+					this.root.classList.add( 'has-error' );
+				} );
+			}
+
+			return true;
+		} catch {
+			this.root.classList.add( 'has-error' );
+
+			return false;
 		}
 	}
 

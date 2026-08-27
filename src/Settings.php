@@ -104,9 +104,18 @@ final class Settings {
 				'ffmpeg_path'       => '',
 				'max_remote_bytes'  => 64 * 1024 * 1024,
 			),
-			'advanced' => array(
+			'advanced'   => array(
 				'load_frontend_css' => true,
 				'lazy_init'         => true,
+			),
+			'protection' => array(
+				'enabled'       => false,
+				'require_login' => false,
+				'bind_to_user'  => false,
+				'bind_to_ip'    => false,
+				'ttl'           => 12 * HOUR_IN_SECONDS,
+				'delivery'      => 'php',
+				'xaccel_prefix' => '/imagina-protected/',
 			),
 		);
 	}
@@ -201,6 +210,15 @@ final class Settings {
 		$settings = self::all();
 
 		return is_array( $settings['advanced'] ) ? $settings['advanced'] : array();
+	}
+
+	/**
+	 * @return array<string, mixed>
+	 */
+	public static function protection(): array {
+		$settings = self::all();
+
+		return is_array( $settings['protection'] ?? null ) ? $settings['protection'] : self::defaults()['protection'];
 	}
 
 	/**

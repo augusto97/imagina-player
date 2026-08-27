@@ -12,7 +12,10 @@ namespace ImaginaPlayer;
 use ImaginaPlayer\Admin\SettingsPage;
 use ImaginaPlayer\Blocks\BlockRegistrar;
 use ImaginaPlayer\Peaks\PeaksRepository;
+use ImaginaPlayer\Protection\Integration as ProtectionIntegration;
+use ImaginaPlayer\Protection\StreamServer;
 use ImaginaPlayer\Rest\PeaksController;
+use ImaginaPlayer\Rest\StreamController;
 use ImaginaPlayer\Shortcodes\PlayerShortcode;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -54,6 +57,9 @@ final class Plugin {
 			'assets'     => new Assets(),
 			'peaks'      => new PeaksRepository(),
 			'rest'       => new PeaksController(),
+			'stream'     => new StreamServer(),
+			'streamRest' => new StreamController(),
+			'protection' => new ProtectionIntegration(),
 			'blocks'     => new BlockRegistrar(),
 			'shortcodes' => new PlayerShortcode(),
 			'settings'   => new SettingsPage(),

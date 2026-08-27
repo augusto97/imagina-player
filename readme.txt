@@ -50,6 +50,14 @@ visitor's browser computes the waveform once and the site caches it.
 Yes. Any HTTPS URL works, including files served from a streaming provider or CDN.
 Waveforms for external URLs are cached in the plugin's own table, keyed by URL.
 
+= Can I stop people downloading my audio? =
+
+Mark a file as protected and it moves out of the public uploads folder, served
+only through a signed link that expires. That stops the URL being copied, shared
+or hotlinked, and it can require a login or defer to your membership plugin. It
+cannot stop someone who is allowed to listen from recording what they hear —
+nothing short of DRM can, and this plugin is honest about that.
+
 = Does it support video? =
 
 The renderer and the front-end core already handle `<video>` sources, but the
@@ -60,3 +68,6 @@ video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 = 0.1.0 =
 * First release: waveform audio player, Gutenberg block, presets, shortcode,
   server and browser waveform generation, REST peaks cache.
+* Protected media: signed expiring links with HTTP range support, optional login,
+  user and network binding, and an `imagina_player_can_stream` filter for
+  membership and course plugins.

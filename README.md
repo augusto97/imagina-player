@@ -37,11 +37,17 @@ de `wp-content/plugins/` el plugin funciona sin compilar nada.
 
 Los presets se editan en **Ajustes → Imagina Player**.
 
+**Archivos protegidos:** marca un audio como protegido en su ficha de la
+biblioteca de medios y pasará a servirse por un enlace firmado que caduca. Los
+detalles, en [docs/PROTECCION.md](docs/PROTECCION.md).
+
 ## Documentación
 
 - [Análisis previo](docs/ANALISIS.md) — el plugin que se sustituye, los
   competidores y por qué se reescribe en lugar de bifurcar.
 - [Arquitectura](docs/ARQUITECTURA.md) — cómo está montado y por qué.
+- [Medios protegidos](docs/PROTECCION.md) — enlaces firmados, configuración de
+  nginx, caché de página y el enganche con plugins de cursos.
 
 ## Licencia
 

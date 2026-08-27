@@ -72,7 +72,10 @@ final class Track {
 			$attachment_url = wp_get_attachment_url( $attachment_id );
 
 			if ( $attachment_url ) {
-				$src  = '' !== $src ? $src : $attachment_url;
+				// The attachment's current URL wins over whatever was stored in the
+				// block: a file moved into the protected vault answers on a signed
+				// URL now, and the saved one would bypass it — or 404.
+				$src  = $attachment_url;
 				$mime = (string) get_post_mime_type( $attachment_id );
 
 				$meta = wp_get_attachment_metadata( $attachment_id );

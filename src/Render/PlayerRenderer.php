@@ -19,6 +19,7 @@ use ImaginaPlayer\Media\Track;
 use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Peaks\PeaksToken;
 use ImaginaPlayer\Player\Attributes;
+use ImaginaPlayer\Protection\Vault;
 use ImaginaPlayer\Player\Config;
 use ImaginaPlayer\Settings;
 
@@ -78,6 +79,9 @@ final class PlayerRenderer {
 			'peaksKey'    => $track->peaks_key(),
 			'peaksToken'  => $peaks_payload['token'],
 			'canCompute'  => $peaks_payload['can_compute'],
+			// Non-zero when the file is served through a signed link, which can
+			// expire while a cached page is still being served.
+			'protectedId' => Vault::is_protected( $track->attachment_id ) ? $track->attachment_id : 0,
 		);
 
 		/**

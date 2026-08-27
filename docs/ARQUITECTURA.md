@@ -119,6 +119,31 @@ Filtros disponibles: `imagina_player_settings`, `imagina_player_skins`,
 `imagina_player_client_config`, `imagina_player_render`,
 `imagina_player_ffmpeg_binary`. Acción: `imagina_player_booted`.
 
+## Medios protegidos
+
+`src/Protection/` implementa entrega por enlace firmado, y se apoya en tres
+piezas separadas a propósito:
+
+- **`Vault`** decide dónde vive el archivo. Proteger un adjunto lo *mueve* a
+  `uploads/imagina-protected-<hash>/` y repunta `_wp_attached_file`. El hash sale
+  de las salts del sitio, así que la ruta no es adivinable en servidores donde el
+  `.htaccess` que se escribe allí no se aplica.
+- **`ProtectedMedia`** decide quién puede escuchar. El token dice *qué* archivo se
+  pide, nunca *si* se puede: caducidad, sesión, usuario, red y el filtro
+  `imagina_player_can_stream` se evalúan de nuevo en cada petición, así que un
+  enlace filtrado se topa con las mismas comprobaciones.
+- **`StreamServer`** entrega los bytes. Resuelve `Range` para que el scrub
+  funcione, y puede delegar en `X-Accel-Redirect` o `X-Sendfile` para no dejar un
+  worker de PHP ocupado durante toda la reproducción.
+
+Los tokens se emiten desde el inicio de una ventana fija, no desde «ahora», para
+que una página cacheada sirva la misma URL a todo el mundo; y si aun así caduca,
+el reproductor pide una nueva a `/stream-url` y reanuda donde estaba.
+
+`Support\Signature` firma tanto estos enlaces como los permisos de escritura de
+ondas, con un `$context` distinto en cada caso: un token de un propósito nunca
+valida para el otro, y hay un test que lo comprueba.
+
 ## Vídeo (siguiente fase)
 
 `Track::is_video()` y el renderizador ya emiten `<video>`, y el núcleo del
@@ -131,6 +156,12 @@ sin reescribir el plugin.
 ## Pruebas
 
 `./tests/run.sh` ejecuta la suite contra stubs de WordPress, sin necesidad de una
-instalación. Cubre sanitización, codificación de picos, remuestreo, firma de
-tokens, escapado del markup y —con un binario ffmpeg simulado— la extracción de
+instalación: 104 comprobaciones. Cubre sanitización, codificación de picos,
+remuestreo, firma de tokens, escapado del markup, el movimiento real de ficheros
+dentro y fuera del vault, y —con un binario ffmpeg simulado— la extracción de
 picos completa.
+
+`tests/test-stream-http.php` va más lejos: levanta el servidor de streaming
+sobre el servidor web integrado de PHP y lo interroga con peticiones HTTP
+reales, porque los 206, la aritmética de `Content-Range` y los cuerpos byte a
+byte no se pueden comprobar llamando a funciones.

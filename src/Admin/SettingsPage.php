@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace ImaginaPlayer\Admin;
 
 use ImaginaPlayer\Peaks\PeaksGenerator;
+use ImaginaPlayer\Protection\Vault;
 use ImaginaPlayer\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -163,6 +164,133 @@ final class SettingsPage {
 					</tr>
 				</table>
 
+				<h2><?php esc_html_e( 'Protected media', 'imagina-player' ); ?></h2>
+				<p class="description">
+					<?php esc_html_e( 'Files you mark as protected are moved out of the public uploads folder and served through a signed link that expires. Mark a file in the media library, on its own edit screen.', 'imagina-player' ); ?>
+				</p>
+				<p class="description">
+					<strong><?php esc_html_e( 'What this does and does not do:', 'imagina-player' ); ?></strong>
+					<?php esc_html_e( 'it stops the file URL being copied, shared or hotlinked, and can require a login or a membership check. It cannot stop someone who is allowed to listen from recording what they hear — nothing short of DRM can.', 'imagina-player' ); ?>
+				</p>
+
+				<table class="form-table" role="presentation">
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Protection', 'imagina-player' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="protection[enabled]" value="1" <?php checked( ! empty( $settings['protection']['enabled'] ) ); ?> />
+								<?php esc_html_e( 'Serve protected files through signed links', 'imagina-player' ); ?>
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="imgp-ttl"><?php esc_html_e( 'Link lifetime', 'imagina-player' ); ?></label></th>
+						<td>
+							<select id="imgp-ttl" name="protection[ttl]">
+								<?php
+								$ttl_choices = array(
+									HOUR_IN_SECONDS      => __( '1 hour', 'imagina-player' ),
+									6 * HOUR_IN_SECONDS  => __( '6 hours', 'imagina-player' ),
+									12 * HOUR_IN_SECONDS => __( '12 hours', 'imagina-player' ),
+									DAY_IN_SECONDS       => __( '24 hours', 'imagina-player' ),
+									WEEK_IN_SECONDS      => __( '7 days', 'imagina-player' ),
+								);
+
+								foreach ( $ttl_choices as $seconds => $label ) {
+									printf(
+										'<option value="%s" %s>%s</option>',
+										esc_attr( (string) $seconds ),
+										selected( (int) $settings['protection']['ttl'], $seconds, false ),
+										esc_html( $label )
+									);
+								}
+								?>
+							</select>
+							<p class="description">
+								<?php esc_html_e( 'A shared link stops working after this long. Players ask for a fresh link automatically when one expires, so page caching stays safe.', 'imagina-player' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Who may listen', 'imagina-player' ); ?></th>
+						<td>
+							<label>
+								<input type="checkbox" name="protection[require_login]" value="1" <?php checked( ! empty( $settings['protection']['require_login'] ) ); ?> />
+								<?php esc_html_e( 'Require a logged-in user', 'imagina-player' ); ?>
+							</label><br />
+							<label>
+								<input type="checkbox" name="protection[bind_to_user]" value="1" <?php checked( ! empty( $settings['protection']['bind_to_user'] ) ); ?> />
+								<?php esc_html_e( 'Tie each link to the user it was issued to', 'imagina-player' ); ?>
+							</label><br />
+							<label>
+								<input type="checkbox" name="protection[bind_to_ip]" value="1" <?php checked( ! empty( $settings['protection']['bind_to_ip'] ) ); ?> />
+								<?php esc_html_e( 'Tie each link to the visitor’s network', 'imagina-player' ); ?>
+							</label>
+							<p class="description">
+								<?php esc_html_e( 'Network binding is coarse on purpose, but a visitor who switches from Wi-Fi to mobile mid-track will still need a fresh link. Membership and course plugins can decide access themselves through the imagina_player_can_stream filter.', 'imagina-player' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="imgp-delivery"><?php esc_html_e( 'Delivery', 'imagina-player' ); ?></label></th>
+						<td>
+							<select id="imgp-delivery" name="protection[delivery]">
+								<?php
+								$delivery_choices = array(
+									'php'       => __( 'PHP (works everywhere)', 'imagina-player' ),
+									'xaccel'    => __( 'X-Accel-Redirect (nginx)', 'imagina-player' ),
+									'xsendfile' => __( 'X-Sendfile (Apache/LiteSpeed)', 'imagina-player' ),
+								);
+
+								foreach ( $delivery_choices as $value => $label ) {
+									printf(
+										'<option value="%s" %s>%s</option>',
+										esc_attr( $value ),
+										selected( (string) $settings['protection']['delivery'], $value, false ),
+										esc_html( $label )
+									);
+								}
+								?>
+							</select>
+							<p class="description">
+								<?php esc_html_e( 'PHP streaming keeps a PHP worker busy for the whole playback. On a site with long tracks and real traffic, hand the transfer to the web server instead.', 'imagina-player' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="imgp-xaccel"><?php esc_html_e( 'X-Accel location', 'imagina-player' ); ?></label></th>
+						<td>
+							<input type="text" id="imgp-xaccel" name="protection[xaccel_prefix]" class="regular-text code" value="<?php echo esc_attr( (string) $settings['protection']['xaccel_prefix'] ); ?>" />
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Server setup', 'imagina-player' ); ?></th>
+						<td>
+							<p>
+								<?php esc_html_e( 'Protected files live in:', 'imagina-player' ); ?>
+								<code><?php echo esc_html( Vault::base_dir() ); ?></code>
+							</p>
+							<?php if ( Vault::server_honours_htaccess() ) : ?>
+								<p><?php esc_html_e( 'This server reads .htaccess, and the plugin writes deny rules into that folder. Nothing else to do.', 'imagina-player' ); ?></p>
+							<?php else : ?>
+								<p>
+									<strong><?php esc_html_e( 'This server does not appear to read .htaccess.', 'imagina-player' ); ?></strong>
+									<?php esc_html_e( 'The folder name is unguessable, but add this to your server config so the files cannot be reached directly at all:', 'imagina-player' ); ?>
+								</p>
+								<textarea readonly rows="7" class="large-text code"><?php
+									echo esc_textarea(
+										"location ^~ /wp-content/uploads/" . Vault::directory_name() . "/ {\n\tinternal;\n}\n\n"
+										. "# Only needed when Delivery is set to X-Accel-Redirect:\n"
+										. "location " . (string) $settings['protection']['xaccel_prefix'] . " {\n"
+										. "\tinternal;\n"
+										. "\talias " . Vault::base_dir() . "/;\n}"
+									);
+								?></textarea>
+							<?php endif; ?>
+						</td>
+					</tr>
+				</table>
+
 				<h2><?php esc_html_e( 'Advanced', 'imagina-player' ); ?></h2>
 				<table class="form-table" role="presentation">
 					<tr>
@@ -206,6 +334,7 @@ final class SettingsPage {
 		$new_label   = isset( $_POST['new_preset_label'] ) ? sanitize_text_field( wp_unslash( $_POST['new_preset_label'] ) ) : '';
 		$raw_peaks   = isset( $_POST['peaks'] ) && is_array( $_POST['peaks'] ) ? wp_unslash( $_POST['peaks'] ) : array();
 		$raw_adv     = isset( $_POST['advanced'] ) && is_array( $_POST['advanced'] ) ? wp_unslash( $_POST['advanced'] ) : array();
+		$raw_prot    = isset( $_POST['protection'] ) && is_array( $_POST['protection'] ) ? wp_unslash( $_POST['protection'] ) : array();
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		$presets = array();
@@ -240,6 +369,20 @@ final class SettingsPage {
 
 		$settings['advanced']['load_frontend_css'] = ! empty( $raw_adv['load_frontend_css'] );
 		$settings['advanced']['lazy_init']         = ! empty( $raw_adv['lazy_init'] );
+
+		$settings['protection']['enabled']       = ! empty( $raw_prot['enabled'] );
+		$settings['protection']['require_login'] = ! empty( $raw_prot['require_login'] );
+		$settings['protection']['bind_to_user']  = ! empty( $raw_prot['bind_to_user'] );
+		$settings['protection']['bind_to_ip']    = ! empty( $raw_prot['bind_to_ip'] );
+		$settings['protection']['ttl']           = max( HOUR_IN_SECONDS, min( WEEK_IN_SECONDS, (int) ( $raw_prot['ttl'] ?? DAY_IN_SECONDS ) ) );
+		$settings['protection']['delivery']      = in_array( $raw_prot['delivery'] ?? 'php', array( 'php', 'xaccel', 'xsendfile' ), true )
+			? (string) $raw_prot['delivery']
+			: 'php';
+		$settings['protection']['xaccel_prefix'] = '/' . trim( sanitize_text_field( (string) ( $raw_prot['xaccel_prefix'] ?? '' ) ), '/' ) . '/';
+
+		if ( $settings['protection']['enabled'] ) {
+			Vault::ensure();
+		}
 
 		Settings::update( $settings );
 
