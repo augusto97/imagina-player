@@ -40,8 +40,7 @@ for item in \
 	LICENSE \
 	src \
 	build \
-	blocks \
-	assets/admin
+	blocks
 do
 	if [ ! -e "$root/$item" ]; then
 		echo "Missing required item: $item" >&2

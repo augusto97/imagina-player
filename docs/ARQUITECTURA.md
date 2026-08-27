@@ -23,9 +23,10 @@ src/
   Blocks/BlockRegistrar.php
   Shortcodes/PlayerShortcode.php
   Rest/PeaksController.php
-  Admin/SettingsPage.php
+  Admin/Dashboard.php      Menú y punto de montaje de la app de ajustes
 assets/src/frontend/       Núcleo del reproductor (TypeScript, sin dependencias)
 assets/src/editor/         UI del bloque (React/@wordpress)
+assets/src/admin/          Pantalla de ajustes (React, diseño propio)
 blocks/audio/block.json
 build/                     Salida de webpack (versionada: el plugin funciona al clonar)
 tests/                     Suite CLI con stubs de WordPress
@@ -165,7 +166,7 @@ sin reescribir el plugin.
 ## Pruebas
 
 `./tests/run.sh` ejecuta la suite contra stubs de WordPress, sin necesidad de una
-instalación: 182 comprobaciones. Cubre sanitización, codificación de picos,
+instalación: 194 comprobaciones. Cubre sanitización, codificación de picos,
 remuestreo, firma de tokens, escapado del markup, el movimiento real de ficheros
 dentro y fuera del vault, y —con un binario ffmpeg simulado— la extracción de
 picos completa.

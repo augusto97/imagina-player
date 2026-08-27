@@ -258,15 +258,16 @@ export class Player {
 	private setupWaveform(): void {
 		const canvas = this.root.querySelector< HTMLCanvasElement >( '.imgp__wave' );
 
-		if ( ! canvas || this.config.skin !== 'wave' ) {
+		if ( ! canvas ) {
 			return;
 		}
 
 		this.waveform = new Waveform( canvas, {
 			barWidth: Math.max( 1, this.config.bars || 3 ),
 			gap: Math.max( 0, this.config.gap ?? 1 ),
-			reflection: clamp( this.config.reflection ?? 0.25, 0, 0.8 ),
+			reflection: this.config.centered ? 0 : clamp( this.config.reflection ?? 0.25, 0, 0.8 ),
 			rounded: this.root.classList.contains( 'imgp--rounded' ),
+			centered: Boolean( this.config.centered ),
 		} );
 
 		this.applyWaveColors();

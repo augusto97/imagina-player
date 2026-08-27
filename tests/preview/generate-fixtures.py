@@ -41,4 +41,32 @@ encoded = base64.b64encode(bytes(int(round(p / loudest * 255)) for p in peaks))
 with open(os.path.join(HERE, 'peaks.txt'), 'w', encoding='utf-8') as out:
     out.write(encoded.decode())
 
-print('demo.wav and peaks.txt written')
+# A small cover image. data: URIs are rejected by the attribute sanitiser, on
+# purpose, so the preview needs a real file like a real site would have.
+def png_chunk(kind, payload):
+    import struct, zlib
+    return struct.pack('>I', len(payload)) + kind + payload + struct.pack('>I', zlib.crc32(kind + payload) & 0xffffffff)
+
+
+def write_cover(path, size=240):
+    import struct, zlib
+    rows = b''
+    for y in range(size):
+        row = b'\x00'
+        for x in range(size):
+            t = (x + y) / (2 * size)
+            row += bytes((int(192 - 100 * t), int(78 + 20 * t), int(196 - 120 * t)))
+        rows += row
+    data = (
+        b'\x89PNG\r\n\x1a\n'
+        + png_chunk(b'IHDR', struct.pack('>IIBBBBB', size, size, 8, 2, 0, 0, 0))
+        + png_chunk(b'IDAT', zlib.compress(rows, 9))
+        + png_chunk(b'IEND', b'')
+    )
+    with open(path, 'wb') as out:
+        out.write(data)
+
+
+write_cover(os.path.join(HERE, 'cover.png'))
+
+print('demo.wav, peaks.txt and cover.png written')

@@ -20,24 +20,35 @@ $make = static function ( array $atts ) use ( $renderer, $peaks ): string {
 	return str_replace( 'data-imagina-player=', 'data-peaks="' . $peaks . '" data-imagina-player=', $html );
 };
 
-$html = $make( array() );
+// One panel per skin, so a layout regression is visible at a glance.
+$cover = './cover.png';
 
-$html_teal = $make( array(
-	'accent'       => '#0b7285',
-	'waveColor'    => '#ced4da',
-	'waveProgress' => '#0b7285',
-	'metaColor'    => '#0b7285',
-	'height'       => '84',
-	'showSkip'     => 'yes',
-	'showSpeed'    => 'yes',
-	'showDownload' => 'yes',
-) );
+$panels = '';
 
-$html_bar = $make( array(
-	'skin'      => 'bar',
-	'accent'    => '#e8590c',
-	'metaColor' => '#e8590c',
-) );
+foreach ( \ImaginaPlayer\Player\Skins::all() as $skin => $label ) {
+	$atts = array( 'skin' => $skin );
+
+	if ( in_array( $skin, array( 'card', 'pill', 'compact' ), true ) ) {
+		$atts['thumbnail']     = $cover;
+		$atts['showThumbnail'] = 'yes';
+	}
+
+	$panels .= '<div class="variant"><h2>' . esc_html( $label ) . ' <code>' . esc_html( $skin ) . '</code></h2>'
+		. $make( $atts ) . '</div>';
+}
+
+$panels .= '<div class="variant"><h2>Overrides por bloque: colores, altura y controles extra</h2>'
+	. $make( array(
+		'accent'       => '#0b7285',
+		'waveColor'    => '#ced4da',
+		'waveProgress' => '#0b7285',
+		'metaColor'    => '#0b7285',
+		'height'       => '84',
+		'showSkip'     => 'yes',
+		'showSpeed'    => 'yes',
+		'showDownload' => 'yes',
+	) )
+	. '</div>';
 
 $css = file_get_contents( $plugin . 'build/style-frontend.css' );
 $js  = file_get_contents( $plugin . 'build/frontend.js' );
@@ -57,18 +68,7 @@ $page = <<<HTML
 </head>
 <body>
 <div class="stage">
-	<div class="variant">
-		<h2>Preset por defecto</h2>
-		$html
-	</div>
-	<div class="variant">
-		<h2>Overrides por bloque: colores, altura y controles extra</h2>
-		$html_teal
-	</div>
-	<div class="variant">
-		<h2>Skin «bar» — mismo markup, sin canvas</h2>
-		$html_bar
-	</div>
+	$panels
 </div>
 <script>window.imaginaPlayer = {"restUrl":"","lazyInit":false,"i18n":{"play":"Reproducir","pause":"Pausa","mute":"Silenciar","unmute":"Activar sonido"}};</script>
 <script>$js</script>

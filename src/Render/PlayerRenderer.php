@@ -21,6 +21,7 @@ use ImaginaPlayer\Peaks\PeaksToken;
 use ImaginaPlayer\Player\Attributes;
 use ImaginaPlayer\Protection\Vault;
 use ImaginaPlayer\Player\Config;
+use ImaginaPlayer\Player\Skins;
 use ImaginaPlayer\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -67,6 +68,7 @@ final class PlayerRenderer {
 		$client_config = array(
 			'id'          => $id,
 			'skin'        => $config['skin'],
+			'centered'    => Skins::is_centered( (string) $config['skin'] ),
 			'bars'        => (int) $config['wave_bars'],
 			'gap'         => (int) $config['wave_gap'],
 			'reflection'  => (float) $config['wave_reflection'],
@@ -93,7 +95,17 @@ final class PlayerRenderer {
 		 */
 		$client_config = apply_filters( 'imagina_player_client_config', $client_config, $atts, $track );
 
-		$style = Config::style_attribute( Config::css_variables( $config ) );
+		$style  = Config::style_attribute( Config::css_variables( $config ) );
+		$layout = Skins::layout( (string) $config['skin'] );
+
+		$parts = array(
+			'media'    => $this->part_media( $track, $atts, $config ),
+			'scrubber' => Skins::has_scrubber( (string) $config['skin'] ) ? $this->part_scrubber( $track, $config ) : '',
+			'thumb'    => $config['show_thumbnail'] && '' !== $track->thumbnail ? $this->part_thumb( $track ) : '',
+			'play'     => $this->part_play(),
+			'meta'     => $this->part_meta( $track, $config ),
+			'controls' => $this->part_controls( $track, $config ),
+		);
 
 		ob_start();
 		?>
@@ -106,119 +118,38 @@ final class PlayerRenderer {
 				data-peaks="<?php echo esc_attr( $peaks_payload['peaks'] ); ?>"
 			<?php endif; ?>
 		>
-			<?php $this->render_media( $track, $atts, $config ); ?>
+			<?php
+			echo $parts['media']; // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
 
-			<?php if ( 'minimal' !== $config['skin'] ) : ?>
-				<div class="imgp__scrubber">
-					<?php if ( 'wave' === $config['skin'] ) : ?>
-						<canvas class="imgp__wave" aria-hidden="true"></canvas>
-					<?php else : ?>
-						<div class="imgp__track" aria-hidden="true"><div class="imgp__progress"></div></div>
-					<?php endif; ?>
-
-					<div
-						class="imgp__seek"
-						role="slider"
-						tabindex="0"
-						aria-label="<?php esc_attr_e( 'Seek', 'imagina-player' ); ?>"
-						aria-valuemin="0"
-						aria-valuemax="100"
-						aria-valuenow="0"
-						aria-valuetext="<?php esc_attr_e( 'Not started', 'imagina-player' ); ?>"
-					>
-						<?php if ( $config['show_time'] ) : ?>
-							<span class="imgp__time imgp__time--current">0:00</span>
-							<span class="imgp__time imgp__time--total"><?php echo esc_html( $this->format_time( $track->duration ) ); ?></span>
-						<?php endif; ?>
-					</div>
-				</div>
-			<?php endif; ?>
-
-			<div class="imgp__bar">
-				<?php if ( $config['show_thumbnail'] && '' !== $track->thumbnail ) : ?>
-					<div class="imgp__thumb">
-						<img
-							src="<?php echo esc_url( $track->thumbnail ); ?>"
-							alt=""
-							loading="lazy"
-							decoding="async"
-							width="72"
-							height="72"
-						/>
-					</div>
-				<?php endif; ?>
-
-				<button
-					type="button"
-					class="imgp__play"
-					aria-label="<?php esc_attr_e( 'Play', 'imagina-player' ); ?>"
-					aria-pressed="false"
-				>
-					<?php
-					echo Icons::get( 'play', 'imgp__icon--play' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG.
-					echo Icons::get( 'pause', 'imgp__icon--pause' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG.
-					?>
-				</button>
-
-				<?php $this->render_meta( $track, $config ); ?>
-
-				<div class="imgp__controls">
-					<?php if ( $config['show_skip'] ) : ?>
-						<button
-							type="button"
-							class="imgp__skip imgp__skip--back"
-							aria-label="<?php echo esc_attr( sprintf( /* translators: %d: number of seconds */ __( 'Rewind %d seconds', 'imagina-player' ), (int) $config['skip_seconds'] ) ); ?>"
-						><?php echo Icons::get( 'back' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG. ?></button>
-						<button
-							type="button"
-							class="imgp__skip imgp__skip--forward"
-							aria-label="<?php echo esc_attr( sprintf( /* translators: %d: number of seconds */ __( 'Forward %d seconds', 'imagina-player' ), (int) $config['skip_seconds'] ) ); ?>"
-						><?php echo Icons::get( 'forward' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG. ?></button>
-					<?php endif; ?>
-
-					<?php if ( $config['show_speed'] ) : ?>
-						<button
-							type="button"
-							class="imgp__speed"
-							aria-label="<?php esc_attr_e( 'Playback speed', 'imagina-player' ); ?>"
-						>1&times;</button>
-					<?php endif; ?>
-
-					<?php if ( $config['show_download'] ) : ?>
-						<a
-							class="imgp__download"
-							href="<?php echo esc_url( '' !== $track->download_url ? $track->download_url : $track->src ); ?>"
-							download
-							aria-label="<?php esc_attr_e( 'Download', 'imagina-player' ); ?>"
-						><?php echo Icons::get( 'download' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG. ?></a>
-					<?php endif; ?>
-
-					<?php if ( $config['show_volume'] ) : ?>
-						<div class="imgp__volume">
-							<button
-								type="button"
-								class="imgp__mute"
-								aria-label="<?php esc_attr_e( 'Mute', 'imagina-player' ); ?>"
-								aria-pressed="false"
-							>
-								<?php
-								echo Icons::get( 'volume', 'imgp__icon--volume' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG.
-								echo Icons::get( 'muted', 'imgp__icon--muted' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG.
-								?>
-							</button>
-							<input
-								class="imgp__volume-slider"
-								type="range"
-								min="0"
-								max="1"
-								step="0.01"
-								value="1"
-								aria-label="<?php esc_attr_e( 'Volume', 'imagina-player' ); ?>"
-							/>
-						</div>
-					<?php endif; ?>
-				</div>
-			</div>
+			if ( 'card' === $layout ) {
+				printf(
+					'%s<div class="imgp__body">%s<div class="imgp__bar">%s%s%s</div></div>',
+					$parts['thumb'], // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
+					$parts['scrubber'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['play'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['controls'] // phpcs:ignore WordPress.Security.EscapeOutput
+				);
+			} elseif ( 'inline' === $layout ) {
+				printf(
+					'<div class="imgp__row">%s%s%s%s%s</div>',
+					$parts['play'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['thumb'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['scrubber'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['controls'] // phpcs:ignore WordPress.Security.EscapeOutput
+				);
+			} else {
+				printf(
+					'%s<div class="imgp__bar">%s%s%s%s</div>',
+					$parts['scrubber'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['thumb'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['play'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['controls'] // phpcs:ignore WordPress.Security.EscapeOutput
+				);
+			}
+			?>
 		</div>
 		<?php
 
@@ -238,8 +169,16 @@ final class PlayerRenderer {
 	 * @param array<string, mixed> $atts   Sanitised attributes.
 	 * @param array<string, mixed> $config Effective settings.
 	 */
-	private function render_media( Track $track, array $atts, array $config ): void {
+	/**
+	 * The media element itself, with native controls for the no-JavaScript case.
+	 *
+	 * @param array<string, mixed> $atts   Sanitised attributes.
+	 * @param array<string, mixed> $config Effective settings.
+	 */
+	private function part_media( Track $track, array $atts, array $config ): string {
 		$tag = $track->is_video() ? 'video' : 'audio';
+
+		ob_start();
 		?>
 		<<?php echo esc_attr( $tag ); ?>
 			class="imgp__media"
@@ -252,18 +191,95 @@ final class PlayerRenderer {
 			<?php echo '' !== $track->title ? 'title="' . esc_attr( $track->title ) . '"' : ''; ?>
 		></<?php echo esc_attr( $tag ); ?>>
 		<?php
+
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * The waveform or progress bar, plus the accessible seek slider over it.
+	 *
+	 * @param array<string, mixed> $config Effective settings.
+	 */
+	private function part_scrubber( Track $track, array $config ): string {
+		ob_start();
+		?>
+		<div class="imgp__scrubber">
+			<?php if ( Skins::uses_waveform( (string) $config['skin'] ) ) : ?>
+				<canvas class="imgp__wave" aria-hidden="true"></canvas>
+			<?php else : ?>
+				<div class="imgp__track" aria-hidden="true"><div class="imgp__progress"></div></div>
+			<?php endif; ?>
+
+			<div
+				class="imgp__seek"
+				role="slider"
+				tabindex="0"
+				aria-label="<?php esc_attr_e( 'Seek', 'imagina-player' ); ?>"
+				aria-valuemin="0"
+				aria-valuemax="100"
+				aria-valuenow="0"
+				aria-valuetext="<?php esc_attr_e( 'Not started', 'imagina-player' ); ?>"
+			>
+				<?php if ( $config['show_time'] ) : ?>
+					<span class="imgp__time imgp__time--current">0:00</span>
+					<span class="imgp__time imgp__time--total"><?php echo esc_html( $this->format_time( $track->duration ) ); ?></span>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php
+
+		return (string) ob_get_clean();
+	}
+
+	private function part_thumb( Track $track ): string {
+		ob_start();
+		?>
+		<div class="imgp__thumb">
+			<img
+				src="<?php echo esc_url( $track->thumbnail ); ?>"
+				alt=""
+				loading="lazy"
+				decoding="async"
+				width="72"
+				height="72"
+			/>
+		</div>
+		<?php
+
+		return (string) ob_get_clean();
+	}
+
+	private function part_play(): string {
+		ob_start();
+		?>
+		<button
+			type="button"
+			class="imgp__play"
+			aria-label="<?php esc_attr_e( 'Play', 'imagina-player' ); ?>"
+			aria-pressed="false"
+		>
+			<?php
+			echo Icons::get( 'play', 'imgp__icon--play' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG.
+			echo Icons::get( 'pause', 'imgp__icon--pause' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG.
+			?>
+		</button>
+		<?php
+
+		return (string) ob_get_clean();
 	}
 
 	/**
 	 * @param array<string, mixed> $config Effective settings.
 	 */
-	private function render_meta( Track $track, array $config ): void {
+	private function part_meta( Track $track, array $config ): string {
 		$show_artist = $config['show_artist'] && '' !== $track->artist;
 		$show_title  = $config['show_title'] && '' !== $track->title;
 
 		if ( ! $show_artist && ! $show_title ) {
-			return;
+			return '';
 		}
+
+		ob_start();
 		?>
 		<div class="imgp__meta">
 			<?php if ( $show_artist ) : ?>
@@ -274,16 +290,81 @@ final class PlayerRenderer {
 			<?php endif; ?>
 		</div>
 		<?php
+
+		return (string) ob_get_clean();
 	}
 
 	/**
-	 * Look up cached peaks and mint a write grant when they are missing.
+	 * Skip, speed, download and volume — everything that sits to the trailing side.
 	 *
 	 * @param array<string, mixed> $config Effective settings.
-	 * @return array{peaks: string, token: string, can_compute: bool}
 	 */
+	private function part_controls( Track $track, array $config ): string {
+		ob_start();
+		?>
+		<div class="imgp__controls">
+			<?php if ( $config['show_skip'] ) : ?>
+				<button
+					type="button"
+					class="imgp__skip imgp__skip--back"
+					aria-label="<?php echo esc_attr( sprintf( /* translators: %d: number of seconds */ __( 'Rewind %d seconds', 'imagina-player' ), (int) $config['skip_seconds'] ) ); ?>"
+				><?php echo Icons::get( 'back' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG. ?></button>
+				<button
+					type="button"
+					class="imgp__skip imgp__skip--forward"
+					aria-label="<?php echo esc_attr( sprintf( /* translators: %d: number of seconds */ __( 'Forward %d seconds', 'imagina-player' ), (int) $config['skip_seconds'] ) ); ?>"
+				><?php echo Icons::get( 'forward' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG. ?></button>
+			<?php endif; ?>
+
+			<?php if ( $config['show_speed'] ) : ?>
+				<button
+					type="button"
+					class="imgp__speed"
+					aria-label="<?php esc_attr_e( 'Playback speed', 'imagina-player' ); ?>"
+				>1&times;</button>
+			<?php endif; ?>
+
+			<?php if ( $config['show_download'] ) : ?>
+				<a
+					class="imgp__download"
+					href="<?php echo esc_url( '' !== $track->download_url ? $track->download_url : $track->src ); ?>"
+					download
+					aria-label="<?php esc_attr_e( 'Download', 'imagina-player' ); ?>"
+				><?php echo Icons::get( 'download' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG. ?></a>
+			<?php endif; ?>
+
+			<?php if ( $config['show_volume'] ) : ?>
+				<div class="imgp__volume">
+					<button
+						type="button"
+						class="imgp__mute"
+						aria-label="<?php esc_attr_e( 'Mute', 'imagina-player' ); ?>"
+						aria-pressed="false"
+					>
+						<?php
+						echo Icons::get( 'volume', 'imgp__icon--volume' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG.
+						echo Icons::get( 'muted', 'imgp__icon--muted' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG.
+						?>
+					</button>
+					<input
+						class="imgp__volume-slider"
+						type="range"
+						min="0"
+						max="1"
+						step="0.01"
+						value="1"
+						aria-label="<?php esc_attr_e( 'Volume', 'imagina-player' ); ?>"
+					/>
+				</div>
+			<?php endif; ?>
+		</div>
+		<?php
+
+		return (string) ob_get_clean();
+	}
+
 	private function peaks_payload( Track $track, array $config ): array {
-		if ( 'wave' !== $config['skin'] ) {
+		if ( ! Skins::uses_waveform( (string) $config['skin'] ) ) {
 			return array(
 				'peaks'       => '',
 				'token'       => '',

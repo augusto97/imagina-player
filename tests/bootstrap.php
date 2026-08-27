@@ -29,5 +29,6 @@ function imgp_test_plugin_version(): string {
 }
 
 define( 'ImaginaPlayer\VERSION', imgp_test_plugin_version() );
+define( 'ImaginaPlayer\FILE', $imgp_plugin_dir . 'imagina-player.php' );
 define( 'ImaginaPlayer\PATH', $imgp_plugin_dir );
 define( 'ImaginaPlayer\URL', $imgp_base_url ?? 'https://example.test/wp-content/plugins/imagina-player/' );

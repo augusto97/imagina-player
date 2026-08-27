@@ -1,6 +1,8 @@
 export interface PlayerConfig {
 	id: string;
-	skin: 'wave' | 'bar' | 'minimal';
+	skin: string;
+	/** Waveform mirrored around the centre line. */
+	centered: boolean;
 	bars: number;
 	gap: number;
 	reflection: number;

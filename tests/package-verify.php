@@ -26,6 +26,7 @@ $header = (string) file_get_contents( $plugin . 'imagina-player.php' );
 preg_match( '/^\s*\*\s*Version:\s*(.+)$/m', $header, $matches );
 
 define( 'ImaginaPlayer\VERSION', trim( $matches[1] ?? '0.0.0' ) );
+define( 'ImaginaPlayer\FILE', $plugin . 'imagina-player.php' );
 define( 'ImaginaPlayer\PATH', $plugin );
 define( 'ImaginaPlayer\URL', 'https://example.test/wp-content/plugins/imagina-player/' );
 
@@ -51,7 +52,9 @@ $classes = array(
 	'ImaginaPlayer\Protection\Integration',
 	'ImaginaPlayer\Blocks\BlockRegistrar',
 	'ImaginaPlayer\Shortcodes\PlayerShortcode',
-	'ImaginaPlayer\Admin\SettingsPage',
+	'ImaginaPlayer\Admin\Dashboard',
+	'ImaginaPlayer\Rest\SettingsController',
+	'ImaginaPlayer\Player\Skins',
 	'ImaginaPlayer\Render\PlayerRenderer',
 	'ImaginaPlayer\Render\Icons',
 	'ImaginaPlayer\Media\Track',

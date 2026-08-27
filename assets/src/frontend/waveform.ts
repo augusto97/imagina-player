@@ -5,6 +5,8 @@ interface WaveformOptions {
 	gap: number;
 	reflection: number;
 	rounded: boolean;
+	/** Grow bars from the centre line in both directions instead of upward. */
+	centered: boolean;
 }
 
 /**
@@ -191,6 +193,20 @@ export class Waveform {
 				trackHeight / 2
 			);
 			ctx.globalAlpha = 1;
+
+			return;
+		}
+
+		if ( this.options.centered ) {
+			// Mirrored around the middle: no separate reflection, the shape is
+			// symmetrical and uses the full height.
+			const middle = this.height / 2;
+
+			for ( let i = 0; i < bars; i++ ) {
+				const half = Math.max( 0.5, values[ i ] * middle );
+
+				this.drawBar( ctx, i * step, middle - half, barWidth, half * 2, radius );
+			}
 
 			return;
 		}

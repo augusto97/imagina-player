@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.0.1
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,17 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.1.0 =
+* New: a purpose-built settings screen replacing the WordPress options form —
+  preset list, a Controls / Behaviour / Style editor, and a live preview that
+  renders through the real player rather than an imitation of it.
+* New: four more skins — mirrored waveform, card with cover, compact one-line,
+  and pill — bringing the total to seven.
+* New: the block picks a cover image and a download file from the media
+  library instead of asking for a URL.
+* New: "Generate missing waveforms" moved into the new screen, alongside the
+  ffmpeg status and the browser size limit.
 
 = 1.0.1 =
 * Fixed: a file too long to analyse in the browser left the "analysing"

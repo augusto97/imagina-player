@@ -32,20 +32,12 @@ final class Settings {
 	private static ?array $cache = null;
 
 	/**
-	 * Available skins. Each maps to a CSS class and, where relevant, a
-	 * different arrangement of the same markup — never a different template.
+	 * Available skins.
 	 *
 	 * @return array<string, string> Skin key => translated label.
 	 */
 	public static function skins(): array {
-		return apply_filters(
-			'imagina_player_skins',
-			array(
-				'wave'    => __( 'Waveform', 'imagina-player' ),
-				'bar'     => __( 'Progress bar', 'imagina-player' ),
-				'minimal' => __( 'Minimal', 'imagina-player' ),
-			)
-		);
+		return Player\Skins::all();
 	}
 
 	/**
@@ -246,7 +238,7 @@ final class Settings {
 		}
 
 		$out['label'] = sanitize_text_field( (string) $out['label'] );
-		$out['skin']  = array_key_exists( $out['skin'], self::skins() ) ? $out['skin'] : 'wave';
+		$out['skin']  = Player\Skins::normalize( (string) $out['skin'] );
 
 		foreach ( array( 'accent', 'wave_color', 'wave_progress', 'text_color', 'meta_color' ) as $color_key ) {
 			$out[ $color_key ] = self::sanitize_color( (string) $out[ $color_key ], $defaults[ $color_key ] );

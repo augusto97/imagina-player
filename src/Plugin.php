@@ -9,12 +9,13 @@ declare( strict_types = 1 );
 
 namespace ImaginaPlayer;
 
-use ImaginaPlayer\Admin\SettingsPage;
+use ImaginaPlayer\Admin\Dashboard;
 use ImaginaPlayer\Blocks\BlockRegistrar;
 use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Protection\Integration as ProtectionIntegration;
 use ImaginaPlayer\Protection\StreamServer;
 use ImaginaPlayer\Rest\PeaksController;
+use ImaginaPlayer\Rest\SettingsController;
 use ImaginaPlayer\Rest\StreamController;
 use ImaginaPlayer\Shortcodes\PlayerShortcode;
 
@@ -54,15 +55,16 @@ final class Plugin {
 		$this->booted = true;
 
 		$this->services = array(
-			'assets'     => new Assets(),
-			'peaks'      => new PeaksRepository(),
-			'rest'       => new PeaksController(),
-			'stream'     => new StreamServer(),
-			'streamRest' => new StreamController(),
-			'protection' => new ProtectionIntegration(),
-			'blocks'     => new BlockRegistrar(),
-			'shortcodes' => new PlayerShortcode(),
-			'settings'   => new SettingsPage(),
+			'assets'      => new Assets(),
+			'peaks'       => new PeaksRepository(),
+			'rest'        => new PeaksController(),
+			'stream'      => new StreamServer(),
+			'streamRest'  => new StreamController(),
+			'settingsApi' => new SettingsController(),
+			'protection'  => new ProtectionIntegration(),
+			'blocks'      => new BlockRegistrar(),
+			'shortcodes'  => new PlayerShortcode(),
+			'dashboard'   => new Dashboard(),
 		);
 
 		foreach ( $this->services as $service ) {

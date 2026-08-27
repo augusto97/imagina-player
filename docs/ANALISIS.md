@@ -87,6 +87,66 @@ interfaz mucho más sobria.
 **Lo que copiamos:** el reproductor fijo inferior (*sticky*) cuando el usuario se
 desplaza, y las playlists como fase siguiente.
 
+## 2b. Inventario real (leyendo su código, agosto 2026)
+
+Con los ZIP de Presto Player 4.4.1, Presto Player Pro y FluentPlayer 1.4.0
+delante, esto es lo que tienen de verdad.
+
+### Presto Player 4.4.1
+
+- **Stack:** React + Tailwind (`@bsf/force-ui`, `lucide-react`), compilado con
+  `@wordpress/scripts`. Menú de primer nivel, una sola SPA montada en
+  `#presto-admin-dashboard`, y las pestañas son enlaces con `?tab=`.
+- **Presets:** en **tablas propias** (`Presets`, `AudioPresets`), separadas para
+  audio y vídeo, expuestas por REST.
+- **Campos del preset de audio:** `skin`, `background_color`, `control_color`,
+  interruptores (`play`, `play-large`, `rewind`, `fast-forward`, `progress`,
+  `current-time`, `mute`, `volume`, `speed`, `pip`), `reset_on_end`,
+  `sticky_scroll` + `sticky_scroll_position`, `on_video_end`,
+  `play_video_viewport`, `show_time_elapsed`, `save_player_position`,
+  `border_radius`, y `cta` / `email_collection` / `action_bar` (Pro).
+- **Skins de audio: 2** — «Basic» y «Stacked». Los de vídeo son 4 (Modern,
+  Business, Stacked, Basic).
+- **Pantallas de ajustes:** Branding, CSS personalizado, Licencia, MCP (IA),
+  Media Hub, Presets, Desinstalar, Analítica, Contribuir.
+- **Pro añade:** Bunny CDN, bloque de playlist, autoalojado privado, captura de
+  email con ActiveCampaign / FluentCRM / Mailchimp / MailerLite, Google
+  Analytics, webhooks y visitas.
+
+### FluentPlayer 1.4.0
+
+- **Stack:** Vue 3 + Element Plus, sobre un mini-framework PHP propio.
+- **Presets:** en la opción `fluent_player_presets`. Trae **7 presets** sobre
+  **6 skins**: classic, modern, simple, minimal, standard, floating.
+- **Forma del preset:** `controls` (backward, forward, play, progress_bar,
+  current_time, volume, settings, playback_speed, fullscreen, pip,
+  captions_toggle, chapters), `behaviors` (autoplay, muted_autoplay,
+  on_video_end, plays_inline, hide_top/center/bottom_controls),
+  `styles.captions`, más `email_capture`, `cta` y `action_bar`.
+- **Ajustes globales:** general (aspect ratio, preset por defecto,
+  `resume_playback`, `pause_others_on_play`, CSS personalizado), YouTube y Vimeo
+  (modo privacidad), analítica con limpieza automática, Google Analytics,
+  **branding** (brand_color, control_bar_color, play_button_color, logo con URL,
+  enlace, posición y ancho, «powered by») y servicio de subtítulos.
+
+### Qué significa esto para nosotros
+
+Sobre **skins de audio** vamos sobrados: nosotros 7, Presto 2, Fluent 6 pero
+orientados a vídeo. Donde ellos van por delante es en cosas que no son skins:
+
+| Nos falta | Lo tienen | Coste |
+| --- | --- | --- |
+| Branding global (logo y colores por defecto del sitio) | Ambos | Medio |
+| CSS personalizado desde ajustes | Ambos | Bajo |
+| `border_radius` del reproductor | Presto | Bajo |
+| Comportamiento al terminar (reiniciar / repetir / parar) | Ambos | Bajo |
+| Posición del reproductor fijo | Presto | Bajo |
+| Descripción por preset | Fluent | Bajo |
+| Varios presets de arranque | Ambos | Bajo |
+| Analítica de escucha | Ambos | Alto |
+| Playlists | Ambos (Pro) | Alto |
+| Captura de email y CTA dentro del reproductor | Ambos (Pro) | Alto |
+
 ## 3. El estado de las librerías de reproducción (agosto 2026)
 
 Esto es lo que más condiciona la decisión técnica:

@@ -83,11 +83,53 @@ check( 'block.json names the view script', ! empty( $block['viewScript'] ) );
 
 // The built assets have to exist, or a fresh clone installs a player with no
 // player in it.
-foreach ( array( 'build/frontend.js', 'build/frontend.asset.php', 'build/editor.js', 'build/editor.asset.php', 'build/style-frontend.css', 'build/editor.css' ) as $asset ) {
+foreach ( array( 'build/frontend.js', 'build/frontend.asset.php', 'build/editor.js', 'build/editor.asset.php', 'build/admin.js', 'build/admin.asset.php', 'build/style-frontend.css', 'build/editor.css', 'build/admin.css' ) as $asset ) {
 	check( "built asset present: {$asset}", is_readable( $plugin . $asset ) );
 }
 
-check( 'the admin script ships', is_readable( $plugin . 'assets/admin/settings.js' ) );
+// PHP resolves an unqualified constant against the *global* namespace, never
+// the parent one, so `VERSION` inside `ImaginaPlayer\Rest` is undefined at
+// runtime — and only on the code path that happens to read it.
+//
+// Tokenised rather than grepped: the word "URL" appears in half the docblocks in
+// this plugin, and `PHP_URL_PATH` is one token, not three.
+$plugin_constants = array( 'VERSION', 'PATH', 'URL', 'SLUG', 'MIN_PHP', 'PREFIX' );
+$unqualified      = array();
+
+foreach ( glob( $plugin . 'src/*/*.php' ) as $file ) {
+	$source = (string) file_get_contents( $file );
+
+	if ( ! preg_match( '/^namespace\s+ImaginaPlayer\\\\\w+/m', $source ) ) {
+		continue;
+	}
+
+	$tokens   = token_get_all( $source );
+	$previous = null;
+
+	foreach ( $tokens as $token ) {
+		if ( is_array( $token ) && in_array( $token[0], array( T_WHITESPACE, T_COMMENT, T_DOC_COMMENT ), true ) ) {
+			continue;
+		}
+
+		if ( is_array( $token ) && T_STRING === $token[0] && in_array( $token[1], $plugin_constants, true ) ) {
+			// `Foo::PATH` and `$x->PATH` are class members, not our constants.
+			$member = is_array( $previous ) && in_array( $previous[0], array( T_DOUBLE_COLON, T_OBJECT_OPERATOR ), true );
+
+			if ( ! $member ) {
+				$unqualified[] = basename( $file ) . ':' . $token[2] . ' (' . $token[1] . ')';
+			}
+		}
+
+		$previous = $token;
+	}
+}
+
+check(
+	'no unqualified plugin constants inside sub-namespaces',
+	array() === $unqualified,
+	implode( ', ', $unqualified )
+);
+
 check( 'uninstall.php ships', is_readable( $plugin . 'uninstall.php' ) );
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;

@@ -3,10 +3,13 @@ import {
 	InspectorControls,
 	MediaPlaceholder,
 	MediaReplaceFlow,
+	MediaUpload,
+	MediaUploadCheck,
 	useBlockProps,
 } from '@wordpress/block-editor';
 import {
 	BaseControl,
+	Button,
 	ExternalLink,
 	PanelBody,
 	RangeControl,
@@ -75,6 +78,8 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 
 	const src = String( attributes.src ?? '' );
 	const preset = String( attributes.preset ?? 'default' );
+	const thumbnail = String( attributes.thumbnail ?? '' );
+	const downloadUrl = String( attributes.downloadUrl ?? '' );
 
 	const inherited = ( attribute: string, presetKey: string ): boolean => {
 		const override = attributes[ attribute ];
@@ -165,19 +170,108 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 						value={ String( attributes.artist ?? '' ) }
 						onChange={ ( value: string ) => setAttributes( { artist: value } ) }
 					/>
-					<TextControl
+					<BaseControl
 						__nextHasNoMarginBottom
-						label={ __( 'Thumbnail URL', 'imagina-player' ) }
-						value={ String( attributes.thumbnail ?? '' ) }
-						onChange={ ( value: string ) => setAttributes( { thumbnail: value } ) }
-					/>
-					<TextControl
+						id="imgp-thumbnail"
+						label={ __( 'Cover image', 'imagina-player' ) }
+						help={ __( 'Shown next to the title. Optional.', 'imagina-player' ) }
+					>
+						<div className="imgp-editor__media-picker">
+							{ thumbnail && (
+								<img
+									className="imgp-editor__media-preview"
+									src={ thumbnail }
+									alt=""
+								/>
+							) }
+							<MediaUploadCheck
+								fallback={
+									<TextControl
+										__nextHasNoMarginBottom
+										label={ __( 'Cover image URL', 'imagina-player' ) }
+										value={ thumbnail }
+										onChange={ ( value: string ) =>
+											setAttributes( { thumbnail: value, thumbnailId: 0 } )
+										}
+									/>
+								}
+							>
+								<MediaUpload
+									allowedTypes={ [ 'image' ] }
+									value={ Number( attributes.thumbnailId ?? 0 ) }
+									onSelect={ ( media: { id?: number; url?: string; sizes?: Record< string, { url: string } > } ) =>
+										setAttributes( {
+											// Prefer a resized copy: the player shows it at 72px.
+											thumbnail: media.sizes?.thumbnail?.url ?? media.url ?? '',
+											thumbnailId: media.id ?? 0,
+										} )
+									}
+									render={ ( { open }: { open: () => void } ) => (
+										<Button variant="secondary" onClick={ open }>
+											{ thumbnail
+												? __( 'Replace cover image', 'imagina-player' )
+												: __( 'Choose from media library', 'imagina-player' ) }
+										</Button>
+									) }
+								/>
+							</MediaUploadCheck>
+							{ thumbnail && (
+								<Button
+									variant="tertiary"
+									isDestructive
+									onClick={ () => setAttributes( { thumbnail: '', thumbnailId: 0 } ) }
+								>
+									{ __( 'Remove', 'imagina-player' ) }
+								</Button>
+							) }
+						</div>
+					</BaseControl>
+
+					<BaseControl
 						__nextHasNoMarginBottom
-						label={ __( 'Download URL', 'imagina-player' ) }
-						value={ String( attributes.downloadUrl ?? '' ) }
-						onChange={ ( value: string ) => setAttributes( { downloadUrl: value } ) }
+						id="imgp-download"
+						label={ __( 'Download file', 'imagina-player' ) }
 						help={ __( 'Optional. Defaults to the audio file itself.', 'imagina-player' ) }
-					/>
+					>
+						<div className="imgp-editor__media-picker">
+							{ downloadUrl && (
+								<code className="imgp-editor__media-path">{ downloadUrl }</code>
+							) }
+							<MediaUploadCheck
+								fallback={
+									<TextControl
+										__nextHasNoMarginBottom
+										label={ __( 'Download URL', 'imagina-player' ) }
+										value={ downloadUrl }
+										onChange={ ( value: string ) => setAttributes( { downloadUrl: value } ) }
+									/>
+								}
+							>
+								<MediaUpload
+									allowedTypes={ [ 'audio', 'video', 'application' ] }
+									onSelect={ ( media: { url?: string } ) =>
+										setAttributes( { downloadUrl: media.url ?? '' } )
+									}
+									render={ ( { open }: { open: () => void } ) => (
+										<Button variant="secondary" onClick={ open }>
+											{ downloadUrl
+												? __( 'Replace download file', 'imagina-player' )
+												: __( 'Choose from media library', 'imagina-player' ) }
+										</Button>
+									) }
+								/>
+							</MediaUploadCheck>
+							{ downloadUrl && (
+								<Button
+									variant="tertiary"
+									isDestructive
+									onClick={ () => setAttributes( { downloadUrl: '' } ) }
+								>
+									{ __( 'Remove', 'imagina-player' ) }
+								</Button>
+							) }
+						</div>
+					</BaseControl>
 				</PanelBody>
 
 				<PanelBody title={ __( 'Preset', 'imagina-player' ) }>

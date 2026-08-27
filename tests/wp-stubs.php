@@ -108,6 +108,10 @@ function rest_url( $path = '' ) { return 'https://example.test/wp-json/' . ltrim
 function admin_url( $path = '' ) { return 'https://example.test/wp-admin/' . ltrim( $path, '/' ); }
 function plugin_dir_url( $file ) { return 'https://example.test/wp-content/plugins/imagina-player/'; }
 function plugin_dir_path( $file ) { return dirname( $file ) . '/'; }
+function plugin_basename( $file ) { return basename( dirname( $file ) ) . '/' . basename( $file ); }
+function add_menu_page( ...$a ) { return 'toplevel_page_' . ( $a[3] ?? '' ); }
+function wp_add_inline_style( ...$a ) {}
+function wp_create_nonce( $action = -1 ) { return 'stub-nonce'; }
 function register_activation_hook( $file, $cb ) {}
 function register_deactivation_hook( $file, $cb ) {}
 function wp_salt( $scheme = 'auth' ) { return 'stub-salt-value'; }

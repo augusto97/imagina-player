@@ -438,3 +438,172 @@
 		transition-duration: 0.01ms !important;
 	}
 }
+
+/* --- Skins -------------------------------------------------------------- */
+
+/* Skins deliberately override base rules, and every one of them is scoped under
+   its own `.imgp--skin-*` class, so a state rule declared earlier is not in
+   conflict — it simply has fewer classes. The rule below cannot tell the two
+   apart. */
+/* stylelint-disable no-descending-specificity */
+
+/* Mirrored waveform: the shape is symmetrical, so the time badges sit clear of
+   it at the bottom rather than over the middle of the bars. */
+.imgp--skin-wave-centered {
+
+	.imgp__time {
+		top: auto;
+		bottom: 0;
+	}
+}
+
+/* Cover art leading, everything else stacked beside it. */
+.imgp--skin-card {
+	display: flex;
+	gap: var(--imgp-gap);
+	align-items: center;
+	padding: var(--imgp-gap);
+	border-radius: 0.6rem;
+	background: var(--imgp-bg, color-mix(in srgb, var(--imgp-text) 4%, transparent));
+
+	> .imgp__thumb {
+		flex: 0 0 auto;
+
+		img {
+			width: 7.5rem;
+			height: 7.5rem;
+			border-radius: 0.45rem;
+		}
+	}
+
+	.imgp__body {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.imgp__scrubber {
+		height: calc(var(--imgp-wave-height) * 0.7);
+	}
+}
+
+/* One row: play, cover, title, scrubber, controls. */
+.imgp__row {
+	display: flex;
+	align-items: center;
+	gap: var(--imgp-gap);
+	min-width: 0;
+
+	.imgp__meta {
+		flex: 0 1 auto;
+		min-width: 0;
+	}
+
+	.imgp__scrubber {
+		flex: 1 1 auto;
+		min-width: 4rem;
+	}
+
+	.imgp__controls {
+		margin-left: 0;
+	}
+}
+
+.imgp--skin-compact {
+
+	.imgp__scrubber {
+		height: 1.75rem;
+	}
+
+	.imgp__play {
+		width: 2.75rem;
+		height: 2.75rem;
+
+		.imgp__icon {
+			width: 1.2rem;
+			height: 1.2rem;
+		}
+	}
+
+	.imgp__title {
+		font-size: 1rem;
+	}
+
+	.imgp__artist {
+		font-size: 0.8125rem;
+	}
+
+	.imgp__thumb img {
+		width: 2.75rem;
+		height: 2.75rem;
+	}
+
+	.imgp__time {
+		top: 50%;
+		transform: translateY(-50%);
+	}
+
+	.imgp__time--current {
+		transform: translate(0, -50%);
+	}
+}
+
+/* A rounded bar meant to sit inline with body copy. */
+.imgp--skin-pill {
+	padding: 0.4rem 1rem 0.4rem 0.4rem;
+	border-radius: 999px;
+	background: var(--imgp-bg, color-mix(in srgb, var(--imgp-text) 6%, transparent));
+
+	.imgp__scrubber {
+		height: 1.5rem;
+	}
+
+	.imgp__play {
+		width: 2.25rem;
+		height: 2.25rem;
+
+		.imgp__icon {
+			width: 1rem;
+			height: 1rem;
+		}
+	}
+
+	.imgp__meta {
+		gap: 0;
+	}
+
+	.imgp__title {
+		font-size: 0.9375rem;
+	}
+
+	.imgp__artist {
+		font-size: 0.75rem;
+	}
+
+	.imgp__thumb img {
+		width: 2.25rem;
+		height: 2.25rem;
+		border-radius: 50%;
+	}
+
+	.imgp__time {
+		top: 50%;
+		font-size: 0.7rem;
+		color: var(--imgp-text);
+		background: none;
+		transform: translateY(-50%);
+	}
+
+	.imgp__time--current {
+		transform: translate(0, -50%);
+	}
+}
+
+/* Play button and title only. */
+.imgp--skin-minimal {
+
+	.imgp__bar {
+		margin-top: 0;
+	}
+}
+
+/* stylelint-enable no-descending-specificity */
