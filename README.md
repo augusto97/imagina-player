@@ -5,27 +5,40 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.3.1.zip`.
+1. Descarga `imagina-player-1.4.0.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
-4. Configura los presets en **Ajustes → Imagina Player**.
+4. Configura los presets en **Imagina Player** (menú lateral), o desde el enlace
+   **Ajustes** de la fila del plugin en **Plugins → Plugins instalados**.
 
 ## Versión actual
 
 | | |
 | --- | --- |
-| Versión | `1.3.1` |
-| Fichero | `imagina-player-1.3.1.zip` |
-| Tamaño | 92 KB |
-| SHA-256 | `c484420804cf563136c5856a6fd6a1c5ddc0a810300a4bb1bfee3509d3e20a73` |
+| Versión | `1.4.0` |
+| Fichero | `imagina-player-1.4.0.zip` |
+| Tamaño | 96 KB |
+| SHA-256 | `f32e7352177eecf98db4a82b9be1bb1d5f7614878daba171b63a7d1e95f9beb2` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.3.1.zip
+sha256sum imagina-player-1.4.0.zip
 ```
+
+## Novedades en 1.4.0
+
+- **Corregido:** el reproductor se desbordaba del contenedor en el móvil. Ahora
+  el título encoge en vez de empujar, y por debajo de 30rem los controles pasan
+  a una línea propia. Cada skin está medido a 320, 360, 414 y 768 píxeles con
+  todos los controles activos.
+- **Cambiado:** los colores de fábrica son neutros. Una instalación nueva ya no
+  llega vestida con los colores del reproductor de otro cliente; los tuyos se
+  ponen una vez en **Marca**.
+- **Cambiado:** la pantalla de ajustes tiene identidad propia (cian de Imagina),
+  separada del color que cada cliente le dé a su reproductor.
 
 ## Novedades en 1.3.1
 
