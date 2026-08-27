@@ -69,7 +69,7 @@ check( 'renders native controls for the no-JS case', str_contains( $html, '<audi
 check( 'renders the waveform canvas', str_contains( $html, 'class="imgp__wave"' ) );
 check( 'renders an accessible seek slider', str_contains( $html, 'role="slider"' ) );
 check( 'escapes the title', str_contains( $html, '&quot;El camino del amor&quot;' ) );
-check( 'carries CSS custom properties', str_contains( $html, '--imgp-accent:#c04ec4' ) );
+check( 'carries CSS custom properties', str_contains( $html, '--imgp-accent:#1f2937' ) );
 check( 'mints a peaks token when nothing is cached', str_contains( $html, '&quot;peaksToken&quot;' ) && ! str_contains( $html, '"peaksToken":""' ) );
 
 $empty = $renderer->render( array() );
@@ -124,6 +124,23 @@ check( 'the minimal skin has no scrubber at all', ! str_contains( $minimal, 'img
 
 $bar = $renderer->render( array( 'src' => 'https://cdn.example.com/a.mp3', 'skin' => 'bar' ) );
 check( 'the bar skin has no waveform canvas', ! str_contains( $bar, '<canvas' ) );
+
+// The Plugins screen is where people look for a plugin's settings, so the row
+// has to carry a link to them.
+ImaginaPlayer\Plugin::instance()->boot();
+
+$basename    = plugin_basename( ImaginaPlayer\FILE );
+$row_links   = apply_filters( 'plugin_action_links_' . $basename, array( '<a href="#">Deactivate</a>' ) );
+$settings_ok = false;
+
+foreach ( $row_links as $link ) {
+	if ( str_contains( $link, 'page=imagina-player' ) && str_contains( $link, 'Settings' ) ) {
+		$settings_ok = true;
+	}
+}
+
+check( 'the plugins list gets a Settings link', $settings_ok, implode( ' | ', $row_links ) );
+check( 'and it comes first in the row', str_contains( (string) ( $row_links[0] ?? '' ), 'page=imagina-player' ) );
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
 exit( $failures ? 1 : 0 );

@@ -14,15 +14,23 @@
  */
 
 #imagina-player-admin {
-	--ip-accent: #a4359f;
-	--ip-accent-soft: #f6ebf6;
-	--ip-ink: #1b1622;
-	--ip-muted: #6d6478;
-	--ip-line: #e5dee9;
+
+	/* Imagina's brand cyan, split by role. The brand colour itself is bright
+	   enough that white text on it reads at 2.2:1 — unusable — so fills carry
+	   dark text, and anything that is itself text uses the deeper variant.
+	   This is the plugin's own chrome and stays put whatever colour a client
+	   makes their player. */
+	--ip-accent: #00c2d8;
+	--ip-accent-strong: #07697a;
+	--ip-on-accent: #04252c;
+	--ip-accent-soft: #e6fafc;
+	--ip-ink: #111827;
+	--ip-muted: #6b7280;
+	--ip-line: #e3e7ec;
 	--ip-surface: #fff;
-	--ip-ground: #faf8fb;
-	--ip-good: #0c6b74;
-	--ip-warn: #9d4519;
+	--ip-ground: #f7f8fa;
+	--ip-good: #0f766e;
+	--ip-warn: #b45309;
 	--ip-radius: 10px;
 
 	margin: 0 0 0 -20px;
@@ -107,7 +115,7 @@
 	width: 34px;
 	height: 34px;
 	border-radius: 9px;
-	color: #fff;
+	color: var(--ip-on-accent);
 	background: var(--ip-accent);
 }
 
@@ -163,7 +171,7 @@
 	}
 
 	&.is-active {
-		color: var(--ip-accent);
+		color: var(--ip-accent-strong);
 		background: var(--ip-accent-soft);
 		font-weight: 600;
 	}
@@ -484,25 +492,26 @@
 
 	&:hover:not(:disabled) {
 		border-color: var(--ip-accent);
-		color: var(--ip-accent);
+		color: var(--ip-accent-strong);
 	}
 }
 
 .imgpa-btn--primary {
 	border-color: transparent;
 	background: var(--ip-accent);
-	color: #fff;
+	color: var(--ip-on-accent);
+	font-weight: 650;
 
 	&:hover:not(:disabled) {
-		color: #fff;
-		filter: brightness(1.08);
+		color: var(--ip-on-accent);
+		filter: brightness(1.06);
 	}
 }
 
 .imgpa-btn--ghost {
 	border-color: transparent;
 	background: var(--ip-accent-soft);
-	color: var(--ip-accent);
+	color: var(--ip-accent-strong);
 }
 
 .imgpa-btn--danger {
@@ -675,7 +684,7 @@
 	padding: 2px 7px;
 	border-radius: 999px;
 	background: var(--ip-accent-soft);
-	color: var(--ip-accent);
+	color: var(--ip-accent-strong);
 	font-size: 10px;
 	font-weight: 650;
 	letter-spacing: 0.06em;
@@ -719,7 +728,7 @@
 
 	&.is-active {
 		background: var(--ip-accent);
-		color: #fff;
+		color: var(--ip-on-accent);
 	}
 
 	&:focus-visible {

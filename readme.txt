@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.3.1
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,16 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.4.0 =
+* Fixed: the player overflowed its container on phones. Every skin was measured
+  at 320, 360, 414 and 768 pixels with all controls on; the title now shrinks
+  instead of pushing, and the controls take a line of their own on narrow
+  screens.
+* Changed: factory colours are neutral. A fresh install no longer arrives
+  wearing the colours of somebody else's player; set yours once under Branding.
+* Changed: the settings screen has its own identity, separate from whatever
+  colour a client gives their player.
 
 = 1.3.1 =
 * Fixed: the block preview grew scrollbars and swallowed clicks and drags in the

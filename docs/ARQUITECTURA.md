@@ -123,6 +123,19 @@ en una onda de 400 barras cuesta dos llamadas, no cuatrocientas.
 El reflejo bajo la onda se dibuja en la misma pasada con `globalAlpha`, y la
 proporción es configurable (`wave_reflection`, 0,25 por defecto).
 
+## Colores: tres cosas distintas
+
+Se confundieron una vez y salió caro, así que quedan separadas por diseño:
+
+- **El cromo del plugin** (`assets/src/admin/admin.scss`) lleva el color de
+  Imagina. No cambia jamás por lo que haga un cliente con su reproductor. El
+  acento es lo bastante brillante como para que el blanco encima dé 2,2:1, así
+  que los rellenos llevan texto oscuro y lo que *es* texto usa la variante
+  profunda. Hay un test que mide el contraste real en el navegador.
+- **Los valores de fábrica del reproductor** son neutros a propósito: una
+  instalación nueva no debe llegar vestida con la marca de otro cliente.
+- **Los colores de cada preset** son del cliente, y mandan sobre todo lo demás.
+
 ## Rendimiento
 
 - Bundle de front-end: **~5 KB gzip**, sin dependencias de runtime.
@@ -133,6 +146,10 @@ proporción es configurable (`wave_reflection`, 0,25 por defecto).
 - Un `MutationObserver` global y un `IntersectionObserver` compartido, no uno por
   reproductor.
 - Solo un reproductor suena a la vez (registro global de instancias).
+- Sin desbordamiento en móvil: `tests/test-responsive.php` mide los siete skins
+  a 320, 360, 414 y 768 px con todos los controles activos. La clave fue que el
+  meta tenga base `0` — con una fila que envuelve, un elemento con base
+  automática salta de línea *antes* de encogerse.
 
 ## Extensibilidad
 

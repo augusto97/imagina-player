@@ -37,9 +37,9 @@ export class Waveform {
 
 	private dpr = 1;
 
-	private waveColor = '#333333';
+	private waveColor = '#c9ced6';
 
-	private progressColor = '#c04ec4';
+	private progressColor = '#1f2937';
 
 	private lastPaintedProgressPx = -1;
 

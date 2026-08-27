@@ -175,6 +175,31 @@ setTimeout(function () {
 		prefersDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
 		ground: styles ? styles.backgroundColor : '',
 		ink: styles ? styles.color : '',
+		// Contrast of the things that carry the brand colour. White on Imagina's
+		// cyan reads at 2.2:1, so these have to be checked rather than assumed.
+		contrast: (function () {
+			function luminance(rgb) {
+				var parts = rgb.match(/\d+/g).slice(0, 3).map(function (n) {
+					var c = n / 255;
+					return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+				});
+				return 0.2126 * parts[0] + 0.7152 * parts[1] + 0.0722 * parts[2];
+			}
+
+			function ratio(el) {
+				if (!el) { return null; }
+				var s = getComputedStyle(el);
+				var a = luminance(s.color);
+				var b = luminance(s.backgroundColor);
+				return Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 100) / 100;
+			}
+
+			return {
+				primaryButton: ratio(document.querySelector('.imgpa-btn--primary')),
+				activeTab: ratio(document.querySelector('.imgpa-tabs__tab.is-active')),
+				activeNav: ratio(document.querySelector('.imgpa-nav__item.is-active'))
+			};
+		})(),
 		nav: text('.imgpa-nav__item'),
 		presets: text('.imgpa-presets__name'),
 		tabs: text('.imgpa-tabs__tab'),
@@ -282,6 +307,17 @@ check(
 	2 === count( $style['backgroundChoices'] ?? array() ),
 	implode( ' / ', $style['backgroundChoices'] ?? array() )
 );
+
+// WCAG AA for normal text is 4.5:1. These three carry the brand colour, and
+// the brand colour is bright enough that the obvious choice of white text on it
+// fails badly.
+foreach ( (array) ( $result['contrast'] ?? array() ) as $part => $ratio ) {
+	check(
+		"{$part} text is readable on its background",
+		is_numeric( $ratio ) && (float) $ratio >= 4.5,
+		$ratio . ':1'
+	);
+}
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
 exit( $failures ? 1 : 0 );

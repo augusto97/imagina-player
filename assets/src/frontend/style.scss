@@ -7,16 +7,20 @@
  */
 
 .imgp {
-	--imgp-accent: #c04ec4;
-	--imgp-wave: #333;
+
+	/* Factory colours are deliberately neutral: a fresh install should not arrive
+	   wearing another client's brand. A light waveform that darkens as it plays
+	   reads on any background. */
+	--imgp-accent: #1f2937;
+	--imgp-wave: #c9ced6;
 	--imgp-wave-progress: var(--imgp-accent);
-	--imgp-text: #333;
-	--imgp-meta: var(--imgp-accent);
+	--imgp-text: #111827;
+	--imgp-meta: #6b7280;
 	--imgp-wave-height: 60px;
 	--imgp-reflection: 0.25;
 	--imgp-bar-radius: 0;
 	--imgp-gap: 0.75rem;
-	--imgp-control: #333;
+	--imgp-control: #374151;
 	--imgp-sheen: color-mix(in srgb, var(--imgp-accent) 18%, transparent);
 
 	position: relative;
@@ -130,6 +134,11 @@
 	display: flex;
 	align-items: center;
 	gap: var(--imgp-gap);
+
+	/* The controls take what they need; on a phone that is more than is left, so
+	   the row wraps rather than pushing the whole player past the screen. */
+	flex-wrap: wrap;
+	row-gap: 0.5rem;
 	margin-top: 0.75rem;
 	min-width: 0;
 }
@@ -199,6 +208,12 @@
 	flex-direction: column;
 	justify-content: center;
 	gap: 0.15rem;
+
+	/* Basis zero, not auto. With a wrapping row, an item whose basis is its
+	   content wraps *before* it shrinks, which is what pushed the title onto its
+	   own line and orphaned the play button. From zero it shrinks first and the
+	   title ellipsises instead. */
+	flex: 1 1 0;
 	min-width: 0;
 }
 
@@ -223,9 +238,16 @@
 .imgp__controls {
 	display: flex;
 	align-items: center;
+
+	/* The icons stay together and move as one block when the row wraps. */
+	flex-wrap: nowrap;
 	gap: 0.5rem;
 	margin-left: auto;
-	flex: 0 0 auto;
+
+	/* Shrinkable, unlike before: `0 0 auto` is what made a narrow player overflow
+	   instead of reflowing. */
+	flex: 0 1 auto;
+	min-width: 0;
 	color: var(--imgp-control);
 }
 
@@ -416,6 +438,10 @@
 
 @container (max-width: 30rem) {
 
+	.imgp {
+		--imgp-gap: 0.5rem;
+	}
+
 	.imgp__title {
 		font-size: 1.05rem;
 	}
@@ -425,8 +451,31 @@
 		height: 3rem;
 	}
 
+	/* The mute button stays; the slider is the part a phone cannot use anyway. */
 	.imgp__volume-slider {
 		display: none;
+	}
+
+	.imgp__thumb img {
+		width: 3rem;
+		height: 3rem;
+	}
+
+	.imgp--skin-card {
+		padding: 0.6rem;
+	}
+
+	.imgp--skin-card > .imgp__thumb img {
+		width: 4rem;
+		height: 4rem;
+	}
+
+	/* With four controls there is no width left for a title worth reading, so
+	   they take a line of their own and the title gets the rest. */
+	.imgp__controls {
+		flex-basis: 100%;
+		justify-content: flex-end;
+		margin-left: 0;
 	}
 }
 
@@ -490,11 +539,13 @@
 .imgp__row {
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 	gap: var(--imgp-gap);
+	row-gap: 0.5rem;
 	min-width: 0;
 
 	.imgp__meta {
-		flex: 0 1 auto;
+		flex: 1 1 0;
 		min-width: 0;
 	}
 

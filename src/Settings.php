@@ -53,14 +53,17 @@ final class Settings {
 			'label'             => __( 'Default', 'imagina-player' ),
 			'description'       => '',
 			'skin'              => 'wave',
-			'accent'            => '#c04ec4',
-			'wave_color'        => '#333333',
-			'wave_progress'     => '#c04ec4',
+			// Factory colours are deliberately neutral: a fresh install should not
+			// arrive wearing another client's brand. Light waveform that darkens
+			// as it plays, which reads on any background.
+			'accent'            => '#1f2937',
+			'wave_color'        => '#c9ced6',
+			'wave_progress'     => '#1f2937',
 			'wave_bars'         => 3,
 			'wave_gap'          => 1,
 			'wave_reflection'   => 0.25,
-			'text_color'        => '#333333',
-			'meta_color'        => '#c04ec4',
+			'text_color'        => '#111827',
+			'meta_color'        => '#6b7280',
 			'background'        => 'transparent',
 			'height'            => 60,
 			'border_radius'     => 0,
@@ -111,10 +114,10 @@ final class Settings {
 			// Site-wide defaults. A new preset starts from these, so a brand change
 			// is one edit rather than one edit per preset.
 			'branding'   => array(
-				'accent'        => '#c04ec4',
-				'wave_color'    => '#333333',
-				'text_color'    => '#333333',
-				'meta_color'    => '#c04ec4',
+				'accent'        => '#1f2937',
+				'wave_color'    => '#c9ced6',
+				'text_color'    => '#111827',
+				'meta_color'    => '#6b7280',
 				'logo'          => '',
 				'logo_link'     => '',
 				'logo_height'   => 20,
