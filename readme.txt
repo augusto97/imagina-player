@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,11 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.2.2 =
+* Fixed: the preset background was a bare text field with no colour picker,
+  because it also accepts "transparent". It is now an explicit choice between
+  transparent and a colour, with the picker alongside.
 
 = 1.2.1 =
 * Fixed: the settings screen followed the browser's dark-mode preference, which

@@ -1,7 +1,16 @@
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
-import { Card, ColorInput, Field, NumberInput, Select, TextInput, Toggle } from './controls';
+import {
+	Card,
+	ColorInput,
+	ColorOrTransparent,
+	Field,
+	NumberInput,
+	Select,
+	TextInput,
+	Toggle,
+} from './controls';
 import { PreviewFrame } from './PreviewFrame';
 import type { Preset, SettingsPayload } from './types';
 
@@ -307,10 +316,12 @@ export function PresetsPanel( { settings, onChange }: Props ) {
 							<Field label={ __( 'Artist', 'imagina-player' ) }>
 								<ColorInput value={ preset.meta_color } onChange={ ( meta_color ) => update( { meta_color } ) } />
 							</Field>
-							<Field label={ __( 'Background', 'imagina-player' ) } help={ __( 'Use “transparent” to inherit the page.', 'imagina-player' ) }>
-								<TextInput
+							<Field
+								label={ __( 'Background', 'imagina-player' ) }
+								help={ __( 'Transparent lets the page behind the player show through.', 'imagina-player' ) }
+							>
+								<ColorOrTransparent
 									value={ preset.background }
-									mono
 									onChange={ ( background ) => update( { background } ) }
 								/>
 							</Field>

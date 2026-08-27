@@ -165,12 +165,12 @@ setTimeout(function () {
 	function text(selector) {
 		return Array.prototype.map.call(document.querySelectorAll(selector), function (el) { return el.textContent.trim(); });
 	}
-	var out = document.createElement('pre');
-	out.id = 'result';
+
 	var root = document.getElementById('imagina-player-admin');
 	var styles = root ? getComputedStyle(root) : null;
 
-	out.textContent = 'RESULT:' + JSON.stringify({
+	// Phase one: whatever the Controls tab shows.
+	var result = {
 		mounted: !!document.querySelector('.imgpa-header'),
 		prefersDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
 		ground: styles ? styles.backgroundColor : '',
@@ -181,8 +181,26 @@ setTimeout(function () {
 		toggles: document.querySelectorAll('.imgpa-toggle').length,
 		preview: !!document.querySelector('.imgpa-preview__frame'),
 		saveDisabled: document.querySelector('.imgpa-btn--primary') ? document.querySelector('.imgpa-btn--primary').disabled : null
-	});
-	document.body.appendChild(out);
+	};
+
+	// Phase two: switch to Style and let React repaint before reading it.
+	var tabs = document.querySelectorAll('.imgpa-tabs__tab');
+
+	if (tabs.length >= 3) {
+		tabs[2].click();
+	}
+
+	setTimeout(function () {
+		result.styleTab = {
+			colorPickers: document.querySelectorAll('.imgpa-color input[type="color"]').length,
+			backgroundChoices: text('.imgpa-segment__option')
+		};
+
+		var out = document.createElement('pre');
+		out.id = 'result';
+		out.textContent = 'RESULT:' + JSON.stringify(result);
+		document.body.appendChild(out);
+	}, 400);
 }, 1800);
 </script>
 </body></html>
@@ -248,6 +266,21 @@ check(
 	'and its text stays dark',
 	3 === count( $ink ) && array_sum( $ink ) / 3 < 110,
 	(string) ( $result['ink'] ?? '' )
+);
+
+$style = $result['styleTab'] ?? array();
+
+// Every colour in the Style tab must be pickable, background included: it was
+// the one field left as a bare text box because it also accepts "transparent".
+check(
+	'the style tab offers colour pickers',
+	(int) ( $style['colorPickers'] ?? 0 ) >= 5,
+	(string) ( $style['colorPickers'] ?? 0 )
+);
+check(
+	'the background offers transparent or a colour',
+	2 === count( $style['backgroundChoices'] ?? array() ),
+	implode( ' / ', $style['backgroundChoices'] ?? array() )
 );
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;

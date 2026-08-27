@@ -322,6 +322,44 @@
 	}
 }
 
+.imgpa-colorset {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.imgpa-segment {
+	display: inline-flex;
+	padding: 3px;
+	border: 1px solid var(--ip-line);
+	border-radius: 8px;
+	background: var(--ip-ground);
+}
+
+.imgpa-segment__option {
+	padding: 5px 11px;
+	border: 0;
+	border-radius: 6px;
+	background: none;
+	color: var(--ip-muted);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 550;
+	cursor: pointer;
+
+	&.is-active {
+		background: var(--ip-surface);
+		color: var(--ip-ink);
+		box-shadow: 0 1px 2px rgb(0 0 0 / 8%);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--ip-accent);
+		outline-offset: 1px;
+	}
+}
+
 .imgpa-color__text {
 	width: 120px;
 	padding: 7px 10px;

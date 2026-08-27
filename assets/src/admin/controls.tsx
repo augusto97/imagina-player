@@ -6,6 +6,7 @@
  * and the WordPress components carry that look with them.
  */
 
+import { __ } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 
 interface FieldProps {
@@ -128,6 +129,44 @@ export function ColorInput( { value, onChange }: ColorProps ) {
 				spellCheck={ false }
 				onChange={ ( event ) => onChange( event.target.value ) }
 			/>
+		</span>
+	);
+}
+
+/**
+ * A colour that is also allowed to be "no colour at all".
+ *
+ * A plain text field could express both, but it left the common case — pick a
+ * colour — without a picker, and left "transparent" looking like an empty box.
+ * The choice is explicit here, and the picker appears once it is relevant.
+ */
+export function ColorOrTransparent( { value, onChange }: ColorProps ) {
+	const transparent = '' === value || 'transparent' === value;
+
+	return (
+		<span className="imgpa-colorset">
+			<span className="imgpa-segment" role="group">
+				<button
+					type="button"
+					className={ `imgpa-segment__option${ transparent ? ' is-active' : '' }` }
+					aria-pressed={ transparent }
+					onClick={ () => onChange( 'transparent' ) }
+				>
+					{ __( 'Transparent', 'imagina-player' ) }
+				</button>
+				<button
+					type="button"
+					className={ `imgpa-segment__option${ transparent ? '' : ' is-active' }` }
+					aria-pressed={ ! transparent }
+					// Starting from white rather than black: a player dropped onto a
+					// page is far more often on a light background.
+					onClick={ () => onChange( transparent ? '#ffffff' : value ) }
+				>
+					{ __( 'Colour', 'imagina-player' ) }
+				</button>
+			</span>
+
+			{ ! transparent && <ColorInput value={ value } onChange={ onChange } /> }
 		</span>
 	);
 }
