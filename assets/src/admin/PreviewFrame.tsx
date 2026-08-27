@@ -81,7 +81,9 @@ export function PreviewFrame( { preset }: { preset: Preset } ) {
 
 	return (
 		<div className="imgpa-preview">
-			<span className="imgpa-preview__label">{ __( 'Live preview', 'imagina-player' ) }</span>
+			<span className="imgpa-preview__label">
+				{ __( 'Live preview', 'imagina-player' ) }
+			</span>
 			<iframe
 				ref={ frame }
 				title={ __( 'Player preview', 'imagina-player' ) }

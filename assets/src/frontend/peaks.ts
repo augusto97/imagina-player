@@ -7,6 +7,7 @@ const decodeCache = new Map< string, Float32Array >();
 
 /**
  * Server peaks arrive as base64-encoded bytes — one byte per bar.
+ * @param encoded
  */
 export function decodePeaks( encoded: string ): Float32Array {
 	const cached = decodeCache.get( encoded );
@@ -37,6 +38,8 @@ export function decodePeaks( encoded: string ): Float32Array {
 /**
  * Resample to an arbitrary bar count, keeping each bucket's peak so quiet
  * passages next to loud ones stay visible.
+ * @param peaks
+ * @param bars
  */
 export function resample( peaks: Float32Array, bars: number ): Float32Array {
 	if ( bars < 1 || peaks.length === 0 ) {
@@ -52,7 +55,10 @@ export function resample( peaks: Float32Array, bars: number ): Float32Array {
 
 	for ( let i = 0; i < bars; i++ ) {
 		const start = Math.floor( i * bucket );
-		const end = Math.min( peaks.length, Math.max( start + 1, Math.ceil( ( i + 1 ) * bucket ) ) );
+		const end = Math.min(
+			peaks.length,
+			Math.max( start + 1, Math.ceil( ( i + 1 ) * bucket ) )
+		);
 		let max = 0;
 
 		for ( let j = start; j < end; j++ ) {
@@ -88,10 +94,19 @@ export interface ComputeResult {
  *
  * Returns -1 when the size cannot be determined, which is treated as "too risky
  * to decode" rather than "go ahead".
+ * @param url
+ * @param signal
  */
-async function probeSize( url: string, signal: AbortSignal ): Promise< number > {
+async function probeSize(
+	url: string,
+	signal: AbortSignal
+): Promise< number > {
 	try {
-		const head = await fetch( url, { method: 'HEAD', signal, credentials: 'same-origin' } );
+		const head = await fetch( url, {
+			method: 'HEAD',
+			signal,
+			credentials: 'same-origin',
+		} );
 
 		if ( head.ok ) {
 			const length = head.headers.get( 'content-length' );
@@ -128,6 +143,9 @@ async function probeSize( url: string, signal: AbortSignal ): Promise< number > 
  * memory: a 76-minute recording at 44.1 kHz stereo is about 1.6 GB, which does
  * not fail cleanly — it grinds the tab. So the size is probed first and anything
  * past the cap is declined, leaving the server to generate the waveform.
+ * @param url
+ * @param resolution
+ * @param options
  */
 export async function computePeaks(
 	url: string,
@@ -136,14 +154,21 @@ export async function computePeaks(
 ): Promise< ComputeResult | ComputeFailure > {
 	const AudioCtx =
 		window.AudioContext ??
-		( window as unknown as { webkitAudioContext?: typeof AudioContext } ).webkitAudioContext;
+		( window as unknown as { webkitAudioContext?: typeof AudioContext } )
+			.webkitAudioContext;
 
 	if ( ! AudioCtx ) {
 		return 'unsupported';
 	}
 
 	const controller = new AbortController();
-	const timer = window.setTimeout( () => controller.abort(), options.timeoutMs );
+	// Armed before the request, not at first use: it exists to cut off a fetch
+	// that never answers, so a later declaration would defeat it.
+	// eslint-disable-next-line @wordpress/no-unused-vars-before-return
+	const timer = window.setTimeout(
+		() => controller.abort(),
+		options.timeoutMs
+	);
 
 	try {
 		const size = await probeSize( url, controller.signal );
@@ -152,7 +177,10 @@ export async function computePeaks(
 			return 'too-large';
 		}
 
-		const response = await fetch( url, { signal: controller.signal, credentials: 'same-origin' } );
+		const response = await fetch( url, {
+			signal: controller.signal,
+			credentials: 'same-origin',
+		} );
 
 		if ( ! response.ok ) {
 			return 'failed';
@@ -170,7 +198,10 @@ export async function computePeaks(
 
 			for ( let i = 0; i < resolution; i++ ) {
 				const start = Math.floor( i * bucket );
-				const end = Math.min( channel.length, Math.floor( ( i + 1 ) * bucket ) );
+				const end = Math.min(
+					channel.length,
+					Math.floor( ( i + 1 ) * bucket )
+				);
 				let peak = 0;
 
 				// Step through the bucket rather than reading every sample: at 44.1 kHz a
@@ -213,6 +244,10 @@ export async function computePeaks(
 /**
  * Hand computed peaks back to the site. Failure is silent: a waveform that did
  * not persist is a cache miss for the next visitor, not a user-facing error.
+ * @param restUrl
+ * @param token
+ * @param peaks
+ * @param duration
  */
 export async function storePeaks(
 	restUrl: string,
@@ -231,7 +266,10 @@ export async function storePeaks(
 			body: JSON.stringify( {
 				token,
 				duration,
-				peaks: Array.from( peaks, ( value ) => Math.round( value * 1000 ) / 1000 ),
+				peaks: Array.from(
+					peaks,
+					( value ) => Math.round( value * 1000 ) / 1000
+				),
 			} ),
 		} );
 	} catch {
@@ -259,6 +297,8 @@ export function rememberPeaks( key: string, peaks: Float32Array ): void {
 
 /**
  * Run `load` at most once per key, sharing the result with every caller.
+ * @param key
+ * @param load
  */
 export function sharedPeaks(
 	key: string,

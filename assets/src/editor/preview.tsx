@@ -50,13 +50,19 @@ export function Preview( { attributes, assets }: PreviewProps ) {
 						return;
 					}
 
-					const { html, peaks } = result as { html: string; peaks: string };
+					const { html, peaks } = result as {
+						html: string;
+						peaks: string;
+					};
 
 					// Real peaks win; the synthetic set only stands in when the track
 					// has none cached yet, so the preview is never a flat bar.
 					const markup = html.includes( 'data-peaks=' )
 						? html
-						: html.replace( 'data-imagina-player=', `data-peaks="${ peaks }" data-imagina-player=` );
+						: html.replace(
+								'data-imagina-player=',
+								`data-peaks="${ peaks }" data-imagina-player=`
+						  );
 
 					setFailed( false );
 					setDoc(
@@ -84,15 +90,17 @@ export function Preview( { attributes, assets }: PreviewProps ) {
 	}, [ signature, assets.frontendCss, assets.frontendJs, assets.frameCss ] );
 
 	const measure = (): void => {
-		const doc = frame.current?.contentDocument;
+		const frameDoc = frame.current?.contentDocument;
 
-		if ( ! doc?.body ) {
+		if ( ! frameDoc?.body ) {
 			return;
 		}
 
 		// A pixel short and the frame grows a scrollbar, which narrows the content
 		// and grows a second one across the bottom.
-		setHeight( Math.max( 90, Math.ceil( doc.body.scrollHeight ) + 2 ) );
+		setHeight(
+			Math.max( 90, Math.ceil( frameDoc.body.scrollHeight ) + 2 )
+		);
 	};
 
 	// The canvas paints a frame or two after load, and the height changes with it.

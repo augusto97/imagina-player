@@ -6,6 +6,7 @@
  * and the WordPress components carry that look with them.
  */
 
+import { useId } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 
@@ -36,9 +37,15 @@ interface ToggleProps {
 }
 
 export function Toggle( { checked, onChange, label, help }: ToggleProps ) {
+	// Nesting the input inside the label associates the two for a browser, but
+	// not for every assistive technology, and not for a test that looks for the
+	// pairing. An explicit id says it outright.
+	const id = useId();
+
 	return (
-		<label className="imgpa-toggle">
+		<label className="imgpa-toggle" htmlFor={ id }>
 			<input
+				id={ id }
 				type="checkbox"
 				checked={ checked }
 				onChange={ ( event ) => onChange( event.target.checked ) }
@@ -87,7 +94,14 @@ interface NumberProps {
 	suffix?: string;
 }
 
-export function NumberInput( { value, onChange, min, max, step = 1, suffix }: NumberProps ) {
+export function NumberInput( {
+	value,
+	onChange,
+	min,
+	max,
+	step = 1,
+	suffix,
+}: NumberProps ) {
 	return (
 		<span className="imgpa-number">
 			<input
@@ -96,7 +110,9 @@ export function NumberInput( { value, onChange, min, max, step = 1, suffix }: Nu
 				min={ min }
 				max={ max }
 				step={ step }
-				onChange={ ( event ) => onChange( Number( event.target.value ) ) }
+				onChange={ ( event ) =>
+					onChange( Number( event.target.value ) )
+				}
 			/>
 			{ suffix && <em>{ suffix }</em> }
 		</span>
@@ -139,6 +155,9 @@ export function ColorInput( { value, onChange }: ColorProps ) {
  * A plain text field could express both, but it left the common case — pick a
  * colour — without a picker, and left "transparent" looking like an empty box.
  * The choice is explicit here, and the picker appears once it is relevant.
+ * @param root0
+ * @param root0.value
+ * @param root0.onChange
  */
 export function ColorOrTransparent( { value, onChange }: ColorProps ) {
 	const transparent = '' === value || 'transparent' === value;
@@ -148,7 +167,9 @@ export function ColorOrTransparent( { value, onChange }: ColorProps ) {
 			<span className="imgpa-segment" role="group">
 				<button
 					type="button"
-					className={ `imgpa-segment__option${ transparent ? ' is-active' : '' }` }
+					className={ `imgpa-segment__option${
+						transparent ? ' is-active' : ''
+					}` }
 					aria-pressed={ transparent }
 					onClick={ () => onChange( 'transparent' ) }
 				>
@@ -156,17 +177,23 @@ export function ColorOrTransparent( { value, onChange }: ColorProps ) {
 				</button>
 				<button
 					type="button"
-					className={ `imgpa-segment__option${ transparent ? '' : ' is-active' }` }
+					className={ `imgpa-segment__option${
+						transparent ? '' : ' is-active'
+					}` }
 					aria-pressed={ ! transparent }
 					// Starting from white rather than black: a player dropped onto a
 					// page is far more often on a light background.
-					onClick={ () => onChange( transparent ? '#ffffff' : value ) }
+					onClick={ () =>
+						onChange( transparent ? '#ffffff' : value )
+					}
 				>
 					{ __( 'Colour', 'imagina-player' ) }
 				</button>
 			</span>
 
-			{ ! transparent && <ColorInput value={ value } onChange={ onChange } /> }
+			{ ! transparent && (
+				<ColorInput value={ value } onChange={ onChange } />
+			) }
 		</span>
 	);
 }
@@ -191,7 +218,15 @@ export function TextInput( { value, onChange, placeholder, mono }: TextProps ) {
 	);
 }
 
-export function Card( { title, description, children }: { title?: string; description?: string; children: ReactNode } ) {
+export function Card( {
+	title,
+	description,
+	children,
+}: {
+	title?: string;
+	description?: string;
+	children: ReactNode;
+} ) {
 	return (
 		<section className="imgpa-card">
 			{ title && (
@@ -205,8 +240,18 @@ export function Card( { title, description, children }: { title?: string; descri
 	);
 }
 
-export function Notice( { tone, children }: { tone: 'info' | 'good' | 'warn'; children: ReactNode } ) {
-	return <div className={ `imgpa-notice imgpa-notice--${ tone }` }>{ children }</div>;
+export function Notice( {
+	tone,
+	children,
+}: {
+	tone: 'info' | 'good' | 'warn';
+	children: ReactNode;
+} ) {
+	return (
+		<div className={ `imgpa-notice imgpa-notice--${ tone }` }>
+			{ children }
+		</div>
+	);
 }
 
 /**
@@ -220,7 +265,11 @@ export function Notice( { tone, children }: { tone: 'info' | 'good' | 'warn'; ch
 interface MediaFrame {
 	on: ( event: string, handler: () => void ) => void;
 	open: () => void;
-	state: () => { get: ( key: string ) => { first: () => { toJSON: () => MediaAttachment } } };
+	state: () => {
+		get: ( key: string ) => {
+			first: () => { toJSON: () => MediaAttachment };
+		};
+	};
 }
 
 interface MediaAttachment {
@@ -231,7 +280,8 @@ interface MediaAttachment {
 type MediaFactory = ( args: Record< string, unknown > ) => MediaFrame;
 
 function mediaFactory(): MediaFactory | null {
-	const media = ( window as unknown as { wp?: { media?: MediaFactory } } ).wp?.media;
+	const media = ( window as unknown as { wp?: { media?: MediaFactory } } ).wp
+		?.media;
 
 	return 'function' === typeof media ? media : null;
 }
@@ -251,7 +301,14 @@ interface MediaProps {
 	size?: string;
 }
 
-export function MediaInput( { value, onChange, placeholder, type = 'image', title, size }: MediaProps ) {
+export function MediaInput( {
+	value,
+	onChange,
+	placeholder,
+	type = 'image',
+	title,
+	size,
+}: MediaProps ) {
 	const factory = mediaFactory();
 
 	const open = (): void => {
@@ -267,7 +324,11 @@ export function MediaInput( { value, onChange, placeholder, type = 'image', titl
 		} );
 
 		frame.on( 'select', () => {
-			const attachment = frame.state().get( 'selection' ).first().toJSON();
+			const attachment = frame
+				.state()
+				.get( 'selection' )
+				.first()
+				.toJSON();
 			const scaled = size ? attachment.sizes?.[ size ]?.url : undefined;
 
 			onChange( scaled ?? attachment.url ?? '' );
@@ -295,7 +356,11 @@ export function MediaInput( { value, onChange, placeholder, type = 'image', titl
 			/>
 
 			{ factory && (
-				<button type="button" className="imgpa-btn imgpa-btn--ghost" onClick={ open }>
+				<button
+					type="button"
+					className="imgpa-btn imgpa-btn--ghost"
+					onClick={ open }
+				>
 					{ __( 'Media library', 'imagina-player' ) }
 				</button>
 			) }

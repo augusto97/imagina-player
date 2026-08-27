@@ -36,7 +36,9 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 function editorData(): EditorData {
 	return (
 		window.imaginaPlayerEditor ?? {
-			presets: [ { value: 'default', label: __( 'Default', 'imagina-player' ) } ],
+			presets: [
+				{ value: 'default', label: __( 'Default', 'imagina-player' ) },
+			],
 			skins: { wave: __( 'Waveform', 'imagina-player' ) },
 			overrides: {},
 			presetShape: {},
@@ -51,10 +53,18 @@ function editorData(): EditorData {
 /**
  * Attribute names for the tri-state visibility toggles, derived from the schema
  * the server sent rather than repeated here.
+ * @param data
  */
-function visibilityToggles( data: EditorData ): Array< { key: string; attribute: string } > {
+function visibilityToggles(
+	data: EditorData
+): Array< { key: string; attribute: string } > {
 	return Object.entries( data.overrides )
-		.filter( ( [ key ] ) => key.startsWith( 'show_' ) || 'sticky' === key || 'remember_position' === key )
+		.filter(
+			( [ key ] ) =>
+				key.startsWith( 'show_' ) ||
+				'sticky' === key ||
+				'remember_position' === key
+		)
 		.map( ( [ key, attribute ] ) => ( { key, attribute } ) );
 }
 
@@ -108,14 +118,21 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 					} }
 					accept="audio/*,video/*"
 					allowedTypes={ [ 'audio', 'video' ] }
-					onSelect={ ( media: { id?: number; url?: string; title?: string; artist?: string } ) =>
+					onSelect={ ( media: {
+						id?: number;
+						url?: string;
+						title?: string;
+						artist?: string;
+					} ) =>
 						setAttributes( {
 							src: media.url ?? '',
 							attachmentId: media.id ?? 0,
 							title: attributes.title || media.title || '',
 						} )
 					}
-					onSelectURL={ ( url: string ) => setAttributes( { src: url, attachmentId: 0 } ) }
+					onSelectURL={ ( url: string ) =>
+						setAttributes( { src: url, attachmentId: 0 } )
+					}
 				/>
 			</div>
 		);
@@ -129,10 +146,19 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 					mediaURL={ src }
 					accept="audio/*,video/*"
 					allowedTypes={ [ 'audio', 'video' ] }
-					onSelect={ ( media: { id?: number; url?: string; title?: string } ) =>
-						setAttributes( { src: media.url ?? '', attachmentId: media.id ?? 0 } )
+					onSelect={ ( media: {
+						id?: number;
+						url?: string;
+						title?: string;
+					} ) =>
+						setAttributes( {
+							src: media.url ?? '',
+							attachmentId: media.id ?? 0,
+						} )
 					}
-					onSelectURL={ ( url: string ) => setAttributes( { src: url, attachmentId: 0 } ) }
+					onSelectURL={ ( url: string ) =>
+						setAttributes( { src: url, attachmentId: 0 } )
+					}
 				/>
 			</BlockControls>
 
@@ -142,20 +168,30 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 						__nextHasNoMarginBottom
 						label={ __( 'Title', 'imagina-player' ) }
 						value={ String( attributes.title ?? '' ) }
-						onChange={ ( value: string ) => setAttributes( { title: value } ) }
-						help={ __( 'Leave empty to use the file’s own title.', 'imagina-player' ) }
+						onChange={ ( value: string ) =>
+							setAttributes( { title: value } )
+						}
+						help={ __(
+							'Leave empty to use the file’s own title.',
+							'imagina-player'
+						) }
 					/>
 					<TextControl
 						__nextHasNoMarginBottom
 						label={ __( 'Artist', 'imagina-player' ) }
 						value={ String( attributes.artist ?? '' ) }
-						onChange={ ( value: string ) => setAttributes( { artist: value } ) }
+						onChange={ ( value: string ) =>
+							setAttributes( { artist: value } )
+						}
 					/>
 					<BaseControl
 						__nextHasNoMarginBottom
 						id="imgp-thumbnail"
 						label={ __( 'Cover image', 'imagina-player' ) }
-						help={ __( 'Shown next to the title. Optional.', 'imagina-player' ) }
+						help={ __(
+							'Shown next to the title. Optional.',
+							'imagina-player'
+						) }
 					>
 						<div className="imgp-editor__media-picker">
 							{ thumbnail && (
@@ -169,29 +205,60 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 								fallback={
 									<TextControl
 										__nextHasNoMarginBottom
-										label={ __( 'Cover image URL', 'imagina-player' ) }
+										label={ __(
+											'Cover image URL',
+											'imagina-player'
+										) }
 										value={ thumbnail }
 										onChange={ ( value: string ) =>
-											setAttributes( { thumbnail: value, thumbnailId: 0 } )
+											setAttributes( {
+												thumbnail: value,
+												thumbnailId: 0,
+											} )
 										}
 									/>
 								}
 							>
 								<MediaUpload
 									allowedTypes={ [ 'image' ] }
-									value={ Number( attributes.thumbnailId ?? 0 ) }
-									onSelect={ ( media: { id?: number; url?: string; sizes?: Record< string, { url: string } > } ) =>
+									value={ Number(
+										attributes.thumbnailId ?? 0
+									) }
+									onSelect={ ( media: {
+										id?: number;
+										url?: string;
+										sizes?: Record<
+											string,
+											{ url: string }
+										>;
+									} ) =>
 										setAttributes( {
 											// Prefer a resized copy: the player shows it at 72px.
-											thumbnail: media.sizes?.thumbnail?.url ?? media.url ?? '',
+											thumbnail:
+												media.sizes?.thumbnail?.url ??
+												media.url ??
+												'',
 											thumbnailId: media.id ?? 0,
 										} )
 									}
-									render={ ( { open }: { open: () => void } ) => (
-										<Button variant="secondary" onClick={ open }>
+									render={ ( {
+										open,
+									}: {
+										open: () => void;
+									} ) => (
+										<Button
+											variant="secondary"
+											onClick={ open }
+										>
 											{ thumbnail
-												? __( 'Replace cover image', 'imagina-player' )
-												: __( 'Choose from media library', 'imagina-player' ) }
+												? __(
+														'Replace cover image',
+														'imagina-player'
+												  )
+												: __(
+														'Choose from media library',
+														'imagina-player'
+												  ) }
 										</Button>
 									) }
 								/>
@@ -200,7 +267,12 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 								<Button
 									variant="tertiary"
 									isDestructive
-									onClick={ () => setAttributes( { thumbnail: '', thumbnailId: 0 } ) }
+									onClick={ () =>
+										setAttributes( {
+											thumbnail: '',
+											thumbnailId: 0,
+										} )
+									}
 								>
 									{ __( 'Remove', 'imagina-player' ) }
 								</Button>
@@ -212,32 +284,63 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 						__nextHasNoMarginBottom
 						id="imgp-download"
 						label={ __( 'Download file', 'imagina-player' ) }
-						help={ __( 'Optional. Defaults to the audio file itself.', 'imagina-player' ) }
+						help={ __(
+							'Optional. Defaults to the audio file itself.',
+							'imagina-player'
+						) }
 					>
 						<div className="imgp-editor__media-picker">
 							{ downloadUrl && (
-								<code className="imgp-editor__media-path">{ downloadUrl }</code>
+								<code className="imgp-editor__media-path">
+									{ downloadUrl }
+								</code>
 							) }
 							<MediaUploadCheck
 								fallback={
 									<TextControl
 										__nextHasNoMarginBottom
-										label={ __( 'Download URL', 'imagina-player' ) }
+										label={ __(
+											'Download URL',
+											'imagina-player'
+										) }
 										value={ downloadUrl }
-										onChange={ ( value: string ) => setAttributes( { downloadUrl: value } ) }
+										onChange={ ( value: string ) =>
+											setAttributes( {
+												downloadUrl: value,
+											} )
+										}
 									/>
 								}
 							>
 								<MediaUpload
-									allowedTypes={ [ 'audio', 'video', 'application' ] }
+									allowedTypes={ [
+										'audio',
+										'video',
+										'application',
+									] }
 									onSelect={ ( media: { url?: string } ) =>
-										setAttributes( { downloadUrl: media.url ?? '' } )
+										setAttributes( {
+											downloadUrl: media.url ?? '',
+										} )
 									}
-									render={ ( { open }: { open: () => void } ) => (
-										<Button variant="secondary" onClick={ open }>
+									render={ ( {
+										open,
+									}: {
+										open: () => void;
+									} ) => (
+										<Button
+											variant="secondary"
+											onClick={ open }
+										>
 											{ downloadUrl
-												? __( 'Replace download file', 'imagina-player' )
-												: __( 'Choose from media library', 'imagina-player' ) }
+												? __(
+														'Replace download file',
+														'imagina-player'
+												  )
+												: __(
+														'Choose from media library',
+														'imagina-player'
+												  ) }
 										</Button>
 									) }
 								/>
@@ -246,7 +349,9 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 								<Button
 									variant="tertiary"
 									isDestructive
-									onClick={ () => setAttributes( { downloadUrl: '' } ) }
+									onClick={ () =>
+										setAttributes( { downloadUrl: '' } )
+									}
 								>
 									{ __( 'Remove', 'imagina-player' ) }
 								</Button>
@@ -261,17 +366,26 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 						label={ __( 'Preset', 'imagina-player' ) }
 						value={ preset }
 						options={ data.presets }
-						onChange={ ( value: string ) => setAttributes( { preset: value } ) }
+						onChange={ ( value: string ) =>
+							setAttributes( { preset: value } )
+						}
 					/>
 					<SelectControl
 						__nextHasNoMarginBottom
 						label={ __( 'Skin', 'imagina-player' ) }
 						value={ String( attributes.skin ?? INHERIT ) }
 						options={ [
-							{ value: INHERIT, label: __( 'Use preset', 'imagina-player' ) },
-							...Object.entries( data.skins ).map( ( [ value, label ] ) => ( { value, label } ) ),
+							{
+								value: INHERIT,
+								label: __( 'Use preset', 'imagina-player' ),
+							},
+							...Object.entries( data.skins ).map(
+								( [ value, label ] ) => ( { value, label } )
+							),
 						] }
-						onChange={ ( value: string ) => setAttributes( { skin: value } ) }
+						onChange={ ( value: string ) =>
+							setAttributes( { skin: value } )
+						}
 					/>
 					{ data.settingsUrl && (
 						<p>
@@ -282,75 +396,124 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 					) }
 				</PanelBody>
 
-				<PanelBody title={ __( 'Controls', 'imagina-player' ) } initialOpen={ false }>
+				<PanelBody
+					title={ __( 'Controls', 'imagina-player' ) }
+					initialOpen={ false }
+				>
 					{ visibilityToggles( data ).map( ( { key, attribute } ) => (
 						<ToggleControl
 							__nextHasNoMarginBottom
 							key={ attribute }
 							label={ humanise( key ) }
 							checked={ inherited( attribute, key ) }
-							onChange={ ( value: boolean ) => setAttributes( { [ attribute ]: value ? 'yes' : 'no' } ) }
+							onChange={ ( value: boolean ) =>
+								setAttributes( {
+									[ attribute ]: value ? 'yes' : 'no',
+								} )
+							}
 						/>
 					) ) }
 				</PanelBody>
 
-				<PanelBody title={ __( 'Playback', 'imagina-player' ) } initialOpen={ false }>
+				<PanelBody
+					title={ __( 'Playback', 'imagina-player' ) }
+					initialOpen={ false }
+				>
 					<ToggleControl
 						__nextHasNoMarginBottom
 						label={ __( 'Autoplay', 'imagina-player' ) }
 						checked={ Boolean( attributes.autoplay ) }
-						onChange={ ( value: boolean ) => setAttributes( { autoplay: value } ) }
-						help={ __( 'Browsers only allow autoplay when the player is muted.', 'imagina-player' ) }
+						onChange={ ( value: boolean ) =>
+							setAttributes( { autoplay: value } )
+						}
+						help={ __(
+							'Browsers only allow autoplay when the player is muted.',
+							'imagina-player'
+						) }
 					/>
 					<ToggleControl
 						__nextHasNoMarginBottom
 						label={ __( 'Loop', 'imagina-player' ) }
 						checked={ Boolean( attributes.loop ) }
-						onChange={ ( value: boolean ) => setAttributes( { loop: value } ) }
+						onChange={ ( value: boolean ) =>
+							setAttributes( { loop: value } )
+						}
 					/>
 					<ToggleControl
 						__nextHasNoMarginBottom
 						label={ __( 'Start muted', 'imagina-player' ) }
 						checked={ Boolean( attributes.muted ) }
-						onChange={ ( value: boolean ) => setAttributes( { muted: value } ) }
+						onChange={ ( value: boolean ) =>
+							setAttributes( { muted: value } )
+						}
 					/>
 					<SelectControl
 						__nextHasNoMarginBottom
 						label={ __( 'Preload', 'imagina-player' ) }
 						value={ String( attributes.preload ?? INHERIT ) as '' }
 						options={ [
-							{ value: INHERIT, label: __( 'Use preset', 'imagina-player' ) },
-							{ value: 'none', label: __( 'None', 'imagina-player' ) },
-							{ value: 'metadata', label: __( 'Metadata', 'imagina-player' ) },
-							{ value: 'auto', label: __( 'Auto', 'imagina-player' ) },
+							{
+								value: INHERIT,
+								label: __( 'Use preset', 'imagina-player' ),
+							},
+							{
+								value: 'none',
+								label: __( 'None', 'imagina-player' ),
+							},
+							{
+								value: 'metadata',
+								label: __( 'Metadata', 'imagina-player' ),
+							},
+							{
+								value: 'auto',
+								label: __( 'Auto', 'imagina-player' ),
+							},
 						] }
-						onChange={ ( value: string ) => setAttributes( { preload: value } ) }
+						onChange={ ( value: string ) =>
+							setAttributes( { preload: value } )
+						}
 					/>
 					<BaseControl __nextHasNoMarginBottom id="imgp-start-time">
 						<TextControl
 							__nextHasNoMarginBottom
 							type="number"
-							label={ __( 'Start at (seconds)', 'imagina-player' ) }
+							label={ __(
+								'Start at (seconds)',
+								'imagina-player'
+							) }
 							value={ String( attributes.startTime ?? 0 ) }
-							onChange={ ( value: string ) => setAttributes( { startTime: Number( value ) || 0 } ) }
+							onChange={ ( value: string ) =>
+								setAttributes( {
+									startTime: Number( value ) || 0,
+								} )
+							}
 						/>
 					</BaseControl>
 				</PanelBody>
 
-				<PanelBody title={ __( 'Colours', 'imagina-player' ) } initialOpen={ false }>
+				<PanelBody
+					title={ __( 'Colours', 'imagina-player' ) }
+					initialOpen={ false }
+				>
 					<p className="imgp-editor__hint">
-						{ __( 'Leave a colour unset to use the preset’s.', 'imagina-player' ) }
+						{ __(
+							'Leave a colour unset to use the preset’s.',
+							'imagina-player'
+						) }
 					</p>
 
 					{ (
 						[
 							[ 'accent', __( 'Accent', 'imagina-player' ) ],
 							[ 'waveColor', __( 'Waveform', 'imagina-player' ) ],
-							[ 'waveProgress', __( 'Played portion', 'imagina-player' ) ],
+							[
+								'waveProgress',
+								__( 'Played portion', 'imagina-player' ),
+							],
 							[ 'textColor', __( 'Title', 'imagina-player' ) ],
 							[ 'metaColor', __( 'Artist', 'imagina-player' ) ],
 						] as const
-					).map( ( [ attribute, label ] ) => {
+					 ).map( ( [ attribute, label ] ) => {
 						const value = String( attributes[ attribute ] ?? '' );
 
 						return (
@@ -366,26 +529,43 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 										id={ `imgp-colour-${ attribute }` }
 										// A swatch cannot show "unset"; it falls back to a
 										// neutral while the text field carries the real state.
-										value={ HEX.test( value ) ? value : '#cccccc' }
+										value={
+											HEX.test( value )
+												? value
+												: '#cccccc'
+										}
 										onChange={ ( event ) =>
-											setAttributes( { [ attribute ]: event.target.value } )
+											setAttributes( {
+												[ attribute ]:
+													event.target.value,
+											} )
 										}
 									/>
 									<input
 										type="text"
 										className="imgp-editor__colour-text"
 										value={ value }
-										placeholder={ __( 'From preset', 'imagina-player' ) }
+										placeholder={ __(
+											'From preset',
+											'imagina-player'
+										) }
 										spellCheck={ false }
 										onChange={ ( event ) =>
-											setAttributes( { [ attribute ]: event.target.value } )
+											setAttributes( {
+												[ attribute ]:
+													event.target.value,
+											} )
 										}
 									/>
 									{ value && (
 										<Button
 											variant="tertiary"
 											size="small"
-											onClick={ () => setAttributes( { [ attribute ]: INHERIT } ) }
+											onClick={ () =>
+												setAttributes( {
+													[ attribute ]: INHERIT,
+												} )
+											}
 										>
 											{ __( 'Reset', 'imagina-player' ) }
 										</Button>
@@ -396,7 +576,10 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 					} ) }
 				</PanelBody>
 
-				<PanelBody title={ __( 'Size', 'imagina-player' ) } initialOpen={ false }>
+				<PanelBody
+					title={ __( 'Size', 'imagina-player' ) }
+					initialOpen={ false }
+				>
 					<RangeControl
 						__nextHasNoMarginBottom
 						label={ __( 'Waveform height', 'imagina-player' ) }
@@ -406,12 +589,16 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 						resetFallbackValue={ undefined }
 						value={ Number( attributes.height ) || undefined }
 						onChange={ ( value?: number ) =>
-							setAttributes( { height: value ? String( value ) : INHERIT } )
+							setAttributes( {
+								height: value ? String( value ) : INHERIT,
+							} )
 						}
-						help={ __( 'Unset uses the preset’s height.', 'imagina-player' ) }
+						help={ __(
+							'Unset uses the preset’s height.',
+							'imagina-player'
+						) }
 					/>
 				</PanelBody>
-
 			</InspectorControls>
 
 			<Preview

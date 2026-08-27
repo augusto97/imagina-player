@@ -70,7 +70,9 @@ export class Player {
 	constructor( root: HTMLElement, runtime: RuntimeData ) {
 		this.root = root;
 		this.runtime = runtime;
-		this.config = JSON.parse( root.dataset.imaginaPlayer || '{}' ) as PlayerConfig;
+		this.config = JSON.parse(
+			root.dataset.imaginaPlayer || '{}'
+		) as PlayerConfig;
 
 		const media = root.querySelector< HTMLMediaElement >( '.imgp__media' );
 
@@ -116,14 +118,22 @@ export class Player {
 	private bindMedia(): void {
 		const media = this.media;
 
-		media.addEventListener( 'loadedmetadata', () => this.onDurationKnown() );
-		media.addEventListener( 'durationchange', () => this.onDurationKnown() );
+		media.addEventListener( 'loadedmetadata', () =>
+			this.onDurationKnown()
+		);
+		media.addEventListener( 'durationchange', () =>
+			this.onDurationKnown()
+		);
 		media.addEventListener( 'timeupdate', this.onTimeUpdate );
 		media.addEventListener( 'play', () => this.onPlay() );
 		media.addEventListener( 'pause', () => this.onPause() );
 		media.addEventListener( 'ended', () => this.onEnded() );
-		media.addEventListener( 'waiting', () => this.root.classList.add( 'is-buffering' ) );
-		media.addEventListener( 'playing', () => this.root.classList.remove( 'is-buffering' ) );
+		media.addEventListener( 'waiting', () =>
+			this.root.classList.add( 'is-buffering' )
+		);
+		media.addEventListener( 'playing', () =>
+			this.root.classList.remove( 'is-buffering' )
+		);
 		media.addEventListener( 'error', () => {
 			void this.recoverSource();
 		} );
@@ -154,17 +164,23 @@ export class Player {
 			this.media.playbackRate = SPEEDS[ this.speedIndex ];
 
 			if ( this.speedButton ) {
-				this.speedButton.textContent = `${ SPEEDS[ this.speedIndex ] }×`;
+				this.speedButton.textContent = `${
+					SPEEDS[ this.speedIndex ]
+				}×`;
 			}
 		} );
 
-		this.root.querySelector( '.imgp__skip--back' )?.addEventListener( 'click', () => {
-			this.seekTo( this.media.currentTime - this.config.skipSeconds );
-		} );
+		this.root
+			.querySelector( '.imgp__skip--back' )
+			?.addEventListener( 'click', () => {
+				this.seekTo( this.media.currentTime - this.config.skipSeconds );
+			} );
 
-		this.root.querySelector( '.imgp__skip--forward' )?.addEventListener( 'click', () => {
-			this.seekTo( this.media.currentTime + this.config.skipSeconds );
-		} );
+		this.root
+			.querySelector( '.imgp__skip--forward' )
+			?.addEventListener( 'click', () => {
+				this.seekTo( this.media.currentTime + this.config.skipSeconds );
+			} );
 
 		this.bindSeek();
 		this.syncVolumeUi();
@@ -180,7 +196,9 @@ export class Player {
 		const positionFromEvent = ( event: PointerEvent ): number => {
 			const rect = seek.getBoundingClientRect();
 
-			return rect.width > 0 ? clamp( ( event.clientX - rect.left ) / rect.width, 0, 1 ) : 0;
+			return rect.width > 0
+				? clamp( ( event.clientX - rect.left ) / rect.width, 0, 1 )
+				: 0;
 		};
 
 		seek.addEventListener( 'pointerdown', ( event: PointerEvent ) => {
@@ -256,7 +274,8 @@ export class Player {
 	}
 
 	private setupWaveform(): void {
-		const canvas = this.root.querySelector< HTMLCanvasElement >( '.imgp__wave' );
+		const canvas =
+			this.root.querySelector< HTMLCanvasElement >( '.imgp__wave' );
 
 		if ( ! canvas ) {
 			return;
@@ -265,7 +284,9 @@ export class Player {
 		this.waveform = new Waveform( canvas, {
 			barWidth: Math.max( 1, this.config.bars || 3 ),
 			gap: Math.max( 0, this.config.gap ?? 1 ),
-			reflection: this.config.centered ? 0 : clamp( this.config.reflection ?? 0.25, 0, 0.8 ),
+			reflection: this.config.centered
+				? 0
+				: clamp( this.config.reflection ?? 0.25, 0, 0.8 ),
 			rounded: this.root.classList.contains( 'imgp--rounded' ),
 			centered: Boolean( this.config.centered ),
 		} );
@@ -332,7 +353,9 @@ export class Player {
 		try {
 			// `sharedPeaks` collapses every player showing this track into one
 			// request — and, on a cold cache, one download and decode.
-			peaks = await sharedPeaks( this.config.peaksKey, () => this.fetchOrComputePeaks() );
+			peaks = await sharedPeaks( this.config.peaksKey, () =>
+				this.fetchOrComputePeaks()
+			);
 		} finally {
 			window.clearTimeout( stopAnalyzing );
 			this.root.classList.remove( 'is-analyzing' );
@@ -361,11 +384,15 @@ export class Player {
 	 */
 	private async fetchOrComputePeaks(): Promise< Float32Array | null > {
 		try {
-			const url = `${ this.runtime.restUrl }/peaks?key=${ encodeURIComponent( this.config.peaksKey ) }`;
+			const url = `${
+				this.runtime.restUrl
+			}/peaks?key=${ encodeURIComponent( this.config.peaksKey ) }`;
 			const response = await fetch( url );
 
 			if ( response.ok ) {
-				const data = ( await response.json() ) as { peaks?: string | null };
+				const data = ( await response.json() ) as {
+					peaks?: string | null;
+				};
 
 				if ( data.peaks ) {
 					return decodePeaks( data.peaks );
@@ -379,10 +406,14 @@ export class Player {
 			return null;
 		}
 
-		const computed = await computePeaks( this.media.currentSrc || this.media.src, this.config.resolution, {
-			maxBytes: this.runtime.maxComputeBytes,
-			timeoutMs: ANALYZE_TIMEOUT,
-		} );
+		const computed = await computePeaks(
+			this.media.currentSrc || this.media.src,
+			this.config.resolution,
+			{
+				maxBytes: this.runtime.maxComputeBytes,
+				timeoutMs: ANALYZE_TIMEOUT,
+			}
+		);
 
 		if ( typeof computed === 'string' ) {
 			// Say why once, in the console: a silent flat waveform on a long
@@ -421,7 +452,8 @@ export class Player {
 
 				// Only detach while something is actually playing — a paused player
 				// scrolling by should not pin itself to the viewport.
-				const shouldStick = ! entry.isIntersecting && ! this.media.paused;
+				const shouldStick =
+					! entry.isIntersecting && ! this.media.paused;
 
 				this.setStuck( shouldStick );
 			},
@@ -484,7 +516,10 @@ export class Player {
 
 		this.root.classList.add( 'is-playing' );
 		this.playButton?.setAttribute( 'aria-pressed', 'true' );
-		this.playButton?.setAttribute( 'aria-label', this.runtime.i18n.pause ?? 'Pause' );
+		this.playButton?.setAttribute(
+			'aria-label',
+			this.runtime.i18n.pause ?? 'Pause'
+		);
 
 		// Colours can change after a theme swap or a dark-mode toggle.
 		this.applyWaveColors();
@@ -494,7 +529,10 @@ export class Player {
 	private onPause(): void {
 		this.root.classList.remove( 'is-playing' );
 		this.playButton?.setAttribute( 'aria-pressed', 'false' );
-		this.playButton?.setAttribute( 'aria-label', this.runtime.i18n.play ?? 'Play' );
+		this.playButton?.setAttribute(
+			'aria-label',
+			this.runtime.i18n.play ?? 'Play'
+		);
 
 		if ( this.root.classList.contains( 'is-stuck' ) ) {
 			this.setStuck( false );
@@ -537,7 +575,8 @@ export class Player {
 
 	private render(): void {
 		const duration = this.duration();
-		const ratio = duration > 0 ? clamp( this.media.currentTime / duration, 0, 1 ) : 0;
+		const ratio =
+			duration > 0 ? clamp( this.media.currentTime / duration, 0, 1 ) : 0;
 
 		this.waveform?.setProgress( ratio );
 
@@ -557,7 +596,10 @@ export class Player {
 		}
 
 		if ( this.seek ) {
-			this.seek.setAttribute( 'aria-valuenow', String( Math.round( ratio * 100 ) ) );
+			this.seek.setAttribute(
+				'aria-valuenow',
+				String( Math.round( ratio * 100 ) )
+			);
 			this.seek.setAttribute( 'aria-valuetext', formatTime( time ) );
 		}
 	}
@@ -566,10 +608,15 @@ export class Player {
 		const muted = this.media.muted || this.media.volume === 0;
 
 		this.root.classList.toggle( 'is-muted', muted );
-		this.muteButton?.setAttribute( 'aria-pressed', muted ? 'true' : 'false' );
+		this.muteButton?.setAttribute(
+			'aria-pressed',
+			muted ? 'true' : 'false'
+		);
 		this.muteButton?.setAttribute(
 			'aria-label',
-			muted ? this.runtime.i18n.unmute ?? 'Unmute' : this.runtime.i18n.mute ?? 'Mute'
+			muted
+				? this.runtime.i18n.unmute ?? 'Unmute'
+				: this.runtime.i18n.mute ?? 'Mute'
 		);
 
 		if ( this.volumeSlider ) {
@@ -578,7 +625,10 @@ export class Player {
 	}
 
 	private duration(): number {
-		if ( Number.isFinite( this.media.duration ) && this.media.duration > 0 ) {
+		if (
+			Number.isFinite( this.media.duration ) &&
+			this.media.duration > 0
+		) {
 			return this.media.duration;
 		}
 
@@ -611,7 +661,10 @@ export class Player {
 		}
 
 		try {
-			window.localStorage.setItem( this.storageKey(), String( Math.floor( this.media.currentTime ) ) );
+			window.localStorage.setItem(
+				this.storageKey(),
+				String( Math.floor( this.media.currentTime ) )
+			);
 		} catch {
 			// Ignored.
 		}
@@ -627,7 +680,10 @@ export class Player {
 
 	seekTo( seconds: number ): void {
 		const duration = this.duration();
-		const target = duration > 0 ? clamp( seconds, 0, duration ) : Math.max( 0, seconds );
+		const target =
+			duration > 0
+				? clamp( seconds, 0, duration )
+				: Math.max( 0, seconds );
 
 		try {
 			this.media.currentTime = target;
@@ -654,7 +710,11 @@ export class Player {
 	 * cache, ask for a fresh link once and pick up where playback stopped.
 	 */
 	private async recoverSource(): Promise< boolean > {
-		if ( ! this.config.protectedId || this.sourceRefreshed || ! this.runtime.restUrl ) {
+		if (
+			! this.config.protectedId ||
+			this.sourceRefreshed ||
+			! this.runtime.restUrl
+		) {
 			this.root.classList.add( 'has-error' );
 
 			return false;
@@ -667,7 +727,9 @@ export class Player {
 
 		try {
 			const response = await fetch(
-				`${ this.runtime.restUrl }/stream-url?id=${ encodeURIComponent( String( this.config.protectedId ) ) }`,
+				`${ this.runtime.restUrl }/stream-url?id=${ encodeURIComponent(
+					String( this.config.protectedId )
+				) }`,
 				{ credentials: 'same-origin' }
 			);
 

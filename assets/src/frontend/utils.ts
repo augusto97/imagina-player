@@ -1,5 +1,6 @@
 /**
  * `3661` -> `1:01:01`, `61` -> `1:01`, unknown -> `--:--`.
+ * @param seconds
  */
 export function formatTime( seconds: number ): string {
 	if ( ! Number.isFinite( seconds ) || seconds <= 0 ) {
@@ -24,6 +25,7 @@ export function clamp( value: number, min: number, max: number ): number {
 
 /**
  * Collapse repeated calls into one per animation frame.
+ * @param callback
  */
 export function rafThrottle< T extends ( ...args: never[] ) => void >(
 	callback: T
@@ -49,5 +51,8 @@ export function rafThrottle< T extends ( ...args: never[] ) => void >(
 }
 
 export function prefersReducedMotion(): boolean {
-	return window.matchMedia?.( '(prefers-reduced-motion: reduce)' ).matches ?? false;
+	return (
+		window.matchMedia?.( '(prefers-reduced-motion: reduce)' ).matches ??
+		false
+	);
 }

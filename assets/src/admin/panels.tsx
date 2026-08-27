@@ -1,9 +1,23 @@
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { generateWaveform, listPendingWaveforms, runProtectionSelfCheck } from './api';
+import {
+	generateWaveform,
+	listPendingWaveforms,
+	runProtectionSelfCheck,
+} from './api';
 import type { SelfCheckResult } from './api';
-import { Card, ColorInput, Field, MediaInput, Notice, NumberInput, Select, TextInput, Toggle } from './controls';
+import {
+	Card,
+	ColorInput,
+	Field,
+	MediaInput,
+	Notice,
+	NumberInput,
+	Select,
+	TextInput,
+	Toggle,
+} from './controls';
 import type { SettingsPayload } from './types';
 
 interface PanelProps {
@@ -18,8 +32,11 @@ interface PanelProps {
  * any process, a path typed in wrong, and nothing installed all read as
  * "not found", and only the last one is answered by asking the host to
  * install it.
+ * @param state
  */
-function ffmpegProblem( state: SettingsPayload[ 'system' ][ 'ffmpegState' ] ): string {
+function ffmpegProblem(
+	state: SettingsPayload[ 'system' ][ 'ffmpegState' ]
+): string {
 	switch ( state ) {
 		case 'processes-disabled':
 			return __(
@@ -58,13 +75,17 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 	 */
 	const generateAll = async (): Promise< void > => {
 		setBusy( true );
-		setStatus( __( 'Looking for files without a waveform…', 'imagina-player' ) );
+		setStatus(
+			__( 'Looking for files without a waveform…', 'imagina-player' )
+		);
 
 		try {
 			const { pending } = await listPendingWaveforms();
 
 			if ( ! pending.length ) {
-				setStatus( __( 'Every file already has a waveform.', 'imagina-player' ) );
+				setStatus(
+					__( 'Every file already has a waveform.', 'imagina-player' )
+				);
 
 				return;
 			}
@@ -99,7 +120,12 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 				)
 			);
 		} catch {
-			setStatus( __( 'The list of pending files could not be loaded.', 'imagina-player' ) );
+			setStatus(
+				__(
+					'The list of pending files could not be loaded.',
+					'imagina-player'
+				)
+			);
 		} finally {
 			setBusy( false );
 		}
@@ -109,18 +135,26 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 		<>
 			<Card
 				title={ __( 'Waveforms', 'imagina-player' ) }
-				description={ __( 'How the shape of each track is measured and stored.', 'imagina-player' ) }
+				description={ __(
+					'How the shape of each track is measured and stored.',
+					'imagina-player'
+				) }
 			>
 				{ settings.system.ffmpeg ? (
 					<Notice tone="good">
-						{ __( 'ffmpeg was found on this server, so waveforms are generated here.', 'imagina-player' ) }
+						{ __(
+							'ffmpeg was found on this server, so waveforms are generated here.',
+							'imagina-player'
+						) }
 						{ settings.system.ffmpegBinary && (
 							<code> { settings.system.ffmpegBinary }</code>
 						) }
 					</Notice>
 				) : (
 					<Notice tone="warn">
-						<strong>{ ffmpegProblem( settings.system.ffmpegState ) }</strong>{ ' ' }
+						<strong>
+							{ ffmpegProblem( settings.system.ffmpegState ) }
+						</strong>{ ' ' }
 						{ __(
 							'Nothing is broken: files small enough to analyse in the visitor’s browser still get a waveform, and longer recordings show a plain progress bar instead. Server-side generation only removes that limit.',
 							'imagina-player'
@@ -130,7 +164,10 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 
 				<Field
 					label={ __( 'Bars per waveform', 'imagina-player' ) }
-					help={ __( 'How many amplitude samples are stored per track. 400 suits players up to about 1200px wide.', 'imagina-player' ) }
+					help={ __(
+						'How many amplitude samples are stored per track. 400 suits players up to about 1200px wide.',
+						'imagina-player'
+					) }
 				>
 					<NumberInput
 						value={ peaks.resolution }
@@ -140,47 +177,77 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 					/>
 				</Field>
 
-				<Field label={ __( 'ffmpeg path', 'imagina-player' ) } help={ __( 'Leave empty to search the usual locations.', 'imagina-player' ) }>
+				<Field
+					label={ __( 'ffmpeg path', 'imagina-player' ) }
+					help={ __(
+						'Leave empty to search the usual locations.',
+						'imagina-player'
+					) }
+				>
 					<TextInput
 						value={ peaks.ffmpeg_path }
 						mono
 						placeholder="/usr/bin/ffmpeg"
-						onChange={ ( ffmpeg_path ) => set( { ffmpeg_path } ) }
+						onChange={ ( value ) => set( { ffmpeg_path: value } ) }
 					/>
 				</Field>
 
 				<div className="imgpa-toggles">
 					<Toggle
-						label={ __( 'Generate on the server', 'imagina-player' ) }
-						help={ __( 'Runs outside the page request, so nobody waits for it.', 'imagina-player' ) }
+						label={ __(
+							'Generate on the server',
+							'imagina-player'
+						) }
+						help={ __(
+							'Runs outside the page request, so nobody waits for it.',
+							'imagina-player'
+						) }
 						checked={ peaks.server_generation }
-						onChange={ ( server_generation ) => set( { server_generation } ) }
+						onChange={ ( value ) =>
+							set( { server_generation: value } )
+						}
 					/>
 					<Toggle
-						label={ __( 'Let the browser fill in the gaps', 'imagina-player' ) }
-						help={ __( 'The first visitor analyses a missing waveform and the site stores it. Short files only.', 'imagina-player' ) }
+						label={ __(
+							'Let the browser fill in the gaps',
+							'imagina-player'
+						) }
+						help={ __(
+							'The first visitor analyses a missing waveform and the site stores it. Short files only.',
+							'imagina-player'
+						) }
 						checked={ peaks.client_fallback }
-						onChange={ ( client_fallback ) => set( { client_fallback } ) }
+						onChange={ ( value ) =>
+							set( { client_fallback: value } )
+						}
 					/>
 				</div>
 
 				<Field
 					label={ __( 'Browser size limit', 'imagina-player' ) }
-					help={ __( 'Larger files are never analysed in the browser: decoding expands audio to raw samples in memory, and an hour of stereo is well over a gigabyte.', 'imagina-player' ) }
+					help={ __(
+						'Larger files are never analysed in the browser: decoding expands audio to raw samples in memory, and an hour of stereo is well over a gigabyte.',
+						'imagina-player'
+					) }
 				>
 					<NumberInput
 						value={ peaks.max_client_mb }
 						min={ 1 }
 						max={ 200 }
 						suffix="MB"
-						onChange={ ( max_client_mb ) => set( { max_client_mb } ) }
+						onChange={ ( value ) =>
+							set( { max_client_mb: value } )
+						}
 					/>
 				</Field>
 			</Card>
 
 			<Card
 				title={ __( 'Generate now', 'imagina-player' ) }
-				description={ __( 'Builds waveforms for every audio and video file that does not have one yet, without waiting for scheduled tasks.', 'imagina-player' ) }
+				description={ __(
+					'Builds waveforms for every audio and video file that does not have one yet, without waiting for scheduled tasks.',
+					'imagina-player'
+				) }
 			>
 				<div className="imgpa-row">
 					<button
@@ -191,9 +258,16 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 					>
 						{ busy
 							? __( 'Working…', 'imagina-player' )
-							: __( 'Generate missing waveforms', 'imagina-player' ) }
+							: __(
+									'Generate missing waveforms',
+									'imagina-player'
+							  ) }
 					</button>
-					<span className="imgpa-hint" role="status" aria-live="polite">
+					<span
+						className="imgpa-hint"
+						role="status"
+						aria-live="polite"
+					>
 						{ status }
 					</span>
 				</div>
@@ -213,7 +287,10 @@ export function ProtectionPanel( { settings, onChange }: PanelProps ) {
 		<>
 			<Card
 				title={ __( 'Protected media', 'imagina-player' ) }
-				description={ __( 'Files you mark as protected move out of the public uploads folder and are served through a signed link that expires. Mark a file on its own screen in the media library.', 'imagina-player' ) }
+				description={ __(
+					'Files you mark as protected move out of the public uploads folder and are served through a signed link that expires. Mark a file on its own screen in the media library.',
+					'imagina-player'
+				) }
 			>
 				<Notice tone="info">
 					{ __(
@@ -224,7 +301,10 @@ export function ProtectionPanel( { settings, onChange }: PanelProps ) {
 
 				<div className="imgpa-toggles">
 					<Toggle
-						label={ __( 'Serve protected files through signed links', 'imagina-player' ) }
+						label={ __(
+							'Serve protected files through signed links',
+							'imagina-player'
+						) }
 						checked={ protection.enabled }
 						onChange={ ( enabled ) => set( { enabled } ) }
 					/>
@@ -232,53 +312,106 @@ export function ProtectionPanel( { settings, onChange }: PanelProps ) {
 
 				<Field
 					label={ __( 'Link lifetime', 'imagina-player' ) }
-					help={ __( 'A shared link stops working after this. Players ask for a fresh one automatically, so page caching stays safe.', 'imagina-player' ) }
+					help={ __(
+						'A shared link stops working after this. Players ask for a fresh one automatically, so page caching stays safe.',
+						'imagina-player'
+					) }
 				>
 					<Select
 						value={ String( protection.ttl ) }
 						onChange={ ( ttl ) => set( { ttl: Number( ttl ) } ) }
 						options={ [
-							{ value: String( hour ), label: __( '1 hour', 'imagina-player' ) },
-							{ value: String( 6 * hour ), label: __( '6 hours', 'imagina-player' ) },
-							{ value: String( 12 * hour ), label: __( '12 hours', 'imagina-player' ) },
-							{ value: String( 24 * hour ), label: __( '24 hours', 'imagina-player' ) },
-							{ value: String( 168 * hour ), label: __( '7 days', 'imagina-player' ) },
+							{
+								value: String( hour ),
+								label: __( '1 hour', 'imagina-player' ),
+							},
+							{
+								value: String( 6 * hour ),
+								label: __( '6 hours', 'imagina-player' ),
+							},
+							{
+								value: String( 12 * hour ),
+								label: __( '12 hours', 'imagina-player' ),
+							},
+							{
+								value: String( 24 * hour ),
+								label: __( '24 hours', 'imagina-player' ),
+							},
+							{
+								value: String( 168 * hour ),
+								label: __( '7 days', 'imagina-player' ),
+							},
 						] }
 					/>
 				</Field>
 
 				<div className="imgpa-toggles">
 					<Toggle
-						label={ __( 'Require a logged-in user', 'imagina-player' ) }
+						label={ __(
+							'Require a logged-in user',
+							'imagina-player'
+						) }
 						checked={ protection.require_login }
-						onChange={ ( require_login ) => set( { require_login } ) }
+						onChange={ ( value ) =>
+							set( { require_login: value } )
+						}
 					/>
 					<Toggle
-						label={ __( 'Tie each link to the user it was issued to', 'imagina-player' ) }
+						label={ __(
+							'Tie each link to the user it was issued to',
+							'imagina-player'
+						) }
 						checked={ protection.bind_to_user }
-						onChange={ ( bind_to_user ) => set( { bind_to_user } ) }
+						onChange={ ( value ) => set( { bind_to_user: value } ) }
 					/>
 					<Toggle
-						label={ __( 'Tie each link to the visitor’s network', 'imagina-player' ) }
-						help={ __( 'Adds a barrier to forwarding, but a listener moving from Wi-Fi to mobile needs a fresh link.', 'imagina-player' ) }
+						label={ __(
+							'Tie each link to the visitor’s network',
+							'imagina-player'
+						) }
+						help={ __(
+							'Adds a barrier to forwarding, but a listener moving from Wi-Fi to mobile needs a fresh link.',
+							'imagina-player'
+						) }
 						checked={ protection.bind_to_ip }
-						onChange={ ( bind_to_ip ) => set( { bind_to_ip } ) }
+						onChange={ ( value ) => set( { bind_to_ip: value } ) }
 					/>
 				</div>
 			</Card>
 
 			<Card
 				title={ __( 'Delivery', 'imagina-player' ) }
-				description={ __( 'Streaming through PHP keeps a worker busy for the whole playback. On a site with long tracks, hand the transfer to the web server.', 'imagina-player' ) }
+				description={ __(
+					'Streaming through PHP keeps a worker busy for the whole playback. On a site with long tracks, hand the transfer to the web server.',
+					'imagina-player'
+				) }
 			>
 				<Field label={ __( 'Method', 'imagina-player' ) }>
 					<Select
 						value={ protection.delivery }
 						onChange={ ( delivery ) => set( { delivery } ) }
 						options={ [
-							{ value: 'php', label: __( 'PHP (works everywhere)', 'imagina-player' ) },
-							{ value: 'xaccel', label: __( 'X-Accel-Redirect (nginx)', 'imagina-player' ) },
-							{ value: 'xsendfile', label: __( 'X-Sendfile (Apache/LiteSpeed)', 'imagina-player' ) },
+							{
+								value: 'php',
+								label: __(
+									'PHP (works everywhere)',
+									'imagina-player'
+								),
+							},
+							{
+								value: 'xaccel',
+								label: __(
+									'X-Accel-Redirect (nginx)',
+									'imagina-player'
+								),
+							},
+							{
+								value: 'xsendfile',
+								label: __(
+									'X-Sendfile (Apache/LiteSpeed)',
+									'imagina-player'
+								),
+							},
 						] }
 					/>
 				</Field>
@@ -287,17 +420,27 @@ export function ProtectionPanel( { settings, onChange }: PanelProps ) {
 					<TextInput
 						value={ protection.xaccel_prefix }
 						mono
-						onChange={ ( xaccel_prefix ) => set( { xaccel_prefix } ) }
+						onChange={ ( value ) =>
+							set( { xaccel_prefix: value } )
+						}
 					/>
 				</Field>
 
-				<Field label={ __( 'Protected files live in', 'imagina-player' ) } wide>
-					<code className="imgpa-code">{ settings.system.vaultDir }</code>
+				<Field
+					label={ __( 'Protected files live in', 'imagina-player' ) }
+					wide
+				>
+					<code className="imgpa-code">
+						{ settings.system.vaultDir }
+					</code>
 				</Field>
 
 				{ settings.system.htaccess ? (
 					<Notice tone="good">
-						{ __( 'This server reads .htaccess, and the plugin writes deny rules into that folder. Nothing else to do.', 'imagina-player' ) }
+						{ __(
+							'This server reads .htaccess, and the plugin writes deny rules into that folder. Nothing else to do.',
+							'imagina-player'
+						) }
 					</Notice>
 				) : (
 					<Notice tone="warn">
@@ -343,7 +486,11 @@ function SelfCheckCard() {
 			setResult( await runProtectionSelfCheck() );
 		} catch ( failure ) {
 			setResult( null );
-			setError( failure instanceof Error ? failure.message : __( 'The check could not be run.', 'imagina-player' ) );
+			setError(
+				failure instanceof Error
+					? failure.message
+					: __( 'The check could not be run.', 'imagina-player' )
+			);
 		} finally {
 			setRunning( false );
 		}
@@ -355,31 +502,57 @@ function SelfCheckCard() {
 	return (
 		<Card
 			title={ __( 'Check that it works', 'imagina-player' ) }
-			description={ __( 'Tries to reach a protected file the way a stranger would: a real request to this site, from this site, carrying no login. What comes back is what any visitor would get.', 'imagina-player' ) }
+			description={ __(
+				'Tries to reach a protected file the way a stranger would: a real request to this site, from this site, carrying no login. What comes back is what any visitor would get.',
+				'imagina-player'
+			) }
 		>
 			<div className="imgpa-row">
-				<button type="button" className="imgpa-btn imgpa-btn--primary" onClick={ run } disabled={ running }>
-					{ running ? __( 'Checking…', 'imagina-player' ) : __( 'Run the check', 'imagina-player' ) }
+				<button
+					type="button"
+					className="imgpa-btn imgpa-btn--primary"
+					onClick={ run }
+					disabled={ running }
+				>
+					{ running
+						? __( 'Checking…', 'imagina-player' )
+						: __( 'Run the check', 'imagina-player' ) }
 				</button>
-				{ result && <span className="imgpa-hint">{ result.summary }</span> }
+				{ result && (
+					<span className="imgpa-hint">{ result.summary }</span>
+				) }
 			</div>
 
 			{ '' !== error && <Notice tone="warn">{ error }</Notice> }
 
 			{ result && (
 				<>
-					<Notice tone={ tone( result.status ) }>{ result.summary }</Notice>
+					<Notice tone={ tone( result.status ) }>
+						{ result.summary }
+					</Notice>
 
 					<ul className="imgpa-checks">
 						{ result.checks.map( ( check ) => (
-							<li key={ check.id } className={ `imgpa-check imgpa-check--${ check.status }` }>
-								<span className="imgpa-check__mark" aria-hidden="true">
+							<li
+								key={ check.id }
+								className={ `imgpa-check imgpa-check--${ check.status }` }
+							>
+								<span
+									className="imgpa-check__mark"
+									aria-hidden="true"
+								>
 									{ MARKS[ check.status ] }
 								</span>
 								<span className="imgpa-check__text">
 									<strong>{ check.label }</strong>
-									<span className="imgpa-sr">{ STATUS_LABELS[ check.status ]() }</span>
-									{ '' !== check.detail && <span className="imgpa-check__detail">{ check.detail }</span> }
+									<span className="imgpa-sr">
+										{ STATUS_LABELS[ check.status ]() }
+									</span>
+									{ '' !== check.detail && (
+										<span className="imgpa-check__detail">
+											{ check.detail }
+										</span>
+									) }
 								</span>
 							</li>
 						) ) }
@@ -411,6 +584,9 @@ const STATUS_LABELS: Record< SelfCheckResult[ 'status' ], () => string > = {
  * These do not restyle existing presets — that would silently rewrite work
  * somebody already did. They are what a *new* preset starts from, plus the logo
  * every player carries.
+ * @param root0
+ * @param root0.settings
+ * @param root0.onChange
  */
 export function BrandingPanel( { settings, onChange }: PanelProps ) {
 	const branding = settings.branding;
@@ -421,25 +597,49 @@ export function BrandingPanel( { settings, onChange }: PanelProps ) {
 		<>
 			<Card
 				title={ __( 'Brand colours', 'imagina-player' ) }
-				description={ __( 'What a new preset starts from. Existing presets keep the colours you already gave them.', 'imagina-player' ) }
+				description={ __(
+					'What a new preset starts from. Existing presets keep the colours you already gave them.',
+					'imagina-player'
+				) }
 			>
-				<Field label={ __( 'Accent', 'imagina-player' ) } help={ __( 'Play button and highlights.', 'imagina-player' ) }>
-					<ColorInput value={ branding.accent } onChange={ ( accent ) => set( { accent } ) } />
+				<Field
+					label={ __( 'Accent', 'imagina-player' ) }
+					help={ __(
+						'Play button and highlights.',
+						'imagina-player'
+					) }
+				>
+					<ColorInput
+						value={ branding.accent }
+						onChange={ ( accent ) => set( { accent } ) }
+					/>
 				</Field>
 				<Field label={ __( 'Waveform', 'imagina-player' ) }>
-					<ColorInput value={ branding.wave_color } onChange={ ( wave_color ) => set( { wave_color } ) } />
+					<ColorInput
+						value={ branding.wave_color }
+						onChange={ ( value ) => set( { wave_color: value } ) }
+					/>
 				</Field>
 				<Field label={ __( 'Title', 'imagina-player' ) }>
-					<ColorInput value={ branding.text_color } onChange={ ( text_color ) => set( { text_color } ) } />
+					<ColorInput
+						value={ branding.text_color }
+						onChange={ ( value ) => set( { text_color: value } ) }
+					/>
 				</Field>
 				<Field label={ __( 'Artist', 'imagina-player' ) }>
-					<ColorInput value={ branding.meta_color } onChange={ ( meta_color ) => set( { meta_color } ) } />
+					<ColorInput
+						value={ branding.meta_color }
+						onChange={ ( value ) => set( { meta_color: value } ) }
+					/>
 				</Field>
 			</Card>
 
 			<Card
 				title={ __( 'Logo', 'imagina-player' ) }
-				description={ __( 'Shown at the end of the control row on every player. Leave empty for none.', 'imagina-player' ) }
+				description={ __(
+					'Shown at the end of the control row on every player. Leave empty for none.',
+					'imagina-player'
+				) }
 			>
 				<Field label={ __( 'Image', 'imagina-player' ) } wide>
 					<MediaInput
@@ -454,7 +654,7 @@ export function BrandingPanel( { settings, onChange }: PanelProps ) {
 						value={ branding.logo_link }
 						mono
 						placeholder="https://…"
-						onChange={ ( logo_link ) => set( { logo_link } ) }
+						onChange={ ( value ) => set( { logo_link: value } ) }
 					/>
 				</Field>
 				<Field label={ __( 'Height', 'imagina-player' ) }>
@@ -463,7 +663,7 @@ export function BrandingPanel( { settings, onChange }: PanelProps ) {
 						min={ 8 }
 						max={ 80 }
 						suffix="px"
-						onChange={ ( logo_height ) => set( { logo_height } ) }
+						onChange={ ( value ) => set( { logo_height: value } ) }
 					/>
 				</Field>
 			</Card>
@@ -480,21 +680,35 @@ export function AdvancedPanel( { settings, onChange }: PanelProps ) {
 		<Card title={ __( 'Advanced', 'imagina-player' ) }>
 			<div className="imgpa-toggles">
 				<Toggle
-					label={ __( 'Load the bundled stylesheet', 'imagina-player' ) }
-					help={ __( 'Turn off only if your theme styles the player itself.', 'imagina-player' ) }
+					label={ __(
+						'Load the bundled stylesheet',
+						'imagina-player'
+					) }
+					help={ __(
+						'Turn off only if your theme styles the player itself.',
+						'imagina-player'
+					) }
 					checked={ advanced.load_frontend_css }
-					onChange={ ( load_frontend_css ) => set( { load_frontend_css } ) }
+					onChange={ ( value ) =>
+						set( { load_frontend_css: value } )
+					}
 				/>
 				<Toggle
-					label={ __( 'Only start a player when it scrolls near the viewport', 'imagina-player' ) }
+					label={ __(
+						'Only start a player when it scrolls near the viewport',
+						'imagina-player'
+					) }
 					checked={ advanced.lazy_init }
-					onChange={ ( lazy_init ) => set( { lazy_init } ) }
+					onChange={ ( value ) => set( { lazy_init: value } ) }
 				/>
 			</div>
 
 			<Field
 				label={ __( 'Custom CSS', 'imagina-player' ) }
-				help={ __( 'Added after the player stylesheet, on pages that contain a player.', 'imagina-player' ) }
+				help={ __(
+					'Added after the player stylesheet, on pages that contain a player.',
+					'imagina-player'
+				) }
 				wide
 			>
 				<textarea
@@ -502,14 +716,19 @@ export function AdvancedPanel( { settings, onChange }: PanelProps ) {
 					rows={ 8 }
 					spellCheck={ false }
 					value={ advanced.custom_css }
-					placeholder={ '.imgp__play { box-shadow: 0 2px 12px rgb(0 0 0 / 20%); }' }
-					onChange={ ( event ) => set( { custom_css: event.target.value } ) }
+					placeholder={
+						'.imgp__play { box-shadow: 0 2px 12px rgb(0 0 0 / 20%); }'
+					}
+					onChange={ ( event ) =>
+						set( { custom_css: event.target.value } )
+					}
 				/>
 			</Field>
 
 			<Field label={ __( 'Shortcode', 'imagina-player' ) } wide>
 				<code className="imgpa-code">
-					[imagina_player src=&quot;https://…/track.mp3&quot; title=&quot;…&quot; artist=&quot;…&quot;
+					[imagina_player src=&quot;https://…/track.mp3&quot;
+					title=&quot;…&quot; artist=&quot;…&quot;
 					preset=&quot;default&quot;]
 				</code>
 			</Field>

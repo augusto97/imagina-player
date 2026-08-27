@@ -16,10 +16,14 @@ export function boot(): AdminBoot {
 }
 
 export function loadSettings(): Promise< SettingsPayload > {
-	return apiFetch( { path: '/imagina-player/v1/settings' } ) as Promise< SettingsPayload >;
+	return apiFetch( {
+		path: '/imagina-player/v1/settings',
+	} ) as Promise< SettingsPayload >;
 }
 
-export function saveSettings( settings: Partial< SettingsPayload > ): Promise< SettingsPayload > {
+export function saveSettings(
+	settings: Partial< SettingsPayload >
+): Promise< SettingsPayload > {
 	return apiFetch( {
 		path: '/imagina-player/v1/settings',
 		method: 'POST',
@@ -27,7 +31,9 @@ export function saveSettings( settings: Partial< SettingsPayload > ): Promise< S
 	} ) as Promise< SettingsPayload >;
 }
 
-export function renderPreview( preset: Preset ): Promise< { html: string; peaks: string } > {
+export function renderPreview(
+	preset: Preset
+): Promise< { html: string; peaks: string } > {
 	return apiFetch( {
 		path: '/imagina-player/v1/preview',
 		method: 'POST',
@@ -42,7 +48,9 @@ export interface PendingWaveforms {
 }
 
 export function listPendingWaveforms(): Promise< PendingWaveforms > {
-	return apiFetch( { path: '/imagina-player/v1/peaks/pending' } ) as Promise< PendingWaveforms >;
+	return apiFetch( {
+		path: '/imagina-player/v1/peaks/pending',
+	} ) as Promise< PendingWaveforms >;
 }
 
 export function generateWaveform( attachmentId: number ): Promise< unknown > {

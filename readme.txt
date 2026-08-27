@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,14 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.5.1 =
+* Fixed: the JavaScript linter could not run at all — a TypeScript version its
+  plugins predate had been pulled in — so nothing had ever been linted. It runs
+  clean now, and `npm test` runs the linters, the type checker and the test
+  suite together so it cannot rot again unnoticed.
+* Fixed: each toggle on the settings screen now names the control it belongs to
+  outright, instead of relying on being wrapped around it.
 
 = 1.5.0 =
 * New: a protection self-check. It writes a decoy file into the protected

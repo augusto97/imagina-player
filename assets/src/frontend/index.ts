@@ -84,7 +84,9 @@ function boot(): void {
 						observe( node );
 					}
 
-					node.querySelectorAll< HTMLElement >( SELECTOR ).forEach( observe );
+					node.querySelectorAll< HTMLElement >( SELECTOR ).forEach(
+						observe
+					);
 				}
 			}
 		} ).observe( document.body, { childList: true, subtree: true } );

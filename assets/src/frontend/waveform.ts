@@ -90,7 +90,9 @@ export class Waveform {
 	}
 
 	setProgress( progress: number ): void {
-		this.progress = Number.isFinite( progress ) ? Math.min( 1, Math.max( 0, progress ) ) : 0;
+		this.progress = Number.isFinite( progress )
+			? Math.min( 1, Math.max( 0, progress ) )
+			: 0;
 		this.composite();
 	}
 
@@ -154,7 +156,6 @@ export class Waveform {
 		ctx.fillStyle = this.waveColor;
 
 		const { barWidth, gap, reflection, rounded } = this.options;
-		const bars = this.barCount();
 		const step = barWidth + gap;
 		const mainHeight = this.height * ( 1 - reflection );
 		const reflectionHeight = this.height * reflection;
@@ -163,7 +164,10 @@ export class Waveform {
 		if ( this.placeholderOnly && this.peaks.length === 0 ) {
 			// One continuous bar across the middle, which the progress tint fills
 			// exactly like a normal seek bar.
-			const trackHeight = Math.max( 4, Math.min( 8, this.height * 0.12 ) );
+			const trackHeight = Math.max(
+				4,
+				Math.min( 8, this.height * 0.12 )
+			);
 
 			this.drawBar(
 				ctx,
@@ -178,10 +182,15 @@ export class Waveform {
 		}
 
 		// Before peaks arrive, the same slim bar stands in — never a row of stubs.
-		const values = this.peaks.length > 0 ? resample( this.peaks, bars ) : null;
+		const bars = this.barCount();
+		const values =
+			this.peaks.length > 0 ? resample( this.peaks, bars ) : null;
 
 		if ( ! values ) {
-			const trackHeight = Math.max( 4, Math.min( 8, this.height * 0.12 ) );
+			const trackHeight = Math.max(
+				4,
+				Math.min( 8, this.height * 0.12 )
+			);
 
 			ctx.globalAlpha = 0.45;
 			this.drawBar(
@@ -205,7 +214,14 @@ export class Waveform {
 			for ( let i = 0; i < bars; i++ ) {
 				const half = Math.max( 0.5, values[ i ] * middle );
 
-				this.drawBar( ctx, i * step, middle - half, barWidth, half * 2, radius );
+				this.drawBar(
+					ctx,
+					i * step,
+					middle - half,
+					barWidth,
+					half * 2,
+					radius
+				);
 			}
 
 			return;
@@ -216,7 +232,14 @@ export class Waveform {
 			const x = i * step;
 			const height = Math.max( 1, value * mainHeight );
 
-			this.drawBar( ctx, x, mainHeight - height, barWidth, height, radius );
+			this.drawBar(
+				ctx,
+				x,
+				mainHeight - height,
+				barWidth,
+				height,
+				radius
+			);
 
 			if ( reflectionHeight > 0 ) {
 				const mirrored = Math.max( 1, value * reflectionHeight );
@@ -249,6 +272,7 @@ export class Waveform {
 
 	/**
 	 * Blit the silhouette and tint everything left of the playhead.
+	 * @param force
 	 */
 	private composite( force = false ): void {
 		const ctx = this.context;
