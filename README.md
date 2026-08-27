@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.2.4.zip`.
+1. Descarga `imagina-player-1.3.0.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Ajustes → Imagina Player**.
@@ -14,18 +14,25 @@ código fuente está en la rama de desarrollo.
 
 | | |
 | --- | --- |
-| Versión | `1.2.4` |
-| Fichero | `imagina-player-1.2.4.zip` |
+| Versión | `1.3.0` |
+| Fichero | `imagina-player-1.3.0.zip` |
 | Tamaño | 92 KB |
-| SHA-256 | `88a9aa7e1393f1b8f769906b97c2358b0c4227398dbd3df7b3e42a9ccfd255e8` |
+| SHA-256 | `4856aaabd0644f7e4aa6e29962c52b733532b3565ebc981740eafa41fd8a778d` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.2.4.zip
+sha256sum imagina-player-1.3.0.zip
 ```
+
+## Novedades en 1.3.0
+
+- **Corregido:** la vista previa del bloque dibujaba una copia del reproductor
+  hecha a mano que se había quedado atrás: los skins tarjeta, compacto y
+  pastilla salían todos como el apilado. Ahora renderiza el reproductor real,
+  igual que la pantalla de ajustes.
 
 ## Novedades en 1.2.4
 
