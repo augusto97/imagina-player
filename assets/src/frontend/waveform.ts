@@ -41,6 +41,9 @@ export class Waveform {
 
 	private lastPaintedProgressPx = -1;
 
+	/** True once we know no waveform is coming and a plain bar is drawn instead. */
+	private placeholderOnly = false;
+
 	constructor( canvas: HTMLCanvasElement, options: WaveformOptions ) {
 		this.canvas = canvas;
 		this.context = canvas.getContext( '2d' );
@@ -63,6 +66,19 @@ export class Waveform {
 
 	setPeaks( peaks: Float32Array ): void {
 		this.peaks = peaks;
+		this.placeholderOnly = false;
+		this.paintBars();
+		this.composite( true );
+	}
+
+	/**
+	 * Settle for a plain progress bar.
+	 *
+	 * Called when no waveform could be obtained. A row of stubby equal bars reads
+	 * as a player that failed; a clean bar reads as a deliberate design.
+	 */
+	setPlaceholder(): void {
+		this.placeholderOnly = true;
 		this.paintBars();
 		this.composite( true );
 	}
@@ -142,12 +158,45 @@ export class Waveform {
 		const reflectionHeight = this.height * reflection;
 		const radius = rounded ? Math.min( barWidth, 6 ) / 2 : 0;
 
-		// No peaks yet: a low flat line reads as "waveform pending" without
-		// pretending to show data we do not have.
+		if ( this.placeholderOnly && this.peaks.length === 0 ) {
+			// One continuous bar across the middle, which the progress tint fills
+			// exactly like a normal seek bar.
+			const trackHeight = Math.max( 4, Math.min( 8, this.height * 0.12 ) );
+
+			this.drawBar(
+				ctx,
+				0,
+				( mainHeight - trackHeight ) / 2,
+				this.width,
+				trackHeight,
+				trackHeight / 2
+			);
+
+			return;
+		}
+
+		// Before peaks arrive, the same slim bar stands in — never a row of stubs.
 		const values = this.peaks.length > 0 ? resample( this.peaks, bars ) : null;
 
+		if ( ! values ) {
+			const trackHeight = Math.max( 4, Math.min( 8, this.height * 0.12 ) );
+
+			ctx.globalAlpha = 0.45;
+			this.drawBar(
+				ctx,
+				0,
+				( mainHeight - trackHeight ) / 2,
+				this.width,
+				trackHeight,
+				trackHeight / 2
+			);
+			ctx.globalAlpha = 1;
+
+			return;
+		}
+
 		for ( let i = 0; i < bars; i++ ) {
-			const value = values ? values[ i ] : 0.08;
+			const value = values[ i ];
 			const x = i * step;
 			const height = Math.max( 1, value * mainHeight );
 

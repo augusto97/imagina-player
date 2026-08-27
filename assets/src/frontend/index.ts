@@ -11,6 +11,7 @@ function runtime(): RuntimeData {
 		window.imaginaPlayer ?? {
 			restUrl: '',
 			lazyInit: true,
+			maxComputeBytes: 25 * 1024 * 1024,
 			i18n: {},
 		}
 	);

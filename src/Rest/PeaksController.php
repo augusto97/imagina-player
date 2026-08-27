@@ -83,6 +83,22 @@ final class PeaksController {
 
 		register_rest_route(
 			self::REST_NAMESPACE,
+			'/peaks/pending',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'list_pending' ),
+				'permission_callback' => static fn(): bool => current_user_can( 'upload_files' ),
+				'args'                => array(
+					'limit' => array(
+						'type'    => 'integer',
+						'default' => 200,
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::REST_NAMESPACE,
 			'/peaks/generate',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
@@ -226,6 +242,54 @@ final class PeaksController {
 				'key'    => $key,
 			),
 			$stored ? 201 : 500
+		);
+	}
+
+	/**
+	 * Audio and video attachments that have no cached waveform yet.
+	 *
+	 * Long recordings cannot be analysed in the browser, and the background job
+	 * depends on WP-Cron firing, so the admin needs a way to see what is missing
+	 * and to push it through on demand.
+	 */
+	public function list_pending( WP_REST_Request $request ): WP_REST_Response {
+		$limit = max( 1, min( 500, (int) $request->get_param( 'limit' ) ) );
+
+		$query = new \WP_Query(
+			array(
+				'post_type'      => 'attachment',
+				'post_status'    => 'inherit',
+				'post_mime_type' => array( 'audio', 'video' ),
+				'posts_per_page' => $limit,
+				'fields'         => 'ids',
+				'orderby'        => 'ID',
+				'order'          => 'DESC',
+				'no_found_rows'  => false,
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- admin-only tool.
+					array(
+						'key'     => PeaksRepository::META_KEY,
+						'compare' => 'NOT EXISTS',
+					),
+				),
+			)
+		);
+
+		$pending = array();
+
+		foreach ( $query->posts as $attachment_id ) {
+			$pending[] = array(
+				'id'    => (int) $attachment_id,
+				'title' => (string) get_the_title( $attachment_id ),
+			);
+		}
+
+		return new WP_REST_Response(
+			array(
+				'pending'   => $pending,
+				'total'     => (int) $query->found_posts,
+				'available' => PeaksGenerator::is_available(),
+			),
+			200
 		);
 	}
 

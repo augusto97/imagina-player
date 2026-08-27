@@ -20,6 +20,8 @@ export interface PlayerConfig {
 export interface RuntimeData {
 	restUrl: string;
 	lazyInit: boolean;
+	/** Largest file the browser may download and decode to build a waveform. */
+	maxComputeBytes: number;
 	i18n: Record< string, string >;
 }
 

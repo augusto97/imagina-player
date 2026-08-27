@@ -102,11 +102,13 @@ final class Assets {
 	 */
 	public static function runtime_data(): array {
 		$advanced = Settings::advanced();
+		$peaks    = Settings::peaks_settings();
 
 		return array(
-			'restUrl'  => esc_url_raw( rest_url( Rest\PeaksController::REST_NAMESPACE ) ),
-			'lazyInit' => ! empty( $advanced['lazy_init'] ),
-			'i18n'     => array(
+			'restUrl'         => esc_url_raw( rest_url( Rest\PeaksController::REST_NAMESPACE ) ),
+			'lazyInit'        => ! empty( $advanced['lazy_init'] ),
+			'maxComputeBytes' => (int) ( $peaks['max_client_bytes'] ?? 25 * 1024 * 1024 ),
+			'i18n'            => array(
 				'play'   => __( 'Play', 'imagina-player' ),
 				'pause'  => __( 'Pause', 'imagina-player' ),
 				'mute'   => __( 'Mute', 'imagina-player' ),

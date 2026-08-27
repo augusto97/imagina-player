@@ -160,6 +160,43 @@ final class SettingsPage {
 								<input type="checkbox" name="peaks[client_fallback]" value="1" <?php checked( ! empty( $settings['peaks']['client_fallback'] ) ); ?> />
 								<?php esc_html_e( 'Let the first visitor’s browser compute a missing waveform and store it', 'imagina-player' ); ?>
 							</label>
+							<p class="description">
+								<?php esc_html_e( 'Only for short files. Decoding expands audio to raw samples in memory, so anything longer than a few minutes has to be done on the server.', 'imagina-player' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="imgp-max-client"><?php esc_html_e( 'Browser size limit', 'imagina-player' ); ?></label></th>
+						<td>
+							<input type="number" id="imgp-max-client" name="peaks[max_client_bytes_mb]" min="1" max="200" step="1" value="<?php echo esc_attr( (string) (int) round( (int) $settings['peaks']['max_client_bytes'] / MB_IN_BYTES ) ); ?>" class="small-text" />
+							<?php esc_html_e( 'MB', 'imagina-player' ); ?>
+							<p class="description">
+								<?php esc_html_e( 'Files larger than this are never analysed in the browser; they show a plain progress bar until the server generates their waveform.', 'imagina-player' ); ?>
+							</p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Generate now', 'imagina-player' ); ?></th>
+						<td>
+							<?php if ( PeaksGenerator::is_available() ) : ?>
+								<p>
+									<button type="button" class="button" id="imgp-generate-waveforms"
+										data-rest="<?php echo esc_url_raw( rest_url( 'imagina-player/v1' ) ); ?>"
+										data-nonce="<?php echo esc_attr( wp_create_nonce( 'wp_rest' ) ); ?>">
+										<?php esc_html_e( 'Generate missing waveforms', 'imagina-player' ); ?>
+									</button>
+								</p>
+								<p class="description" id="imgp-generate-status" role="status" aria-live="polite">
+									<?php esc_html_e( 'Builds waveforms for every audio and video file that does not have one yet, without waiting for WordPress’s scheduled tasks.', 'imagina-player' ); ?>
+								</p>
+							<?php else : ?>
+								<p>
+									<strong><?php esc_html_e( 'Not possible on this server: ffmpeg was not found.', 'imagina-player' ); ?></strong>
+								</p>
+								<p class="description">
+									<?php esc_html_e( 'Without ffmpeg, only files small enough to analyse in the visitor’s browser get a waveform; longer recordings show a plain progress bar. Ask your host to install ffmpeg, or set its path above if it is installed somewhere unusual.', 'imagina-player' ); ?>
+								</p>
+							<?php endif; ?>
 						</td>
 					</tr>
 				</table>
@@ -366,6 +403,7 @@ final class SettingsPage {
 		$settings['peaks']['server_generation'] = ! empty( $raw_peaks['server_generation'] );
 		$settings['peaks']['client_fallback']   = ! empty( $raw_peaks['client_fallback'] );
 		$settings['peaks']['ffmpeg_path']       = sanitize_text_field( (string) ( $raw_peaks['ffmpeg_path'] ?? '' ) );
+		$settings['peaks']['max_client_bytes']  = max( 1, min( 200, (int) ( $raw_peaks['max_client_bytes_mb'] ?? 25 ) ) ) * MB_IN_BYTES;
 
 		$settings['advanced']['load_frontend_css'] = ! empty( $raw_adv['load_frontend_css'] );
 		$settings['advanced']['lazy_init']         = ! empty( $raw_adv['lazy_init'] );

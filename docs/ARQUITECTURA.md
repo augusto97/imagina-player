@@ -67,7 +67,16 @@ Estrategia en tres niveles:
    mide el pico de cada ventana de 800 muestras. El renderizado de la página
    nunca espera a ffmpeg.
 3. **Navegador.** Si no hay ffmpeg, el primer visitante decodifica el archivo con
-   Web Audio, dibuja la onda y devuelve el resultado al sitio.
+   Web Audio, dibuja la onda y devuelve el resultado al sitio. **Solo para
+   archivos cortos**: `decodeAudioData` expande el audio a PCM en memoria, y una
+   grabación de 76 minutos en estéreo son ~1,6 GB. El tamaño se comprueba antes
+   de descargar nada y por encima del límite (25 MB por defecto) ni se intenta.
+
+Cuando no hay onda por ninguna de las tres vías, el reproductor dibuja una barra
+de progreso limpia en lugar de barras de relleno: un estado degradado tiene que
+parecer intencionado, no roto. Y para las grabaciones largas está el botón
+**Generar ondas pendientes** en Ajustes, que no depende de que WP-Cron se
+dispare.
 
 ### Por qué la escritura anónima es segura
 
@@ -156,10 +165,15 @@ sin reescribir el plugin.
 ## Pruebas
 
 `./tests/run.sh` ejecuta la suite contra stubs de WordPress, sin necesidad de una
-instalación: 172 comprobaciones. Cubre sanitización, codificación de picos,
+instalación: 182 comprobaciones. Cubre sanitización, codificación de picos,
 remuestreo, firma de tokens, escapado del markup, el movimiento real de ficheros
 dentro y fuera del vault, y —con un binario ffmpeg simulado— la extracción de
 picos completa.
+
+`tests/test-frontend.php` carga el reproductor en Chromium y comprueba estados
+que solo existen en el DOM: que la animación de «analizando» no se queda colgada,
+que sin onda se degrada a barra de progreso, y que el canvas efectivamente pinta.
+Se salta solo si no encuentra un navegador.
 
 `tests/test-package.php` construye el ZIP de distribución, lo extrae y arranca el
 plugin **en un proceso aparte**, con solo el contenido del archivo en el

@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,19 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.0.1 =
+* Fixed: a file too long to analyse in the browser left the "analysing"
+  highlight sweeping across the player for ever. The browser now checks the
+  file size before committing, gives up after 30 seconds, and the highlight
+  stops regardless.
+* Fixed: a player with no waveform drew a row of stubby bars that read as a
+  broken player. It now falls back to a plain seek bar.
+* Added: "Generate missing waveforms" in Settings → Imagina Player, so long
+  recordings get their waveform on the server without waiting for WP-Cron.
+* Added: a size limit for browser-side analysis, 25 MB by default.
+* Fixed: the volume slider is now styled explicitly, so themes that restyle
+  range inputs cannot turn it into an unrecognisable box.
 
 = 1.0.0 =
 * First release.

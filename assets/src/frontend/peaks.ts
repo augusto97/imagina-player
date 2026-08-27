@@ -69,84 +69,144 @@ export function resample( peaks: Float32Array, bars: number ): Float32Array {
 	return out;
 }
 
+export interface ComputeOptions {
+	/** Refuse to download more than this. */
+	maxBytes: number;
+	/** Give up after this long, however far it got. */
+	timeoutMs: number;
+}
+
+export type ComputeFailure = 'unsupported' | 'too-large' | 'timeout' | 'failed';
+
+export interface ComputeResult {
+	peaks: Float32Array;
+	duration: number;
+}
+
+/**
+ * Ask the server how big the file is before committing to downloading it.
+ *
+ * Returns -1 when the size cannot be determined, which is treated as "too risky
+ * to decode" rather than "go ahead".
+ */
+async function probeSize( url: string, signal: AbortSignal ): Promise< number > {
+	try {
+		const head = await fetch( url, { method: 'HEAD', signal, credentials: 'same-origin' } );
+
+		if ( head.ok ) {
+			const length = head.headers.get( 'content-length' );
+
+			if ( length ) {
+				return Number( length );
+			}
+		}
+	} catch {
+		// Some hosts reject HEAD; fall through to the range probe.
+	}
+
+	try {
+		// One byte is enough: the total comes back in Content-Range.
+		const probe = await fetch( url, {
+			headers: { Range: 'bytes=0-0' },
+			signal,
+			credentials: 'same-origin',
+		} );
+
+		const range = probe.headers.get( 'content-range' );
+		const total = range ? Number( range.split( '/' )[ 1 ] ) : NaN;
+
+		return Number.isFinite( total ) ? total : -1;
+	} catch {
+		return -1;
+	}
+}
+
 /**
  * Decode the file with Web Audio and measure it.
  *
- * This costs a full download plus a decode, so it runs once per track and the
- * result is posted back to the site for every later visitor.
+ * Bounded on purpose. `decodeAudioData` expands the file to raw float PCM in
+ * memory: a 76-minute recording at 44.1 kHz stereo is about 1.6 GB, which does
+ * not fail cleanly — it grinds the tab. So the size is probed first and anything
+ * past the cap is declined, leaving the server to generate the waveform.
  */
 export async function computePeaks(
 	url: string,
 	resolution: number,
-	signal?: AbortSignal
-): Promise< { peaks: Float32Array; duration: number } | null > {
+	options: ComputeOptions
+): Promise< ComputeResult | ComputeFailure > {
 	const AudioCtx =
 		window.AudioContext ??
 		( window as unknown as { webkitAudioContext?: typeof AudioContext } ).webkitAudioContext;
 
 	if ( ! AudioCtx ) {
-		return null;
+		return 'unsupported';
 	}
 
-	let buffer: ArrayBuffer;
+	const controller = new AbortController();
+	const timer = window.setTimeout( () => controller.abort(), options.timeoutMs );
 
 	try {
-		const response = await fetch( url, { signal, credentials: 'omit', mode: 'cors' } );
+		const size = await probeSize( url, controller.signal );
 
-		if ( ! response.ok ) {
-			return null;
+		if ( size < 0 || size > options.maxBytes ) {
+			return 'too-large';
 		}
 
-		buffer = await response.arrayBuffer();
-	} catch {
-		return null;
-	}
+		const response = await fetch( url, { signal: controller.signal, credentials: 'same-origin' } );
 
-	const context = new AudioCtx();
+		if ( ! response.ok ) {
+			return 'failed';
+		}
 
-	try {
-		const audio = await context.decodeAudioData( buffer );
-		const channel = audio.getChannelData( 0 );
-		const peaks = new Float32Array( resolution );
-		const bucket = channel.length / resolution;
-		let max = 0;
+		const buffer = await response.arrayBuffer();
+		const context = new AudioCtx();
 
-		for ( let i = 0; i < resolution; i++ ) {
-			const start = Math.floor( i * bucket );
-			const end = Math.min( channel.length, Math.floor( ( i + 1 ) * bucket ) );
-			let peak = 0;
+		try {
+			const audio = await context.decodeAudioData( buffer );
+			const channel = audio.getChannelData( 0 );
+			const peaks = new Float32Array( resolution );
+			const bucket = channel.length / resolution;
+			let max = 0;
 
-			// Step through the bucket rather than reading every sample: at 44.1 kHz a
-			// three-minute track is eight million samples and the extra precision is
-			// invisible at one pixel per bar.
-			const step = Math.max( 1, Math.floor( ( end - start ) / 512 ) );
+			for ( let i = 0; i < resolution; i++ ) {
+				const start = Math.floor( i * bucket );
+				const end = Math.min( channel.length, Math.floor( ( i + 1 ) * bucket ) );
+				let peak = 0;
 
-			for ( let j = start; j < end; j += step ) {
-				const value = Math.abs( channel[ j ] );
+				// Step through the bucket rather than reading every sample: at 44.1 kHz a
+				// three-minute track is eight million samples and the extra precision is
+				// invisible at one pixel per bar.
+				const step = Math.max( 1, Math.floor( ( end - start ) / 512 ) );
 
-				if ( value > peak ) {
-					peak = value;
+				for ( let j = start; j < end; j += step ) {
+					const value = Math.abs( channel[ j ] );
+
+					if ( value > peak ) {
+						peak = value;
+					}
+				}
+
+				peaks[ i ] = peak;
+
+				if ( peak > max ) {
+					max = peak;
 				}
 			}
 
-			peaks[ i ] = peak;
-
-			if ( peak > max ) {
-				max = peak;
+			if ( max > 0 ) {
+				for ( let i = 0; i < peaks.length; i++ ) {
+					peaks[ i ] = peaks[ i ] / max;
+				}
 			}
-		}
 
-		if ( max > 0 ) {
-			for ( let i = 0; i < peaks.length; i++ ) {
-				peaks[ i ] = peaks[ i ] / max;
-			}
+			return { peaks, duration: audio.duration };
+		} finally {
+			void context.close();
 		}
-
-		return { peaks, duration: audio.duration };
-	} catch {
-		return null;
+	} catch ( error ) {
+		return controller.signal.aborted ? 'timeout' : 'failed';
 	} finally {
-		void context.close();
+		window.clearTimeout( timer );
 	}
 }
 

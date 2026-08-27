@@ -1,6 +1,6 @@
 {
   "name": "imagina-player",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Modern audio & video player for WordPress — waveform audio player, Gutenberg blocks, presets.",
   "private": true,
   "license": "GPL-2.0-or-later",

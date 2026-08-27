@@ -102,7 +102,10 @@ final class Settings {
 				'server_generation' => true,
 				'client_fallback'   => true,
 				'ffmpeg_path'       => '',
-				'max_remote_bytes'  => 64 * 1024 * 1024,
+				// Above this, the browser is not asked to build a waveform: decoding
+				// expands a file to raw float PCM, and an hour of stereo audio is
+				// well over a gigabyte in memory.
+				'max_client_bytes'  => 25 * 1024 * 1024,
 			),
 			'advanced'   => array(
 				'load_frontend_css' => true,

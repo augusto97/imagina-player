@@ -1,4 +1,10 @@
-import { computePeaks, decodePeaks, rememberPeaks, sharedPeaks, storePeaks } from './peaks';
+import {
+	computePeaks,
+	decodePeaks,
+	rememberPeaks,
+	sharedPeaks,
+	storePeaks,
+} from './peaks';
 import type { PlayerConfig, RuntimeData } from './types';
 import { clamp, formatTime, rafThrottle } from './utils';
 import { Waveform } from './waveform';
@@ -6,6 +12,12 @@ import { Waveform } from './waveform';
 const SPEEDS = [ 1, 1.25, 1.5, 2, 0.75 ];
 
 const STORAGE_PREFIX = 'imagina-player:position:';
+
+/** How long the browser may spend downloading and decoding a file. */
+const ANALYZE_TIMEOUT = 30000;
+
+/** How long the "analysing" highlight may run before it gives up visually. */
+const ANALYZE_UI_TIMEOUT = 20000;
 
 /**
  * Players registered on the page, so starting one can stop the rest.
@@ -300,21 +312,45 @@ export class Player {
 	 */
 	private async loadPeaks(): Promise< void > {
 		if ( this.peaksRequested || ! this.config.peaksKey ) {
+			this.root.classList.add( 'imgp--no-peaks' );
+
 			return;
 		}
 
 		this.peaksRequested = true;
 		this.root.classList.add( 'is-analyzing' );
 
-		// `sharedPeaks` collapses every player showing this track into one
-		// request — and, on a cold cache, one download and decode.
-		const peaks = await sharedPeaks( this.config.peaksKey, () => this.fetchOrComputePeaks() );
+		// The analysing state drives a moving highlight. Whatever happens below,
+		// that highlight stops: an animation with no end looks like a broken page.
+		const stopAnalyzing = window.setTimeout( () => {
+			this.root.classList.remove( 'is-analyzing' );
+		}, ANALYZE_UI_TIMEOUT );
 
-		this.root.classList.remove( 'is-analyzing' );
+		let peaks: Float32Array | null = null;
 
-		if ( peaks && ! this.destroyed ) {
-			this.waveform?.setPeaks( peaks );
+		try {
+			// `sharedPeaks` collapses every player showing this track into one
+			// request — and, on a cold cache, one download and decode.
+			peaks = await sharedPeaks( this.config.peaksKey, () => this.fetchOrComputePeaks() );
+		} finally {
+			window.clearTimeout( stopAnalyzing );
+			this.root.classList.remove( 'is-analyzing' );
 		}
+
+		if ( this.destroyed ) {
+			return;
+		}
+
+		if ( peaks && peaks.length > 0 ) {
+			this.waveform?.setPeaks( peaks );
+
+			return;
+		}
+
+		// No waveform available. Show a plain progress bar rather than a row of
+		// stubs that reads as a player that failed to load.
+		this.root.classList.add( 'imgp--no-peaks' );
+		this.waveform?.setPlaceholder();
 	}
 
 	/**
@@ -342,9 +378,20 @@ export class Player {
 			return null;
 		}
 
-		const computed = await computePeaks( this.media.currentSrc || this.media.src, this.config.resolution );
+		const computed = await computePeaks( this.media.currentSrc || this.media.src, this.config.resolution, {
+			maxBytes: this.runtime.maxComputeBytes,
+			timeoutMs: ANALYZE_TIMEOUT,
+		} );
 
-		if ( ! computed ) {
+		if ( typeof computed === 'string' ) {
+			// Say why once, in the console: a silent flat waveform on a long
+			// recording is otherwise impossible to explain from the outside.
+			if ( 'too-large' === computed && window.console ) {
+				window.console.info(
+					'Imagina Player: this file is too large to analyse in the browser. Generate the waveform on the server (Settings → Imagina Player → Waveforms).'
+				);
+			}
+
 			return null;
 		}
 
