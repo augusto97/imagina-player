@@ -1,0 +1,22 @@
+{
+  "name": "imagina-player",
+  "version": "0.1.0",
+  "description": "Modern audio & video player for WordPress — waveform audio player, Gutenberg blocks, presets.",
+  "private": true,
+  "license": "GPL-2.0-or-later",
+  "scripts": {
+    "build": "wp-scripts build",
+    "start": "wp-scripts start",
+    "lint:js": "wp-scripts lint-js",
+    "lint:css": "wp-scripts lint-style",
+    "format": "wp-scripts format"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.31",
+    "@wordpress/block-editor": "^17.0.0",
+    "@wordpress/blocks": "^15.27.0",
+    "@wordpress/components": "^40.0.0",
+    "@wordpress/i18n": "^6.27.0",
+    "@wordpress/scripts": "^30.0.0"
+  }
+}

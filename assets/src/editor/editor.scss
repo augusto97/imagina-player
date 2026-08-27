@@ -1,0 +1,43 @@
+/**
+ * Editor-only styles.
+ *
+ * The published player's stylesheet is loaded in the canvas through the block's
+ * `style` handle, so this file only covers the static preview's stand-ins.
+ */
+
+.imgp--preview {
+	pointer-events: none;
+	user-select: none;
+}
+
+.imgp__wave-preview {
+	display: flex;
+	align-items: flex-end;
+	gap: 1px;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+
+	span {
+		flex: 1 1 auto;
+		min-width: 2px;
+		background: var(--imgp-wave, #333);
+		opacity: 0.85;
+	}
+
+	span:nth-child(-n + 34) {
+		background: var(--imgp-wave-progress, #c04ec4);
+	}
+}
+
+.imgp__volume-track {
+	display: block;
+	width: 4.5rem;
+	height: 3px;
+	border-radius: 999px;
+	background: var(--imgp-accent, #c04ec4);
+}
+
+.imgp-block-editor .imgp__play {
+	pointer-events: none;
+}

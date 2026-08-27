@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"target": "ES2020",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"lib": [ "DOM", "DOM.Iterable", "ES2021" ],
+		"jsx": "react-jsx",
+		"jsxImportSource": "react",
+		"strict": true,
+		"noUncheckedIndexedAccess": false,
+		"esModuleInterop": true,
+		"resolveJsonModule": true,
+		"allowSyntheticDefaultImports": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"noEmit": true
+	},
+	"include": [ "assets/src/**/*" ]
+}
