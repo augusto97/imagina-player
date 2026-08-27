@@ -51,6 +51,7 @@ final class Settings {
 	public static function preset_defaults(): array {
 		return array(
 			'label'             => __( 'Default', 'imagina-player' ),
+			'description'       => '',
 			'skin'              => 'wave',
 			'accent'            => '#c04ec4',
 			'wave_color'        => '#333333',
@@ -62,6 +63,7 @@ final class Settings {
 			'meta_color'        => '#c04ec4',
 			'background'        => 'transparent',
 			'height'            => 60,
+			'border_radius'     => 0,
 			'rounded_bars'      => false,
 			'show_artist'       => true,
 			'show_title'        => true,
@@ -73,6 +75,8 @@ final class Settings {
 			'show_skip'         => false,
 			'skip_seconds'      => 15,
 			'sticky'            => false,
+			'sticky_position'   => 'bottom',
+			'on_end'            => 'reset',
 			'preload'           => 'metadata',
 			'remember_position' => false,
 		);
@@ -102,6 +106,18 @@ final class Settings {
 			'advanced'   => array(
 				'load_frontend_css' => true,
 				'lazy_init'         => true,
+				'custom_css'        => '',
+			),
+			// Site-wide defaults. A new preset starts from these, so a brand change
+			// is one edit rather than one edit per preset.
+			'branding'   => array(
+				'accent'        => '#c04ec4',
+				'wave_color'    => '#333333',
+				'text_color'    => '#333333',
+				'meta_color'    => '#c04ec4',
+				'logo'          => '',
+				'logo_link'     => '',
+				'logo_height'   => 20,
 			),
 			'protection' => array(
 				'enabled'       => false,
@@ -208,6 +224,36 @@ final class Settings {
 	}
 
 	/**
+	 * Site-wide brand defaults.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function branding(): array {
+		$settings = self::all();
+
+		return is_array( $settings['branding'] ?? null ) ? $settings['branding'] : self::defaults()['branding'];
+	}
+
+	/**
+	 * A preset for a brand-new entry: the brand colours rather than the
+	 * plugin's own.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function preset_from_branding(): array {
+		$branding = self::branding();
+		$preset   = self::preset_defaults();
+
+		$preset['accent']        = (string) $branding['accent'];
+		$preset['wave_color']    = (string) $branding['wave_color'];
+		$preset['wave_progress'] = (string) $branding['accent'];
+		$preset['text_color']    = (string) $branding['text_color'];
+		$preset['meta_color']    = (string) $branding['meta_color'];
+
+		return $preset;
+	}
+
+	/**
 	 * @return array<string, mixed>
 	 */
 	public static function protection(): array {
@@ -237,8 +283,9 @@ final class Settings {
 			};
 		}
 
-		$out['label'] = sanitize_text_field( (string) $out['label'] );
-		$out['skin']  = Player\Skins::normalize( (string) $out['skin'] );
+		$out['label']       = sanitize_text_field( (string) $out['label'] );
+		$out['description'] = sanitize_text_field( (string) $out['description'] );
+		$out['skin']        = Player\Skins::normalize( (string) $out['skin'] );
 
 		foreach ( array( 'accent', 'wave_color', 'wave_progress', 'text_color', 'meta_color' ) as $color_key ) {
 			$out[ $color_key ] = self::sanitize_color( (string) $out[ $color_key ], $defaults[ $color_key ] );
@@ -251,6 +298,9 @@ final class Settings {
 		$out['height']          = max( 24, min( 400, (int) $out['height'] ) );
 		$out['skip_seconds']    = max( 1, min( 120, (int) $out['skip_seconds'] ) );
 		$out['preload']         = in_array( $out['preload'], array( 'none', 'metadata', 'auto' ), true ) ? $out['preload'] : 'metadata';
+		$out['border_radius']   = max( 0, min( 40, (int) $out['border_radius'] ) );
+		$out['on_end']          = in_array( $out['on_end'], array( 'reset', 'loop', 'stop' ), true ) ? $out['on_end'] : 'reset';
+		$out['sticky_position'] = in_array( $out['sticky_position'], array( 'bottom', 'bottom-left', 'bottom-right' ), true ) ? $out['sticky_position'] : 'bottom';
 
 		return $out;
 	}

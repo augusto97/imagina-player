@@ -2,7 +2,7 @@ import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { generateWaveform, listPendingWaveforms } from './api';
-import { Card, Field, Notice, NumberInput, Select, TextInput, Toggle } from './controls';
+import { Card, ColorInput, Field, Notice, NumberInput, Select, TextInput, Toggle } from './controls';
 import type { SettingsPayload } from './types';
 
 interface PanelProps {
@@ -284,6 +284,72 @@ export function ProtectionPanel( { settings, onChange }: PanelProps ) {
 	);
 }
 
+/**
+ * Site-wide brand defaults.
+ *
+ * These do not restyle existing presets — that would silently rewrite work
+ * somebody already did. They are what a *new* preset starts from, plus the logo
+ * every player carries.
+ */
+export function BrandingPanel( { settings, onChange }: PanelProps ) {
+	const branding = settings.branding;
+	const set = ( patch: Partial< SettingsPayload[ 'branding' ] > ): void =>
+		onChange( { branding: { ...branding, ...patch } } );
+
+	return (
+		<>
+			<Card
+				title={ __( 'Brand colours', 'imagina-player' ) }
+				description={ __( 'What a new preset starts from. Existing presets keep the colours you already gave them.', 'imagina-player' ) }
+			>
+				<Field label={ __( 'Accent', 'imagina-player' ) } help={ __( 'Play button and highlights.', 'imagina-player' ) }>
+					<ColorInput value={ branding.accent } onChange={ ( accent ) => set( { accent } ) } />
+				</Field>
+				<Field label={ __( 'Waveform', 'imagina-player' ) }>
+					<ColorInput value={ branding.wave_color } onChange={ ( wave_color ) => set( { wave_color } ) } />
+				</Field>
+				<Field label={ __( 'Title', 'imagina-player' ) }>
+					<ColorInput value={ branding.text_color } onChange={ ( text_color ) => set( { text_color } ) } />
+				</Field>
+				<Field label={ __( 'Artist', 'imagina-player' ) }>
+					<ColorInput value={ branding.meta_color } onChange={ ( meta_color ) => set( { meta_color } ) } />
+				</Field>
+			</Card>
+
+			<Card
+				title={ __( 'Logo', 'imagina-player' ) }
+				description={ __( 'Shown at the end of the control row on every player. Leave empty for none.', 'imagina-player' ) }
+			>
+				<Field label={ __( 'Image URL', 'imagina-player' ) } wide>
+					<TextInput
+						value={ branding.logo }
+						mono
+						placeholder="https://…/logo.svg"
+						onChange={ ( logo ) => set( { logo } ) }
+					/>
+				</Field>
+				<Field label={ __( 'Links to', 'imagina-player' ) } wide>
+					<TextInput
+						value={ branding.logo_link }
+						mono
+						placeholder="https://…"
+						onChange={ ( logo_link ) => set( { logo_link } ) }
+					/>
+				</Field>
+				<Field label={ __( 'Height', 'imagina-player' ) }>
+					<NumberInput
+						value={ branding.logo_height }
+						min={ 8 }
+						max={ 80 }
+						suffix="px"
+						onChange={ ( logo_height ) => set( { logo_height } ) }
+					/>
+				</Field>
+			</Card>
+		</>
+	);
+}
+
 export function AdvancedPanel( { settings, onChange }: PanelProps ) {
 	const advanced = settings.advanced;
 	const set = ( patch: Partial< SettingsPayload[ 'advanced' ] > ): void =>
@@ -304,6 +370,21 @@ export function AdvancedPanel( { settings, onChange }: PanelProps ) {
 					onChange={ ( lazy_init ) => set( { lazy_init } ) }
 				/>
 			</div>
+
+			<Field
+				label={ __( 'Custom CSS', 'imagina-player' ) }
+				help={ __( 'Added after the player stylesheet, on pages that contain a player.', 'imagina-player' ) }
+				wide
+			>
+				<textarea
+					className="imgpa-textarea"
+					rows={ 8 }
+					spellCheck={ false }
+					value={ advanced.custom_css }
+					placeholder={ '.imgp__play { box-shadow: 0 2px 12px rgb(0 0 0 / 20%); }' }
+					onChange={ ( event ) => set( { custom_css: event.target.value } ) }
+				/>
+			</Field>
 
 			<Field label={ __( 'Shortcode', 'imagina-player' ) } wide>
 				<code className="imgpa-code">

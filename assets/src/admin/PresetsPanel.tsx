@@ -142,6 +142,18 @@ export function PresetsPanel( { settings, onChange }: Props ) {
 						<TextInput value={ preset.label } onChange={ ( label ) => update( { label } ) } />
 					</Field>
 
+					<Field
+						label={ __( 'Description', 'imagina-player' ) }
+						help={ __( 'A note to yourself about when to use this preset.', 'imagina-player' ) }
+						wide
+					>
+						<TextInput
+							value={ preset.description }
+							placeholder={ __( 'For the weekly podcast', 'imagina-player' ) }
+							onChange={ ( description ) => update( { description } ) }
+						/>
+					</Field>
+
 					{ 'controls' === tab && (
 						<>
 							<Field
@@ -233,6 +245,20 @@ export function PresetsPanel( { settings, onChange }: Props ) {
 								/>
 							</Field>
 
+							<Field
+								label={ __( 'When the track finishes', 'imagina-player' ) }
+							>
+								<Select
+									value={ preset.on_end }
+									onChange={ ( on_end ) => update( { on_end } ) }
+									options={ [
+										{ value: 'reset', label: __( 'Rewind to the start', 'imagina-player' ) },
+										{ value: 'loop', label: __( 'Play again', 'imagina-player' ) },
+										{ value: 'stop', label: __( 'Stop where it ended', 'imagina-player' ) },
+									] }
+								/>
+							</Field>
+
 							<div className="imgpa-toggles">
 								<Toggle
 									label={ __( 'Stick to the bottom while playing', 'imagina-player' ) }
@@ -247,6 +273,20 @@ export function PresetsPanel( { settings, onChange }: Props ) {
 									onChange={ ( remember_position ) => update( { remember_position } ) }
 								/>
 							</div>
+
+							{ preset.sticky && (
+								<Field label={ __( 'Where it sticks', 'imagina-player' ) }>
+									<Select
+										value={ preset.sticky_position }
+										onChange={ ( sticky_position ) => update( { sticky_position } ) }
+										options={ [
+											{ value: 'bottom', label: __( 'Full width, bottom', 'imagina-player' ) },
+											{ value: 'bottom-left', label: __( 'Bottom left', 'imagina-player' ) },
+											{ value: 'bottom-right', label: __( 'Bottom right', 'imagina-player' ) },
+										] }
+									/>
+								</Field>
+							) }
 						</>
 					) }
 
@@ -300,6 +340,15 @@ export function PresetsPanel( { settings, onChange }: Props ) {
 									max={ 20 }
 									suffix="px"
 									onChange={ ( wave_gap ) => update( { wave_gap } ) }
+								/>
+							</Field>
+							<Field label={ __( 'Corner radius', 'imagina-player' ) } help={ __( 'Rounds the whole player.', 'imagina-player' ) }>
+								<NumberInput
+									value={ preset.border_radius }
+									min={ 0 }
+									max={ 40 }
+									suffix="px"
+									onChange={ ( border_radius ) => update( { border_radius } ) }
 								/>
 							</Field>
 							<Field label={ __( 'Reflection', 'imagina-player' ) } help={ __( 'Share of the height given to the mirrored copy below.', 'imagina-player' ) }>

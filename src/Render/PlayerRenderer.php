@@ -62,6 +62,9 @@ final class PlayerRenderer {
 			'imgp--skin-' . $config['skin'],
 			$track->thumbnail && $config['show_thumbnail'] ? 'imgp--has-thumb' : '',
 			$config['sticky'] ? 'imgp--sticky' : '',
+			$config['sticky'] ? 'imgp--stick-' . $config['sticky_position'] : '',
+			(int) $config['border_radius'] > 0 ? 'imgp--rounded-box' : '',
+			$config['rounded_bars'] ? 'imgp--rounded' : '',
 			$atts['className'],
 		);
 
@@ -76,6 +79,7 @@ final class PlayerRenderer {
 			'startTime'   => (float) $atts['startTime'],
 			'skipSeconds' => (int) $config['skip_seconds'],
 			'remember'    => (bool) $config['remember_position'],
+			'onEnd'       => (string) $config['on_end'],
 			'sticky'      => (bool) $config['sticky'],
 			'duration'    => $track->duration,
 			'peaksKey'    => $track->peaks_key(),
@@ -105,6 +109,7 @@ final class PlayerRenderer {
 			'play'     => $this->part_play(),
 			'meta'     => $this->part_meta( $track, $config ),
 			'controls' => $this->part_controls( $track, $config ),
+			'logo'     => $this->part_logo(),
 		);
 
 		ob_start();
@@ -128,7 +133,7 @@ final class PlayerRenderer {
 					$parts['scrubber'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['play'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
-					$parts['controls'] // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['controls'] . $parts['logo'] // phpcs:ignore WordPress.Security.EscapeOutput
 				);
 			} elseif ( 'inline' === $layout ) {
 				printf(
@@ -137,7 +142,7 @@ final class PlayerRenderer {
 					$parts['thumb'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['scrubber'], // phpcs:ignore WordPress.Security.EscapeOutput
-					$parts['controls'] // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['controls'] . $parts['logo'] // phpcs:ignore WordPress.Security.EscapeOutput
 				);
 			} else {
 				printf(
@@ -146,7 +151,7 @@ final class PlayerRenderer {
 					$parts['thumb'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['play'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
-					$parts['controls'] // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['controls'] . $parts['logo'] // phpcs:ignore WordPress.Security.EscapeOutput
 				);
 			}
 			?>
@@ -243,6 +248,36 @@ final class PlayerRenderer {
 				width="72"
 				height="72"
 			/>
+		</div>
+		<?php
+
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * The site's brand mark, when one is configured.
+	 */
+	private function part_logo(): string {
+		$branding = Settings::branding();
+		$logo     = (string) ( $branding['logo'] ?? '' );
+
+		if ( '' === $logo ) {
+			return '';
+		}
+
+		$height = max( 8, min( 80, (int) ( $branding['logo_height'] ?? 20 ) ) );
+		$link   = (string) ( $branding['logo_link'] ?? '' );
+
+		ob_start();
+		?>
+		<div class="imgp__logo" style="--imgp-logo-height:<?php echo esc_attr( (string) $height ); ?>px">
+			<?php if ( '' !== $link ) : ?>
+				<a href="<?php echo esc_url( $link ); ?>" rel="noopener">
+			<?php endif; ?>
+			<img src="<?php echo esc_url( $logo ); ?>" alt="" loading="lazy" decoding="async" />
+			<?php if ( '' !== $link ) : ?>
+				</a>
+			<?php endif; ?>
 		</div>
 		<?php
 

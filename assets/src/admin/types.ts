@@ -1,5 +1,6 @@
 export interface Preset {
 	label: string;
+	description: string;
 	skin: string;
 	accent: string;
 	wave_color: string;
@@ -11,6 +12,7 @@ export interface Preset {
 	meta_color: string;
 	background: string;
 	height: number;
+	border_radius: number;
 	rounded_bars: boolean;
 	show_artist: boolean;
 	show_title: boolean;
@@ -22,6 +24,8 @@ export interface Preset {
 	show_skip: boolean;
 	skip_seconds: number;
 	sticky: boolean;
+	sticky_position: string;
+	on_end: string;
 	preload: string;
 	remember_position: boolean;
 	[ key: string ]: string | number | boolean;
@@ -48,6 +52,16 @@ export interface SettingsPayload {
 	advanced: {
 		load_frontend_css: boolean;
 		lazy_init: boolean;
+		custom_css: string;
+	};
+	branding: {
+		accent: string;
+		wave_color: string;
+		text_color: string;
+		meta_color: string;
+		logo: string;
+		logo_link: string;
+		logo_height: number;
 	};
 	schema: {
 		presetDefaults: Preset;

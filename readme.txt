@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,16 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.2.0 =
+* Fixed: the settings screen's live preview showed "no audio file selected"
+  instead of a player, and headings were unreadable under a dark admin theme
+  because their colour was inherited rather than declared.
+* New: Branding — site-wide default colours that a new preset starts from, plus
+  an optional logo on every player.
+* New: custom CSS, loaded after the player stylesheet on pages with a player.
+* New per preset: a description, a corner radius, what happens when a track
+  finishes (rewind, repeat or stop), and where a sticky player docks.
 
 = 1.1.0 =
 * New: a purpose-built settings screen replacing the WordPress options form —

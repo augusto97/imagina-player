@@ -442,6 +442,8 @@ export class Player {
 			this.stickyPlaceholder = document.createElement( 'div' );
 			this.stickyPlaceholder.className = 'imgp__sticky-placeholder';
 			this.stickyPlaceholder.style.height = `${ height }px`;
+			// The player leaves the flow either way, so the gap it left behind has
+			// to be held open regardless of where it docks.
 			this.root.after( this.stickyPlaceholder );
 			this.root.classList.add( 'is-stuck' );
 		} else {
@@ -502,6 +504,19 @@ export class Player {
 	private onEnded(): void {
 		this.root.classList.remove( 'is-playing' );
 		this.clearPosition();
+
+		if ( 'loop' === this.config.onEnd ) {
+			this.seekTo( 0 );
+			void this.media.play().catch( () => undefined );
+
+			return;
+		}
+
+		// `stop` leaves the playhead where it finished; `reset` rewinds it.
+		if ( 'stop' !== this.config.onEnd ) {
+			this.seekTo( 0 );
+		}
+
 		this.setStuck( false );
 		this.render();
 	}

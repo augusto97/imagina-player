@@ -74,6 +74,7 @@ final class Config {
 			'--imgp-wave-height'    => (int) $config['height'] . 'px',
 			'--imgp-reflection'     => (string) (float) $config['wave_reflection'],
 			'--imgp-bar-radius'     => $config['rounded_bars'] ? '999px' : '0',
+			'--imgp-radius'         => (int) $config['border_radius'] . 'px',
 		);
 
 		if ( 'transparent' !== $config['background'] ) {

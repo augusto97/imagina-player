@@ -40,6 +40,18 @@ atributos del bloque (`BlockRegistrar::block_attributes()`), los del shortcode
 (convertidos a `snake_case`) y la sanitización. Añadir una opción es tocar un
 único array.
 
+**Siete skins, tres disposiciones.** Un skin es una maquetación, no una paleta:
+los colores salen del preset. `Player\Skins` dice de cada uno si dibuja onda, si
+esa onda va espejada, y con cuál de las tres disposiciones se monta —`stacked`,
+`card` o `inline`—. Esas disposiciones cambian el **orden del DOM**, no solo el
+CSS: una portada que encabeza una tarjeta no puede ser el mismo nodo que va
+dentro de una fila de controles, y reordenar solo con CSS deja el orden de
+lectura mal para un lector de pantalla.
+
+**La marca es el punto de partida, no una imposición.** Los colores de
+*Branding* son de los que arranca un preset nuevo. No repintan los que ya
+existen: eso reescribiría en silencio trabajo que alguien ya hizo.
+
 **Los presets mandan, la instancia matiza.** Un preset agrupa skin, colores,
 altura y qué controles se ven. Cada bloque elige un preset y puede sobrescribir
 valores sueltos. Los interruptores usan tres estados (`''` = heredar, `'yes'`,
@@ -128,6 +140,23 @@ Filtros disponibles: `imagina_player_settings`, `imagina_player_skins`,
 `imagina_player_attribute_schema`, `imagina_player_resolved_config`,
 `imagina_player_client_config`, `imagina_player_render`,
 `imagina_player_ffmpeg_binary`. Acción: `imagina_player_booted`.
+
+## La pantalla de ajustes
+
+`src/Admin/Dashboard.php` solo pone el punto de montaje y los datos de arranque;
+todo lo demás es `assets/src/admin/`, una aplicación React con su propio sistema
+de diseño —ni un `form-table` de WordPress—. Lee y escribe por REST
+(`Rest\SettingsController`).
+
+La vista previa es un iframe que carga el **bundle real** del front-end sobre
+markup del **renderizador real**, servido por `POST /preview`. Dos motivos: lo
+que ves es lo que se publicará, en lugar de una imitación que se desincroniza
+cuando cambia el renderizador; y el CSS del panel no puede colarse dentro y
+favorecer el resultado.
+
+Un detalle que costó una versión: **todos los colores de texto se declaran, nunca
+se heredan**. Un tema oscuro de administración pinta sus propios colores sobre
+los encabezados, y así es como esta pantalla salió ilegible la primera vez.
 
 ## Medios protegidos
 

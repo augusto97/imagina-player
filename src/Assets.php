@@ -93,6 +93,12 @@ final class Assets {
 			'window.imaginaPlayer = ' . wp_json_encode( self::runtime_data() ) . ';',
 			'before'
 		);
+
+		$custom = trim( (string) ( $advanced['custom_css'] ?? '' ) );
+
+		if ( '' !== $custom ) {
+			wp_add_inline_style( self::FRONTEND_HANDLE, wp_strip_all_tags( $custom ) );
+		}
 	}
 
 	/**

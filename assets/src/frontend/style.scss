@@ -607,3 +607,46 @@
 }
 
 /* stylelint-enable no-descending-specificity */
+
+/* stylelint-disable no-descending-specificity */
+
+/* --- Brand mark --------------------------------------------------------- */
+
+.imgp__logo {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	margin-left: 0.6rem;
+	opacity: 0.85;
+
+	img {
+		display: block;
+		height: var(--imgp-logo-height, 20px);
+		width: auto;
+	}
+}
+
+/* --- Rounded shell ------------------------------------------------------ */
+
+.imgp--rounded-box {
+	padding: var(--imgp-gap);
+	border-radius: var(--imgp-radius, 0);
+	background: var(--imgp-bg, color-mix(in srgb, var(--imgp-text) 4%, transparent));
+}
+
+/* --- Sticky positions --------------------------------------------------- */
+
+.imgp.is-stuck.imgp--stick-bottom-left,
+.imgp.is-stuck.imgp--stick-bottom-right {
+	inset: auto auto 1rem;
+	width: min(28rem, calc(100vw - 2rem));
+	border-radius: 0.7rem;
+}
+
+.imgp.is-stuck.imgp--stick-bottom-left {
+	left: 1rem;
+}
+
+.imgp.is-stuck.imgp--stick-bottom-right {
+	right: 1rem;
+}

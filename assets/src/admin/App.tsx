@@ -2,14 +2,15 @@ import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 import { loadSettings, saveSettings } from './api';
-import { AdvancedPanel, ProtectionPanel, WaveformsPanel } from './panels';
+import { AdvancedPanel, BrandingPanel, ProtectionPanel, WaveformsPanel } from './panels';
 import { PresetsPanel } from './PresetsPanel';
 import type { Preset, SettingsPayload } from './types';
 
-type Section = 'presets' | 'waveforms' | 'protection' | 'advanced';
+type Section = 'presets' | 'branding' | 'waveforms' | 'protection' | 'advanced';
 
 const SECTIONS: Array< { id: Section; label: string } > = [
 	{ id: 'presets', label: __( 'Presets', 'imagina-player' ) },
+	{ id: 'branding', label: __( 'Branding', 'imagina-player' ) },
 	{ id: 'waveforms', label: __( 'Waveforms', 'imagina-player' ) },
 	{ id: 'protection', label: __( 'Protection', 'imagina-player' ) },
 	{ id: 'advanced', label: __( 'Advanced', 'imagina-player' ) },
@@ -65,6 +66,7 @@ export function App() {
 				peaks: settings.peaks,
 				protection: settings.protection,
 				advanced: settings.advanced,
+				branding: settings.branding,
 			} );
 
 			setSettings( saved );
@@ -141,6 +143,7 @@ export function App() {
 							onChange={ ( presets: Record< string, Preset > ) => patch( { presets } ) }
 						/>
 					) }
+							{ 'branding' === section && <BrandingPanel settings={ settings } onChange={ patch } /> }
 					{ 'waveforms' === section && <WaveformsPanel settings={ settings } onChange={ patch } /> }
 					{ 'protection' === section && <ProtectionPanel settings={ settings } onChange={ patch } /> }
 					{ 'advanced' === section && <AdvancedPanel settings={ settings } onChange={ patch } /> }

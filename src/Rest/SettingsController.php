@@ -132,6 +132,25 @@ final class SettingsController {
 		if ( isset( $incoming['advanced'] ) && is_array( $incoming['advanced'] ) ) {
 			$settings['advanced']['load_frontend_css'] = ! empty( $incoming['advanced']['load_frontend_css'] );
 			$settings['advanced']['lazy_init']         = ! empty( $incoming['advanced']['lazy_init'] );
+			// Stripped of tags, not of CSS: this is a stylesheet, and an admin who
+			// can reach this screen can already edit theme files.
+			$settings['advanced']['custom_css']        = wp_strip_all_tags( (string) ( $incoming['advanced']['custom_css'] ?? '' ) );
+		}
+
+		if ( isset( $incoming['branding'] ) && is_array( $incoming['branding'] ) ) {
+			$branding = $incoming['branding'];
+			$current  = $settings['branding'];
+
+			foreach ( array( 'accent', 'wave_color', 'text_color', 'meta_color' ) as $key ) {
+				$settings['branding'][ $key ] = Settings::sanitize_color(
+					(string) ( $branding[ $key ] ?? '' ),
+					(string) $current[ $key ]
+				);
+			}
+
+			$settings['branding']['logo']        = esc_url_raw( (string) ( $branding['logo'] ?? '' ), array( 'http', 'https' ) );
+			$settings['branding']['logo_link']   = esc_url_raw( (string) ( $branding['logo_link'] ?? '' ), array( 'http', 'https' ) );
+			$settings['branding']['logo_height'] = max( 8, min( 80, (int) ( $branding['logo_height'] ?? 20 ) ) );
 		}
 
 		Settings::update( $settings );
@@ -149,18 +168,33 @@ final class SettingsController {
 		// so the preview goes through exactly the same code path as the front end.
 		$override = static fn(): array => $preset;
 
+		// A duration the player can lay a scrubber over. Without it the preview
+		// shows `--:--` and the elapsed badge has nowhere to sit.
+		$fake_duration = static function ( array $config ): array {
+			$config['duration'] = 214.0;
+
+			return $config;
+		};
+
 		add_filter( 'imagina_player_resolved_config', $override, 99 );
+		add_filter( 'imagina_player_client_config', $fake_duration, 99 );
 
 		$renderer = new PlayerRenderer();
-		$html     = $renderer->render(
+
+		// The preview needs a source or the renderer, correctly, refuses to draw a
+		// player at all. Nothing ever loads from it: the waveform is supplied and
+		// nobody presses play on a settings screen.
+		$html = $renderer->render(
 			array(
-				'src'    => (string) $request->get_param( 'src' ),
-				'title'  => (string) ( $request->get_param( 'title' ) ?: __( 'Your track title', 'imagina-player' ) ),
-				'artist' => (string) ( $request->get_param( 'artist' ) ?: __( 'Artist name', 'imagina-player' ) ),
+				'src'       => home_url( '/imagina-player-preview.mp3' ),
+				'title'     => (string) ( $request->get_param( 'title' ) ?: __( 'Your track title', 'imagina-player' ) ),
+				'artist'    => (string) ( $request->get_param( 'artist' ) ?: __( 'Artist name', 'imagina-player' ) ),
+				'thumbnail' => (string) ( $request->get_param( 'thumbnail' ) ?: \ImaginaPlayer\URL . 'assets/preview-cover.svg' ),
 			)
 		);
 
 		remove_filter( 'imagina_player_resolved_config', $override, 99 );
+		remove_filter( 'imagina_player_client_config', $fake_duration, 99 );
 
 		return new WP_REST_Response(
 			array(
@@ -214,8 +248,9 @@ final class SettingsController {
 			),
 			'protection' => $settings['protection'],
 			'advanced'   => $settings['advanced'],
+			'branding'   => $settings['branding'],
 			'schema'     => array(
-				'presetDefaults' => Settings::preset_defaults(),
+				'presetDefaults' => Settings::preset_from_branding(),
 				'skins'          => Skins::all(),
 				'skinNotes'      => Skins::descriptions(),
 				'defaultPreset'  => Settings::DEFAULT_PRESET,

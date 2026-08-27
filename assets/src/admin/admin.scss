@@ -21,6 +21,30 @@
 	margin: 0 0 0 -20px;
 	background: var(--ip-ground);
 	color: var(--ip-ink);
+
+	/* Every text colour is declared, never inherited: a dark admin theme sets
+	   its own colours on headings and would otherwise paint them onto these
+	   surfaces, which is how this screen first shipped unreadable. */
+	h1,
+	h2,
+	h3,
+	p,
+	label,
+	span,
+	strong,
+	small,
+	code,
+	pre,
+	li {
+		color: inherit;
+	}
+
+	h1,
+	h2,
+	h3 {
+		color: var(--ip-ink);
+		font-family: inherit;
+	}
 	font-size: 14px;
 	line-height: 1.55;
 	min-height: calc(100vh - 32px);
@@ -46,6 +70,12 @@
 		--ip-warn: #d98a5c;
 	}
 }
+
+/* Disabled for the file, for two reasons that are both this pattern working as
+   intended: the colour reset above is deliberately low-specificity and comes
+   first, and the nested `input` rules further down are scoped to their own
+   components but read as competing with the shared ones. */
+/* stylelint-disable no-descending-specificity */
 
 /* --- Header ------------------------------------------------------------- */
 
@@ -169,6 +199,8 @@
 
 	h2 {
 		margin: 0;
+		padding: 0;
+		color: var(--ip-ink);
 		font-size: 15px;
 		font-weight: 650;
 	}
@@ -190,11 +222,6 @@
 
 /* --- Fields ------------------------------------------------------------- */
 
-/* The nested `input` rules below are scoped to their own components; stylelint
-   compares them against the shared `.imgpa-number input:focus` above and cannot
-   tell that they never apply to the same element. */
-/* stylelint-disable no-descending-specificity */
-
 .imgpa-field {
 	display: grid;
 	grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
@@ -210,7 +237,8 @@
 .imgpa-field__label {
 	padding-top: 6px;
 
-	span {
+	> span {
+		color: var(--ip-ink);
 		font-weight: 550;
 	}
 
@@ -220,6 +248,27 @@
 		color: var(--ip-muted);
 		font-size: 12px;
 		line-height: 1.45;
+	}
+}
+
+.imgpa-textarea {
+	width: 100%;
+	max-width: 640px;
+	min-height: 140px;
+	padding: 10px 12px;
+	border: 1px solid var(--ip-line);
+	border-radius: 7px;
+	background: var(--ip-ground);
+	color: var(--ip-ink);
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 12px;
+	line-height: 1.6;
+	resize: vertical;
+
+	&:focus {
+		outline: 2px solid var(--ip-accent);
+		outline-offset: 1px;
+		border-color: transparent;
 	}
 }
 
@@ -368,6 +417,7 @@
 }
 
 .imgpa-toggle__text {
+	color: var(--ip-ink);
 	font-weight: 500;
 
 	small {
@@ -512,6 +562,8 @@
 
 	h2 {
 		margin: 0;
+		padding: 0;
+		color: var(--ip-ink);
 		font-size: 14px;
 		font-weight: 650;
 	}
@@ -550,6 +602,7 @@
 
 .imgpa-presets__name {
 	min-width: 0;
+	color: var(--ip-ink);
 	font-weight: 550;
 
 	small {

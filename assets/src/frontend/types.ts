@@ -10,6 +10,8 @@ export interface PlayerConfig {
 	startTime: number;
 	skipSeconds: number;
 	remember: boolean;
+	/** What happens when the track finishes: reset, loop or stop. */
+	onEnd: string;
 	sticky: boolean;
 	duration: number;
 	peaksKey: string;

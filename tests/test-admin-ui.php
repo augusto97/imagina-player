@@ -74,6 +74,7 @@ $payload  = array(
 	),
 	'protection' => $defaults['protection'],
 	'advanced'   => $defaults['advanced'],
+	'branding'   => $defaults['branding'],
 	'schema'     => array(
 		'presetDefaults' => Settings::preset_defaults(),
 		'skins'          => Skins::all(),
@@ -203,7 +204,7 @@ if ( ! preg_match( '/RESULT:(\{.*?\})</s', $dom_output, $matches ) ) {
 $result = json_decode( $matches[1], true );
 
 check( 'the application mounts', ! empty( $result['mounted'] ) );
-check( 'the four sections are listed', 4 === count( $result['nav'] ?? array() ), implode( ' / ', $result['nav'] ?? array() ) );
+check( 'every section is listed', 5 === count( $result['nav'] ?? array() ), implode( ' / ', $result['nav'] ?? array() ) );
 check( 'both presets are listed', 2 === count( $result['presets'] ?? array() ), implode( ' / ', $result['presets'] ?? array() ) );
 check( 'the preset editor has its three tabs', 3 === count( $result['tabs'] ?? array() ), implode( ' / ', $result['tabs'] ?? array() ) );
 check( 'the control toggles render', (int) ( $result['toggles'] ?? 0 ) >= 8, (string) ( $result['toggles'] ?? 0 ) );
