@@ -9,6 +9,7 @@ export function boot(): AdminBoot {
 			nonce: '',
 			frontendCss: '',
 			frontendJs: '',
+			frameCss: '',
 			docsUrl: '',
 		}
 	);

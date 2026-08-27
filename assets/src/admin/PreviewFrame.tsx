@@ -31,7 +31,7 @@ export function PreviewFrame( { preset }: { preset: Preset } ) {
 						return;
 					}
 
-					const { frontendCss, frontendJs } = boot();
+					const { frontendCss, frontendJs, frameCss } = boot();
 					const html = result.html.replace(
 						'data-imagina-player=',
 						`data-peaks="${ result.peaks }" data-imagina-player=`
@@ -40,11 +40,9 @@ export function PreviewFrame( { preset }: { preset: Preset } ) {
 					setFailed( false );
 					setDoc(
 						`<!doctype html><html><head><meta charset="utf-8">
+						<link rel="stylesheet" href="${ frameCss }">
 						<link rel="stylesheet" href="${ frontendCss }">
-						<style>
-							body { margin: 0; padding: 24px; background: transparent;
-								font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-						</style>
+						<style>body { padding: 24px 0; }</style>
 						</head><body>${ html }
 						<script>window.imaginaPlayer = { restUrl: "", lazyInit: false, maxComputeBytes: 0, i18n: {} };</script>
 						<script src="${ frontendJs }"></script>

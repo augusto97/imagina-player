@@ -105,6 +105,7 @@ final class Dashboard {
 					'nonce'       => wp_create_nonce( 'wp_rest' ),
 					'frontendCss' => \ImaginaPlayer\URL . 'build/style-frontend.css',
 					'frontendJs'  => \ImaginaPlayer\URL . 'build/frontend.js',
+					'frameCss'    => \ImaginaPlayer\URL . 'assets/preview-frame.css',
 					'docsUrl'     => 'https://github.com/augusto97/imagina-player',
 				)
 			) . ';',

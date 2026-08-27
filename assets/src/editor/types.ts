@@ -6,6 +6,7 @@ export interface EditorData {
 	settingsUrl: string;
 	frontendCss: string;
 	frontendJs: string;
+	frameCss: string;
 }
 
 declare global {

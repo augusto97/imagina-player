@@ -117,6 +117,7 @@ final class BlockRegistrar {
 					// the real assets rather than a copy of them.
 					'frontendCss' => \ImaginaPlayer\URL . 'build/style-frontend.css',
 					'frontendJs'  => \ImaginaPlayer\URL . 'build/frontend.js',
+					'frameCss'    => \ImaginaPlayer\URL . 'assets/preview-frame.css',
 				)
 			) . ';',
 			'before'

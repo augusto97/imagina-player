@@ -43,6 +43,7 @@ function editorData(): EditorData {
 			settingsUrl: '',
 			frontendCss: '',
 			frontendJs: '',
+			frameCss: '',
 		}
 	);
 }
@@ -415,7 +416,11 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 
 			<Preview
 				attributes={ attributes }
-				assets={ { frontendCss: data.frontendCss, frontendJs: data.frontendJs } }
+				assets={ {
+					frontendCss: data.frontendCss,
+					frontendJs: data.frontendJs,
+					frameCss: data.frameCss,
+				} }
 			/>
 		</div>
 	);

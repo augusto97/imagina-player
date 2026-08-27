@@ -41,7 +41,8 @@ for item in \
 	src \
 	build \
 	blocks \
-	assets/preview-cover.svg
+	assets/preview-cover.svg \
+	assets/preview-frame.css
 do
 	if [ ! -e "$root/$item" ]; then
 		echo "Missing required item: $item" >&2

@@ -84,6 +84,7 @@ export interface AdminBoot {
 	nonce: string;
 	frontendCss: string;
 	frontendJs: string;
+	frameCss: string;
 	docsUrl: string;
 }
 

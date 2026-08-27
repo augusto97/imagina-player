@@ -6,9 +6,6 @@
  */
 
 
-
-
-
 /* --- Media pickers ------------------------------------------------------ */
 
 .imgp-editor__media-picker {
@@ -75,13 +72,13 @@
 	display: block;
 	width: 100%;
 	border: 0;
+	overflow: hidden;
 	background: transparent;
-}
 
-/* Transparent, above the frame: the block stays selectable by clicking it. */
-.imgp-editor__preview-catcher {
-	position: absolute;
-	inset: 0;
+	/* Inert on purpose. It is a preview, so every click and drag belongs to the
+	   editor: selecting the block, dragging it, opening its toolbar. An
+	   interactive frame swallows all of that. */
+	pointer-events: none;
 }
 
 .imgp-editor__preview--failed {

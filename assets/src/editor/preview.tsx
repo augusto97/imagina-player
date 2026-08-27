@@ -18,6 +18,7 @@ import apiFetch from '@wordpress/api-fetch';
 interface EditorAssets {
 	frontendCss: string;
 	frontendJs: string;
+	frameCss: string;
 }
 
 interface PreviewProps {
@@ -60,8 +61,8 @@ export function Preview( { attributes, assets }: PreviewProps ) {
 					setFailed( false );
 					setDoc(
 						`<!doctype html><html><head><meta charset="utf-8">
+						<link rel="stylesheet" href="${ assets.frameCss }">
 						<link rel="stylesheet" href="${ assets.frontendCss }">
-						<style>body{margin:0;padding:4px 0;background:transparent;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}</style>
 						</head><body>${ markup }
 						<script>window.imaginaPlayer={restUrl:"",lazyInit:false,maxComputeBytes:0,i18n:{}};</script>
 						<script src="${ assets.frontendJs }"></script>
@@ -80,14 +81,25 @@ export function Preview( { attributes, assets }: PreviewProps ) {
 			window.clearTimeout( timer );
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ signature, assets.frontendCss, assets.frontendJs ] );
+	}, [ signature, assets.frontendCss, assets.frontendJs, assets.frameCss ] );
 
 	const measure = (): void => {
-		const body = frame.current?.contentDocument?.body;
+		const doc = frame.current?.contentDocument;
 
-		if ( body ) {
-			setHeight( Math.max( 90, body.scrollHeight ) );
+		if ( ! doc?.body ) {
+			return;
 		}
+
+		// A pixel short and the frame grows a scrollbar, which narrows the content
+		// and grows a second one across the bottom.
+		setHeight( Math.max( 90, Math.ceil( doc.body.scrollHeight ) + 2 ) );
+	};
+
+	// The canvas paints a frame or two after load, and the height changes with it.
+	const remeasure = (): void => {
+		measure();
+		window.setTimeout( measure, 120 );
+		window.setTimeout( measure, 500 );
 	};
 
 	if ( failed ) {
@@ -106,11 +118,9 @@ export function Preview( { attributes, assets }: PreviewProps ) {
 				className="imgp-editor__preview-frame"
 				style={ { height: `${ height }px` } }
 				srcDoc={ doc }
-				onLoad={ measure }
+				scrolling="no"
+				onLoad={ remeasure }
 			/>
-			{ /* Clicks belong to the block, not to the player inside the frame:
-			     without this the block cannot be selected by clicking it. */ }
-			<div className="imgp-editor__preview-catcher" aria-hidden="true" />
 		</div>
 	);
 }

@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,11 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.3.1 =
+* Fixed: the block preview grew scrollbars and swallowed clicks and drags in the
+  editor. The preview frame no longer scrolls, and it is inert — every click and
+  drag belongs to the editor, as it should for something you only look at.
 
 = 1.3.0 =
 * Fixed: the block preview drew a hand-made copy of the player that had fallen

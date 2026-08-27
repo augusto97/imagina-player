@@ -1,0 +1,31 @@
+/**
+ * Reset for the preview iframe.
+ *
+ * Loaded inside the frames that show the player in the block editor and on the
+ * settings screen. The frame is sized to its content and must never scroll: a
+ * scrollbar inside it steals the drag the editor needs, and narrows the content
+ * enough to grow a second scrollbar across the bottom.
+ */
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	background: transparent;
+}
+
+body {
+	padding: 4px 0;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+.imgp {
+	max-width: 100%;
+}
