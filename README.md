@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.5.0.zip`.
+1. Descarga `imagina-player-1.5.1.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Imagina Player** (menú lateral), o desde el enlace
@@ -15,18 +15,27 @@ código fuente está en la rama de desarrollo.
 
 | | |
 | --- | --- |
-| Versión | `1.5.0` |
-| Fichero | `imagina-player-1.5.0.zip` |
+| Versión | `1.5.1` |
+| Fichero | `imagina-player-1.5.1.zip` |
 | Tamaño | 104 KB |
-| SHA-256 | `0258ea86598160fc594407bec7edaa380ffebb92b934f07d8de267549c135cd8` |
+| SHA-256 | `47e5f75f4458600dfde39fa8f0afc89d79192effd058f578ca688863d146c8a8` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.5.0.zip
+sha256sum imagina-player-1.5.1.zip
 ```
+
+## Novedades en 1.5.1
+
+- **Corregido:** el linter de JavaScript no arrancaba —se había colado una
+  versión de TypeScript más nueva que la que soportan sus plugins—, así que
+  nada se había revisado nunca. Ahora pasa limpio, y `npm test` ejecuta los
+  linters, el comprobador de tipos y la suite de pruebas juntos.
+- **Corregido:** cada interruptor de la pantalla de ajustes nombra ahora el
+  control al que pertenece, en vez de depender de envolverlo.
 
 ## Novedades en 1.5.0
 
