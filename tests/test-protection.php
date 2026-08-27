@@ -3,13 +3,7 @@
  * Protected media: token signing, access decisions and range parsing.
  */
 
-$plugin = dirname( __DIR__ ) . '/';
-require $plugin . 'tests/wp-stubs.php';
-require_once $plugin . 'src/Support/Autoloader.php';
-ImaginaPlayer\Support\Autoloader::register( 'ImaginaPlayer', $plugin . 'src' );
-define( 'ImaginaPlayer\VERSION', '0.1.0' );
-define( 'ImaginaPlayer\PATH', $plugin );
-define( 'ImaginaPlayer\URL', 'https://example.test/' );
+require __DIR__ . '/bootstrap.php';
 
 use ImaginaPlayer\Protection\ProtectedMedia;
 use ImaginaPlayer\Protection\StreamServer;

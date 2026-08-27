@@ -156,10 +156,16 @@ sin reescribir el plugin.
 ## Pruebas
 
 `./tests/run.sh` ejecuta la suite contra stubs de WordPress, sin necesidad de una
-instalación: 104 comprobaciones. Cubre sanitización, codificación de picos,
+instalación: 172 comprobaciones. Cubre sanitización, codificación de picos,
 remuestreo, firma de tokens, escapado del markup, el movimiento real de ficheros
 dentro y fuera del vault, y —con un binario ffmpeg simulado— la extracción de
 picos completa.
+
+`tests/test-package.php` construye el ZIP de distribución, lo extrae y arranca el
+plugin **en un proceso aparte**, con solo el contenido del archivo en el
+autoloader: un fichero que se quede fuera del ZIP falla aquí y no en el sitio de
+un cliente. `tests/test-release.php` comprueba que los cinco sitios donde vive el
+número de versión digan lo mismo.
 
 `tests/test-stream-http.php` va más lejos: levanta el servidor de streaming
 sobre el servidor web integrado de PHP y lo interroga con peticiones HTTP

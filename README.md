@@ -7,7 +7,7 @@ presets reutilizables y un núcleo de ~5 KB gzip sin dependencias.
 
 ## Estado
 
-`0.1.0` — audio completo y funcional. El vídeo está preparado en el núcleo pero
+`1.0.0` — audio completo y funcional. El vídeo está preparado en el núcleo pero
 su interfaz específica todavía no está construida (ver
 [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md#vídeo-siguiente-fase)).
 
@@ -15,12 +15,23 @@ su interfaz específica todavía no está construida (ver
 
 ```sh
 npm install
-npm run build      # o `npm start` para recompilar al guardar
-./tests/run.sh     # suite CLI, no necesita WordPress
+npm run build          # o `npm start` para recompilar al guardar
+./tests/run.sh         # suite CLI (172 comprobaciones), no necesita WordPress
+./bin/build-zip.sh     # genera dist/imagina-player-<versión>.zip
 ```
 
 La carpeta `build/` está versionada a propósito: al clonar el repositorio dentro
 de `wp-content/plugins/` el plugin funciona sin compilar nada.
+
+## Instalación en un WordPress
+
+Descarga el ZIP de la rama [`release`](https://github.com/augusto97/imagina-player/tree/release)
+y súbelo en **Plugins → Añadir nuevo → Subir plugin**.
+
+Al publicar una versión: sube el número en `imagina-player.php` (la cabecera y la
+constante `VERSION`), en `package.json`, en `blocks/audio/block.json` y en el
+`Stable tag` de `readme.txt`; añade la entrada al changelog; y ejecuta
+`./tests/run.sh`, que falla si alguno de esos números no coincide.
 
 ## Uso
 

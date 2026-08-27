@@ -7,16 +7,9 @@
  * Started by tests/test-stream-http.php; not part of the plugin.
  */
 
-$plugin = dirname( __DIR__, 2 ) . '/';
+$imgp_base_url = 'http://127.0.0.1/';
 
-require $plugin . 'tests/wp-stubs.php';
-require_once $plugin . 'src/Support/Autoloader.php';
-
-ImaginaPlayer\Support\Autoloader::register( 'ImaginaPlayer', $plugin . 'src' );
-
-define( 'ImaginaPlayer\VERSION', '0.1.0' );
-define( 'ImaginaPlayer\PATH', $plugin );
-define( 'ImaginaPlayer\URL', 'http://127.0.0.1/' );
+require dirname( __DIR__ ) . '/bootstrap.php';
 
 use ImaginaPlayer\Protection\ProtectedMedia;
 use ImaginaPlayer\Protection\StreamServer;

@@ -71,6 +71,8 @@ final class Plugin {
 			}
 		}
 
+		add_action( 'plugins_loaded', array( $this, 'maybe_upgrade' ), 5 );
+
 		/**
 		 * Fires once every Imagina Player service has registered its hooks.
 		 *
@@ -84,6 +86,25 @@ final class Plugin {
 	 */
 	public function service( string $name ): ?object {
 		return $this->services[ $name ] ?? null;
+	}
+
+	/**
+	 * Catch up a site whose stored version is behind the code.
+	 *
+	 * The activation hook does not fire for a plugin copied into place, updated
+	 * over FTP or deployed by git, which is exactly how this one reaches most of
+	 * the sites that will run it.
+	 */
+	public function maybe_upgrade(): void {
+		if ( get_option( 'imagina_player_version' ) === VERSION ) {
+			return;
+		}
+
+		if ( false === get_option( Settings::OPTION_KEY ) ) {
+			add_option( Settings::OPTION_KEY, Settings::defaults() );
+		}
+
+		update_option( 'imagina_player_version', VERSION, false );
 	}
 
 	public static function on_activation(): void {

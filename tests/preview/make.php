@@ -1,11 +1,8 @@
 <?php
-$plugin = dirname( __DIR__, 2 ) . '/';
-require $plugin . 'tests/wp-stubs.php';
-require_once $plugin . 'src/Support/Autoloader.php';
-ImaginaPlayer\Support\Autoloader::register( 'ImaginaPlayer', $plugin . 'src' );
-define( 'ImaginaPlayer\VERSION', '0.1.0' );
-define( 'ImaginaPlayer\PATH', $plugin );
-define( 'ImaginaPlayer\URL', './' );
+$imgp_base_url = './';
+$plugin        = dirname( __DIR__, 2 ) . '/';
+
+require dirname( __DIR__ ) . '/bootstrap.php';
 
 use ImaginaPlayer\Render\PlayerRenderer;
 

@@ -1,20 +1,9 @@
 <?php
-require __DIR__ . '/wp-stubs.php';
+/**
+ * Settings, attribute sanitisation, peaks encoding and rendered markup.
+ */
 
-$plugin = dirname( __DIR__ ) . '/';
-
-require_once $plugin . 'src/Support/Autoloader.php';
-ImaginaPlayer\Support\Autoloader::register( 'ImaginaPlayer', $plugin . 'src' );
-
-define( 'ImaginaPlayer\FILE', $plugin . 'imagina-player.php' );
-define( 'ImaginaPlayer\PATH', $plugin );
-define( 'ImaginaPlayer\URL', 'https://example.test/wp-content/plugins/imagina-player/' );
-
-// The bootstrap file defines VERSION etc. inside the namespace; replicate them.
-if ( ! defined( 'ImaginaPlayer\VERSION' ) ) {
-	define( 'ImaginaPlayer\VERSION', '0.1.0' );
-	define( 'ImaginaPlayer\SLUG', 'imagina-player' );
-}
+require __DIR__ . '/bootstrap.php';
 
 use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Peaks\PeaksToken;
