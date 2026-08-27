@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.0.1.zip`.
+1. Descarga `imagina-player-1.1.0.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Ajustes → Imagina Player**.
@@ -14,31 +14,37 @@ código fuente está en la rama de desarrollo.
 
 | | |
 | --- | --- |
-| Versión | `1.0.1` |
-| Fichero | `imagina-player-1.0.1.zip` |
-| Tamaño | 76 KB |
-| SHA-256 | `df2a7c7cbb6c5c6b3c812158c60ea647ad8b168a5c35fe133b8302d0c92fee2f` |
+| Versión | `1.1.0` |
+| Fichero | `imagina-player-1.1.0.zip` |
+| Tamaño | 88 KB |
+| SHA-256 | `56f6425b6941db65c642b0ea690ba00e286c9e84e1dc10c24e90adec5da0f9f6` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.0.1.zip
+sha256sum imagina-player-1.1.0.zip
 ```
+
+## Novedades en 1.1.0
+
+- **Pantalla de ajustes propia**, en el menú lateral: lista de presets, editor
+  dividido en Controles / Comportamiento / Estilo, y **vista previa en vivo**
+  que renderiza el reproductor de verdad.
+- **Siete skins**: onda, onda espejada, tarjeta con portada, compacto de una
+  línea, pastilla, barra de progreso y mínimo.
+- La **portada y el archivo de descarga** se eligen desde la biblioteca de
+  medios, ya no pidiendo una URL.
+- **Generar ondas pendientes** vive ahora en esa pantalla, junto al estado de
+  ffmpeg y el límite de análisis en navegador.
 
 ## Novedades en 1.0.1
 
-Correcciones de la primera instalación real:
-
 - Un archivo demasiado largo para analizarse en el navegador dejaba una franja
-  moviéndose de izquierda a derecha para siempre. Ahora se comprueba el tamaño
-  antes de descargar nada, se abandona a los 30 segundos, y la animación se
-  detiene igualmente.
-- Un reproductor sin onda dibujaba barras de relleno que parecían un fallo de
-  carga. Ahora muestra una barra de progreso limpia.
-- Nuevo botón **Generar ondas pendientes** en Ajustes, para las grabaciones
-  largas, sin depender de WP-Cron.
+  moviéndose de izquierda a derecha para siempre. Ya no.
+- Un reproductor sin onda muestra una barra de progreso limpia en lugar de
+  barras de relleno que parecían un fallo de carga.
 - El control de volumen ya no se deforma con los temas que restilan los
   `<input type="range">`.
 
