@@ -87,7 +87,11 @@ final class PeaksController {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'generate_peaks' ),
-				'permission_callback' => static fn(): bool => current_user_can( 'upload_files' ),
+				'permission_callback' => static function ( WP_REST_Request $request ): bool {
+					// `upload_files` alone would let any contributor spend server CPU
+					// on any attachment; require rights over this one.
+					return current_user_can( 'edit_post', (int) $request->get_param( 'attachmentId' ) );
+				},
 				'args'                => array(
 					'attachmentId' => array(
 						'type'     => 'integer',

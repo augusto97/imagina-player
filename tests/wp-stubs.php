@@ -9,6 +9,7 @@ define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'WEEK_IN_SECONDS', 604800 );
+define( 'ARRAY_A', 'ARRAY_A' );
 
 $GLOBALS['stub_options'] = array();
 $GLOBALS['stub_actions'] = array();
@@ -24,11 +25,11 @@ function shortcode_atts( $pairs, $atts, $shortcode = '' ) {
 	foreach ( $pairs as $name => $default ) { $out[ $name ] = array_key_exists( $name, (array) $atts ) ? $atts[ $name ] : $default; }
 	return $out;
 }
-function get_option( $name, $default = false ) { return $GLOBALS['stub_options'][ $name ] ?? $default; }
+function get_option( $name, $default = false ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['get_option']++; } return $GLOBALS['stub_options'][ $name ] ?? $default; }
 function update_option( $name, $value, $autoload = null ) { $GLOBALS['stub_options'][ $name ] = $value; return true; }
 function add_option( $name, $value, $d = '', $autoload = 'yes' ) { $GLOBALS['stub_options'][ $name ] = $value; return true; }
 function delete_option( $name ) { unset( $GLOBALS['stub_options'][ $name ] ); return true; }
-function get_transient( $k ) { return false; }
+function get_transient( $k ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['transient']++; } return false; }
 function set_transient( $k, $v, $t = 0 ) { return true; }
 function delete_transient( $k ) { return true; }
 function wp_cache_get( $k, $g = '' ) { return false; }
@@ -72,7 +73,7 @@ function wp_get_attachment_metadata( $id ) { return false; }
 function wp_get_attachment_image_url( $id, $size = '' ) { return false; }
 function get_post_mime_type( $id ) { return ''; }
 function get_the_title( $id ) { return ''; }
-function get_post_meta( $id, $key, $single = false ) { return ''; }
+function get_post_meta( $id, $key, $single = false ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['get_post_meta']++; } return ''; }
 function update_post_meta( $id, $key, $value ) { return true; }
 function delete_post_meta( $id, $key ) { return true; }
 function get_post_type( $id ) { return ''; }
@@ -113,11 +114,13 @@ class Stub_WPDB {
 	public $prefix = 'wp_';
 	public function get_charset_collate() { return 'DEFAULT CHARACTER SET utf8mb4'; }
 	public function prepare( $query, ...$args ) { return vsprintf( str_replace( array( '%s', '%d', '%f' ), array( "'%s'", '%d', '%f' ), $query ), $args ); }
-	public function get_var( $query ) { return null; }
-	public function get_row( $query, $output = null ) { return null; }
+	public function get_var( $query ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['db_query']++; } return $GLOBALS['stub_table_exists'] ?? null; }
+	public function get_row( $query, $output = null ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['db_query']++; } return null; }
 	public function replace( $table, $data, $format = null ) { return 1; }
 	public function delete( $table, $where, $format = null ) { return 1; }
 	public function esc_like( $text ) { return $text; }
+	// When $GLOBALS['stub_table_exists'] is set, SHOW TABLES reports the table.
+	public function show_tables_result() { return $GLOBALS['stub_table_exists'] ?? null; }
 }
 
 $GLOBALS['wpdb'] = new Stub_WPDB();

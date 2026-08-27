@@ -233,6 +233,12 @@ final class PeaksGenerator {
 	}
 
 	private static function probe( string $binary ): bool {
+		// A configured path must actually exist. A bare command name is left to
+		// PATH resolution, which popen() handles.
+		if ( str_contains( $binary, '/' ) && ! is_file( $binary ) ) {
+			return false;
+		}
+
 		// phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.PHP.DiscouragedPHPFunctions -- guarded by can_run_processes().
 		$handle = @popen( escapeshellcmd( $binary ) . ' -version 2>/dev/null', 'r' );
 

@@ -178,3 +178,61 @@ export async function storePeaks(
 		// Ignored on purpose.
 	}
 }
+
+/**
+ * Peaks already loaded this page, and loads still in flight, keyed by track.
+ *
+ * Several players can share one track — an inline player plus a sticky one, a
+ * track repeated down an archive page — and without this each of them would
+ * fetch the waveform, and on a cold cache download and decode the whole file,
+ * for a result they all end up with anyway.
+ */
+const resolvedPeaks = new Map< string, Float32Array >();
+
+const pendingPeaks = new Map< string, Promise< Float32Array | null > >();
+
+export function rememberPeaks( key: string, peaks: Float32Array ): void {
+	if ( key && peaks.length > 0 ) {
+		resolvedPeaks.set( key, peaks );
+	}
+}
+
+/**
+ * Run `load` at most once per key, sharing the result with every caller.
+ */
+export function sharedPeaks(
+	key: string,
+	load: () => Promise< Float32Array | null >
+): Promise< Float32Array | null > {
+	const done = resolvedPeaks.get( key );
+
+	if ( done ) {
+		return Promise.resolve( done );
+	}
+
+	const inFlight = pendingPeaks.get( key );
+
+	if ( inFlight ) {
+		return inFlight;
+	}
+
+	const promise = load()
+		.then( ( peaks ) => {
+			pendingPeaks.delete( key );
+
+			if ( peaks && peaks.length > 0 ) {
+				resolvedPeaks.set( key, peaks );
+			}
+
+			return peaks;
+		} )
+		.catch( () => {
+			pendingPeaks.delete( key );
+
+			return null;
+		} );
+
+	pendingPeaks.set( key, promise );
+
+	return promise;
+}

@@ -25,6 +25,21 @@ final class SettingsPage {
 	public function hooks(): void {
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle_save' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue' ) );
+	}
+
+	public function enqueue( string $hook ): void {
+		if ( 'settings_page_' . self::MENU_SLUG !== $hook ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'imagina-player-settings',
+			\ImaginaPlayer\URL . 'assets/admin/settings.js',
+			array(),
+			\ImaginaPlayer\VERSION,
+			true
+		);
 	}
 
 	public function register_menu(): void {
@@ -300,12 +315,12 @@ final class SettingsPage {
 
 		if ( in_array( $field, array( 'accent', 'wave_color', 'wave_progress', 'text_color', 'meta_color' ), true ) ) {
 			printf(
-				'<input type="text" id="%s" name="%s" value="%s" class="regular-text code" /> <input type="color" value="%s" oninput="document.getElementById(\'%s\').value=this.value" aria-hidden="true" tabindex="-1" />',
+				'<input type="text" id="%1$s" name="%2$s" value="%3$s" class="regular-text code" /> <input type="color" class="imgp-swatch" data-target="%1$s" value="%4$s" aria-label="%5$s" />',
 				esc_attr( $id ),
 				esc_attr( $name ),
 				esc_attr( (string) $value ),
 				esc_attr( self::color_for_input( (string) $value ) ),
-				esc_js( $id )
+				esc_attr__( 'Pick a colour', 'imagina-player' )
 			);
 
 			return;

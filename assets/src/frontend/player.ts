@@ -1,4 +1,4 @@
-import { computePeaks, decodePeaks, storePeaks } from './peaks';
+import { computePeaks, decodePeaks, rememberPeaks, sharedPeaks, storePeaks } from './peaks';
 import type { PlayerConfig, RuntimeData } from './types';
 import { clamp, formatTime, rafThrottle } from './utils';
 import { Waveform } from './waveform';
@@ -259,7 +259,10 @@ export class Player {
 		const inline = this.root.dataset.peaks;
 
 		if ( inline ) {
-			this.waveform.setPeaks( decodePeaks( inline ) );
+			const peaks = decodePeaks( inline );
+
+			rememberPeaks( this.config.peaksKey, peaks );
+			this.waveform.setPeaks( peaks );
 		} else {
 			void this.loadPeaks();
 		}
@@ -289,9 +292,7 @@ export class Player {
 	}
 
 	/**
-	 * Fill in a waveform the server did not have: ask the REST cache first (it may
-	 * have been generated since this page was rendered), then fall back to
-	 * decoding the file here and handing the result back.
+	 * Fill in a waveform the server did not have.
 	 */
 	private async loadPeaks(): Promise< void > {
 		if ( this.peaksRequested || ! this.config.peaksKey ) {
@@ -301,6 +302,23 @@ export class Player {
 		this.peaksRequested = true;
 		this.root.classList.add( 'is-analyzing' );
 
+		// `sharedPeaks` collapses every player showing this track into one
+		// request — and, on a cold cache, one download and decode.
+		const peaks = await sharedPeaks( this.config.peaksKey, () => this.fetchOrComputePeaks() );
+
+		this.root.classList.remove( 'is-analyzing' );
+
+		if ( peaks && ! this.destroyed ) {
+			this.waveform?.setPeaks( peaks );
+		}
+	}
+
+	/**
+	 * Ask the REST cache first — the waveform may have been generated since this
+	 * page was rendered — then fall back to decoding the file here and handing
+	 * the result back to the site.
+	 */
+	private async fetchOrComputePeaks(): Promise< Float32Array | null > {
 		try {
 			const url = `${ this.runtime.restUrl }/peaks?key=${ encodeURIComponent( this.config.peaksKey ) }`;
 			const response = await fetch( url );
@@ -309,32 +327,22 @@ export class Player {
 				const data = ( await response.json() ) as { peaks?: string | null };
 
 				if ( data.peaks ) {
-					this.waveform?.setPeaks( decodePeaks( data.peaks ) );
-
-					return;
+					return decodePeaks( data.peaks );
 				}
 			}
 		} catch {
 			// Fall through to client-side computation.
-		} finally {
-			this.root.classList.remove( 'is-analyzing' );
 		}
 
 		if ( ! this.config.canCompute || ! this.config.peaksToken ) {
-			return;
+			return null;
 		}
-
-		this.root.classList.add( 'is-analyzing' );
 
 		const computed = await computePeaks( this.media.currentSrc || this.media.src, this.config.resolution );
 
-		this.root.classList.remove( 'is-analyzing' );
-
-		if ( ! computed || this.destroyed ) {
-			return;
+		if ( ! computed ) {
+			return null;
 		}
-
-		this.waveform?.setPeaks( computed.peaks );
 
 		void storePeaks(
 			this.runtime.restUrl,
@@ -342,6 +350,8 @@ export class Player {
 			computed.peaks,
 			computed.duration
 		);
+
+		return computed.peaks;
 	}
 
 	private setupSticky(): void {
