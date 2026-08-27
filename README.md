@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.4.0.zip`.
+1. Descarga `imagina-player-1.5.0.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Imagina Player** (menú lateral), o desde el enlace
@@ -15,18 +15,35 @@ código fuente está en la rama de desarrollo.
 
 | | |
 | --- | --- |
-| Versión | `1.4.0` |
-| Fichero | `imagina-player-1.4.0.zip` |
-| Tamaño | 96 KB |
-| SHA-256 | `f32e7352177eecf98db4a82b9be1bb1d5f7614878daba171b63a7d1e95f9beb2` |
+| Versión | `1.5.0` |
+| Fichero | `imagina-player-1.5.0.zip` |
+| Tamaño | 104 KB |
+| SHA-256 | `0258ea86598160fc594407bec7edaa380ffebb92b934f07d8de267549c135cd8` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.4.0.zip
+sha256sum imagina-player-1.5.0.zip
 ```
+
+## Novedades en 1.5.0
+
+- **Nuevo:** comprobación de la protección. En **Protección → Comprobar que
+  funciona**, el sitio escribe un archivo señuelo en la carpeta protegida, lo
+  pide por HTTP real sin sesión iniciada y te dice qué respondió el servidor.
+  Es la única forma de detectar el fallo habitual: nginx no lee el `.htaccess`
+  que escribe el plugin, y los archivos «protegidos» estarían en abierto. Si el
+  sitio no puede hacerse una petición a sí mismo, el resultado es «no se pudo
+  confirmar», nunca «correcto».
+- **Nuevo:** el logo se elige desde la biblioteca de medios. Sigue aceptando una
+  URL pegada, porque un logo a menudo vive fuera de la biblioteca.
+- **Corregido:** «no se encontró ffmpeg» se mostraba para tres problemas
+  distintos con tres soluciones distintas — un hosting que prohíbe lanzar
+  procesos, una ruta mal escrita, y que no esté instalado. Ahora dice cuál es.
+- **Corregido:** al guardar una ruta de ffmpeg nueva, el estado que se mostraba
+  era el de antes de guardar.
 
 ## Novedades en 1.4.0
 
