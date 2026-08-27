@@ -5,7 +5,6 @@ import {
 	MediaReplaceFlow,
 	MediaUpload,
 	MediaUploadCheck,
-	PanelColorSettings,
 	useBlockProps,
 } from '@wordpress/block-editor';
 import {
@@ -31,6 +30,8 @@ interface EditProps {
 }
 
 const INHERIT = '';
+
+const HEX = /^#[0-9a-fA-F]{6}$/;
 
 function editorData(): EditorData {
 	return (
@@ -355,13 +356,12 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 					</BaseControl>
 				</PanelBody>
 
-				<PanelColorSettings
-					title={ __( 'Colours', 'imagina-player' ) }
-					initialOpen={ false }
-					enableAlpha={ false }
-					// Every colour is shown, not hidden behind a menu: these are the
-					// settings people came here to change.
-					colorSettings={ (
+				<PanelBody title={ __( 'Colours', 'imagina-player' ) } initialOpen={ false }>
+					<p className="imgp-editor__hint">
+						{ __( 'Leave a colour unset to use the preset’s.', 'imagina-player' ) }
+					</p>
+
+					{ (
 						[
 							[ 'accent', __( 'Accent', 'imagina-player' ) ],
 							[ 'waveColor', __( 'Waveform', 'imagina-player' ) ],
@@ -369,17 +369,51 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 							[ 'textColor', __( 'Title', 'imagina-player' ) ],
 							[ 'metaColor', __( 'Artist', 'imagina-player' ) ],
 						] as const
-					).map( ( [ attribute, label ] ) => ( {
-						label,
-						value: String( attributes[ attribute ] ?? '' ) || undefined,
-						// Clearing a swatch means "inherit from the preset" again.
-						onChange: ( value?: string ) => setAttributes( { [ attribute ]: value ?? INHERIT } ),
-					} ) ) }
-				>
-					<p className="imgp-editor__hint">
-						{ __( 'Leave a colour unset to use the preset’s.', 'imagina-player' ) }
-					</p>
-				</PanelColorSettings>
+					).map( ( [ attribute, label ] ) => {
+						const value = String( attributes[ attribute ] ?? '' );
+
+						return (
+							<BaseControl
+								__nextHasNoMarginBottom
+								key={ attribute }
+								id={ `imgp-colour-${ attribute }` }
+								label={ label }
+							>
+								<div className="imgp-editor__colour">
+									<input
+										type="color"
+										id={ `imgp-colour-${ attribute }` }
+										// A swatch cannot show "unset"; it falls back to a
+										// neutral while the text field carries the real state.
+										value={ HEX.test( value ) ? value : '#cccccc' }
+										onChange={ ( event ) =>
+											setAttributes( { [ attribute ]: event.target.value } )
+										}
+									/>
+									<input
+										type="text"
+										className="imgp-editor__colour-text"
+										value={ value }
+										placeholder={ __( 'From preset', 'imagina-player' ) }
+										spellCheck={ false }
+										onChange={ ( event ) =>
+											setAttributes( { [ attribute ]: event.target.value } )
+										}
+									/>
+									{ value && (
+										<Button
+											variant="tertiary"
+											size="small"
+											onClick={ () => setAttributes( { [ attribute ]: INHERIT } ) }
+										>
+											{ __( 'Reset', 'imagina-player' ) }
+										</Button>
+									) }
+								</div>
+							</BaseControl>
+						);
+					} ) }
+				</PanelBody>
 
 				<PanelBody title={ __( 'Size', 'imagina-player' ) } initialOpen={ false }>
 					<RangeControl

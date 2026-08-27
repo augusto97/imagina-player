@@ -73,3 +73,27 @@
 	font-size: 12px;
 	font-style: italic;
 }
+
+.imgp-editor__colour {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+
+	input[type="color"] {
+		flex: 0 0 auto;
+		width: 32px;
+		height: 32px;
+		padding: 0;
+		border: 1px solid #ddd;
+		border-radius: 3px;
+		background: none;
+		cursor: pointer;
+	}
+}
+
+.imgp-editor__colour-text {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 12px;
+}

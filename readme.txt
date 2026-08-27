@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.2.3
+Stable tag: 1.2.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,10 +65,14 @@ video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
 
+= 1.2.4 =
+* Fixed: the block's colour settings still sat behind an overflow menu and could
+  not be collapsed. They are now an ordinary collapsible panel with a swatch, a
+  hex field and a reset for each colour.
+
 = 1.2.3 =
 * Fixed: the block's appearance settings sat behind a "+" menu that hid them
-  until you knew to look. Colours are now real swatches, always visible, and
-  the waveform height is a slider with a reset.
+  until you knew to look, and the waveform height is now a slider with a reset.
 
 = 1.2.2 =
 * Fixed: the preset background was a bare text field with no colour picker,

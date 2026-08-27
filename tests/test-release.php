@@ -140,9 +140,20 @@ check(
 	'the block inspector hides nothing behind a ToolsPanel',
 	! str_contains( $editor_bundle, 'experimentalToolsPanel' )
 );
+// PanelColorSettings replaced it and turned out to carry the same problem in
+// current WordPress: its own overflow menu, and no way to collapse the section.
+// The inspector now uses only plain, collapsible panels.
 check(
-	'and its colours use real swatches',
-	str_contains( $editor_bundle, 'PanelColorSettings' )
+	'nor behind PanelColorSettings, which has the same problem',
+	! str_contains( $editor_bundle, 'PanelColorSettings' )
+);
+
+$inspector = (string) file_get_contents( $plugin . 'assets/src/editor/edit.tsx' );
+
+// Counting panels would not catch a swap; naming the section does.
+check(
+	'the colours section is a collapsible panel',
+	1 === preg_match( "/<PanelBody\s+title=\{ __\( 'Colours'/", $inspector )
 );
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
