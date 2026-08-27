@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.5.1.zip`.
+1. Descarga `imagina-player-1.6.0.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Imagina Player** (menú lateral), o desde el enlace
@@ -15,18 +15,35 @@ código fuente está en la rama de desarrollo.
 
 | | |
 | --- | --- |
-| Versión | `1.5.1` |
-| Fichero | `imagina-player-1.5.1.zip` |
-| Tamaño | 104 KB |
-| SHA-256 | `47e5f75f4458600dfde39fa8f0afc89d79192effd058f578ca688863d146c8a8` |
+| Versión | `1.6.0` |
+| Fichero | `imagina-player-1.6.0.zip` |
+| Tamaño | 112 KB |
+| SHA-256 | `a9710bd9593bd5afe084713a6f8b73560db747818bd07aa2ecd4f8994b7532d5` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.5.1.zip
+sha256sum imagina-player-1.6.0.zip
 ```
+
+## Novedades en 1.6.0
+
+- **Nuevo: vídeo.** Un reproductor construido alrededor de la imagen, no al
+  lado: póster, botón de play en el centro, controles sobre el vídeo que se
+  ocultan mientras se reproduce, pantalla completa, picture-in-picture, atajos
+  de teclado y gestos táctiles. La caja tiene su altura definitiva antes de que
+  llegue el vídeo, así que la página no salta.
+- **Nuevo:** el cromo de vídeo solo lo descargan las páginas que tienen un
+  vídeo. Una página con solo audio no cambia ni un byte.
+- **Nuevo:** los vídeos se sirven con el botón de descarga del navegador y la
+  reproducción remota desactivados, y sin menú contextual. Esto hace el archivo
+  más difícil de llevarse, no imposible: nada, ni el DRM, impide grabar la
+  pantalla. Lo que protege de verdad sigue siendo que el archivo está fuera de
+  la carpeta pública y su enlace caduca.
+- **Corregido:** el bundle no arrancaba si un plugin de optimización lo
+  insertaba dentro de la página.
 
 ## Novedades en 1.5.1
 
