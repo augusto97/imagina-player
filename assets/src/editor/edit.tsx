@@ -5,6 +5,7 @@ import {
 	MediaReplaceFlow,
 	MediaUpload,
 	MediaUploadCheck,
+	PanelColorSettings,
 	useBlockProps,
 } from '@wordpress/block-editor';
 import {
@@ -16,8 +17,6 @@ import {
 	SelectControl,
 	TextControl,
 	ToggleControl,
-	__experimentalToolsPanel as ToolsPanel,
-	__experimentalToolsPanelItem as ToolsPanelItem,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
@@ -356,59 +355,48 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 					</BaseControl>
 				</PanelBody>
 
-				<ToolsPanel
-					label={ __( 'Appearance', 'imagina-player' ) }
-					resetAll={ () =>
-						setAttributes( {
-							accent: INHERIT,
-							waveColor: INHERIT,
-							waveProgress: INHERIT,
-							textColor: INHERIT,
-							metaColor: INHERIT,
-							height: INHERIT,
-						} )
-					}
-				>
-					{ (
+				<PanelColorSettings
+					title={ __( 'Colours', 'imagina-player' ) }
+					initialOpen={ false }
+					enableAlpha={ false }
+					// Every colour is shown, not hidden behind a menu: these are the
+					// settings people came here to change.
+					colorSettings={ (
 						[
-							[ 'accent', __( 'Accent colour', 'imagina-player' ) ],
-							[ 'waveColor', __( 'Waveform colour', 'imagina-player' ) ],
-							[ 'waveProgress', __( 'Played colour', 'imagina-player' ) ],
-							[ 'textColor', __( 'Title colour', 'imagina-player' ) ],
-							[ 'metaColor', __( 'Artist colour', 'imagina-player' ) ],
+							[ 'accent', __( 'Accent', 'imagina-player' ) ],
+							[ 'waveColor', __( 'Waveform', 'imagina-player' ) ],
+							[ 'waveProgress', __( 'Played portion', 'imagina-player' ) ],
+							[ 'textColor', __( 'Title', 'imagina-player' ) ],
+							[ 'metaColor', __( 'Artist', 'imagina-player' ) ],
 						] as const
-					).map( ( [ attribute, label ] ) => (
-						<ToolsPanelItem
-							key={ attribute }
-							label={ label }
-							hasValue={ () => Boolean( attributes[ attribute ] ) }
-							onDeselect={ () => setAttributes( { [ attribute ]: INHERIT } ) }
-						>
-							<TextControl
-								__nextHasNoMarginBottom
-								label={ label }
-								value={ String( attributes[ attribute ] ?? '' ) }
-								placeholder={ __( 'Inherit from preset', 'imagina-player' ) }
-								onChange={ ( value: string ) => setAttributes( { [ attribute ]: value } ) }
-							/>
-						</ToolsPanelItem>
-					) ) }
+					).map( ( [ attribute, label ] ) => ( {
+						label,
+						value: String( attributes[ attribute ] ?? '' ) || undefined,
+						// Clearing a swatch means "inherit from the preset" again.
+						onChange: ( value?: string ) => setAttributes( { [ attribute ]: value ?? INHERIT } ),
+					} ) ) }
+				>
+					<p className="imgp-editor__hint">
+						{ __( 'Leave a colour unset to use the preset’s.', 'imagina-player' ) }
+					</p>
+				</PanelColorSettings>
 
-					<ToolsPanelItem
+				<PanelBody title={ __( 'Size', 'imagina-player' ) } initialOpen={ false }>
+					<RangeControl
+						__nextHasNoMarginBottom
 						label={ __( 'Waveform height', 'imagina-player' ) }
-						hasValue={ () => Boolean( attributes.height ) }
-						onDeselect={ () => setAttributes( { height: INHERIT } ) }
-					>
-						<RangeControl
-							__nextHasNoMarginBottom
-							label={ __( 'Waveform height', 'imagina-player' ) }
-							min={ 24 }
-							max={ 240 }
-							value={ Number( attributes.height ) || undefined }
-							onChange={ ( value?: number ) => setAttributes( { height: value ? String( value ) : INHERIT } ) }
-						/>
-					</ToolsPanelItem>
-				</ToolsPanel>
+						min={ 24 }
+						max={ 240 }
+						allowReset
+						resetFallbackValue={ undefined }
+						value={ Number( attributes.height ) || undefined }
+						onChange={ ( value?: number ) =>
+							setAttributes( { height: value ? String( value ) : INHERIT } )
+						}
+						help={ __( 'Unset uses the preset’s height.', 'imagina-player' ) }
+					/>
+				</PanelBody>
+
 			</InspectorControls>
 
 			<Preview

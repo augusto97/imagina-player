@@ -132,5 +132,18 @@ check(
 
 check( 'uninstall.php ships', is_readable( $plugin . 'uninstall.php' ) );
 
+// The block inspector once hid its appearance settings behind a ToolsPanel's
+// "+" menu, where nobody found them. Everything the block offers is visible.
+$editor_bundle = (string) file_get_contents( $plugin . 'build/editor.js' );
+
+check(
+	'the block inspector hides nothing behind a ToolsPanel',
+	! str_contains( $editor_bundle, 'experimentalToolsPanel' )
+);
+check(
+	'and its colours use real swatches',
+	str_contains( $editor_bundle, 'PanelColorSettings' )
+);
+
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
 exit( $failures ? 1 : 0 );
