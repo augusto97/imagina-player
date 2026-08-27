@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.1.0.zip`.
+1. Descarga `imagina-player-1.2.0.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Ajustes → Imagina Player**.
@@ -14,18 +14,29 @@ código fuente está en la rama de desarrollo.
 
 | | |
 | --- | --- |
-| Versión | `1.1.0` |
-| Fichero | `imagina-player-1.1.0.zip` |
-| Tamaño | 88 KB |
-| SHA-256 | `56f6425b6941db65c642b0ea690ba00e286c9e84e1dc10c24e90adec5da0f9f6` |
+| Versión | `1.2.0` |
+| Fichero | `imagina-player-1.2.0.zip` |
+| Tamaño | 92 KB |
+| SHA-256 | `3fa93723255ee90b424fbf3568de13bc69a8d56c35262bf19943fe2ea365cf90` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.1.0.zip
+sha256sum imagina-player-1.2.0.zip
 ```
+
+## Novedades en 1.2.0
+
+- **Corregido:** la vista previa de los ajustes mostraba «no audio file
+  selected» en vez de un reproductor, y con un tema de administración oscuro los
+  títulos quedaban ilegibles.
+- **Marca:** colores por defecto para todo el sitio, de los que arranca cada
+  preset nuevo, más un logo opcional en cada reproductor.
+- **CSS personalizado** desde los ajustes.
+- Por preset: descripción, radio de esquina, qué pasa al terminar la pista
+  (rebobinar, repetir o parar) y dónde se ancla el reproductor fijo.
 
 ## Novedades en 1.1.0
 
