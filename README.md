@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.2.3.zip`.
+1. Descarga `imagina-player-1.2.4.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Ajustes → Imagina Player**.
@@ -14,24 +14,26 @@ código fuente está en la rama de desarrollo.
 
 | | |
 | --- | --- |
-| Versión | `1.2.3` |
-| Fichero | `imagina-player-1.2.3.zip` |
+| Versión | `1.2.4` |
+| Fichero | `imagina-player-1.2.4.zip` |
 | Tamaño | 92 KB |
-| SHA-256 | `8866981b6717e428c22f3a31facb7a5e1019171c51d923441a78dfbed4e9f488` |
+| SHA-256 | `88a9aa7e1393f1b8f769906b97c2358b0c4227398dbd3df7b3e42a9ccfd255e8` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.2.3.zip
+sha256sum imagina-player-1.2.4.zip
 ```
 
-## Novedades en 1.2.3
+## Novedades en 1.2.4
 
+- **Corregido:** los colores del bloque seguían tras un menú de tres puntos y no
+  se podían plegar. Ahora son un panel normal y plegable, con muestra, campo hex
+  y botón de reinicio por color.
 - **Corregido:** los ajustes de apariencia del bloque estaban escondidos tras un
-  menú «+». Ahora los colores son muestras visibles y la altura de la onda un
-  deslizador.
+  menú «+»; la altura de la onda es ahora un deslizador con reinicio.
 - **Corregido:** el fondo del preset era una caja de texto sin selector de
   color; ahora eliges entre transparente o color, con la muestra al lado.
 
