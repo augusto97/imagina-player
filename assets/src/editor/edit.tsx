@@ -41,6 +41,8 @@ function editorData(): EditorData {
 			overrides: {},
 			presetShape: {},
 			settingsUrl: '',
+			frontendCss: '',
+			frontendJs: '',
 		}
 	);
 }
@@ -90,28 +92,6 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 
 		return 'yes' === override;
 	};
-
-	const previewStyle: Record< string, string > = {};
-
-	for ( const [ property, attribute ] of [
-		[ '--imgp-accent', 'accent' ],
-		[ '--imgp-wave', 'waveColor' ],
-		[ '--imgp-wave-progress', 'waveProgress' ],
-		[ '--imgp-text', 'textColor' ],
-		[ '--imgp-meta', 'metaColor' ],
-	] as const ) {
-		const value = String( attributes[ attribute ] ?? '' );
-
-		if ( value ) {
-			previewStyle[ property ] = value;
-		}
-	}
-
-	const height = Number( attributes.height ?? 0 );
-
-	if ( height > 0 ) {
-		previewStyle[ '--imgp-wave-height' ] = `${ height }px`;
-	}
 
 	if ( ! src ) {
 		return (
@@ -434,15 +414,8 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 			</InspectorControls>
 
 			<Preview
-				title={ String( attributes.title ?? __( 'Untitled track', 'imagina-player' ) ) }
-				artist={ String( attributes.artist ?? '' ) }
-				thumbnail={ inherited( 'showThumbnail', 'show_thumbnail' ) ? String( attributes.thumbnail ?? '' ) : '' }
-				skin={ String( attributes.skin || data.presetShape.skin || 'wave' ) }
-				showArtist={ inherited( 'showArtist', 'show_artist' ) && Boolean( attributes.artist ) }
-				showTitle={ inherited( 'showTitle', 'show_title' ) }
-				showVolume={ inherited( 'showVolume', 'show_volume' ) }
-				showTime={ inherited( 'showTime', 'show_time' ) }
-				style={ previewStyle }
+				attributes={ attributes }
+				assets={ { frontendCss: data.frontendCss, frontendJs: data.frontendJs } }
 			/>
 		</div>
 	);

@@ -148,8 +148,9 @@ todo lo demás es `assets/src/admin/`, una aplicación React con su propio siste
 de diseño —ni un `form-table` de WordPress—. Lee y escribe por REST
 (`Rest\SettingsController`).
 
-La vista previa es un iframe que carga el **bundle real** del front-end sobre
-markup del **renderizador real**, servido por `POST /preview`. Dos motivos: lo
+La vista previa —tanto la de esta pantalla como la del bloque— es un iframe que
+carga el **bundle real** del front-end sobre markup del **renderizador real**,
+servido por `POST /preview`. Dos motivos: lo
 que ves es lo que se publicará, en lugar de una imitación que se desincroniza
 cuando cambia el renderizador; y el CSS del panel no puede colarse dentro y
 favorecer el resultado.

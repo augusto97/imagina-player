@@ -87,5 +87,43 @@ $xss = $renderer->render( array(
 check( 'no raw script tag survives', ! str_contains( $xss, '<script>' ) );
 check( 'no raw img injection survives', ! str_contains( $xss, '<img src=x' ) );
 
+// Every skin must actually produce its own layout. The block preview renders
+// through this same path now, and the lookalike it replaced drew card, compact
+// and pill as the plain stacked one.
+$layouts = array(
+	'wave'          => array( 'imgp__wave', 'imgp__bar' ),
+	'wave-centered' => array( 'imgp__wave', 'imgp__bar' ),
+	'card'          => array( 'imgp__wave', 'imgp__body' ),
+	'compact'       => array( 'imgp__row', 'imgp__track' ),
+	'pill'          => array( 'imgp__row', 'imgp__track' ),
+	'bar'           => array( 'imgp__track', 'imgp__bar' ),
+	'minimal'       => array( 'imgp__bar' ),
+);
+
+foreach ( $layouts as $skin => $expected ) {
+	$markup = $renderer->render( array(
+		'src'   => 'https://cdn.example.com/a.mp3',
+		'title' => 'T',
+		'skin'  => $skin,
+	) );
+
+	$missing = array();
+
+	foreach ( $expected as $marker ) {
+		if ( ! str_contains( $markup, $marker ) ) {
+			$missing[] = $marker;
+		}
+	}
+
+	check( "skin {$skin} renders its own layout", array() === $missing, implode( ', ', $missing ) );
+}
+
+// Only the skins that draw a waveform get a canvas.
+$minimal = $renderer->render( array( 'src' => 'https://cdn.example.com/a.mp3', 'skin' => 'minimal' ) );
+check( 'the minimal skin has no scrubber at all', ! str_contains( $minimal, 'imgp__scrubber' ) );
+
+$bar = $renderer->render( array( 'src' => 'https://cdn.example.com/a.mp3', 'skin' => 'bar' ) );
+check( 'the bar skin has no waveform canvas', ! str_contains( $bar, '<canvas' ) );
+
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
 exit( $failures ? 1 : 0 );

@@ -62,9 +62,11 @@ final class SettingsController {
 				'callback'            => array( $this, 'preview' ),
 				'permission_callback' => $can_manage,
 				'args'                => array(
-					'preset' => array(
-						'type'     => 'object',
-						'required' => true,
+					'preset'     => array(
+						'type' => 'object',
+					),
+					'attributes' => array(
+						'type' => 'object',
 					),
 				),
 			)
@@ -162,38 +164,59 @@ final class SettingsController {
 	 * Render a player with a candidate preset, without saving anything.
 	 */
 	public function preview( WP_REST_Request $request ): WP_REST_Response {
-		$preset = Settings::sanitize_preset( (array) $request->get_param( 'preset' ) );
+		$attributes = $request->get_param( 'attributes' );
 
-		// Feed the renderer the candidate preset by filtering the resolution step,
-		// so the preview goes through exactly the same code path as the front end.
-		$override = static fn(): array => $preset;
+		// Two callers, two shapes. The block sends its own attributes and wants to
+		// see exactly what it will publish; the settings screen sends a candidate
+		// preset that is not saved anywhere yet.
+		if ( is_array( $attributes ) ) {
+			return $this->preview_response( $attributes, null );
+		}
 
-		// A duration the player can lay a scrubber over. Without it the preview
-		// shows `--:--` and the elapsed badge has nowhere to sit.
-		$fake_duration = static function ( array $config ): array {
-			$config['duration'] = 214.0;
-
-			return $config;
-		};
-
-		add_filter( 'imagina_player_resolved_config', $override, 99 );
-		add_filter( 'imagina_player_client_config', $fake_duration, 99 );
-
-		$renderer = new PlayerRenderer();
-
-		// The preview needs a source or the renderer, correctly, refuses to draw a
-		// player at all. Nothing ever loads from it: the waveform is supplied and
-		// nobody presses play on a settings screen.
-		$html = $renderer->render(
+		return $this->preview_response(
 			array(
 				'src'       => home_url( '/imagina-player-preview.mp3' ),
 				'title'     => (string) ( $request->get_param( 'title' ) ?: __( 'Your track title', 'imagina-player' ) ),
 				'artist'    => (string) ( $request->get_param( 'artist' ) ?: __( 'Artist name', 'imagina-player' ) ),
-				'thumbnail' => (string) ( $request->get_param( 'thumbnail' ) ?: \ImaginaPlayer\URL . 'assets/preview-cover.svg' ),
-			)
+				'thumbnail' => \ImaginaPlayer\URL . 'assets/preview-cover.svg',
+			),
+			Settings::sanitize_preset( (array) $request->get_param( 'preset' ) )
 		);
+	}
 
-		remove_filter( 'imagina_player_resolved_config', $override, 99 );
+	/**
+	 * Render through the real renderer, optionally forcing a candidate preset.
+	 *
+	 * @param array<string, mixed>      $attributes Player attributes.
+	 * @param array<string, mixed>|null $preset     Preset to force, or null to resolve normally.
+	 */
+	private function preview_response( array $attributes, ?array $preset ): WP_REST_Response {
+		// A duration the player can lay a scrubber over. Without it the preview
+		// shows `--:--` and the elapsed badge has nowhere to sit.
+		$fake_duration = static function ( array $config ): array {
+			if ( empty( $config['duration'] ) ) {
+				$config['duration'] = 214.0;
+			}
+
+			return $config;
+		};
+
+		$override = null;
+
+		if ( null !== $preset ) {
+			$override = static fn(): array => $preset;
+			add_filter( 'imagina_player_resolved_config', $override, 99 );
+		}
+
+		add_filter( 'imagina_player_client_config', $fake_duration, 99 );
+
+		$renderer = new PlayerRenderer();
+		$html     = $renderer->render( $attributes );
+
+		if ( null !== $override ) {
+			remove_filter( 'imagina_player_resolved_config', $override, 99 );
+		}
+
 		remove_filter( 'imagina_player_client_config', $fake_duration, 99 );
 
 		return new WP_REST_Response(

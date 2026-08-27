@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.2.4
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,12 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.3.0 =
+* Fixed: the block preview drew a hand-made copy of the player that had fallen
+  behind the real one — the card, compact and pill skins all appeared as the
+  plain stacked layout. It now renders the actual player, the same way the
+  settings screen does.
 
 = 1.2.4 =
 * Fixed: the block's colour settings still sat behind an overflow menu and could

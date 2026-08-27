@@ -151,6 +151,12 @@ check(
 $inspector = (string) file_get_contents( $plugin . 'assets/src/editor/edit.tsx' );
 
 // Counting panels would not catch a swap; naming the section does.
+// The block preview renders the real player now; the hand-made stand-in it
+// replaced is what fell behind the renderer.
+check(
+	'the editor ships no hand-made player lookalike',
+	! str_contains( $editor_bundle, 'imgp__wave-preview' )
+);
 check(
 	'the colours section is a collapsible panel',
 	1 === preg_match( "/<PanelBody\s+title=\{ __\( 'Colours'/", $inspector )

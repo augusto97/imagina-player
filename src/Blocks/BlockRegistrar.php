@@ -112,7 +112,11 @@ final class BlockRegistrar {
 					'skins'       => Settings::skins(),
 					'overrides'   => Attributes::override_map(),
 					'presetShape' => Settings::preset_defaults(),
-					'settingsUrl' => esc_url_raw( admin_url( 'options-general.php?page=imagina-player' ) ),
+					'settingsUrl' => esc_url_raw( admin_url( 'admin.php?page=imagina-player' ) ),
+					// The preview runs the real player inside an iframe, so it needs
+					// the real assets rather than a copy of them.
+					'frontendCss' => \ImaginaPlayer\URL . 'build/style-frontend.css',
+					'frontendJs'  => \ImaginaPlayer\URL . 'build/frontend.js',
 				)
 			) . ';',
 			'before'
