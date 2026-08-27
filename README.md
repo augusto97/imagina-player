@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.2.0.zip`.
+1. Descarga `imagina-player-1.2.1.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Ajustes → Imagina Player**.
@@ -14,18 +14,25 @@ código fuente está en la rama de desarrollo.
 
 | | |
 | --- | --- |
-| Versión | `1.2.0` |
-| Fichero | `imagina-player-1.2.0.zip` |
+| Versión | `1.2.1` |
+| Fichero | `imagina-player-1.2.1.zip` |
 | Tamaño | 92 KB |
-| SHA-256 | `3fa93723255ee90b424fbf3568de13bc69a8d56c35262bf19943fe2ea365cf90` |
+| SHA-256 | `248ef692e0549084a09721ac9aa79ad2bfd102f01fd53365ab824e2170df0e35` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.2.0.zip
+sha256sum imagina-player-1.2.1.zip
 ```
+
+## Novedades en 1.2.1
+
+- **Corregido:** la pantalla de ajustes seguía la preferencia de modo oscuro del
+  navegador y se ponía oscura ella sola, mientras el resto del escritorio de
+  WordPress seguía claro — con los títulos ilegibles como resultado. Ahora usa
+  una sola paleta clara, como el admin que la rodea.
 
 ## Novedades en 1.2.0
 
