@@ -167,8 +167,14 @@ setTimeout(function () {
 	}
 	var out = document.createElement('pre');
 	out.id = 'result';
+	var root = document.getElementById('imagina-player-admin');
+	var styles = root ? getComputedStyle(root) : null;
+
 	out.textContent = 'RESULT:' + JSON.stringify({
 		mounted: !!document.querySelector('.imgpa-header'),
+		prefersDark: window.matchMedia('(prefers-color-scheme: dark)').matches,
+		ground: styles ? styles.backgroundColor : '',
+		ink: styles ? styles.color : '',
 		nav: text('.imgpa-nav__item'),
 		presets: text('.imgpa-presets__name'),
 		tabs: text('.imgpa-tabs__tab'),
@@ -210,6 +216,39 @@ check( 'the preset editor has its three tabs', 3 === count( $result['tabs'] ?? a
 check( 'the control toggles render', (int) ( $result['toggles'] ?? 0 ) >= 8, (string) ( $result['toggles'] ?? 0 ) );
 check( 'the live preview frame is present', ! empty( $result['preview'] ) );
 check( 'saving is disabled until something changes', true === ( $result['saveDisabled'] ?? null ) );
+
+// The screen once followed the OS preference and turned dark on its own, while
+// the rest of wp-admin stayed light and kept painting dark headings onto it.
+// WordPress has no dark mode; this screen does not invent one.
+$to_rgb = static function ( string $value ): array {
+	preg_match_all( '/\d+/', $value, $numbers );
+
+	return array_map( 'intval', array_slice( $numbers[0], 0, 3 ) );
+};
+
+$ground = $to_rgb( (string) ( $result['ground'] ?? '' ) );
+$ink    = $to_rgb( (string) ( $result['ink'] ?? '' ) );
+
+// Headless Chromium will not report a dark colour scheme on demand — the flags
+// that look like they should are about auto-darkening, not the media query — so
+// the decision is pinned at the stylesheet instead: no colour-scheme rule may
+// reach this screen at all.
+$admin_css = (string) file_get_contents( $root . '/build/admin.css' );
+
+check(
+	'the stylesheet has no colour-scheme rule to follow',
+	! str_contains( $admin_css, 'prefers-color-scheme' )
+);
+check(
+	'the panel stays light anyway',
+	3 === count( $ground ) && array_sum( $ground ) / 3 > 200,
+	(string) ( $result['ground'] ?? '' )
+);
+check(
+	'and its text stays dark',
+	3 === count( $ink ) && array_sum( $ink ) / 3 < 110,
+	(string) ( $result['ink'] ?? '' )
+);
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
 exit( $failures ? 1 : 0 );

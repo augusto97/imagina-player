@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,10 +65,16 @@ video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
 
+= 1.2.1 =
+* Fixed: the settings screen followed the browser's dark-mode preference, which
+  turned that one screen dark while the rest of wp-admin stayed light and kept
+  painting dark headings onto it. It now uses a single light palette, like the
+  admin around it.
+
 = 1.2.0 =
 * Fixed: the settings screen's live preview showed "no audio file selected"
-  instead of a player, and headings were unreadable under a dark admin theme
-  because their colour was inherited rather than declared.
+  instead of a player, and its headings inherited their colour from wp-admin
+  instead of declaring it.
 * New: Branding — site-wide default colours that a new preset starts from, plus
   an optional logo on every player.
 * New: custom CSS, loaded after the player stylesheet on pages with a player.

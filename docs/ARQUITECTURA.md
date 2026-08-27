@@ -154,9 +154,17 @@ que ves es lo que se publicará, en lugar de una imitación que se desincroniza
 cuando cambia el renderizador; y el CSS del panel no puede colarse dentro y
 favorecer el resultado.
 
-Un detalle que costó una versión: **todos los colores de texto se declaran, nunca
-se heredan**. Un tema oscuro de administración pinta sus propios colores sobre
-los encabezados, y así es como esta pantalla salió ilegible la primera vez.
+Dos decisiones que costaron una versión cada una:
+
+**Una sola paleta clara.** La primera versión seguía `prefers-color-scheme`, así
+que con el navegador en modo oscuro *esta* pantalla se ponía oscura mientras el
+resto de wp-admin seguía claro — y el CSS de WordPress, que da por hecho un
+fondo claro, seguía pintando encabezados oscuros encima. WordPress no tiene modo
+oscuro que seguir; que un plugin se lo invente para una sola pantalla desentona
+aunque sea legible.
+
+**Todos los colores de texto se declaran, nunca se heredan.** Es lo que dejaba
+que el CSS de wp-admin se colara en primer lugar.
 
 ## Medios protegidos
 

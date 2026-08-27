@@ -4,6 +4,13 @@
  * Deliberately not the WordPress options look: its own tokens, its own
  * controls, and `#wpcontent` padding reset so the screen fills the page the way
  * a product screen does rather than sitting in a form.
+ *
+ * Single light palette, on purpose. An earlier version followed
+ * `prefers-color-scheme`, which turned this one screen dark while the rest of
+ * wp-admin stayed light — and WordPress's own admin CSS, which assumes a light
+ * content area, kept painting dark headings onto the dark cards. WordPress has
+ * no dark mode to follow; a plugin inventing one for a single screen is jarring
+ * even when it is legible.
  */
 
 #imagina-player-admin {
@@ -53,21 +60,6 @@
 	*::before,
 	*::after {
 		box-sizing: border-box;
-	}
-}
-
-@media (prefers-color-scheme: dark) {
-
-	#imagina-player-admin {
-		--ip-accent: #cf5fd2;
-		--ip-accent-soft: #2a1f2c;
-		--ip-ink: #ece6f0;
-		--ip-muted: #9c93a8;
-		--ip-line: #322b3a;
-		--ip-surface: #1d1826;
-		--ip-ground: #16121c;
-		--ip-good: #4fb6bd;
-		--ip-warn: #d98a5c;
 	}
 }
 
