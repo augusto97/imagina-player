@@ -51,7 +51,29 @@ final class Track {
 	}
 
 	public function is_video(): bool {
-		return str_starts_with( $this->mime, 'video/' );
+		return str_starts_with( $this->mime, 'video/' ) || $this->is_hls();
+	}
+
+	/**
+	 * An HLS manifest.
+	 *
+	 * Checked by extension, because `.m3u8` is not an upload type WordPress
+	 * knows and so `wp_check_filetype()` reports nothing for it. Without this a
+	 * stream rendered as an audio player — a row of controls with no picture —
+	 * which is exactly what happened before a test caught it.
+	 *
+	 * Treated as video: a manifest says nothing about its own contents until it
+	 * is fetched, and in practice a stream on a WordPress site is a recording of
+	 * something to watch.
+	 */
+	public function is_hls(): bool {
+		if ( 'application/vnd.apple.mpegurl' === $this->mime || 'application/x-mpegurl' === $this->mime ) {
+			return true;
+		}
+
+		$path = (string) wp_parse_url( $this->src, PHP_URL_PATH );
+
+		return 'm3u8' === strtolower( pathinfo( $path, PATHINFO_EXTENSION ) );
 	}
 
 	/**

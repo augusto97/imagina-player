@@ -142,6 +142,14 @@ final class Attributes {
 				'type'    => 'string',
 				'default' => self::DEFAULT_RATIO,
 			),
+			'tracks'       => array(
+				'type'    => 'array',
+				'default' => array(),
+			),
+			'chapters'     => array(
+				'type'    => 'array',
+				'default' => array(),
+			),
 		);
 
 		$preset_defaults = Settings::preset_defaults();
@@ -190,6 +198,7 @@ final class Attributes {
 				'float'    => (float) $raw,
 				'bool'     => self::to_bool( $raw ),
 				'tristate' => self::to_tristate( $raw ),
+				'array'    => self::to_array( $raw ),
 				default    => is_scalar( $raw ) ? (string) $raw : '',
 			};
 		}
@@ -204,6 +213,8 @@ final class Attributes {
 		$out['startTime']   = max( 0.0, (float) $out['startTime'] );
 		$out['poster']      = self::sanitize_media_url( (string) $out['poster'] );
 		$out['aspectRatio'] = self::sanitize_ratio( (string) $out['aspectRatio'] );
+		$out['tracks']      = self::sanitize_tracks( (array) $out['tracks'] );
+		$out['chapters']    = self::sanitize_chapters( (array) $out['chapters'] );
 
 		return $out;
 	}
@@ -249,6 +260,156 @@ final class Attributes {
 		}
 
 		return $width . ':' . $height;
+	}
+
+	/**
+	 * A list, from a block's JSON or a shortcode's JSON string.
+	 *
+	 * @return array<int, mixed>
+	 */
+	public static function to_array( mixed $value ): array {
+		if ( is_array( $value ) ) {
+			return array_values( $value );
+		}
+
+		if ( is_string( $value ) && '' !== trim( $value ) ) {
+			$decoded = json_decode( $value, true );
+
+			return is_array( $decoded ) ? array_values( $decoded ) : array();
+		}
+
+		return array();
+	}
+
+	/**
+	 * Subtitle tracks.
+	 *
+	 * A track with no source is not a track. A language code reaches the `srclang`
+	 * attribute, which browsers parse, so it is cut down to what BCP 47 allows
+	 * rather than escaped and hoped for.
+	 *
+	 * @param array<int, mixed> $tracks Raw tracks.
+	 * @return array<int, array{src: string, srclang: string, label: string, kind: string, default: bool}>
+	 */
+	public static function sanitize_tracks( array $tracks ): array {
+		$clean   = array();
+		$default = false;
+
+		foreach ( $tracks as $track ) {
+			if ( ! is_array( $track ) ) {
+				continue;
+			}
+
+			$src = self::sanitize_media_url( (string) ( $track['src'] ?? '' ) );
+
+			if ( '' === $src ) {
+				continue;
+			}
+
+			$kind = (string) ( $track['kind'] ?? 'subtitles' );
+
+			if ( ! in_array( $kind, array( 'subtitles', 'captions', 'descriptions' ), true ) ) {
+				$kind = 'subtitles';
+			}
+
+			$language = strtolower( (string) preg_replace( '/[^A-Za-z0-9-]/', '', (string) ( $track['srclang'] ?? '' ) ) );
+			$language = substr( $language, 0, 20 );
+
+			// Only the first default wins: two default tracks is not a state a
+			// browser has an answer for.
+			$is_default = ! $default && ! empty( $track['default'] );
+			$default    = $default || $is_default;
+
+			$clean[] = array(
+				'src'     => $src,
+				'srclang' => $language,
+				'label'   => sanitize_text_field( (string) ( $track['label'] ?? $language ) ),
+				'kind'    => $kind,
+				'default' => $is_default,
+			);
+		}
+
+		return $clean;
+	}
+
+	/**
+	 * Chapters, in order and without overlaps.
+	 *
+	 * Sorted here rather than trusted from the editor, because the VTT built from
+	 * them has to be monotonic and a browser given cues out of order simply drops
+	 * the ones it does not like — silently.
+	 *
+	 * @param array<int, mixed> $chapters Raw chapters.
+	 * @return array<int, array{start: float, title: string}>
+	 */
+	public static function sanitize_chapters( array $chapters ): array {
+		$clean = array();
+
+		foreach ( $chapters as $chapter ) {
+			if ( ! is_array( $chapter ) ) {
+				continue;
+			}
+
+			$title = sanitize_text_field( (string) ( $chapter['title'] ?? '' ) );
+
+			if ( '' === $title ) {
+				continue;
+			}
+
+			$clean[] = array(
+				'start' => max( 0.0, self::to_seconds( $chapter['start'] ?? 0 ) ),
+				'title' => $title,
+			);
+		}
+
+		usort( $clean, static fn( array $a, array $b ): int => $a['start'] <=> $b['start'] );
+
+		// Two chapters starting at the same second would produce a zero-length
+		// cue, which is not a cue.
+		$seen = array();
+
+		return array_values(
+			array_filter(
+				$clean,
+				static function ( array $chapter ) use ( &$seen ): bool {
+					$key = (string) $chapter['start'];
+
+					if ( isset( $seen[ $key ] ) ) {
+						return false;
+					}
+
+					$seen[ $key ] = true;
+
+					return true;
+				}
+			)
+		);
+	}
+
+	/**
+	 * Seconds from a number or a `mm:ss` / `hh:mm:ss` string.
+	 */
+	public static function to_seconds( mixed $value ): float {
+		if ( is_numeric( $value ) ) {
+			return (float) $value;
+		}
+
+		if ( ! is_string( $value ) ) {
+			return 0.0;
+		}
+
+		$parts = array_reverse( array_map( 'trim', explode( ':', $value ) ) );
+		$total = 0.0;
+
+		foreach ( $parts as $index => $part ) {
+			if ( ! is_numeric( $part ) || $index > 2 ) {
+				return 0.0;
+			}
+
+			$total += (float) $part * ( 60 ** $index );
+		}
+
+		return $total;
 	}
 
 	public static function to_bool( mixed $value ): bool {

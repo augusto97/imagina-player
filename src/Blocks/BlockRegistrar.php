@@ -64,6 +64,11 @@ final class BlockRegistrar {
 					'type'    => 'boolean',
 					'default' => (bool) $definition['default'],
 				),
+				'array'        => array(
+					'type'    => 'array',
+					'default' => array(),
+					'items'   => array( 'type' => 'object' ),
+				),
 				default        => array(
 					'type'    => 'string',
 					'default' => (string) $definition['default'],

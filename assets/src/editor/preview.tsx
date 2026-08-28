@@ -22,7 +22,12 @@ interface EditorAssets {
 }
 
 interface PreviewProps {
-	attributes: Record< string, string | number | boolean >;
+	/**
+	 * Whatever the block holds. Lists (subtitle tracks, chapters) go through
+	 * unchanged: the preview posts them to the renderer, which is the only side
+	 * that needs to understand their shape.
+	 */
+	attributes: Record< string, unknown >;
 	assets: EditorAssets;
 }
 

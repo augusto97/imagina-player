@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.6.0
+Stable tag: 1.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,23 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.7.0 =
+* New: subtitles. WebVTT and SubRip, several languages, a menu to switch
+  between them, and the choice remembered across videos. SubRip files are
+  converted for the browser automatically — browsers read WebVTT and nothing
+  else, and telling people to go and find a converter is not a feature.
+* New: chapters. Marks on the progress bar and a menu to jump between sections.
+  Times can be written as 90, 1:30 or 0:01:30.
+* New: HLS adaptive streaming, with a quality menu built from the stream
+  itself. The streaming library is downloaded only for pages that have a
+  stream, and only where the browser cannot play one on its own — Safari and
+  iOS play it natively and pay nothing.
+* New: on a protected stream, every segment is signed, not just the playlist.
+  Signing only the playlist protects nothing: the segment addresses are listed
+  inside it in plain text.
+* Fixed: a stream (.m3u8) was rendered as an audio player, because WordPress
+  reports no file type for a playlist.
 
 = 1.6.0 =
 * New: video. A player built around the picture rather than beside it —

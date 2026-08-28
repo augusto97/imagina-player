@@ -153,6 +153,7 @@ export class Player {
 					toggle: () => this.toggle(),
 					seekBy: ( seconds: number ) =>
 						this.seekTo( this.media.currentTime + seconds ),
+					seekTo: ( seconds: number ) => this.seekTo( seconds ),
 				},
 				config
 			);

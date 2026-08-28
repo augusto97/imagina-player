@@ -29,6 +29,8 @@ function kb( string $file ): float {
 
 $core  = $plugin . 'build/frontend.js';
 $video = $plugin . 'build/imagina-video.js';
+$glue  = $plugin . 'build/imagina-hls-glue.js';
+$hls   = $plugin . 'build/imagina-hls.js';
 $css   = $plugin . 'build/style-frontend.css';
 
 check( 'the front-end bundle is built', is_readable( $core ) );
@@ -39,9 +41,10 @@ check( 'the front-end bundle is built', is_readable( $core ) );
  * the claim survives. Raise one deliberately, in a commit that says why.
  */
 $budgets = array(
-	'the core bundle'   => array( $core, 26.0 ),
-	'the video chunk'   => array( $video, 12.0 ),
-	'the stylesheet'    => array( $css, 20.0 ),
+	'the core bundle' => array( $core, 26.0 ),
+	'the video chunk' => array( $video, 14.0 ),
+	'the HLS glue'    => array( $glue, 6.0 ),
+	'the stylesheet'  => array( $css, 24.0 ),
 );
 
 foreach ( $budgets as $label => $budget ) {
@@ -60,6 +63,11 @@ foreach ( $budgets as $label => $budget ) {
 	);
 }
 
+/*
+ * hls.js gets no byte budget, because its size is not ours to choose and there
+ * is no smaller way to play adaptive streaming. What it gets instead is a hard
+ * rule about who pays for it, checked below.
+ */
 echo PHP_EOL . '# Audio pages must not pay for video' . PHP_EOL;
 
 check(
@@ -100,6 +108,39 @@ check(
 	'without this the import target is unresolvable at runtime'
 );
 
+echo PHP_EOL . '# Only streams pay for the streaming library' . PHP_EOL;
+
+check( 'hls.js is its own chunk', is_readable( $hls ) );
+
+// Internals, not the public event names our own glue legitimately mentions:
+// these appear only if the library itself has been inlined.
+$hls_only = array( 'levelController', 'fragmentLoader', 'bufferController', 'abrController' );
+$others   = array( $core => 'the core bundle', $video => 'the video chunk', $glue => 'the HLS glue' );
+
+foreach ( $others as $file => $label ) {
+	if ( ! is_readable( $file ) ) {
+		continue;
+	}
+
+	$source = (string) file_get_contents( $file );
+
+	foreach ( $hls_only as $needle ) {
+		check(
+			sprintf( '%s does not contain "%s"', $label, $needle ),
+			! str_contains( $source, $needle ),
+			'400 KB on every page that has a video is the whole cost of the feature paid by everyone'
+		);
+	}
+}
+
+// Webpack keeps the chunk *name* map in the runtime, which lives in the core
+// bundle. That is a handful of bytes, and it is what makes the deferral work.
+check(
+	'the core runtime knows the chunk names',
+	str_contains( $core_source, 'imagina-hls' ) && str_contains( $core_source, 'imagina-video' ),
+	'without the map the imports are unresolvable at runtime'
+);
+
 echo PHP_EOL . '# No third-party player library crept in' . PHP_EOL;
 
 // The whole architectural position is: our own chrome, no runtime dependency.
@@ -107,7 +148,7 @@ echo PHP_EOL . '# No third-party player library crept in' . PHP_EOL;
 // Package names, not "video.js": that string is a substring of our own chunk
 // filename, and a check that fires on `imagina-video.js` reports a library we
 // do not have.
-foreach ( array( 'plyr', 'vidstack', 'videojs', 'media-chrome', 'hls.js' ) as $library ) {
+foreach ( array( 'plyr', 'vidstack', 'videojs', 'media-chrome' ) as $library ) {
 	check(
 		sprintf( 'no %s in the front-end bundle', $library ),
 		! str_contains( strtolower( $core_source ), $library )

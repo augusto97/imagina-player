@@ -124,6 +124,8 @@ final class Assets {
 				'pause'  => __( 'Pause', 'imagina-player' ),
 				'mute'   => __( 'Mute', 'imagina-player' ),
 				'unmute' => __( 'Unmute', 'imagina-player' ),
+				'captionsOff' => __( 'Off', 'imagina-player' ),
+				'qualityAuto' => __( 'Auto', 'imagina-player' ),
 			),
 		);
 	}

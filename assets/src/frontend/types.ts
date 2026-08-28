@@ -29,6 +29,13 @@ export interface VideoConfig {
 	poster: string;
 	/** Milliseconds of stillness before the controls fade out during playback. */
 	hideAfter: number;
+	/**
+	 * Chapter starts, so markers can be drawn without re-parsing the VTT the
+	 * browser was already given.
+	 */
+	chapters: Array< { start: number; title: string } >;
+	/** The source is an HLS manifest, so adaptive streaming may be needed. */
+	hls: boolean;
 }
 
 export interface RuntimeData {

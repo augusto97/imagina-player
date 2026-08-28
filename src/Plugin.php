@@ -14,6 +14,7 @@ use ImaginaPlayer\Blocks\BlockRegistrar;
 use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Protection\Integration as ProtectionIntegration;
 use ImaginaPlayer\Protection\StreamServer;
+use ImaginaPlayer\Rest\CaptionController;
 use ImaginaPlayer\Rest\PeaksController;
 use ImaginaPlayer\Rest\SettingsController;
 use ImaginaPlayer\Rest\StreamController;
@@ -58,6 +59,7 @@ final class Plugin {
 			'assets'      => new Assets(),
 			'peaks'       => new PeaksRepository(),
 			'rest'        => new PeaksController(),
+			'captions'    => new CaptionController(),
 			'stream'      => new StreamServer(),
 			'streamRest'  => new StreamController(),
 			'settingsApi' => new SettingsController(),

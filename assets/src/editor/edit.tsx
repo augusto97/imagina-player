@@ -22,7 +22,13 @@ import { __ } from '@wordpress/i18n';
 import { Preview } from './preview';
 import type { EditorData } from './types';
 
-type Attributes = Record< string, string | number | boolean >;
+/** A subtitle track or a chapter, as the block stores it. */
+type ListItem = Record< string, string | number | boolean >;
+
+type Attributes = Record<
+	string,
+	string | number | boolean | ListItem[] | undefined
+>;
 
 interface EditProps {
 	attributes: Attributes;
@@ -109,7 +115,24 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 	// From the file, because that is what the renderer decides on too. A URL
 	// pasted from a provider has no attachment to ask, so the extension is all
 	// there is — and it is what `wp_check_filetype()` looks at server-side.
-	const isVideo = /\.(mp4|m4v|webm|ogv|mov)(\?|#|$)/i.test( src );
+	const isVideo = /\.(mp4|m4v|webm|ogv|mov|m3u8)(\?|#|$)/i.test( src );
+
+	const tracks = ( attributes.tracks ?? [] ) as ListItem[];
+	const chapters = ( attributes.chapters ?? [] ) as ListItem[];
+
+	const patchTrack = ( index: number, patch: ListItem ): void =>
+		setAttributes( {
+			tracks: tracks.map( ( item, i ) =>
+				i === index ? { ...item, ...patch } : item
+			),
+		} );
+
+	const patchChapter = ( index: number, patch: ListItem ): void =>
+		setAttributes( {
+			chapters: chapters.map( ( item, i ) =>
+				i === index ? { ...item, ...patch } : item
+			),
+		} );
 
 	const inherited = ( attribute: string, presetKey: string ): boolean => {
 		const override = attributes[ attribute ];
@@ -616,6 +639,217 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 						) }
 					/>
 				</PanelBody>
+
+				{ isVideo && (
+					<PanelBody
+						title={ __( 'Subtitles', 'imagina-player' ) }
+						initialOpen={ false }
+					>
+						<p className="imgp-editor__hint">
+							{ __(
+								'WebVTT or SubRip (.vtt or .srt). SubRip files are converted for the browser automatically.',
+								'imagina-player'
+							) }
+						</p>
+
+						{ tracks.map( ( track, index ) => (
+							<div className="imgp-editor__row" key={ index }>
+								<TextControl
+									__nextHasNoMarginBottom
+									label={ __(
+										'Language name',
+										'imagina-player'
+									) }
+									value={ String( track.label ?? '' ) }
+									placeholder={ __(
+										'Español',
+										'imagina-player'
+									) }
+									onChange={ ( value: string ) =>
+										patchTrack( index, { label: value } )
+									}
+								/>
+								<TextControl
+									__nextHasNoMarginBottom
+									label={ __(
+										'Language code',
+										'imagina-player'
+									) }
+									value={ String( track.srclang ?? '' ) }
+									placeholder="es"
+									help={ __(
+										'Two letters, as in es, en, pt-br.',
+										'imagina-player'
+									) }
+									onChange={ ( value: string ) =>
+										patchTrack( index, { srclang: value } )
+									}
+								/>
+								<ToggleControl
+									__nextHasNoMarginBottom
+									label={ __(
+										'Show by default',
+										'imagina-player'
+									) }
+									checked={ Boolean( track.default ) }
+									onChange={ ( value: boolean ) =>
+										setAttributes( {
+											tracks: tracks.map(
+												( item, i ) => ( {
+													...item,
+													// Only one can be the default; a
+													// browser has no answer for two.
+													default:
+														value && i === index,
+												} )
+											),
+										} )
+									}
+								/>
+								<div className="imgp-editor__media-picker">
+									{ track.src && (
+										<code className="imgp-editor__media-path">
+											{ String( track.src )
+												.split( '/' )
+												.pop() }
+										</code>
+									) }
+									<MediaUploadCheck>
+										<MediaUpload
+											allowedTypes={ [ 'text' ] }
+											onSelect={ ( media: {
+												url?: string;
+											} ) =>
+												patchTrack( index, {
+													src: media.url ?? '',
+												} )
+											}
+											render={ ( {
+												open,
+											}: {
+												open: () => void;
+											} ) => (
+												<Button
+													variant="secondary"
+													onClick={ open }
+												>
+													{ track.src
+														? __(
+																'Replace file',
+																'imagina-player'
+														  )
+														: __(
+																'Choose file',
+																'imagina-player'
+														  ) }
+												</Button>
+											) }
+										/>
+									</MediaUploadCheck>
+									<Button
+										variant="tertiary"
+										isDestructive
+										onClick={ () =>
+											setAttributes( {
+												tracks: tracks.filter(
+													( _item, i ) => i !== index
+												),
+											} )
+										}
+									>
+										{ __( 'Remove', 'imagina-player' ) }
+									</Button>
+								</div>
+							</div>
+						) ) }
+
+						<Button
+							variant="secondary"
+							onClick={ () =>
+								setAttributes( {
+									tracks: [
+										...tracks,
+										{
+											src: '',
+											srclang: '',
+											label: '',
+											kind: 'subtitles',
+											default: false,
+										},
+									],
+								} )
+							}
+						>
+							{ __( 'Add subtitles', 'imagina-player' ) }
+						</Button>
+					</PanelBody>
+				) }
+
+				{ isVideo && (
+					<PanelBody
+						title={ __( 'Chapters', 'imagina-player' ) }
+						initialOpen={ false }
+					>
+						<p className="imgp-editor__hint">
+							{ __(
+								'Marks on the progress bar, and a menu to jump between sections. Times can be written as 90, 1:30 or 0:01:30.',
+								'imagina-player'
+							) }
+						</p>
+
+						{ chapters.map( ( chapter, index ) => (
+							<div className="imgp-editor__row" key={ index }>
+								<TextControl
+									__nextHasNoMarginBottom
+									label={ __(
+										'Starts at',
+										'imagina-player'
+									) }
+									value={ String( chapter.start ?? '' ) }
+									placeholder="1:30"
+									onChange={ ( value: string ) =>
+										patchChapter( index, { start: value } )
+									}
+								/>
+								<TextControl
+									__nextHasNoMarginBottom
+									label={ __( 'Title', 'imagina-player' ) }
+									value={ String( chapter.title ?? '' ) }
+									onChange={ ( value: string ) =>
+										patchChapter( index, { title: value } )
+									}
+								/>
+								<Button
+									variant="tertiary"
+									isDestructive
+									onClick={ () =>
+										setAttributes( {
+											chapters: chapters.filter(
+												( _item, i ) => i !== index
+											),
+										} )
+									}
+								>
+									{ __( 'Remove', 'imagina-player' ) }
+								</Button>
+							</div>
+						) ) }
+
+						<Button
+							variant="secondary"
+							onClick={ () =>
+								setAttributes( {
+									chapters: [
+										...chapters,
+										{ start: '', title: '' },
+									],
+								} )
+							}
+						>
+							{ __( 'Add chapter', 'imagina-player' ) }
+						</Button>
+					</PanelBody>
+				) }
 
 				{ isVideo && (
 					<PanelBody title={ __( 'Video', 'imagina-player' ) }>

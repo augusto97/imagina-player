@@ -303,15 +303,80 @@ Por capas, y en orden de lo que realmente hace trabajo:
 Si el preset ofrece descarga, la capa 2 no se aplica: ofrecer un botón de
 descarga y a la vez esconder el del navegador es teatro.
 
-Falta la capa de UI restante (subtítulos, capítulos, calidades) y HLS mediante
-`hls.js` cargado solo cuando la fuente es `.m3u8`. La decisión de no depender
-hoy de ninguna librería de reproductor es lo que permite adoptar una cuando su
-API se estabilice sin reescribir el plugin.
+### Subtítulos y capítulos
+
+`<track>` lee WebVTT y nada más, pero lo que la gente tiene es SRT: es lo que
+produce cualquier servicio de transcripción. Un plugin que solo acepta VTT en
+realidad le está diciendo al usuario que se busque un conversor. `Media\Captions`
+convierte al leer (`Rest\CaptionController`, cacheado un día) en vez de al
+subir, para no acabar con dos ficheros que mantener en sincronía ni una
+migración de todo lo que ya está en la biblioteca. Un `.vtt` va enlazado
+directo; solo el SRT da el rodeo.
+
+La conversión merece pruebas duras: una línea de tiempos mal formada en un VTT
+no falla en voz alta —el navegador descarta esa señal y, en casi todos los
+motores, **todas las siguientes**—, así que un conversor «casi bien» produce un
+vídeo cuyos subtítulos se paran a la mitad. Por eso los tiempos se reconstruyen
+desde los números parseados, no se buscan y reemplazan.
+
+`Captions::read()` es alcanzable desde un endpoint público, así que nunca
+convierte una URL en una ruta que pueda apuntar fuera de los uploads del sitio:
+prefijo, extensión (`vtt`/`srt`) y `realpath` contenido dentro del directorio,
+las tres cosas. Hay un test que sube por `..` **con extensión `.vtt`**, porque
+la primera versión de esa prueba pasaba por la comprobación de extensión y no
+por la de contención — y no sabía distinguirlo.
+
+Los capítulos van en línea como `data:` URI: son unos cientos de bytes, una
+petición costaría más que el contenido, y así funcionan en un sitio cuya REST
+API esté detrás de un plugin de seguridad. Se ordenan en el servidor porque un
+VTT tiene que ser monótono y un navegador descarta en silencio las señales que
+llegan fuera de orden.
+
+### HLS
+
+`hls.js` (1.7.1) va en un chunk propio, detrás de su propio `import()`
+dinámico, y solo se pide cuando la fuente es `.m3u8` **y** el navegador no sabe
+reproducirlo por su cuenta. Safari y iOS lo reproducen de forma nativa —en iOS
+es la única forma, porque MSE no existe allí— así que no pagan nada. Cargar 400
+KB para hacerlo peor que el navegador no es una opción.
+
+Detectar HLS es por extensión, no por MIME: `.m3u8` no es un tipo de subida que
+WordPress conozca, así que `wp_check_filetype()` no dice nada de él. Sin eso, un
+stream se renderizaba como reproductor de **audio** — una fila de controles sin
+imagen. Lo encontró un test, no una revisión.
+
+**Y lo que de verdad importa:** un stream protegido no es un fichero, es un
+manifiesto y unos cientos de segmentos. Firmar solo el manifiesto no protege
+nada, porque las direcciones de los segmentos están dentro de él en texto
+plano. `hls.js` resuelve esas direcciones contra el manifiesto pero **no
+arrastra su query string**, así que la firma se vuelve a poner en cada petición
+mediante `xhrSetup` — y solo en el mismo origen, porque mandar el token del
+sitio al host que el manifiesto mencione sería regalarlo.
+
+`tests/test-hls.php` levanta un servidor real que apunta cada petición que
+recibe y comprueba que **todos** los segmentos llevaban el token. Quitar el
+`xhrSetup` hace fallar el test con la lista de segmentos desnudos; lo comprobé.
+
+### Qué pesa cada cosa
+
+Comprimido, que es lo que viaja:
+
+| | |
+| --- | --- |
+| cualquier página con reproductor | 7 KB |
+| página con vídeo | 9 KB |
+| página con stream, fuera de Safari | 183 KB |
+
+`hls.js` no tiene presupuesto de bytes, porque su tamaño no lo elegimos
+nosotros y no hay forma más pequeña de reproducir streaming adaptativo. Lo que
+sí tiene es una regla dura sobre **quién lo paga**, y `tests/test-payload.php`
+la comprueba buscando símbolos internos de la librería en los otros tres
+paquetes.
 
 ## Pruebas
 
 `./tests/run.sh` ejecuta la suite contra stubs de WordPress, sin necesidad de una
-instalación: 376 comprobaciones. Cubre sanitización, codificación de picos,
+instalación: 451 comprobaciones. Cubre sanitización, codificación de picos,
 remuestreo, firma de tokens, escapado del markup, el movimiento real de ficheros
 dentro y fuera del vault, y —con un binario ffmpeg simulado— la extracción de
 picos completa.

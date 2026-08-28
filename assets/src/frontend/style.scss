@@ -880,6 +880,9 @@
    nothing on Firefox Android is worse than no button. */
 
 .imgp__vcontrols {
+
+	/* Positioned because the menu hangs off it. */
+	position: relative;
 	display: flex;
 	align-items: center;
 	gap: 0.25rem;
@@ -969,4 +972,109 @@
 	.imgp__bigplay::before {
 		transition: none;
 	}
+}
+
+/* --- Chapter markers ---------------------------------------------------
+   Ticks on the scrub bar. Positioned as percentages so they hold their
+   place when the player is resized, and never drawn until the duration is
+   known — against a NaN duration every one of them lands on the left edge. */
+
+.imgp__marks {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+.imgp__mark {
+	position: absolute;
+	top: 50%;
+	width: 2px;
+	height: 0.7rem;
+	margin-left: -1px;
+	transform: translateY(-50%);
+	background: var(--imgp-on-chrome, #fff);
+	opacity: 0.75;
+	border-radius: 1px;
+}
+
+/* --- The shared menu ----------------------------------------------------
+   One panel for subtitles and for chapters: they never open together, and a
+   second would only be a second thing to position and keep in step. */
+
+.imgp__menu {
+	position: absolute;
+	right: 0;
+	bottom: calc(100% + 0.5rem);
+	z-index: 12;
+	display: flex;
+	flex-direction: column;
+	min-width: 10rem;
+	max-width: min(18rem, 70vw);
+	max-height: 14rem;
+	overflow-y: auto;
+	padding: 0.25rem;
+	border-radius: 0.5rem;
+	background: rgb(20 20 20 / 96%);
+	box-shadow: 0 8px 28px rgb(0 0 0 / 45%);
+}
+
+.imgp__menu[hidden] {
+	display: none;
+}
+
+.imgp__menuitem {
+	display: block;
+	width: 100%;
+	padding: 0.45rem 0.6rem;
+	border: 0;
+	border-radius: 0.35rem;
+	background: transparent;
+	color: var(--imgp-on-chrome, #fff);
+	font: inherit;
+	font-size: 0.85rem;
+	line-height: 1.35;
+	text-align: left;
+	cursor: pointer;
+}
+
+.imgp__menuitem:hover,
+.imgp__menuitem:focus-visible {
+	background: rgb(255 255 255 / 14%);
+}
+
+/* The chosen one is marked by more than colour: aria-checked is what a screen
+   reader reads, and the dot is what everyone else sees. */
+.imgp__menuitem[aria-checked="true"] {
+	font-weight: 600;
+}
+
+.imgp__menuitem[aria-checked="true"]::before {
+	content: "";
+	display: inline-block;
+	width: 0.4rem;
+	height: 0.4rem;
+	margin-right: 0.45rem;
+	border-radius: 50%;
+	background: var(--imgp-accent);
+	vertical-align: 0.1em;
+}
+
+.imgp__vbtn.is-active {
+	background: rgb(255 255 255 / 22%);
+}
+
+/* Native cues sit at the very bottom of the video, which is exactly where the
+   control bar is. Lifted while the chrome is up so the two do not overlap. */
+.imgp--video .imgp__media::cue {
+	background: rgb(0 0 0 / 70%);
+	color: #fff;
+}
+
+.imgp--video .imgp__media::-webkit-media-text-track-container {
+	transform: translateY(-3rem);
+	transition: transform 0.25s ease;
+}
+
+.imgp--video.is-chrome-idle .imgp__media::-webkit-media-text-track-container {
+	transform: translateY(0);
 }

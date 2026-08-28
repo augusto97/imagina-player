@@ -21,6 +21,9 @@ const DOUBLE_TAP_MS = 300;
 /** Seconds a double tap at the edge of the picture seeks. */
 const TAP_SEEK = 10;
 
+/** Where the visitor's subtitle language is kept, across videos and visits. */
+const CAPTION_KEY = 'imagina-player-captions';
+
 interface Host {
 	root: HTMLElement;
 	media: HTMLVideoElement;
@@ -28,6 +31,7 @@ interface Host {
 	/** The core's own play/pause, so both buttons agree on what toggling means. */
 	toggle: () => void;
 	seekBy: ( seconds: number ) => void;
+	seekTo: ( seconds: number ) => void;
 }
 
 /**
@@ -57,6 +61,12 @@ export class VideoChrome {
 
 	private readonly cleanup: Array< () => void > = [];
 
+	/** Removes the menu's outside-click and Escape listeners, when one is open. */
+	private dismissMenu: ( () => void ) | null = null;
+
+	/** Set only when hls.js took over playback; Safari never gets one. */
+	private hls: { destroy: () => void } | null = null;
+
 	constructor( host: Host, config: VideoConfig ) {
 		this.host = host;
 		this.root = host.root;
@@ -71,11 +81,51 @@ export class VideoChrome {
 		this.bindPictureInPicture();
 		this.bindKeyboard();
 		this.bindGestures();
+		this.bindCaptions();
+		this.bindChapters();
 		this.hardenContextMenu();
+
+		if ( config.hls ) {
+			void this.setupHls();
+		}
+	}
+
+	/**
+	 * Adaptive streaming, if this is a stream and the browser needs help.
+	 *
+	 * A chunk of its own again, because hls.js is around 400 KB — more than
+	 * twenty times the rest of the player — and most videos are a plain MP4
+	 * that will never touch it.
+	 */
+	private async setupHls(): Promise< void > {
+		try {
+			const { HlsStream } = await import(
+				/* webpackChunkName: "imagina-hls-glue" */ './hls'
+			);
+
+			const stream = new HlsStream( {
+				root: this.root,
+				media: this.media,
+				i18n: this.host.i18n,
+				menu: ( items ) => this.openMenu( items ),
+			} );
+
+			if (
+				await stream.attach( this.media.currentSrc || this.media.src )
+			) {
+				this.hls = stream;
+			}
+		} catch {
+			// The element keeps its own src, so Safari — which plays HLS by
+			// itself — is unaffected, and anywhere else the error state the core
+			// player already handles takes over.
+		}
 	}
 
 	destroy(): void {
 		window.clearTimeout( this.idleTimer );
+		this.dismissMenu?.();
+		this.hls?.destroy();
 
 		for ( const off of this.cleanup ) {
 			off();
@@ -390,6 +440,332 @@ export class VideoChrome {
 			this.lastTap = now;
 			this.root.classList.toggle( 'is-chrome-idle' );
 		} );
+	}
+
+	/**
+	 * The panel both menus share.
+	 *
+	 * Built here rather than rendered by PHP because its contents depend on what
+	 * the browser reports — a subtitle track that failed to load should not be
+	 * offered — and because two menus that never open together do not need two
+	 * containers.
+	 * @param items
+	 */
+	private openMenu(
+		items: Array< { label: string; active: boolean; onPick: () => void } >
+	): void {
+		const menu = this.root.querySelector< HTMLElement >( '.imgp__menu' );
+
+		if ( ! menu ) {
+			return;
+		}
+
+		if ( ! menu.hidden ) {
+			this.closeMenu();
+
+			return;
+		}
+
+		menu.textContent = '';
+
+		for ( const item of items ) {
+			const button = this.root.ownerDocument.createElement( 'button' );
+
+			button.type = 'button';
+			button.className = 'imgp__menuitem';
+			button.setAttribute( 'role', 'menuitemradio' );
+			button.setAttribute(
+				'aria-checked',
+				item.active ? 'true' : 'false'
+			);
+			button.textContent = item.label;
+
+			button.addEventListener( 'click', () => {
+				item.onPick();
+				this.closeMenu();
+			} );
+
+			menu.appendChild( button );
+		}
+
+		menu.hidden = false;
+		menu.querySelector< HTMLButtonElement >( 'button' )?.focus();
+
+		// One dismissal path for a click anywhere else and for Escape, removed
+		// as soon as it fires so these never pile up.
+		const dismiss = ( event: Event ): void => {
+			if ( event instanceof KeyboardEvent && 'Escape' !== event.key ) {
+				return;
+			}
+
+			if (
+				event instanceof PointerEvent &&
+				( event.target as HTMLElement | null )?.closest(
+					'.imgp__vcontrols'
+				)
+			) {
+				return;
+			}
+
+			this.closeMenu();
+		};
+
+		this.dismissMenu = () => {
+			this.root.ownerDocument.removeEventListener(
+				'pointerdown',
+				dismiss
+			);
+			this.root.ownerDocument.removeEventListener( 'keydown', dismiss );
+		};
+
+		this.root.ownerDocument.addEventListener( 'pointerdown', dismiss );
+		this.root.ownerDocument.addEventListener( 'keydown', dismiss );
+	}
+
+	private closeMenu(): void {
+		const menu = this.root.querySelector< HTMLElement >( '.imgp__menu' );
+
+		if ( menu ) {
+			menu.hidden = true;
+			menu.textContent = '';
+		}
+
+		this.dismissMenu?.();
+		this.dismissMenu = null;
+	}
+
+	/**
+	 * Subtitles.
+	 *
+	 * The tracks are already in the DOM — the server put them there, so they
+	 * work without this file at all. What this adds is a way to change them, and
+	 * a memory: a visitor who turns Spanish subtitles on once should not have to
+	 * do it again on the next video.
+	 */
+	private bindCaptions(): void {
+		const button = this.root.querySelector< HTMLButtonElement >(
+			'.imgp__vbtn--captions'
+		);
+
+		if ( ! button ) {
+			return;
+		}
+
+		const tracks = this.subtitleTracks();
+
+		if ( 0 === tracks.length ) {
+			return;
+		}
+
+		button.hidden = false;
+
+		// A track marked `default` is showing already; anything else starts off.
+		for ( const track of tracks ) {
+			track.mode = 'showing' === track.mode ? 'showing' : 'disabled';
+		}
+
+		const remembered = this.remembered();
+
+		if ( remembered ) {
+			this.showTrack( tracks, remembered );
+		}
+
+		this.syncCaptionButton();
+
+		this.on( button, 'click', () => {
+			const off = this.i18n( 'captionsOff', 'Off' );
+
+			this.openMenu( [
+				{
+					label: off,
+					active: ! tracks.some(
+						( track ) => 'showing' === track.mode
+					),
+					onPick: () => {
+						this.showTrack( tracks, null );
+						this.remember( '' );
+					},
+				},
+				...tracks.map( ( track ) => ( {
+					label: track.label || track.language || off,
+					active: 'showing' === track.mode,
+					onPick: () => {
+						this.showTrack( tracks, track.language || track.label );
+						this.remember( track.language || track.label );
+					},
+				} ) ),
+			] );
+		} );
+	}
+
+	/** Every subtitle track, in DOM order, chapters excluded. */
+	private subtitleTracks(): TextTrack[] {
+		const tracks: TextTrack[] = [];
+
+		for ( let i = 0; i < this.media.textTracks.length; i++ ) {
+			const track = this.media.textTracks[ i ];
+
+			if ( 'subtitles' === track.kind || 'captions' === track.kind ) {
+				tracks.push( track );
+			}
+		}
+
+		return tracks;
+	}
+
+	/**
+	 * Exactly one showing, or none.
+	 * @param tracks
+	 * @param wanted
+	 */
+	private showTrack( tracks: TextTrack[], wanted: string | null ): void {
+		for ( const track of tracks ) {
+			const matches =
+				null !== wanted &&
+				'' !== wanted &&
+				( track.language === wanted || track.label === wanted );
+
+			track.mode = matches ? 'showing' : 'disabled';
+		}
+
+		this.syncCaptionButton();
+	}
+
+	private syncCaptionButton(): void {
+		const button = this.root.querySelector< HTMLButtonElement >(
+			'.imgp__vbtn--captions'
+		);
+		const on = this.subtitleTracks().some(
+			( track ) => 'showing' === track.mode
+		);
+
+		button?.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+		button?.classList.toggle( 'is-active', on );
+	}
+
+	/**
+	 * The subtitle choice, remembered across videos and visits.
+	 *
+	 * Site-wide rather than per video, because the thing being remembered is a
+	 * preference about the person, not about the file.
+	 */
+	private remembered(): string | null {
+		try {
+			return window.localStorage.getItem( CAPTION_KEY );
+		} catch {
+			return null;
+		}
+	}
+
+	private remember( language: string ): void {
+		try {
+			window.localStorage.setItem( CAPTION_KEY, language );
+		} catch {
+			// Private browsing, or storage turned off. Not worth a word.
+		}
+	}
+
+	/**
+	 * Chapters: markers on the scrub bar, and a menu to jump between them.
+	 *
+	 * The markers are the point. A menu is a list of times; a marked scrub bar
+	 * shows a viewer the shape of what they are about to watch without opening
+	 * anything.
+	 */
+	private bindChapters(): void {
+		const chapters = this.config.chapters ?? [];
+
+		if ( 0 === chapters.length ) {
+			return;
+		}
+
+		this.paintMarkers( chapters );
+
+		const button = this.root.querySelector< HTMLButtonElement >(
+			'.imgp__vbtn--chapters'
+		);
+
+		if ( ! button ) {
+			return;
+		}
+
+		button.hidden = false;
+
+		this.on( button, 'click', () => {
+			const now = this.media.currentTime;
+
+			this.openMenu(
+				chapters.map( ( chapter, index ) => {
+					const next = chapters[ index + 1 ];
+
+					return {
+						label: chapter.title,
+						active:
+							now >= chapter.start &&
+							( ! next || now < next.start ),
+						onPick: () => this.host.seekTo( chapter.start ),
+					};
+				} )
+			);
+		} );
+	}
+
+	/**
+	 * Ticks at each chapter boundary.
+	 *
+	 * Percentages, so they stay put when the player is resized, and skipped
+	 * entirely until the duration is known — placing a marker against a duration
+	 * of NaN puts every one of them at the left edge.
+	 * @param chapters
+	 */
+	private paintMarkers(
+		chapters: Array< { start: number; title: string } >
+	): void {
+		const scrubber =
+			this.root.querySelector< HTMLElement >( '.imgp__scrubber' );
+
+		if ( ! scrubber ) {
+			return;
+		}
+
+		const paint = (): void => {
+			const duration = this.media.duration;
+
+			if ( ! Number.isFinite( duration ) || duration <= 0 ) {
+				return;
+			}
+
+			scrubber.querySelector( '.imgp__marks' )?.remove();
+
+			const marks = this.root.ownerDocument.createElement( 'div' );
+
+			marks.className = 'imgp__marks';
+			marks.setAttribute( 'aria-hidden', 'true' );
+
+			for ( const chapter of chapters ) {
+				if ( chapter.start <= 0 || chapter.start >= duration ) {
+					continue;
+				}
+
+				const mark = this.root.ownerDocument.createElement( 'span' );
+
+				mark.className = 'imgp__mark';
+				mark.style.left = ( chapter.start / duration ) * 100 + '%';
+				mark.title = chapter.title;
+
+				marks.appendChild( mark );
+			}
+
+			scrubber.appendChild( marks );
+		};
+
+		paint();
+		this.on( this.media, 'loadedmetadata', paint );
+		this.on( this.media, 'durationchange', paint );
+	}
+
+	private i18n( key: string, fallback: string ): string {
+		return this.host.i18n[ key ] ?? fallback;
 	}
 
 	/**

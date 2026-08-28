@@ -15,7 +15,9 @@ declare( strict_types = 1 );
 namespace ImaginaPlayer\Render;
 
 use ImaginaPlayer\Assets;
+use ImaginaPlayer\Media\Captions;
 use ImaginaPlayer\Media\Track;
+use ImaginaPlayer\Rest\CaptionController;
 use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Peaks\PeaksToken;
 use ImaginaPlayer\Player\Attributes;
@@ -95,9 +97,22 @@ final class PlayerRenderer {
 		// nothing else, so growing it later cannot collide with an audio key.
 		if ( $track->is_video() ) {
 			$client_config['video'] = array(
-				'ratio'    => $track->aspect_ratio,
-				'poster'   => $track->poster,
+				'ratio'     => $track->aspect_ratio,
+				'poster'    => $track->poster,
 				'hideAfter' => 2600,
+				// The browser cannot tell from the element that this is adaptive
+				// streaming, and loading 400 KB of hls.js to find out would be
+				// the whole cost of the feature paid on every video.
+				'hls'       => $track->is_hls(),
+				// Chapter starts, so the module can draw markers on the scrub bar
+				// without parsing the VTT it just handed the browser.
+				'chapters'  => array_map(
+					static fn( array $chapter ): array => array(
+						'start' => round( (float) $chapter['start'], 3 ),
+						'title' => (string) $chapter['title'],
+					),
+					(array) $atts['chapters']
+				),
 			);
 		}
 
@@ -134,7 +149,7 @@ final class PlayerRenderer {
 		if ( 'theater' === $layout ) {
 			$parts['poster']  = $this->part_poster( $track );
 			$parts['bigplay'] = $this->part_big_play();
-			$parts['video']   = $this->part_video_controls( $config );
+			$parts['video']   = $this->part_video_controls( $config, $atts );
 			$parts['layers']  = $this->part_layers( $track, $config, $id );
 		}
 
@@ -247,10 +262,55 @@ final class PlayerRenderer {
 				<?php echo '' !== $track->poster ? 'poster="' . esc_url( $track->poster ) . '"' : ''; ?>
 				<?php echo $this->download_guards( $track, $config ); // phpcs:ignore WordPress.Security.EscapeOutput -- fixed attribute names. ?>
 			<?php endif; ?>
-		></<?php echo esc_attr( $tag ); ?>>
+		><?php echo $this->text_tracks( $track, $atts ); // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts. ?></<?php echo esc_attr( $tag ); ?>>
 		<?php
 
 		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Subtitle and chapter tracks.
+	 *
+	 * Subtitles that are already WebVTT are linked straight to the file. SubRip
+	 * goes through an endpoint that converts it, because `<track>` reads WebVTT
+	 * and nothing else, and telling people to go and convert their subtitles is
+	 * not a feature.
+	 *
+	 * Chapters are inlined as a data URI: they are a few hundred bytes, so a
+	 * request would cost more than the content, and inlining means they still
+	 * work on a site whose REST API is behind a security plugin.
+	 *
+	 * @param array<string, mixed> $atts Sanitised attributes.
+	 */
+	private function text_tracks( Track $track, array $atts ): string {
+		$html = '';
+
+		foreach ( (array) ( $atts['tracks'] ?? array() ) as $subtitle ) {
+			if ( ! is_array( $subtitle ) || empty( $subtitle['src'] ) ) {
+				continue;
+			}
+
+			$html .= sprintf(
+				'<track kind="%s" src="%s" srclang="%s" label="%s"%s />',
+				esc_attr( (string) $subtitle['kind'] ),
+				esc_url( CaptionController::track_url( (string) $subtitle['src'] ) ),
+				esc_attr( (string) $subtitle['srclang'] ),
+				esc_attr( (string) $subtitle['label'] ),
+				empty( $subtitle['default'] ) ? '' : ' default'
+			);
+		}
+
+		$chapters = Captions::chapters_vtt( (array) ( $atts['chapters'] ?? array() ), $track->duration );
+
+		if ( '' !== $chapters ) {
+			$html .= sprintf(
+				'<track kind="chapters" src="%s" label="%s" default />',
+				esc_url( Captions::data_uri( $chapters ) ),
+				esc_attr__( 'Chapters', 'imagina-player' )
+			);
+		}
+
+		return $html;
 	}
 
 	/**
@@ -389,8 +449,31 @@ final class PlayerRenderer {
 	 *
 	 * @param array<string, mixed> $config Effective settings.
 	 */
-	private function part_video_controls( array $config ): string {
-		$buttons = array(
+	private function part_video_controls( array $config, array $atts = array() ): string {
+		$buttons = array();
+
+		if ( array() !== (array) ( $atts['tracks'] ?? array() ) ) {
+			$buttons['captions'] = array(
+				'icons' => array( 'cc' ),
+				'label' => __( 'Subtitles', 'imagina-player' ),
+			);
+		}
+
+		if ( array() !== (array) ( $atts['chapters'] ?? array() ) ) {
+			$buttons['chapters'] = array(
+				'icons' => array( 'chapters' ),
+				'label' => __( 'Chapters', 'imagina-player' ),
+			);
+		}
+
+		// Hidden until the manifest reports more than one rendition; a stream with
+		// a single quality is not a choice.
+		$buttons['quality'] = array(
+			'icons' => array( 'quality' ),
+			'label' => __( 'Quality', 'imagina-player' ),
+		);
+
+		$buttons += array(
 			'pip'        => array(
 				'icons' => array( 'pip' ),
 				'label' => __( 'Picture in picture', 'imagina-player' ),
@@ -430,7 +513,15 @@ final class PlayerRenderer {
 			);
 		}
 
-		return '' === $html ? '' : '<div class="imgp__vcontrols">' . $html . '</div>';
+		if ( '' === $html ) {
+			return '';
+		}
+
+		// One panel, shared. The captions and chapters menus never open at the
+		// same time, so a second container would only be a second thing to
+		// position, style and keep in step.
+		return '<div class="imgp__vcontrols">' . $html
+			. '<div class="imgp__menu" role="menu" hidden></div></div>';
 	}
 
 	/**
