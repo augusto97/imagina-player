@@ -1,33 +1,33 @@
-# Imagina Player — 1.13.0
+# Imagina Player — 1.13.1
 
-Download **imagina-player-1.13.0.zip** and install it in WordPress under
+Download **imagina-player-1.13.1.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  a9b9f06573eedded35ddde81a937d19e10e73be47d10b8108af60c0944d28a84
+    SHA-256  5a56aae562b222d6925f316947830e25da6df3f98d1ebe02acb1fa3a9c5ea5f1
 
-## What changed in 1.13.0
+## What changed in 1.13.1
 
-**YouTube and Vimeo.** Pasting a YouTube address into the Video block used to
-produce an audio player that showed nothing, played nothing and had no
-thumbnail: WordPress reports no file type for a web page, so the track was not
-a video and the renderer wrapped an `<audio>` element around a link to
-youtube.com. Provider support had never been written.
+**The theme was painting the player.** The play button over a video covers the
+whole picture so it can be clicked anywhere, and during playback only its
+circle and icon fade out. A theme that styles its own buttons — most do — was
+therefore painting the video with a flat sheet of its own colour. The same
+reach turned round buttons into rounded squares, gave the transport icons the
+theme's text colour and the download control its link colour, and inflated a
+row of icons to the height of a "Add to cart" button.
 
-Now such an address is recognised, laid out as video with the provider's own
-still image, and driven through the provider's API — so the picture carries
-this player's controls, colours and calls to action rather than theirs. A call
-to action at 60%, chapters, the keyboard and the scrub bar all work on a
-YouTube video.
+The player now restates, for the elements it owns, the properties a theme has
+any business setting on a button, an input, an anchor or a frame of its own.
+Your typeface still flows into it, as it should. Nothing else does.
 
-Nothing is requested from YouTube or Vimeo until somebody presses play. The
-page holds their still image until then, so a video nobody watches costs a
-visitor no third-party request and no cookie. YouTube loads from its no-cookie
-domain by default; there is a setting for it under Video.
+**The editor was showing a stale stylesheet.** The block preview loaded the
+front-end CSS with no version, so after an update the browser kept serving what
+it had cached. On a site updated from an older release the editor drew a video
+with a stylesheet from before video existed — no shape to the picture, the
+poster at its own size, the controls falling out underneath.
 
-The block now says what it made of the address before you save, including when
-it cannot play it at all — which used to be silent.
+**And the reason neither was caught.** Every browser test rendered the player
+into an empty page. There is now one that renders it twice — inside a
+stylesheet built out of rules themes really ship, and without it — and compares
+every element of the two. That test found four more faults than the report did.
 
-A video hosted by them is not a file on your site, so the download protection
-does not apply to it, and their subtitles are drawn inside their frame.
-
-796 checks green.
+834 checks green.
