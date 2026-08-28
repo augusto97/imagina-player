@@ -67,6 +67,11 @@ final class Config {
 	public static function css_variables( array $config ): array {
 		$vars = array(
 			'--imgp-accent'         => (string) $config['accent'],
+			// Anything printed *on* the accent — a button label, an action bar —
+			// needs a foreground that survives the accent the site actually
+			// chose. White is right on a deep magenta and close to unreadable on
+			// a bright cyan, so it is worked out rather than assumed.
+			'--imgp-on-accent'      => self::readable_on( (string) $config['accent'] ),
 			'--imgp-wave'           => (string) $config['wave_color'],
 			'--imgp-wave-progress'  => (string) $config['wave_progress'],
 			'--imgp-text'           => (string) $config['text_color'],
@@ -82,6 +87,42 @@ final class Config {
 		}
 
 		return $vars;
+	}
+
+	/**
+	 * A foreground that reads against a given background.
+	 *
+	 * Relative luminance by the WCAG definition, with the threshold where the
+	 * contrast of black and of white against the colour are equal. Anything the
+	 * function cannot parse — a named colour, `rgb()`, a gradient — gets white,
+	 * which is the safer half of the guess for the dark accents most players use.
+	 *
+	 * @param string $color A CSS colour, ideally `#rgb` or `#rrggbb`.
+	 */
+	public static function readable_on( string $color ): string {
+		$hex = ltrim( trim( $color ), '#' );
+
+		if ( 3 === strlen( $hex ) ) {
+			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+		}
+
+		if ( 6 !== strlen( $hex ) || ! ctype_xdigit( $hex ) ) {
+			return '#ffffff';
+		}
+
+		$channels = array();
+
+		foreach ( str_split( $hex, 2 ) as $pair ) {
+			$value = hexdec( $pair ) / 255;
+
+			$channels[] = $value <= 0.03928
+				? $value / 12.92
+				: pow( ( $value + 0.055 ) / 1.055, 2.4 );
+		}
+
+		$luminance = 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2];
+
+		return $luminance > 0.179 ? '#111111' : '#ffffff';
 	}
 
 	/**

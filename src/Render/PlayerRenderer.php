@@ -585,16 +585,28 @@ final class PlayerRenderer {
 			hidden
 		>
 			<div class="imgp__layer-body">
-				<?php if ( '' !== $layer['title'] ) : ?>
-					<p class="imgp__layer-title" id="<?php echo esc_attr( $id ); ?>-t">
-						<?php echo esc_html( (string) $layer['title'] ); ?>
-					</p>
-				<?php endif; ?>
+				<?php
+				/*
+				 * Copy and action are separate boxes rather than one stack,
+				 * because beside an audio player there is no picture to cover
+				 * and the offer has to read as a strip: words on one side, the
+				 * thing to press on the other. Over a video the same two boxes
+				 * sit one above the other.
+				 */
+				?>
+				<div class="imgp__layer-copy">
+					<?php if ( '' !== $layer['title'] ) : ?>
+						<p class="imgp__layer-title" id="<?php echo esc_attr( $id ); ?>-t">
+							<?php echo esc_html( (string) $layer['title'] ); ?>
+						</p>
+					<?php endif; ?>
 
-				<?php if ( '' !== $layer['text'] ) : ?>
-					<p class="imgp__layer-text"><?php echo esc_html( (string) $layer['text'] ); ?></p>
-				<?php endif; ?>
+					<?php if ( '' !== $layer['text'] ) : ?>
+						<p class="imgp__layer-text"><?php echo esc_html( (string) $layer['text'] ); ?></p>
+					<?php endif; ?>
+				</div>
 
+				<div class="imgp__layer-action">
 				<?php if ( 'email' === $type ) : ?>
 					<form class="imgp__layer-form" novalidate>
 						<label class="imgp__sr" for="<?php echo esc_attr( $id ); ?>-e">
@@ -640,6 +652,7 @@ final class PlayerRenderer {
 						<?php echo $layer['newTab'] ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>
 					><?php echo esc_html( (string) $layer['button'] ); ?></a>
 				<?php endif; ?>
+				</div>
 			</div>
 
 			<?php if ( ! empty( $layer['skip'] ) || 'bar' === $type ) : ?>

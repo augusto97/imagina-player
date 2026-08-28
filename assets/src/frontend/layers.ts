@@ -315,7 +315,10 @@ export class LayerStack {
 			// Announced rather than only shown: someone who cannot see the field
 			// turn red still needs to be told what went wrong.
 			error.setAttribute( 'role', 'alert' );
-			element.querySelector( '.imgp__layer-body' )?.appendChild( error );
+			(
+				element.querySelector( '.imgp__layer-action' ) ??
+				element.querySelector( '.imgp__layer-body' )
+			)?.appendChild( error );
 		}
 
 		error.textContent =

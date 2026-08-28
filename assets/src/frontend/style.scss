@@ -23,6 +23,11 @@
 	--imgp-control: #374151;
 	--imgp-sheen: color-mix(in srgb, var(--imgp-accent) 18%, transparent);
 
+	/* The surface a call to action sits on beside audio. Near-black with a
+	   trace of the accent in it, so the panel belongs to the player without
+	   being a sheet of brand colour with a brand-coloured button on top. */
+	--imgp-layer-bg: color-mix(in srgb, var(--imgp-accent) 14%, #0e1116);
+
 	position: relative;
 	display: block;
 	box-sizing: border-box;
@@ -834,6 +839,15 @@
 	pointer-events: auto;
 }
 
+/* Audio has nothing to overlay. Leaving the wrapper absolute made every layer
+   float over the waveform and the title — a coloured sheet across the player
+   rather than an offer attached to it — so on audio it goes back into the
+   flow and the panels stack beneath the controls. */
+.imgp--audio .imgp__layers {
+	position: static;
+	pointer-events: auto;
+}
+
 /* --- Chrome (the control bar over the picture) --------------------------- */
 
 .imgp__chrome {
@@ -1116,84 +1130,167 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 1.25rem;
-	background: rgb(0 0 0 / 78%);
+	padding: clamp(1rem, 6%, 3rem);
 	color: #fff;
 	text-align: center;
+
+	/* Not a flat wall of black. The picture stays faintly readable at the
+	   edges, which is what keeps a call to action feeling like part of the
+	   video rather than a page that replaced it. */
+	background: radial-gradient(ellipse at center, rgb(0 0 0 / 62%), rgb(0 0 0 / 88%));
+	backdrop-filter: blur(2px);
 }
 
 .imgp__layer[hidden] {
 	display: none;
 }
 
-/* Audio has no picture to cover, so a layer becomes a panel under the
-   controls rather than a sheet over them. */
+/* --- The audio panel -----------------------------------------------------
+   Beside audio there is no picture to cover, so a layer is a strip attached
+   under the controls: words on the left, the thing to press on the right.
+   Deliberately *not* the accent as a background — a full-width sheet of brand
+   colour with a brand-coloured button on it is a slab, not an offer. */
+
 .imgp--audio .imgp__layer {
-	position: static;
+	position: relative;
+	inset: auto;
+	z-index: 0;
+	display: block;
 	margin-top: var(--imgp-gap);
+	padding: 0.85rem 1rem;
+	overflow: hidden;
 	border-radius: var(--imgp-radius, 0.5rem);
-	background: color-mix(in srgb, var(--imgp-accent) 92%, #000);
+	background: var(--imgp-layer-bg);
+	box-shadow:
+		inset 3px 0 0 var(--imgp-accent),
+		inset 0 0 0 1px rgb(255 255 255 / 8%);
 	text-align: left;
+	backdrop-filter: none;
 }
 
-/* The bar is the one that does not interrupt: a strip along the bottom edge,
-   alongside playback rather than instead of it. */
+/* The bar is the one that does not interrupt: a strip along the bottom edge of
+   the picture, alongside playback rather than instead of it. */
 .imgp__layer--bar {
 	inset: auto 0 0;
-	padding: 0.6rem 2.5rem 0.6rem 1rem;
+	z-index: 11;
+	display: block;
+	padding: 0.6rem 2.6rem 0.6rem 0.9rem;
 	background: var(--imgp-accent);
 	color: var(--imgp-on-accent, #fff);
 	text-align: left;
+	backdrop-filter: none;
 }
 
 .imgp--audio .imgp__layer--bar {
-	padding: 0.6rem 2.5rem 0.6rem 1rem;
+	padding: 0.6rem 2.6rem 0.6rem 0.9rem;
+	background: var(--imgp-accent);
+	color: var(--imgp-on-accent, #fff);
+	box-shadow: none;
 }
 
 .imgp__layer-body {
 	display: flex;
 	flex-direction: column;
-	gap: 0.6rem;
+	gap: 0.7rem;
 	align-items: center;
-	max-width: 26rem;
 	width: 100%;
+	max-width: 30rem;
+	margin: 0 auto;
 }
 
+/* A strip: the copy takes what is left, the action keeps its own size, and
+   below roughly a phone's width the two stack instead of squeezing. */
+.imgp--audio .imgp__layer-body,
 .imgp__layer--bar .imgp__layer-body {
 	flex-direction: row;
 	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
 	align-items: center;
-	justify-content: flex-start;
-	gap: 0.5rem 0.9rem;
+	justify-content: space-between;
 	max-width: none;
+	margin: 0;
+
+	/* Room for the close button, which sits over the top-right corner and
+	   would otherwise land on top of whatever the action is. */
+	padding-right: 2.25rem;
 }
 
-.imgp--audio .imgp__layer-body {
+.imgp__layer-copy {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	min-width: 0;
+}
+
+.imgp--audio .imgp__layer-copy,
+.imgp__layer--bar .imgp__layer-copy {
+	flex: 1 1 14rem;
 	align-items: flex-start;
+	text-align: left;
+}
+
+.imgp__layer-action {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	align-items: center;
+	width: 100%;
+}
+
+.imgp--audio .imgp__layer-action,
+.imgp__layer--bar .imgp__layer-action {
+	flex: 0 1 auto;
+	align-items: flex-end;
+	width: auto;
+}
+
+/* The gate needs the field beside its button, and that pair needs more room
+   than a single button does. */
+.imgp--audio .imgp__layer--email .imgp__layer-action {
+	flex: 1 1 18rem;
+	align-items: stretch;
 }
 
 .imgp__layer-title {
 	margin: 0;
-	font-size: 1.05rem;
+	font-size: 1.3rem;
 	font-weight: 600;
-	line-height: 1.3;
+	line-height: 1.25;
 	color: inherit;
 	text-wrap: balance;
 }
 
+/* Smaller beside audio: this is a strip a few lines tall, not a card filling
+   a picture, and headline sizes meant for one look shouted in the other. */
+.imgp--audio .imgp__layer-title,
+.imgp__layer--bar .imgp__layer-title {
+	font-size: 1rem;
+	line-height: 1.3;
+}
+
 .imgp__layer-text {
 	margin: 0;
-	font-size: 0.9rem;
+	font-size: 0.95rem;
 	line-height: 1.45;
 	color: inherit;
-	opacity: 0.9;
+	opacity: 0.82;
+}
+
+.imgp--audio .imgp__layer-text,
+.imgp__layer--bar .imgp__layer-text {
+	font-size: 0.85rem;
 }
 
 .imgp__layer-fine {
 	margin: 0;
 	font-size: 0.72rem;
 	line-height: 1.4;
-	opacity: 0.72;
+	text-align: center;
+	opacity: 0.68;
+}
+
+.imgp--audio .imgp__layer-fine {
+	text-align: left;
 }
 
 .imgp__layer-error {
@@ -1208,7 +1305,7 @@
 
 .imgp__layer-thanks {
 	margin: 0;
-	font-size: 1rem;
+	font-size: 0.95rem;
 	font-weight: 600;
 }
 
@@ -1229,19 +1326,19 @@
 }
 
 .imgp__layer-input {
-	flex: 1 1 12rem;
+	flex: 1 1 11rem;
 	min-width: 0;
-	padding: 0.55rem 0.7rem;
-	border: 1px solid rgb(255 255 255 / 35%);
+	padding: 0.55rem 0.75rem;
+	border: 1px solid rgb(255 255 255 / 28%);
 	border-radius: 0.4rem;
-	background: rgb(255 255 255 / 12%);
+	background: rgb(255 255 255 / 10%);
 	color: inherit;
 	font: inherit;
 	font-size: 0.92rem;
 }
 
 .imgp__layer-input::placeholder {
-	color: rgb(255 255 255 / 60%);
+	color: rgb(255 255 255 / 55%);
 }
 
 .imgp__layer-input:focus-visible {
@@ -1253,22 +1350,33 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	padding: 0.55rem 1.1rem;
+	padding: 0.6rem 1.15rem;
 	border: 0;
 	border-radius: 0.4rem;
 	background: var(--imgp-accent);
+
+	/* Worked out from the accent on the server rather than assumed to be white,
+	   because a bright accent with a white label is unreadable. */
 	color: var(--imgp-on-accent, #fff);
 	font: inherit;
 	font-size: 0.92rem;
 	font-weight: 600;
+	line-height: 1.2;
+	white-space: nowrap;
 	text-decoration: none;
 	cursor: pointer;
+	transition: filter 0.15s ease;
 }
 
+.imgp__layer-button:hover {
+	filter: brightness(1.08);
+}
+
+/* On the bar the background *is* the accent, so the button inverts: the
+   foreground colour becomes the fill and the accent becomes the label. */
 .imgp__layer--bar .imgp__layer-button {
 	background: var(--imgp-on-accent, #fff);
 	color: var(--imgp-accent);
-	margin-left: auto;
 }
 
 .imgp__layer-button:disabled {
@@ -1283,24 +1391,64 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 1.9rem;
-	height: 1.9rem;
+	width: 1.75rem;
+	height: 1.75rem;
 	padding: 0;
 	border: 0;
-	border-radius: 0.35rem;
-	background: transparent;
+	border-radius: 999px;
+	background: rgb(255 255 255 / 12%);
 	color: inherit;
+	opacity: 0.75;
 	cursor: pointer;
+	transition: opacity 0.15s ease, background-color 0.15s ease;
 }
 
-.imgp__layer-close:hover {
-	background: rgb(255 255 255 / 18%);
+.imgp__layer--bar .imgp__layer-close {
+	background: rgb(0 0 0 / 12%);
+}
+
+.imgp__layer-close:hover,
+.imgp__layer-close:focus-visible {
+	background: rgb(255 255 255 / 24%);
+	opacity: 1;
 }
 
 .imgp__layer-close svg {
-	width: 1rem;
-	height: 1rem;
+	width: 0.9rem;
+	height: 0.9rem;
 	fill: currentcolor;
+}
+
+/* Narrow enough that a strip cannot be a strip: the action drops under the
+   copy and both go full width, so nothing is squeezed to a word per line. */
+@container (max-width: 26rem) {
+
+	.imgp--audio .imgp__layer-body,
+	.imgp__layer--bar .imgp__layer-body {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	/* The basis is a width while these sit side by side and a *height* the
+	   moment they stack, which is how a two-line offer became a 224px box. */
+	.imgp--audio .imgp__layer-copy,
+	.imgp__layer--bar .imgp__layer-copy,
+	.imgp--audio .imgp__layer-action,
+	.imgp__layer--bar .imgp__layer-action,
+	.imgp--audio .imgp__layer--email .imgp__layer-action {
+		flex: 0 0 auto;
+	}
+
+	.imgp--audio .imgp__layer-action,
+	.imgp__layer--bar .imgp__layer-action {
+		align-items: stretch;
+		width: 100%;
+	}
+
+	.imgp--audio .imgp__layer-button,
+	.imgp__layer--bar .imgp__layer-button {
+		width: 100%;
+	}
 }
 
 /* Read by a screen reader, not shown: the field has a visible placeholder,

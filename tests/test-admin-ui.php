@@ -194,11 +194,26 @@ setTimeout(function () {
 		// Contrast of the things that carry the brand colour. White on Imagina's
 		// cyan reads at 2.2:1, so these have to be checked rather than assumed.
 		contrast: (function () {
-			function luminance(rgb) {
-				var parts = rgb.match(/\d+/g).slice(0, 3).map(function (n) {
+			/*
+			 * Through a canvas rather than a regular expression. A computed
+			 * background is not always `rgb()` — a `color-mix()` resolves to
+			 * `color(srgb 0 0.7 0.78)`, whose numbers are 0–1, and pulling
+			 * digits out of that makes every mixed colour look like black. A
+			 * contrast check that believes that passes anything.
+			 */
+			var probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+
+			function luminance(color) {
+				probe.clearRect(0, 0, 1, 1);
+				probe.fillStyle = color;
+				probe.fillRect(0, 0, 1, 1);
+
+				var data = probe.getImageData(0, 0, 1, 1).data;
+				var parts = [ data[0], data[1], data[2] ].map(function (n) {
 					var c = n / 255;
 					return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 				});
+
 				return 0.2126 * parts[0] + 0.7152 * parts[1] + 0.0722 * parts[2];
 			}
 

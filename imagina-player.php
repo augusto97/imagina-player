@@ -3,7 +3,7 @@
  * Plugin Name:       Imagina Player
  * Plugin URI:        https://github.com/augusto97/imagina-player
  * Description:       Modern, fast and accessible audio &amp; video player for WordPress. Waveform audio player, Gutenberg blocks, reusable presets and a shortcode compatibility layer for legacy players.
- * Version:           1.11.0
+ * Version:           1.12.0
  * Requires at least: 6.5
  * Requires PHP:      8.0
  * Author:            Imagina
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-const VERSION  = '1.11.0';
+const VERSION  = '1.12.0';
 const MIN_PHP  = '8.0';
 const SLUG     = 'imagina-player';
 const PREFIX   = 'imgp';

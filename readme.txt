@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.11.0
+Stable tag: 1.12.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,10 +60,31 @@ nothing short of DRM can, and this plugin is honest about that.
 
 = Does it support video? =
 
-The renderer and the front-end core already handle `<video>` sources, but the
-video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
+Yes. There is a Video block in the inserter and a Video section in the settings,
+with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
+download protection the audio player has.
 
 == Changelog ==
+
+= 1.12.0 =
+* Fixed: a call to action beside an audio player rendered as a full-width sheet
+  of brand colour lying across the waveform and the title, with a button in
+  almost exactly the colour of the sheet behind it. The layers were inside a
+  wrapper positioned to cover the picture, which audio does not have.
+* Changed: beside audio a call to action is now a strip attached under the
+  controls — the offer on the left, the button on the right, on a dark surface
+  with a hairline of the accent down its edge. Over a video it stays a sheet
+  over the picture, with the copy held to a readable column.
+* Fixed: button labels were always white. On a bright accent — this plugin's
+  own cyan included — white on it reads at 2.2:1, which is unreadable. The
+  foreground is now worked out from the accent's luminance.
+* New: the layer layout is measured in a real browser on every test run: that
+  it sits beside the player rather than on it, stays inside its width, is a
+  strip rather than a slab, and that the button can be told apart from what is
+  behind it.
+* Fixed: two contrast checks in the test suite read colours with a regular
+  expression, which reads `color(srgb 0 0.7 0.78)` as near-black and so passed
+  anything painted with `color-mix()`. They now resolve colours properly.
 
 = 1.11.0 =
 * New: a Track details section. Where a title and an artist come from when you
