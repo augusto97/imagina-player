@@ -1,6 +1,7 @@
 import { registerBlockType } from '@wordpress/blocks';
 
 import { Edit } from './edit';
+import { PlaylistEdit } from './playlist';
 import './editor.scss';
 
 /**
@@ -14,5 +15,10 @@ registerBlockType( 'imagina/audio-player', {
 	edit: Edit,
 	// Dynamic block: the server renders the markup so a preset change reaches
 	// every published player without re-saving posts.
+	save: () => null,
+} as unknown as BlockSettings );
+
+registerBlockType( 'imagina/playlist', {
+	edit: PlaylistEdit,
 	save: () => null,
 } as unknown as BlockSettings );

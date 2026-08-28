@@ -81,3 +81,63 @@ export function runProtectionSelfCheck(): Promise< SelfCheckResult > {
 		method: 'POST',
 	} ) as Promise< SelfCheckResult >;
 }
+
+export interface Lead {
+	id: number;
+	email: string;
+	list: string;
+	source_url: string;
+	created_at: string;
+}
+
+export interface LeadPage {
+	rows: Lead[];
+	total: number;
+	lists: string[];
+}
+
+export function listLeads( page = 1, list = '' ): Promise< LeadPage > {
+	const query = new URLSearchParams( {
+		page: String( page ),
+		perPage: '50',
+	} );
+
+	if ( list ) {
+		query.set( 'list', list );
+	}
+
+	return apiFetch( {
+		path: '/imagina-player/v1/leads?' + query.toString(),
+	} ) as Promise< LeadPage >;
+}
+
+export function deleteLead( id: number ): Promise< unknown > {
+	return apiFetch( {
+		path: '/imagina-player/v1/leads?id=' + id,
+		method: 'DELETE',
+	} );
+}
+
+/**
+ * The export URL, for a plain link.
+ *
+ * A link rather than a fetch: the browser's own download handling is better
+ * than anything reconstructed with a blob, and it keeps the nonce in the URL
+ * where a `<a download>` can carry it.
+ * @param list
+ * @param restUrl
+ * @param nonce
+ */
+export function exportUrl(
+	list: string,
+	restUrl: string,
+	nonce: string
+): string {
+	const query = new URLSearchParams( { _wpnonce: nonce } );
+
+	if ( list ) {
+		query.set( 'list', list );
+	}
+
+	return restUrl + '/leads/export?' + query.toString();
+}

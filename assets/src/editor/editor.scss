@@ -88,3 +88,36 @@
 	border: 1px dashed #ddd;
 	border-radius: 4px;
 }
+
+/* The playlist block edits an order, so the editor shows the order. */
+.imgp-playlist-editor__items {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: grid;
+	gap: 8px;
+}
+
+.imgp-playlist-editor__items li {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 10px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.imgp-playlist-editor__art {
+	width: 40px;
+	height: 40px;
+	border-radius: 3px;
+	object-fit: cover;
+}
+
+.imgp-playlist-editor__actions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}

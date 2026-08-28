@@ -1,13 +1,13 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "imagina/audio-player",
+	"name": "imagina/playlist",
 	"version": "1.8.0",
-	"title": "Imagina Audio Player",
+	"title": "Imagina Playlist",
 	"category": "media",
-	"icon": "format-audio",
-	"description": "A fast waveform audio player with reusable presets.",
-	"keywords": [ "audio", "mp3", "waveform", "podcast", "music", "player" ],
+	"icon": "playlist-audio",
+	"description": "Several tracks in one player, as a list or a grid.",
+	"keywords": [ "playlist", "album", "series", "course", "podcast" ],
 	"textdomain": "imagina-player",
 	"supports": {
 		"html": false,
@@ -19,12 +19,6 @@
 		},
 		"interactivity": {
 			"clientNavigation": false
-		}
-	},
-	"example": {
-		"attributes": {
-			"title": "El camino del amor",
-			"artist": "Elízabeth Guerra Gómez"
 		}
 	},
 	"editorScript": "imagina-player-editor",

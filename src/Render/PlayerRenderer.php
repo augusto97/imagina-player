@@ -93,6 +93,20 @@ final class PlayerRenderer {
 			'protectedId' => Vault::is_protected( $track->attachment_id ) ? $track->attachment_id : 0,
 		);
 
+		// Only present when there is something to run, because its absence is
+		// what keeps the layer chunk from being downloaded at all.
+		if ( array() !== (array) $atts['layers'] ) {
+			$client_config['layers'] = array_map(
+				static fn( array $layer ): array => array(
+					'type' => (string) $layer['type'],
+					'at'   => (int) $layer['at'],
+					'skip' => (bool) $layer['skip'],
+					'list' => (string) ( $layer['list'] ?? '' ),
+				),
+				(array) $atts['layers']
+			);
+		}
+
 		// Namespaced rather than flattened: the video module reads `video` and
 		// nothing else, so growing it later cannot collide with an audio key.
 		if ( $track->is_video() ) {
@@ -146,11 +160,12 @@ final class PlayerRenderer {
 			'logo'     => $this->part_logo(),
 		);
 
+		$parts['layers'] = $this->part_layers( $track, $config, $atts, $id );
+
 		if ( 'theater' === $layout ) {
 			$parts['poster']  = $this->part_poster( $track );
 			$parts['bigplay'] = $this->part_big_play();
 			$parts['video']   = $this->part_video_controls( $config, $atts );
-			$parts['layers']  = $this->part_layers( $track, $config, $id );
 		}
 
 		ob_start();
@@ -212,6 +227,12 @@ final class PlayerRenderer {
 					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['controls'] . $parts['logo'] // phpcs:ignore WordPress.Security.EscapeOutput
 				);
+			}
+
+			// Video puts its layers inside the stage, over the picture. Audio has
+			// no picture, so they go on the player itself.
+			if ( 'theater' !== $layout ) {
+				echo $parts['layers']; // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
 			}
 			?>
 		</div>
@@ -525,6 +546,98 @@ final class PlayerRenderer {
 	}
 
 	/**
+	 * One layer, hidden until its moment.
+	 *
+	 * Rendered by the server rather than built in JavaScript so that it is in
+	 * the page for anything that reads the page — a search engine, a reader
+	 * mode, someone with scripting off. `hidden` is the only thing standing
+	 * between it and being visible, and the runtime removes that.
+	 *
+	 * @param array<string, mixed> $layer Sanitised layer.
+	 */
+	private function part_layer( array $layer, string $id ): string {
+		$type = (string) $layer['type'];
+
+		ob_start();
+		?>
+		<div
+			class="imgp__layer imgp__layer--<?php echo esc_attr( $type ); ?>"
+			data-layer="<?php echo esc_attr( (string) wp_json_encode( array( 'type' => $type, 'at' => $layer['at'] ) ) ); ?>"
+			role="<?php echo 'bar' === $type ? 'complementary' : 'dialog'; ?>"
+			<?php echo 'bar' === $type ? '' : 'aria-modal="false"'; ?>
+			aria-labelledby="<?php echo esc_attr( $id ); ?>-t"
+			hidden
+		>
+			<div class="imgp__layer-body">
+				<?php if ( '' !== $layer['title'] ) : ?>
+					<p class="imgp__layer-title" id="<?php echo esc_attr( $id ); ?>-t">
+						<?php echo esc_html( (string) $layer['title'] ); ?>
+					</p>
+				<?php endif; ?>
+
+				<?php if ( '' !== $layer['text'] ) : ?>
+					<p class="imgp__layer-text"><?php echo esc_html( (string) $layer['text'] ); ?></p>
+				<?php endif; ?>
+
+				<?php if ( 'email' === $type ) : ?>
+					<form class="imgp__layer-form" novalidate>
+						<label class="imgp__sr" for="<?php echo esc_attr( $id ); ?>-e">
+							<?php esc_html_e( 'Email address', 'imagina-player' ); ?>
+						</label>
+						<input
+							class="imgp__layer-input"
+							id="<?php echo esc_attr( $id ); ?>-e"
+							type="email"
+							name="email"
+							autocomplete="email"
+							required
+							placeholder="<?php esc_attr_e( 'you@example.com', 'imagina-player' ); ?>"
+						/>
+						<?php
+						/*
+						 * A field no person can see and no person will fill in.
+						 * Anything that arrives with it filled came from a script,
+						 * and is dropped without a word — which is cheaper and
+						 * kinder than a captcha.
+						 */
+						?>
+						<div class="imgp__hp" aria-hidden="true">
+							<label for="<?php echo esc_attr( $id ); ?>-w">
+								<?php esc_html_e( 'Leave this field empty', 'imagina-player' ); ?>
+							</label>
+							<input id="<?php echo esc_attr( $id ); ?>-w" type="text" name="website" tabindex="-1" autocomplete="off" />
+						</div>
+						<button type="submit" class="imgp__layer-button">
+							<?php echo esc_html( (string) $layer['button'] ); ?>
+						</button>
+					</form>
+
+					<?php if ( '' !== $layer['consent'] ) : ?>
+						<p class="imgp__layer-fine"><?php echo esc_html( (string) $layer['consent'] ); ?></p>
+					<?php endif; ?>
+
+					<p class="imgp__layer-thanks" hidden><?php echo esc_html( (string) $layer['thanks'] ); ?></p>
+				<?php else : ?>
+					<a
+						class="imgp__layer-button"
+						href="<?php echo esc_url( (string) $layer['url'] ); ?>"
+						<?php echo $layer['newTab'] ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>
+					><?php echo esc_html( (string) $layer['button'] ); ?></a>
+				<?php endif; ?>
+			</div>
+
+			<?php if ( ! empty( $layer['skip'] ) || 'bar' === $type ) : ?>
+				<button type="button" class="imgp__layer-close" aria-label="<?php esc_attr_e( 'Close', 'imagina-player' ); ?>">
+					<?php echo Icons::get( 'close' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG. ?>
+				</button>
+			<?php endif; ?>
+		</div>
+		<?php
+
+		return (string) ob_get_clean();
+	}
+
+	/**
 	 * Where things that sit on top of the picture mount.
 	 *
 	 * Empty today. It exists now because chapters, captions, calls to action and
@@ -534,8 +647,12 @@ final class PlayerRenderer {
 	 *
 	 * @param array<string, mixed> $config Effective settings.
 	 */
-	private function part_layers( Track $track, array $config, string $id ): string {
+	private function part_layers( Track $track, array $config, array $atts, string $id ): string {
 		$layers = array();
+
+		foreach ( (array) ( $atts['layers'] ?? array() ) as $index => $layer ) {
+			$layers[ 'layer-' . $index ] = $this->part_layer( (array) $layer, $id . '-l' . $index );
+		}
 
 		/**
 		 * Filter the overlay layers rendered above a video.
@@ -549,6 +666,10 @@ final class PlayerRenderer {
 		 * @param string                $id     Player DOM id.
 		 */
 		$layers = (array) apply_filters( 'imagina_player_video_layers', $layers, $track, $config, $id );
+
+		if ( array() === $layers ) {
+			return '';
+		}
 
 		$html = implode( '', array_map( 'strval', $layers ) );
 

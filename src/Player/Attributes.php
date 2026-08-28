@@ -150,6 +150,10 @@ final class Attributes {
 				'type'    => 'array',
 				'default' => array(),
 			),
+			'layers'       => array(
+				'type'    => 'array',
+				'default' => array(),
+			),
 		);
 
 		$preset_defaults = Settings::preset_defaults();
@@ -215,6 +219,7 @@ final class Attributes {
 		$out['aspectRatio'] = self::sanitize_ratio( (string) $out['aspectRatio'] );
 		$out['tracks']      = self::sanitize_tracks( (array) $out['tracks'] );
 		$out['chapters']    = self::sanitize_chapters( (array) $out['chapters'] );
+		$out['layers']      = Layers::sanitize( (array) $out['layers'] );
 
 		return $out;
 	}

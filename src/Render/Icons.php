@@ -33,6 +33,7 @@ final class Icons {
 		'expand'   => '<path d="M4 9V4h5v2H6v3zm11-5h5v5h-2V6h-3zM6 15v3h3v2H4v-5zm12 0h2v5h-5v-2h3z"/>',
 		'collapse' => '<path d="M9 4v5H4V7h3V4zm6 0h2v3h3v2h-5zM4 15h5v5H7v-3H4zm12 2v3h-2v-5h5v2z"/>',
 		'pip'      => '<path d="M3 4h18v10h-2V6H5v10h6v2H3zm10 10h8v6h-8z"/>',
+		'close'    => '<path d="M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 5.7 18.3 4.3 16.9 10.6 12 4.3 5.7 5.7 4.3 12 10.6l4.9-4.9z"/>',
 		'quality'  => '<path d="M12 2 4 6v6c0 4.4 3.4 8.5 8 10 4.6-1.5 8-5.6 8-10V6zm-1 5h2v4h3l-4 5-4-5h3z"/>',
 		'chapters' => '<path d="M3 5h2v2H3zm4 0h14v2H7zM3 11h2v2H3zm4 0h14v2H7zM3 17h2v2H3zm4 0h14v2H7z"/>',
 		'cc'       => '<path d="M3 5h18v14H3zm4.6 4.4a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 2.2-1.2l-1.3-.7a1.1 1.1 0 1 1 0-1.4l1.3-.7a2.6 2.6 0 0 0-2.2-1.2zm7 0a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 2.2-1.2l-1.3-.7a1.1 1.1 0 1 1 0-1.4l1.3-.7a2.6 2.6 0 0 0-2.2-1.2z"/>',

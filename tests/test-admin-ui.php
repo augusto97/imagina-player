@@ -324,7 +324,13 @@ if ( ! preg_match( '/RESULT:(\{.*?\})</s', $dom_output, $matches ) ) {
 $result = json_decode( $matches[1], true );
 
 check( 'the application mounts', ! empty( $result['mounted'] ) );
-check( 'every section is listed', 5 === count( $result['nav'] ?? array() ), implode( ' / ', $result['nav'] ?? array() ) );
+// By name rather than by count: a count tells you a section was added or
+// removed but not which, and it fails on every deliberate change too.
+$expected_sections = array( 'Presets', 'Branding', 'Waveforms', 'Protection', 'Emails', 'Advanced' );
+
+foreach ( $expected_sections as $name ) {
+	check( "the {$name} section is listed", in_array( $name, $result['nav'] ?? array(), true ), implode( ' / ', $result['nav'] ?? array() ) );
+}
 check( 'both presets are listed', 2 === count( $result['presets'] ?? array() ), implode( ' / ', $result['presets'] ?? array() ) );
 check( 'the preset editor has its three tabs', 3 === count( $result['tabs'] ?? array() ), implode( ' / ', $result['tabs'] ?? array() ) );
 check( 'the control toggles render', (int) ( $result['toggles'] ?? 0 ) >= 8, (string) ( $result['toggles'] ?? 0 ) );

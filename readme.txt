@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.7.0
+Stable tag: 1.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,20 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.8.0 =
+* New: calls to action. Three kinds — a panel that stops playback, a bar that
+  does not, and an email gate. They work on audio as well as video: a gate two
+  thirds of the way through a podcast is the same feature.
+* New: captured addresses are kept, listed under Emails, and downloadable as a
+  CSV. Cells that a spreadsheet would run as a formula are neutralised on the
+  way out.
+* New: playlists, as a list or a grid of covers. Every track is a link to its
+  own file, so clicking one plays it even before any script has run; the
+  runtime catches the click and hands it to the player already on the page, so
+  the volume and speed the listener chose survive.
+* Each of these is downloaded only by pages that use it. A page with a plain
+  player is unchanged, to the byte.
 
 = 1.7.0 =
 * New: subtitles. WebVTT and SubRip, several languages, a menu to switch

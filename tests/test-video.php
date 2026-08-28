@@ -80,7 +80,13 @@ check( 'the stage carries the ratio so the box is sized before the video loads',
 check( 'the media element is inside the stage, not beside it', (bool) preg_match( '#imgp__stage.*?<video#s', $video ) );
 check( 'there is a play button in the middle', str_contains( $video, 'imgp__bigplay' ) );
 check( 'the poster is a real image, so it can be prioritised', str_contains( $video, 'fetchpriority="high"' ) );
-check( 'the overlay slot exists for later layers', str_contains( $video, 'imgp__layers' ) );
+// The slot is created when something mounts in it, not always: an empty div on
+// every video in the world is markup nobody asked for. What matters is that a
+// layer lands inside the stage, above the picture.
+check(
+	'a video with no layers carries no empty slot',
+	! str_contains( $video, 'imgp__layers' )
+);
 check( 'full screen and picture-in-picture are rendered', str_contains( $video, 'imgp__vbtn--fullscreen' ) && str_contains( $video, 'imgp__vbtn--pip' ) );
 check( 'and start hidden, for the browser to reveal what it supports', (bool) preg_match( '#imgp__vbtn--pip[^>]*hidden#', $video ) );
 check( 'a video always gets a scrubber', str_contains( $video, 'imgp__scrubber' ) );

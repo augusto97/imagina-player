@@ -126,6 +126,7 @@ final class Assets {
 				'unmute' => __( 'Unmute', 'imagina-player' ),
 				'captionsOff' => __( 'Off', 'imagina-player' ),
 				'qualityAuto' => __( 'Auto', 'imagina-player' ),
+				'layerFailed' => __( 'That could not be sent. Please try again.', 'imagina-player' ),
 			),
 		);
 	}

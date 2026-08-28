@@ -95,6 +95,18 @@ function humanise( key: string ): string {
  * Shapes offered for a video. Declared as data, and typed as plain strings, so
  * the control accepts whatever was saved rather than only these four.
  */
+const LAYER_TYPES: Array< { value: string; label: string } > = [
+	{
+		value: 'cta',
+		label: __( 'Call to action (stops playback)', 'imagina-player' ),
+	},
+	{
+		value: 'bar',
+		label: __( 'Bar (does not stop playback)', 'imagina-player' ),
+	},
+	{ value: 'email', label: __( 'Email gate', 'imagina-player' ) },
+];
+
 const RATIOS: Array< { value: string; label: string } > = [
 	{ value: '16:9', label: __( 'Widescreen (16:9)', 'imagina-player' ) },
 	{ value: '4:3', label: __( 'Classic (4:3)', 'imagina-player' ) },
@@ -123,6 +135,15 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 	const patchTrack = ( index: number, patch: ListItem ): void =>
 		setAttributes( {
 			tracks: tracks.map( ( item, i ) =>
+				i === index ? { ...item, ...patch } : item
+			),
+		} );
+
+	const layers = ( attributes.layers ?? [] ) as ListItem[];
+
+	const patchLayer = ( index: number, patch: ListItem ): void =>
+		setAttributes( {
+			layers: layers.map( ( item, i ) =>
 				i === index ? { ...item, ...patch } : item
 			),
 		} );
@@ -946,6 +967,185 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 						</BaseControl>
 					</PanelBody>
 				) }
+
+				<PanelBody
+					title={ __( 'Calls to action', 'imagina-player' ) }
+					initialOpen={ false }
+				>
+					<p className="imgp-editor__hint">
+						{ __(
+							'Appears part-way through. A bar sits alongside playback; the other two stop it until the listener answers or closes them.',
+							'imagina-player'
+						) }
+					</p>
+
+					{ layers.map( ( layer, index ) => (
+						<div className="imgp-editor__row" key={ index }>
+							<SelectControl
+								__nextHasNoMarginBottom
+								label={ __( 'Kind', 'imagina-player' ) }
+								value={ String( layer.type ?? 'cta' ) }
+								options={ LAYER_TYPES }
+								onChange={ ( value: string ) =>
+									patchLayer( index, { type: value } )
+								}
+							/>
+							<RangeControl
+								__nextHasNoMarginBottom
+								label={ __( 'Appears at', 'imagina-player' ) }
+								help={ __(
+									'Percentage of the track. 100 means when it ends.',
+									'imagina-player'
+								) }
+								value={ Number( layer.at ?? 100 ) }
+								min={ 0 }
+								max={ 100 }
+								step={ 5 }
+								onChange={ ( value?: number ) =>
+									patchLayer( index, { at: value ?? 100 } )
+								}
+							/>
+							<TextControl
+								__nextHasNoMarginBottom
+								label={ __( 'Headline', 'imagina-player' ) }
+								value={ String( layer.title ?? '' ) }
+								onChange={ ( value: string ) =>
+									patchLayer( index, { title: value } )
+								}
+							/>
+							<TextControl
+								__nextHasNoMarginBottom
+								label={ __( 'Text', 'imagina-player' ) }
+								value={ String( layer.text ?? '' ) }
+								onChange={ ( value: string ) =>
+									patchLayer( index, { text: value } )
+								}
+							/>
+							<TextControl
+								__nextHasNoMarginBottom
+								label={ __( 'Button label', 'imagina-player' ) }
+								value={ String( layer.button ?? '' ) }
+								onChange={ ( value: string ) =>
+									patchLayer( index, { button: value } )
+								}
+							/>
+
+							{ 'email' === layer.type ? (
+								<>
+									<TextControl
+										__nextHasNoMarginBottom
+										label={ __(
+											'List name',
+											'imagina-player'
+										) }
+										help={ __(
+											'Groups the addresses this player captures. Anything you like: "course", "newsletter".',
+											'imagina-player'
+										) }
+										value={ String( layer.list ?? '' ) }
+										onChange={ ( value: string ) =>
+											patchLayer( index, { list: value } )
+										}
+									/>
+									<TextControl
+										__nextHasNoMarginBottom
+										label={ __(
+											'Small print',
+											'imagina-player'
+										) }
+										value={ String( layer.consent ?? '' ) }
+										onChange={ ( value: string ) =>
+											patchLayer( index, {
+												consent: value,
+											} )
+										}
+									/>
+								</>
+							) : (
+								<>
+									<TextControl
+										__nextHasNoMarginBottom
+										label={ __(
+											'Button links to',
+											'imagina-player'
+										) }
+										value={ String( layer.url ?? '' ) }
+										placeholder="https://…"
+										onChange={ ( value: string ) =>
+											patchLayer( index, { url: value } )
+										}
+									/>
+									<ToggleControl
+										__nextHasNoMarginBottom
+										label={ __(
+											'Open in a new tab',
+											'imagina-player'
+										) }
+										checked={ Boolean( layer.newTab ) }
+										onChange={ ( value: boolean ) =>
+											patchLayer( index, {
+												newTab: value,
+											} )
+										}
+									/>
+								</>
+							) }
+
+							<ToggleControl
+								__nextHasNoMarginBottom
+								label={ __(
+									'Can be closed',
+									'imagina-player'
+								) }
+								help={ __(
+									'Without this, an email gate has to be answered to carry on.',
+									'imagina-player'
+								) }
+								checked={ Boolean( layer.skip ) }
+								onChange={ ( value: boolean ) =>
+									patchLayer( index, { skip: value } )
+								}
+							/>
+
+							<Button
+								variant="tertiary"
+								isDestructive
+								onClick={ () =>
+									setAttributes( {
+										layers: layers.filter(
+											( _item, i ) => i !== index
+										),
+									} )
+								}
+							>
+								{ __( 'Remove', 'imagina-player' ) }
+							</Button>
+						</div>
+					) ) }
+
+					<Button
+						variant="secondary"
+						onClick={ () =>
+							setAttributes( {
+								layers: [
+									...layers,
+									{
+										type: 'cta',
+										at: 100,
+										title: '',
+										text: '',
+										button: '',
+										url: '',
+										skip: true,
+										newTab: true,
+									},
+								],
+							} )
+						}
+					>
+						{ __( 'Add a call to action', 'imagina-player' ) }
+					</Button>
+				</PanelBody>
 			</InspectorControls>
 
 			<Preview

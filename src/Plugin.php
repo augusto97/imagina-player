@@ -14,7 +14,9 @@ use ImaginaPlayer\Blocks\BlockRegistrar;
 use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Protection\Integration as ProtectionIntegration;
 use ImaginaPlayer\Protection\StreamServer;
+use ImaginaPlayer\Leads\LeadRepository;
 use ImaginaPlayer\Rest\CaptionController;
+use ImaginaPlayer\Rest\LeadController;
 use ImaginaPlayer\Rest\PeaksController;
 use ImaginaPlayer\Rest\SettingsController;
 use ImaginaPlayer\Rest\StreamController;
@@ -60,6 +62,7 @@ final class Plugin {
 			'peaks'       => new PeaksRepository(),
 			'rest'        => new PeaksController(),
 			'captions'    => new CaptionController(),
+			'leads'       => new LeadController(),
 			'stream'      => new StreamServer(),
 			'streamRest'  => new StreamController(),
 			'settingsApi' => new SettingsController(),
@@ -119,6 +122,7 @@ final class Plugin {
 		update_option( 'imagina_player_version', VERSION, false );
 
 		PeaksRepository::install_table();
+		LeadRepository::install_table();
 
 		// Front-end assets are versioned by plugin version; flush page caches that key on rewrite rules.
 		flush_rewrite_rules();

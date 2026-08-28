@@ -53,9 +53,20 @@ function get_option( $name, $default = false ) { if ( isset( $GLOBALS['counts'] 
 function update_option( $name, $value, $autoload = null ) { $GLOBALS['stub_options'][ $name ] = $value; return true; }
 function add_option( $name, $value, $d = '', $autoload = 'yes' ) { $GLOBALS['stub_options'][ $name ] = $value; return true; }
 function delete_option( $name ) { unset( $GLOBALS['stub_options'][ $name ] ); return true; }
-function get_transient( $k ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['transient']++; } return false; }
-function set_transient( $k, $v, $t = 0 ) { return true; }
-function delete_transient( $k ) { return true; }
+// Real, in-memory: a rate limit that is never remembered cannot be tested.
+$GLOBALS['stub_transients'] = array();
+function get_transient( $k ) {
+	if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['transient']++; }
+	$row = $GLOBALS['stub_transients'][ $k ] ?? null;
+	if ( null === $row ) { return false; }
+	if ( 0 !== $row['expires'] && $row['expires'] < time() ) { unset( $GLOBALS['stub_transients'][ $k ] ); return false; }
+	return $row['value'];
+}
+function set_transient( $k, $v, $t = 0 ) {
+	$GLOBALS['stub_transients'][ $k ] = array( 'value' => $v, 'expires' => $t > 0 ? time() + $t : 0 );
+	return true;
+}
+function delete_transient( $k ) { unset( $GLOBALS['stub_transients'][ $k ] ); return true; }
 function wp_cache_get( $k, $g = '' ) { return false; }
 function wp_cache_set( $k, $v, $g = '', $e = 0 ) { return true; }
 function wp_cache_delete( $k, $g = '' ) { return true; }
@@ -145,6 +156,16 @@ class Stub_WPDB {
 	public function get_var( $query ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['db_query']++; } return $GLOBALS['stub_table_exists'] ?? null; }
 	public function get_row( $query, $output = null ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['db_query']++; } return null; }
 	public function replace( $table, $data, $format = null ) { return 1; }
+	/**
+	 * Records rather than executes. Enough to assert that a write was attempted
+	 * and that its SQL was built through prepare().
+	 */
+	public function query( $sql ) {
+		$GLOBALS['stub_queries'][] = $sql;
+		return $GLOBALS['stub_query_result'] ?? 1;
+	}
+	public function get_results( $query, $output = null ) { return $GLOBALS['stub_rows'] ?? array(); }
+	public function get_col( $query ) { return $GLOBALS['stub_cols'] ?? array(); }
 	public function delete( $table, $where, $format = null ) { return 1; }
 	public function esc_like( $text ) { return $text; }
 	// When $GLOBALS['stub_table_exists'] is set, SHOW TABLES reports the table.
@@ -274,3 +295,47 @@ function sanitize_html_class( $class, $fallback = '' ) {
 
 	return '' === (string) $clean ? (string) $fallback : (string) $clean;
 }
+
+$GLOBALS['stub_queries'] = array();
+
+function sanitize_email( $email ) { return trim( (string) filter_var( (string) $email, FILTER_SANITIZE_EMAIL ) ); }
+function is_email( $email ) { return (bool) filter_var( (string) $email, FILTER_VALIDATE_EMAIL ); }
+
+/**
+ * Just enough of the REST classes to call a controller method directly.
+ */
+class WP_REST_Request {
+	private array $params;
+	private array $headers;
+
+	public function __construct( array $params = array(), array $headers = array() ) {
+		$this->params  = $params;
+		$this->headers = $headers;
+	}
+
+	public function get_param( $name ) { return $this->params[ $name ] ?? null; }
+	public function set_param( $name, $value ) { $this->params[ $name ] = $value; }
+	public function get_header( $name ) { return $this->headers[ strtolower( $name ) ] ?? ''; }
+}
+
+class WP_REST_Response {
+	private $data;
+	private int $status;
+
+	public function __construct( $data = null, int $status = 200 ) {
+		$this->data   = $data;
+		$this->status = $status;
+	}
+
+	public function get_data() { return $this->data; }
+	public function get_status(): int { return $this->status; }
+}
+
+class WP_REST_Server {
+	const READABLE  = 'GET';
+	const CREATABLE = 'POST';
+	const EDITABLE  = 'POST, PUT, PATCH';
+	const DELETABLE = 'DELETE';
+}
+
+function register_rest_route( ...$args ) { return true; }

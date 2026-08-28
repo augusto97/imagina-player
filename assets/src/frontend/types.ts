@@ -21,6 +21,14 @@ export interface PlayerConfig {
 	protectedId: number;
 	/** Present only for video. Its absence is what keeps the video chunk unloaded. */
 	video?: VideoConfig;
+	/** Present only when a player carries one, for the same reason. */
+	layers?: Array< {
+		type: 'cta' | 'bar' | 'email';
+		/** Percentage of the track at which it appears. */
+		at: number;
+		skip: boolean;
+		list: string;
+	} >;
 }
 
 export interface VideoConfig {
@@ -36,6 +44,19 @@ export interface VideoConfig {
 	chapters: Array< { start: number; title: string } >;
 	/** The source is an HLS manifest, so adaptive streaming may be needed. */
 	hls: boolean;
+}
+
+/** One item of a playlist, as the server hands it over. */
+export interface TrackChange {
+	src: string;
+	title: string;
+	artist?: string;
+	thumbnail?: string;
+	duration?: number;
+	peaksKey?: string;
+	/** Base64 peaks, when the server already had them measured. */
+	peaks?: string;
+	protectedId?: number;
 }
 
 export interface RuntimeData {

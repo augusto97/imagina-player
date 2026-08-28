@@ -1,11 +1,16 @@
 import './public-path';
 import { Player } from './player';
-import type { RuntimeData } from './types';
+import type { RuntimeData, TrackChange } from './types';
 import './style.scss';
 
 const SELECTOR = '[data-imagina-player]';
 
+const PLAYLIST_SELECTOR = '[data-imagina-playlist]';
+
 const initialised = new WeakSet< HTMLElement >();
+
+/** Players by root element, so a playlist can find the one it belongs to. */
+const players = new WeakMap< HTMLElement, Player >();
 
 function runtime(): RuntimeData {
 	return (
@@ -26,8 +31,7 @@ function create( root: HTMLElement ): void {
 	initialised.add( root );
 
 	try {
-		// eslint-disable-next-line no-new
-		new Player( root, runtime() );
+		players.set( root, new Player( root, runtime() ) );
 	} catch ( error ) {
 		// A single broken player must not take the rest of the page with it.
 		if ( window.console ) {
@@ -66,6 +70,52 @@ function observe( root: HTMLElement ): void {
 
 export function scan( scope: ParentNode = document ): void {
 	scope.querySelectorAll< HTMLElement >( SELECTOR ).forEach( observe );
+	scope.querySelectorAll< HTMLElement >( PLAYLIST_SELECTOR ).forEach( wire );
+}
+
+/**
+ * Give a playlist control of the player inside it.
+ *
+ * The list is already usable before this runs — every item is a link to its own
+ * file — so this is an upgrade, not the feature. Which is why a failure to load
+ * the chunk is survivable and silent.
+ * @param root
+ */
+function wire( root: HTMLElement ): void {
+	if ( initialised.has( root ) ) {
+		return;
+	}
+
+	initialised.add( root );
+
+	const host = root.querySelector< HTMLElement >( SELECTOR );
+
+	if ( ! host ) {
+		return;
+	}
+
+	// The player has to exist before the playlist can drive it, and a lazily
+	// initialised one does not until it is scrolled to.
+	create( host );
+
+	const player = players.get( host );
+	const data = root.getAttribute( 'data-imagina-playlist' );
+
+	if ( ! player || ! data ) {
+		return;
+	}
+
+	let tracks: TrackChange[];
+
+	try {
+		tracks = JSON.parse( data ) as TrackChange[];
+	} catch {
+		return;
+	}
+
+	import( /* webpackChunkName: "imagina-playlist" */ './playlist' )
+		.then( ( { Playlist } ) => new Playlist( root, player, tracks ) )
+		.catch( () => undefined );
 }
 
 function boot(): void {
@@ -85,9 +135,11 @@ function boot(): void {
 						observe( node );
 					}
 
-					node.querySelectorAll< HTMLElement >( SELECTOR ).forEach(
-						observe
-					);
+					if ( node.matches( PLAYLIST_SELECTOR ) ) {
+						wire( node );
+					}
+
+					scan( node );
 				}
 			}
 		} ).observe( document.body, { childList: true, subtree: true } );

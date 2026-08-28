@@ -1078,3 +1078,368 @@
 .imgp--video.is-chrome-idle .imgp__media::-webkit-media-text-track-container {
 	transform: translateY(0);
 }
+
+/* --- Conversion layers --------------------------------------------------
+   Rendered by the server and merely hidden, so a reader that never runs
+   JavaScript still finds the offer in the page. The runtime's whole job is
+   to decide when to stop hiding them. */
+
+.imgp__layer {
+	position: absolute;
+	inset: 0;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1.25rem;
+	background: rgb(0 0 0 / 78%);
+	color: #fff;
+	text-align: center;
+}
+
+.imgp__layer[hidden] {
+	display: none;
+}
+
+/* Audio has no picture to cover, so a layer becomes a panel under the
+   controls rather than a sheet over them. */
+.imgp--audio .imgp__layer {
+	position: static;
+	margin-top: var(--imgp-gap);
+	border-radius: var(--imgp-radius, 0.5rem);
+	background: color-mix(in srgb, var(--imgp-accent) 92%, #000);
+	text-align: left;
+}
+
+/* The bar is the one that does not interrupt: a strip along the bottom edge,
+   alongside playback rather than instead of it. */
+.imgp__layer--bar {
+	inset: auto 0 0;
+	padding: 0.6rem 2.5rem 0.6rem 1rem;
+	background: var(--imgp-accent);
+	color: var(--imgp-on-accent, #fff);
+	text-align: left;
+}
+
+.imgp--audio .imgp__layer--bar {
+	padding: 0.6rem 2.5rem 0.6rem 1rem;
+}
+
+.imgp__layer-body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	align-items: center;
+	max-width: 26rem;
+	width: 100%;
+}
+
+.imgp__layer--bar .imgp__layer-body {
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-start;
+	gap: 0.5rem 0.9rem;
+	max-width: none;
+}
+
+.imgp--audio .imgp__layer-body {
+	align-items: flex-start;
+}
+
+.imgp__layer-title {
+	margin: 0;
+	font-size: 1.05rem;
+	font-weight: 600;
+	line-height: 1.3;
+	color: inherit;
+	text-wrap: balance;
+}
+
+.imgp__layer-text {
+	margin: 0;
+	font-size: 0.9rem;
+	line-height: 1.45;
+	color: inherit;
+	opacity: 0.9;
+}
+
+.imgp__layer-fine {
+	margin: 0;
+	font-size: 0.72rem;
+	line-height: 1.4;
+	opacity: 0.72;
+}
+
+.imgp__layer-error {
+	margin: 0;
+	font-size: 0.82rem;
+	font-weight: 600;
+
+	/* Not the theme accent: an error that arrives in the brand colour reads as
+	   part of the offer rather than as something going wrong. */
+	color: #ffb4a8;
+}
+
+.imgp__layer-thanks {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 600;
+}
+
+.imgp__layer-thanks[hidden] {
+	display: none;
+}
+
+.imgp__layer-form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	width: 100%;
+	justify-content: center;
+}
+
+.imgp__layer-form[hidden] {
+	display: none;
+}
+
+.imgp__layer-input {
+	flex: 1 1 12rem;
+	min-width: 0;
+	padding: 0.55rem 0.7rem;
+	border: 1px solid rgb(255 255 255 / 35%);
+	border-radius: 0.4rem;
+	background: rgb(255 255 255 / 12%);
+	color: inherit;
+	font: inherit;
+	font-size: 0.92rem;
+}
+
+.imgp__layer-input::placeholder {
+	color: rgb(255 255 255 / 60%);
+}
+
+.imgp__layer-input:focus-visible {
+	outline: 2px solid var(--imgp-accent);
+	outline-offset: 1px;
+}
+
+.imgp__layer-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.55rem 1.1rem;
+	border: 0;
+	border-radius: 0.4rem;
+	background: var(--imgp-accent);
+	color: var(--imgp-on-accent, #fff);
+	font: inherit;
+	font-size: 0.92rem;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.imgp__layer--bar .imgp__layer-button {
+	background: var(--imgp-on-accent, #fff);
+	color: var(--imgp-accent);
+	margin-left: auto;
+}
+
+.imgp__layer-button:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.imgp__layer-close {
+	position: absolute;
+	top: 0.5rem;
+	right: 0.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.9rem;
+	height: 1.9rem;
+	padding: 0;
+	border: 0;
+	border-radius: 0.35rem;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+}
+
+.imgp__layer-close:hover {
+	background: rgb(255 255 255 / 18%);
+}
+
+.imgp__layer-close svg {
+	width: 1rem;
+	height: 1rem;
+	fill: currentcolor;
+}
+
+/* Read by a screen reader, not shown: the field has a visible placeholder,
+   which is not a label. */
+.imgp__sr {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* The honeypot. Off-screen rather than display:none, because a form filler
+   that skips hidden fields would skip this one too, and the whole point is
+   that it gets filled. */
+.imgp__hp {
+	position: absolute;
+	left: -9999px;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
+/* While something is asking a question, the controls behind it are not the
+   thing to be reaching for. */
+.imgp--video.has-modal-layer .imgp__chrome,
+.imgp--video.has-modal-layer .imgp__bigplay {
+	opacity: 0;
+	pointer-events: none;
+}
+
+@container (max-width: 30rem) {
+
+	.imgp__layer--bar .imgp__layer-body {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.imgp__layer--bar .imgp__layer-button {
+		margin-left: 0;
+	}
+}
+
+/* --- Playlists ----------------------------------------------------------
+   The list is rendered as links to the files, so it works before any of the
+   runtime does: clicking a track plays it. The runtime catches the click and
+   hands it to the player already on the page instead. */
+
+.imgp-playlist {
+	display: grid;
+	gap: var(--imgp-gap, 0.75rem);
+	container-type: inline-size;
+}
+
+.imgp-playlist__heading {
+	margin: 0;
+	font-size: 1.05rem;
+	font-weight: 600;
+	color: var(--imgp-text, #111827);
+}
+
+.imgp-playlist__items {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: grid;
+	gap: 2px;
+}
+
+.imgp-playlist--grid .imgp-playlist__items {
+	grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+	gap: 0.75rem;
+}
+
+.imgp-playlist__item {
+	margin: 0;
+}
+
+.imgp-playlist__link {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	width: 100%;
+	padding: 0.5rem 0.6rem;
+	border-radius: 0.4rem;
+	color: var(--imgp-text, #111827);
+	text-decoration: none;
+	box-shadow: none;
+}
+
+.imgp-playlist--grid .imgp-playlist__link {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.5rem;
+}
+
+.imgp-playlist__link:hover,
+.imgp-playlist__link:focus-visible {
+	background: color-mix(in srgb, var(--imgp-accent) 10%, transparent);
+}
+
+/* The current track is marked by weight and a bar, not by colour alone. */
+.imgp-playlist__item.is-current .imgp-playlist__link {
+	background: color-mix(in srgb, var(--imgp-accent) 14%, transparent);
+	box-shadow: inset 3px 0 0 var(--imgp-accent);
+	font-weight: 600;
+}
+
+.imgp-playlist--grid .imgp-playlist__item.is-current .imgp-playlist__link {
+	box-shadow: inset 0 -3px 0 var(--imgp-accent);
+}
+
+.imgp-playlist__art {
+	flex: 0 0 auto;
+	width: 3rem;
+	height: 3rem;
+	border-radius: 0.35rem;
+	object-fit: cover;
+}
+
+.imgp-playlist--grid .imgp-playlist__art {
+	width: 100%;
+	height: auto;
+	aspect-ratio: 1;
+}
+
+.imgp-playlist__text {
+	display: grid;
+	gap: 1px;
+	min-width: 0;
+	flex: 1 1 0;
+}
+
+.imgp-playlist__title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 0.92rem;
+	line-height: 1.35;
+}
+
+.imgp-playlist--grid .imgp-playlist__title {
+	white-space: normal;
+}
+
+.imgp-playlist__artist {
+	font-size: 0.8rem;
+	color: var(--imgp-meta, #6b7280);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.imgp-playlist__time {
+	flex: 0 0 auto;
+	font-size: 0.8rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--imgp-meta, #6b7280);
+}
+
+.imgp-playlist--grid .imgp-playlist__time {
+	align-self: flex-start;
+}

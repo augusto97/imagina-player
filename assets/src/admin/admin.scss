@@ -904,3 +904,53 @@
 }
 
 /* stylelint-enable no-descending-specificity */
+
+/* Captured emails. A table, not a dashboard: the questions are who signed up,
+   from which offer, and can I have it as a spreadsheet. */
+.imgpa-tablewrap {
+	overflow-x: auto;
+	margin-top: 14px;
+	border: 1px solid var(--ip-line);
+	border-radius: 8px;
+}
+
+.imgpa-table {
+	width: 100%;
+	min-width: 40rem;
+	border-collapse: collapse;
+	font-size: 13px;
+}
+
+.imgpa-table th,
+.imgpa-table td {
+	padding: 9px 12px;
+	text-align: left;
+	border-bottom: 1px solid var(--ip-line);
+	color: var(--ip-ink);
+	vertical-align: middle;
+}
+
+.imgpa-table thead th {
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--ip-muted);
+	background: var(--ip-ground);
+}
+
+.imgpa-table tbody tr:last-child th,
+.imgpa-table tbody tr:last-child td {
+	border-bottom: 0;
+}
+
+.imgpa-table__url {
+	max-width: 18rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.imgpa-table__url a {
+	color: var(--ip-accent-strong);
+}

@@ -8,16 +8,24 @@ import {
 	ProtectionPanel,
 	WaveformsPanel,
 } from './panels';
+import { LeadsPanel } from './LeadsPanel';
 import { PresetsPanel } from './PresetsPanel';
 import type { Preset, SettingsPayload } from './types';
 
-type Section = 'presets' | 'branding' | 'waveforms' | 'protection' | 'advanced';
+type Section =
+	| 'presets'
+	| 'branding'
+	| 'waveforms'
+	| 'protection'
+	| 'leads'
+	| 'advanced';
 
 const SECTIONS: Array< { id: Section; label: string } > = [
 	{ id: 'presets', label: __( 'Presets', 'imagina-player' ) },
 	{ id: 'branding', label: __( 'Branding', 'imagina-player' ) },
 	{ id: 'waveforms', label: __( 'Waveforms', 'imagina-player' ) },
 	{ id: 'protection', label: __( 'Protection', 'imagina-player' ) },
+	{ id: 'leads', label: __( 'Emails', 'imagina-player' ) },
 	{ id: 'advanced', label: __( 'Advanced', 'imagina-player' ) },
 ];
 
@@ -199,6 +207,7 @@ export function App() {
 							onChange={ patch }
 						/>
 					) }
+					{ 'leads' === section && <LeadsPanel /> }
 					{ 'advanced' === section && (
 						<AdvancedPanel
 							settings={ settings }

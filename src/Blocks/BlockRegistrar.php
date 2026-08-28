@@ -17,6 +17,7 @@ namespace ImaginaPlayer\Blocks;
 use ImaginaPlayer\Assets;
 use ImaginaPlayer\Player\Attributes;
 use ImaginaPlayer\Render\PlayerRenderer;
+use ImaginaPlayer\Render\PlaylistRenderer;
 use ImaginaPlayer\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,6 +27,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class BlockRegistrar {
 
 	public const BLOCK_NAME = 'imagina/audio-player';
+
+	public const PLAYLIST_BLOCK = 'imagina/playlist';
 
 	public function hooks(): void {
 		add_action( 'init', array( $this, 'register' ), 20 );
@@ -44,6 +47,52 @@ final class BlockRegistrar {
 				'render_callback' => array( $this, 'render' ),
 			)
 		);
+
+		register_block_type(
+			\ImaginaPlayer\PATH . 'blocks/playlist',
+			array(
+				'attributes'      => array(
+					'items'     => array(
+						'type'    => 'array',
+						'default' => array(),
+						'items'   => array( 'type' => 'object' ),
+					),
+					'layout'    => array(
+						'type'    => 'string',
+						'default' => 'list',
+					),
+					'heading'   => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+					'preset'    => array(
+						'type'    => 'string',
+						'default' => Settings::DEFAULT_PRESET,
+					),
+					'className' => array(
+						'type'    => 'string',
+						'default' => '',
+					),
+				),
+				'render_callback' => array( $this, 'render_playlist' ),
+			)
+		);
+	}
+
+	/**
+	 * @param array<string, mixed> $attributes Block attributes.
+	 */
+	public function render_playlist( array $attributes, string $content = '', mixed $block = null ): string {
+		$renderer = new PlaylistRenderer();
+		$html     = $renderer->render( $attributes );
+
+		if ( '' === $html ) {
+			return '';
+		}
+
+		$wrapper = get_block_wrapper_attributes( array( 'class' => 'imgp-block' ) );
+
+		return sprintf( '<div %s>%s</div>', $wrapper, $html );
 	}
 
 	/**

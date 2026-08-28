@@ -30,6 +30,8 @@ function kb( string $file ): float {
 $core  = $plugin . 'build/frontend.js';
 $video = $plugin . 'build/imagina-video.js';
 $glue  = $plugin . 'build/imagina-hls-glue.js';
+$layers   = $plugin . 'build/imagina-layers.js';
+$playlist = $plugin . 'build/imagina-playlist.js';
 $hls   = $plugin . 'build/imagina-hls.js';
 $css   = $plugin . 'build/style-frontend.css';
 
@@ -44,6 +46,8 @@ $budgets = array(
 	'the core bundle' => array( $core, 26.0 ),
 	'the video chunk' => array( $video, 14.0 ),
 	'the HLS glue'    => array( $glue, 6.0 ),
+	'the layer chunk' => array( $layers, 8.0 ),
+	'the playlist'    => array( $playlist, 6.0 ),
 	'the stylesheet'  => array( $css, 24.0 ),
 );
 
@@ -82,6 +86,13 @@ $core_source = (string) file_get_contents( $core );
 // means the chunk was inlined back in.
 $video_only = array( 'requestPictureInPicture', 'webkitEnterFullscreen', 'is-chrome-idle' );
 
+// Every optional feature is its own chunk, and none of them may leak into the
+// bundle every page loads.
+$optional = array(
+	'imagina-player-layers'   => $layers,
+	'imagina-player-playlist' => $playlist,
+);
+
 foreach ( $video_only as $needle ) {
 	check(
 		sprintf( '"%s" is not in the core bundle', $needle ),
@@ -100,6 +111,20 @@ if ( is_readable( $video ) ) {
 			str_contains( $video_source, $needle )
 		);
 	}
+}
+
+foreach ( $optional as $marker => $file ) {
+	check(
+		sprintf( '"%s" is not in the core bundle', $marker ),
+		! str_contains( $core_source, $marker )
+	);
+
+	// And it has to be somewhere, or the check above passes because the feature
+	// was deleted rather than deferred.
+	check(
+		sprintf( '"%s" is in its own chunk', $marker ),
+		is_readable( $file ) && str_contains( (string) file_get_contents( $file ), $marker )
+	);
 }
 
 check(

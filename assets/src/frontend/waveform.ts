@@ -85,6 +85,20 @@ export class Waveform {
 		this.composite( true );
 	}
 
+	/**
+	 * Forget the current shape.
+	 *
+	 * For a playlist swapping tracks: the old waveform belongs to the old file,
+	 * and leaving it on screen while the new one loads shows the listener the
+	 * shape of something they are no longer hearing.
+	 */
+	clear(): void {
+		this.peaks = new Float32Array( 0 );
+		this.placeholderOnly = false;
+		this.paintBars();
+		this.composite( true );
+	}
+
 	hasPeaks(): boolean {
 		return this.peaks.length > 0;
 	}

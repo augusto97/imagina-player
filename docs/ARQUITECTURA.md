@@ -357,6 +357,66 @@ sitio al host que el manifiesto mencione sería regalarlo.
 recibe y comprueba que **todos** los segmentos llevaban el token. Quitar el
 `xhrSetup` hace fallar el test con la lista de segmentos desnudos; lo comprobé.
 
+## Capas de conversión
+
+Tres tipos, porque responden a tres preguntas distintas: **cta** interrumpe
+—pausa y cubre—, **bar** hace la misma oferta sin interrumpir, y **email** es
+una puerta. `Player\Layers` las sanea; `PlayerRenderer::part_layer()` las
+dibuja **en el servidor y ocultas**, no las construye JavaScript: así la oferta
+existe en la página para cualquier cosa que lea páginas en vez de ejecutarlas.
+Lo único que hace el runtime es decidir cuándo dejar de ocultarlas.
+
+No son solo de vídeo, y por eso no viven en `video.ts`: una puerta de email a
+dos tercios de un podcast es exactamente la misma función.
+
+### El endpoint de captura no lleva nonce, a propósito
+
+Sería lo obvio y estaría mal: el formulario se imprime dentro de una página que
+una caché de página entera sirve a todo el mundo durante horas, así que el
+nonce impreso está caducado para todos menos el primer visitante — y para un
+visitante no identificado es el mismo valor para todos, es decir, no es un
+secreto.
+
+Lo que hace el trabajo es más barato y más honesto: un campo que ninguna
+persona ve (relleno = script, y se responde **200** sin escribir nada, porque
+decirle a un bot que lo pillaste solo le enseña qué cambiar), un límite de
+cinco envíos por dirección en diez minutos, y el hecho de que lo peor que puede
+pasar es una fila que el dueño del sitio puede borrar.
+
+El límite va **por dirección, no por IP**: una IP la comparte toda una oficina
+o toda una red móvil, así que limitar por IP dejaría fuera a un edificio entero
+por culpa de una persona.
+
+`{prefix}imagina_player_leads` es tabla propia, no CPT: son filas, no
+contenido. Nunca se editan, nunca se muestran en el front, y pueden ser
+muchas — un CPT las metería en `wp_posts` junto a las páginas reales del sitio
+y toda consulta de listado lo pagaría. `email` y `list` son únicos **juntos**:
+la misma persona puede apuntarse al curso y a la newsletter.
+
+En la exportación, una celda que empiece por `= + - @` se prefija con comilla:
+una dirección `=HYPERLINK(...)` es un ataque real contra quien abre el CSV, y
+quien lo abre es el dueño del sitio.
+
+## Playlists
+
+Un bloque aparte (`imagina/playlist`), porque su forma es distinta: una lista
+de pistas y un reproductor. El reproductor es **el de siempre** —mismo
+renderizador, mismos skins, misma protección—; lo que añade la playlist es la
+lista al lado y la capacidad de cambiar lo que suena sin reconstruir nada.
+
+La propiedad que sostiene todo el diseño: **cada elemento es un enlace a su
+propio archivo**. Antes de que corra una línea de JavaScript, pinchar una pista
+la reproduce, que es lo que pide quien pincha una pista de una lista. El
+runtime intercepta el clic y se lo pasa al reproductor que ya está en la
+página — así el volumen y la velocidad que eligió el oyente sobreviven al
+cambio, cosa que no pasaría reconstruyendo el reproductor en cada clic. Un clic
+con Ctrl o Cmd no se intercepta: eso es pedir abrirlo en otro sitio.
+
+`Player::loadTrack()` cambia lo que suena y deja el reproductor en paz. Los
+picos viajan con cada pista cuando el servidor ya los tiene medidos: la
+alternativa es una petición por pista mientras el oyente recorre un álbum, y
+todo el pipeline de ondas existe precisamente para evitar eso.
+
 ### Qué pesa cada cosa
 
 Comprimido, que es lo que viaja:
@@ -365,7 +425,15 @@ Comprimido, que es lo que viaja:
 | --- | --- |
 | cualquier página con reproductor | 7 KB |
 | página con vídeo | 9 KB |
+| + capas de conversión | +1.5 KB |
+| + playlist | +0.7 KB |
 | página con stream, fuera de Safari | 183 KB |
+
+Cada función opcional es su propio chunk, y `tests/test-payload.php` comprueba
+que ninguna se cuela en el paquete que carga todo el mundo — buscando cadenas
+que solo existen en cada módulo dentro del bundle principal, y comprobando
+además que **sí** están en su chunk, para que el test no pase porque alguien
+borró la función en vez de diferirla.
 
 `hls.js` no tiene presupuesto de bytes, porque su tamaño no lo elegimos
 nosotros y no hay forma más pequeña de reproducir streaming adaptativo. Lo que
@@ -376,7 +444,7 @@ paquetes.
 ## Pruebas
 
 `./tests/run.sh` ejecuta la suite contra stubs de WordPress, sin necesidad de una
-instalación: 451 comprobaciones. Cubre sanitización, codificación de picos,
+instalación: 528 comprobaciones. Cubre sanitización, codificación de picos,
 remuestreo, firma de tokens, escapado del markup, el movimiento real de ficheros
 dentro y fuera del vault, y —con un binario ffmpeg simulado— la extracción de
 picos completa.

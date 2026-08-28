@@ -5,7 +5,12 @@ import {
 	sharedPeaks,
 	storePeaks,
 } from './peaks';
-import type { PlayerConfig, RuntimeData, VideoConfig } from './types';
+import type {
+	PlayerConfig,
+	RuntimeData,
+	TrackChange,
+	VideoConfig,
+} from './types';
 import { clamp, formatTime, rafThrottle } from './utils';
 import { Waveform } from './waveform';
 
@@ -70,6 +75,9 @@ export class Player {
 	/** Set once the video chunk has loaded; absent for audio, always. */
 	private video: { destroy: () => void } | null = null;
 
+	/** Set once the layer chunk has loaded; absent unless one was configured. */
+	private layers: { destroy: () => void } | null = null;
+
 	constructor( root: HTMLElement, runtime: RuntimeData ) {
 		this.root = root;
 		this.runtime = runtime;
@@ -117,6 +125,10 @@ export class Player {
 
 		if ( this.config.video ) {
 			void this.setupVideo( this.config.video );
+		}
+
+		if ( this.config.layers?.length ) {
+			void this.setupLayers();
 		}
 
 		instances.add( this );
@@ -818,8 +830,100 @@ export class Player {
 		}
 	}
 
+	/**
+	 * Calls to action, bars and email gates — for audio as much as video.
+	 *
+	 * Its own chunk, because most players carry none and a feature nobody
+	 * configured should not be downloaded by anybody.
+	 */
+	private async setupLayers(): Promise< void > {
+		try {
+			const { LayerStack } = await import(
+				/* webpackChunkName: "imagina-layers" */ './layers'
+			);
+
+			if ( this.destroyed ) {
+				return;
+			}
+
+			this.layers = new LayerStack( {
+				root: this.root,
+				media: this.media,
+				config: this.config,
+				runtime: this.runtime,
+			} );
+		} catch {
+			// The layers stay hidden, which is the same as not having them. The
+			// track plays either way.
+		}
+	}
+
+	/**
+	 * Swap in a different track without tearing the player down.
+	 *
+	 * A playlist that rebuilt the player for every item would lose the volume
+	 * the listener set, the speed they chose and the element they had focused,
+	 * and would flash the whole shell on every click. This changes what is
+	 * playing and leaves everything about the player alone.
+	 *
+	 * @param track The item to play.
+	 * @param play  Whether to start it. False when restoring a page's last item.
+	 */
+	loadTrack( track: TrackChange, play = true ): void {
+		this.savePosition();
+
+		this.config.peaksKey = track.peaksKey ?? '';
+		this.config.duration = track.duration ?? 0;
+		this.config.protectedId = track.protectedId ?? 0;
+		this.sourceRefreshed = false;
+
+		const title = this.root.querySelector< HTMLElement >( '.imgp__title' );
+		const artist =
+			this.root.querySelector< HTMLElement >( '.imgp__artist' );
+		const thumb =
+			this.root.querySelector< HTMLImageElement >( '.imgp__thumb img' );
+
+		if ( title ) {
+			title.textContent = track.title;
+		}
+
+		if ( artist ) {
+			artist.textContent = track.artist ?? '';
+		}
+
+		if ( thumb && track.thumbnail ) {
+			thumb.src = track.thumbnail;
+		}
+
+		// The waveform belongs to the file, so it goes with it. Cleared before
+		// the new source loads rather than after, or the old shape is on screen
+		// under the new track for as long as the fetch takes.
+		this.peaksRequested = false;
+		this.waveform?.clear();
+		this.root.classList.remove( 'imgp--no-peaks' );
+
+		this.media.src = track.src;
+		this.media.load();
+
+		if ( track.peaks ) {
+			this.waveform?.setPeaks( decodePeaks( track.peaks ) );
+		} else if ( this.config.peaksKey ) {
+			void this.loadPeaks();
+		}
+
+		this.render();
+		this.restorePosition();
+
+		if ( play ) {
+			void this.media.play().catch( () => {
+				void this.recoverSource();
+			} );
+		}
+	}
+
 	destroy(): void {
 		this.destroyed = true;
+		this.layers?.destroy();
 		this.resizeObserver?.disconnect();
 		this.stickyObserver?.disconnect();
 		this.video?.destroy();
