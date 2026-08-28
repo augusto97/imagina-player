@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.9.1.zip`.
+1. Descarga `imagina-player-1.9.2.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Imagina Player** (menú lateral), o desde el enlace
@@ -25,18 +25,30 @@ En el insertador de Gutenberg, buscando «imagina»:
 
 | | |
 | --- | --- |
-| Versión | `1.9.1` |
-| Fichero | `imagina-player-1.9.1.zip` |
+| Versión | `1.9.2` |
+| Fichero | `imagina-player-1.9.2.zip` |
 | Tamaño | 324 KB |
-| SHA-256 | `7e2b6931e7156ea6cbcbb92e50ae6239f20ec952377c4b202bcc3d182b282def` |
+| SHA-256 | `ff220b6e16a12f0952318db3991f9fa13b899156d064fad191b619dea5224040` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.9.1.zip
+sha256sum imagina-player-1.9.2.zip
 ```
+
+## Novedades en 1.9.2
+
+- **Corregido:** al generar la onda desde el editor, la vista previa seguía
+  mostrando la barra plana — o sea, parecía que el botón no hacía nada. La onda
+  se guarda contra el archivo, no contra el bloque, así que no cambiaba ningún
+  atributo que hiciera recargar la vista previa. Ya lo hace.
+- **Nuevo:** el bloque de playlist revisa todas sus pistas y ofrece medir las
+  que hagan falta, de una vez. Es el caso que más lo necesitaba: llegan varios
+  archivos de golpe.
+- **Cambiado:** el aviso pregunta directamente al servidor en vez de esperar a
+  la vista previa, así que aparece en cuanto eliges el archivo.
 
 ## Novedades en 1.9.1
 
