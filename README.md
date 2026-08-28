@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.9.0.zip`.
+1. Descarga `imagina-player-1.9.1.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Imagina Player** (menú lateral), o desde el enlace
@@ -25,18 +25,31 @@ En el insertador de Gutenberg, buscando «imagina»:
 
 | | |
 | --- | --- |
-| Versión | `1.9.0` |
-| Fichero | `imagina-player-1.9.0.zip` |
-| Tamaño | 320 KB |
-| SHA-256 | `11ea69f5ceb2eb3f9f199450157d04e03cb92151710269bcefd6c3712768ecb5` |
+| Versión | `1.9.1` |
+| Fichero | `imagina-player-1.9.1.zip` |
+| Tamaño | 324 KB |
+| SHA-256 | `7e2b6931e7156ea6cbcbb92e50ae6239f20ec952377c4b202bcc3d182b282def` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.9.0.zip
+sha256sum imagina-player-1.9.1.zip
 ```
+
+## Novedades en 1.9.1
+
+- **Corregido:** el editor dibujaba una onda para pistas que no tenían ninguna.
+  Era sintética —un relleno para que la vista previa no pareciera una barra
+  plana— y el efecto era decirte que tu onda funcionaba mientras tu sitio
+  mostraba una barra plana. Ahora la vista previa muestra lo que mostrará el
+  sitio, y avisa cuando falta la onda.
+- **Corregido:** en un hosting sin ffmpeg, una grabación más larga que el límite
+  del visitante no conseguía onda **nunca**, y nada decía por qué. Ahora puedes
+  medirla en tu propio navegador —desde el bloque, o en lote en **Ondas**—: se
+  descarga el archivo una vez, ahí, y el resultado queda guardado para todos los
+  visitantes. Quien navega tu sitio no descarga nada de más.
 
 ## Novedades en 1.9.0
 
