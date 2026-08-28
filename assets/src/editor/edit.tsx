@@ -152,10 +152,10 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 	 * Assumed present until the preview reports otherwise, so the notice does
 	 * not flash up on every keystroke while the preview is in flight.
 	 */
-	const [ peaksState, setPeaksState ] = useState< {
-		hasPeaks: boolean;
-		attachmentId: number;
-	} >( { hasPeaks: true, attachmentId: 0 } );
+	// Bumped after a waveform is measured, so the preview goes and fetches the
+	// one that now exists. Measuring stores it against the file, not against
+	// the block, so nothing in the attributes changes to trigger it.
+	const [ refresh, setRefresh ] = useState( 0 );
 
 	const patchLayer = ( index: number, patch: ListItem ): void =>
 		setAttributes( {
@@ -1176,19 +1176,13 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 			</InspectorControls>
 
 			<WaveformNotice
-				attachmentId={ peaksState.attachmentId }
-				hasPeaks={ peaksState.hasPeaks }
-				isVideo={ isVideo }
-				onMeasured={ () =>
-					setPeaksState( ( current ) => ( {
-						...current,
-						hasPeaks: true,
-					} ) )
-				}
+				attachmentIds={ [ Number( attributes.attachmentId ?? 0 ) ] }
+				disabled={ isVideo }
+				onMeasured={ () => setRefresh( ( n ) => n + 1 ) }
 			/>
 
 			<Preview
-				onPeaks={ setPeaksState }
+				refresh={ refresh }
 				attributes={ attributes }
 				assets={ {
 					frontendCss: data.frontendCss,

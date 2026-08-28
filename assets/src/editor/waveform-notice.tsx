@@ -1,112 +1,154 @@
 /**
- * The one place an author can find out their waveform is missing, and fix it.
+ * The one place an author finds out a waveform is missing, and fixes it.
  *
- * Before this, a track with no stored waveform looked fine in the editor — the
- * preview drew a synthetic one — and showed a flat bar on the live site. The
- * author had no way of knowing until a visitor told them.
+ * Before this, a track with none looked fine in the editor — the preview drew a
+ * synthetic one — and showed a flat bar on the live site. There was nowhere to
+ * find out and nowhere to act; the only route was the settings screen, which
+ * meant leaving the post after every upload.
  *
- * So the preview no longer lies, and this says what is wrong and offers the
- * only thing that will actually help on a host with no ffmpeg: measure it
- * here, once, in this browser, and store it for everyone.
+ * So it belongs here, next to the file that has the problem, and it handles a
+ * list as well as a single track: a playlist is where several files arrive at
+ * once, which is exactly when nobody wants to go and press a button somewhere
+ * else five times.
  */
 
 import apiFetch from '@wordpress/api-fetch';
 import { Button, Notice } from '@wordpress/components';
-import { useState } from '@wordpress/element';
-import { __, sprintf } from '@wordpress/i18n';
+import { useEffect, useState } from '@wordpress/element';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { canMeasure, measure } from '../shared/measure';
 import type { MeasureProgress } from '../shared/measure';
 
-interface Props {
-	attachmentId: number;
+/** Bars to measure. Matches the shipped default resolution. */
+const BARS = 400;
+
+interface Track {
+	id: number;
 	hasPeaks: boolean;
-	isVideo: boolean;
+	url: string;
+}
+
+interface Props {
+	/** The files to check. Empty, or all zeroes, renders nothing. */
+	attachmentIds: number[];
+	/** Videos draw no waveform, so a missing one is not a problem to report. */
+	disabled?: boolean;
+	/** Called after at least one waveform has been stored. */
 	onMeasured: () => void;
 }
 
 export function WaveformNotice( {
-	attachmentId,
-	hasPeaks,
-	isVideo,
+	attachmentIds,
+	disabled,
 	onMeasured,
 }: Props ) {
+	const [ missing, setMissing ] = useState< Track[] >( [] );
 	const [ status, setStatus ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
-	const [ done, setDone ] = useState( false );
 
-	// A video draws no waveform, so a missing one is not a problem to report.
-	// Nor is a file that is not in the library: there is nothing to store it
-	// against, and nothing to measure it from reliably.
-	if ( isVideo || hasPeaks || done || ! attachmentId ) {
+	const ids = attachmentIds.filter( Boolean );
+	const signature = ids.join( ',' );
+
+	useEffect( () => {
+		if ( disabled || '' === signature ) {
+			setMissing( [] );
+
+			return;
+		}
+
+		let cancelled = false;
+
+		apiFetch( { path: '/imagina-player/v1/peaks/status?ids=' + signature } )
+			.then( ( result ) => {
+				if ( cancelled ) {
+					return;
+				}
+
+				const { tracks } = result as { tracks: Track[] };
+
+				setMissing( tracks.filter( ( track ) => ! track.hasPeaks ) );
+			} )
+			.catch( () => {
+				// Asking failed. Saying nothing is better than crying wolf.
+				if ( ! cancelled ) {
+					setMissing( [] );
+				}
+			} );
+
+		return () => {
+			cancelled = true;
+		};
+	}, [ signature, disabled ] );
+
+	if ( disabled || 0 === missing.length ) {
 		return null;
 	}
 
 	const run = async (): Promise< void > => {
 		setBusy( true );
-		setStatus( __( 'Starting…', 'imagina-player' ) );
 
-		try {
-			const url = ( await apiFetch( {
-				path: '/wp/v2/media/' + attachmentId,
-			} ) ) as { source_url?: string };
+		let done = 0;
+		const failed: string[] = [];
 
-			if ( ! url.source_url ) {
-				throw new Error( 'no-url' );
+		for ( let i = 0; i < missing.length; i++ ) {
+			const track = missing[ i ];
+
+			try {
+				const result = await measure(
+					track.url,
+					BARS,
+					( progress: MeasureProgress ) =>
+						setStatus( label( progress, i + 1, missing.length ) )
+				);
+
+				await apiFetch( {
+					path: '/imagina-player/v1/peaks/store',
+					method: 'POST',
+					data: {
+						attachmentId: track.id,
+						peaks: result.peaks,
+						duration: result.duration,
+					},
+				} );
+
+				done++;
+			} catch {
+				// One file that will not decode should not stop the others.
+				failed.push( String( track.id ) );
 			}
+		}
 
-			const result = await measure(
-				url.source_url,
-				400,
-				( progress: MeasureProgress ) => {
-					if ( 'decoding' === progress.stage ) {
-						setStatus( __( 'Measuring…', 'imagina-player' ) );
+		setBusy( false );
+		setMissing( ( current ) =>
+			current.filter( ( track ) => failed.includes( String( track.id ) ) )
+		);
+		setStatus(
+			0 === failed.length
+				? ''
+				: __(
+						'Some files could not be measured here. They may be too long for this browser, or served from somewhere it cannot read them.',
+						'imagina-player'
+				  )
+		);
 
-						return;
-					}
-
-					setStatus(
-						progress.ratio < 0
-							? __( 'Downloading…', 'imagina-player' )
-							: sprintf(
-									/* translators: %d: percentage downloaded. */
-									__( 'Downloading… %d%%', 'imagina-player' ),
-									Math.round( progress.ratio * 100 )
-							  )
-					);
-				}
-			);
-
-			await apiFetch( {
-				path: '/imagina-player/v1/peaks/store',
-				method: 'POST',
-				data: {
-					attachmentId,
-					peaks: result.peaks,
-					duration: result.duration,
-				},
-			} );
-
-			setDone( true );
+		if ( done > 0 ) {
 			onMeasured();
-		} catch {
-			setStatus(
-				__(
-					'That could not be measured here. The file may be too long for this browser, or served from somewhere it cannot be read.',
-					'imagina-player'
-				)
-			);
-		} finally {
-			setBusy( false );
 		}
 	};
 
 	return (
 		<Notice status="warning" isDismissible={ false }>
 			<p>
-				{ __(
-					'This track has no waveform stored, so it will show a plain progress bar on your site.',
-					'imagina-player'
+				{ sprintf(
+					/* translators: %d: number of files with no waveform. */
+					_n(
+						'%d file here has no waveform, so it will show a plain progress bar on your site.',
+						'%d files here have no waveform, so they will show a plain progress bar on your site.',
+						missing.length,
+						'imagina-player'
+					),
+					missing.length
 				) }
 			</p>
 
@@ -114,15 +156,17 @@ export function WaveformNotice( {
 				<p>
 					<Button variant="primary" onClick={ run } disabled={ busy }>
 						{ busy
-							? status
-							: __(
-									'Measure it in this browser',
+							? status || __( 'Working…', 'imagina-player' )
+							: _n(
+									'Generate it now',
+									'Generate them now',
+									missing.length,
 									'imagina-player'
 							  ) }
 					</Button>{ ' ' }
 					<span className="imgp-editor__hint">
 						{ __(
-							'Downloads the file once, here, and stores the result for every visitor.',
+							'Measured here, in this browser, and stored for every visitor. Nobody browsing your site downloads anything extra.',
 							'imagina-player'
 						) }
 					</span>
@@ -140,5 +184,42 @@ export function WaveformNotice( {
 				<p className="imgp-editor__hint">{ status }</p>
 			) }
 		</Notice>
+	);
+}
+
+/**
+ * What is happening, said in the button.
+ *
+ * A ninety-megabyte download in silence reads as a hang, so the percentage is
+ * worth the noise.
+ *
+ * @param progress Where the measuring has got to.
+ * @param index    Which file, counting from one.
+ * @param total    How many there are.
+ */
+function label(
+	progress: MeasureProgress,
+	index: number,
+	total: number
+): string {
+	const what =
+		'decoding' === progress.stage
+			? __( 'measuring', 'imagina-player' )
+			: sprintf(
+					/* translators: %d: percentage downloaded. */
+					__( 'downloading %d%%', 'imagina-player' ),
+					Math.max( 0, Math.round( progress.ratio * 100 ) )
+			  );
+
+	if ( total < 2 ) {
+		return what;
+	}
+
+	return sprintf(
+		/* translators: 1: current file number, 2: total files, 3: what is happening */
+		__( '%1$d of %2$d — %3$s', 'imagina-player' ),
+		index,
+		total,
+		what
 	);
 }

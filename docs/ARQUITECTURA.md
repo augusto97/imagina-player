@@ -390,6 +390,22 @@ razonable —quien lo pide otra vez lo está pidiendo, no compitiendo con nadie.
 
 **El tope del visitante no se ha tocado.**
 
+El aviso vive en el bloque, junto al archivo que tiene el problema, y no en los
+ajustes: ir a otra pantalla después de cada subida no es una solución, es una
+tarea. Pregunta él mismo a `/peaks/status` en vez de esperar a la vista previa,
+así que aparece en cuanto eliges el archivo. Y cubre una lista además de una
+pista suelta, porque una playlist es justo donde llegan varios archivos de
+golpe.
+
+Un detalle que costó una versión: medir guarda los picos contra **el archivo**,
+no contra el bloque, así que ningún atributo cambia y la vista previa no se
+recargaba. Pulsabas el botón, el aviso desaparecía, y seguías viendo la barra
+plana — o sea, parecía que el botón no hacía nada. Por eso `Preview` acepta un
+`refresh` que va en su lista de dependencias. El primer test que escribí para
+esto buscaba la palabra `refresh` en el fichero, y la declaración de la prop ya
+la satisfacía: no detectaba nada. Ahora comprueba la lista de dependencias en
+concreto, y quitarla hace fallar el test.
+
 ## Bloques
 
 Tres: `imagina/audio-player`, `imagina/video-player` e `imagina/playlist`.
@@ -511,7 +527,7 @@ paquetes.
 ## Pruebas
 
 `./tests/run.sh` ejecuta la suite contra stubs de WordPress, sin necesidad de una
-instalación: 600 comprobaciones. Cubre sanitización, codificación de picos,
+instalación: 608 comprobaciones. Cubre sanitización, codificación de picos,
 remuestreo, firma de tokens, escapado del markup, el movimiento real de ficheros
 dentro y fuera del vault, y —con un binario ffmpeg simulado— la extracción de
 picos completa.

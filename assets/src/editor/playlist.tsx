@@ -23,7 +23,10 @@ import {
 	ToolbarButton,
 	ToolbarGroup,
 } from '@wordpress/components';
+import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+
+import { WaveformNotice } from './waveform-notice';
 
 interface Item {
 	id?: number;
@@ -80,6 +83,10 @@ function toItem( media: Selected ): Item {
 export function PlaylistEdit( { attributes, setAttributes }: EditProps ) {
 	const blockProps = useBlockProps( { className: 'imgp-playlist-editor' } );
 	const items = attributes.items ?? [];
+
+	// Only to re-key the list after measuring, so the covers and titles are
+	// re-read rather than left showing what was there before.
+	const [ refresh, setRefresh ] = useState( 0 );
 
 	const replace = ( next: Item[] ): void => setAttributes( { items: next } );
 
@@ -174,7 +181,12 @@ export function PlaylistEdit( { attributes, setAttributes }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 
-			<ol className="imgp-playlist-editor__items">
+			<WaveformNotice
+				attachmentIds={ items.map( ( item ) => item.id ?? 0 ) }
+				onMeasured={ () => setRefresh( ( n ) => n + 1 ) }
+			/>
+
+			<ol className="imgp-playlist-editor__items" key={ refresh }>
 				{ items.map( ( item, index ) => (
 					<li key={ item.id ?? index }>
 						{ item.thumbnail && (

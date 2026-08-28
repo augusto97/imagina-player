@@ -132,6 +132,28 @@ final class PeaksController {
 			)
 		);
 
+		/*
+		 * Which of these files already have a waveform.
+		 *
+		 * For the playlist block, where several files arrive at once and the
+		 * author has no way of knowing which of them the site can draw.
+		 */
+		register_rest_route(
+			self::REST_NAMESPACE,
+			'/peaks/status',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'status' ),
+				'permission_callback' => static fn(): bool => current_user_can( 'upload_files' ),
+				'args'                => array(
+					'ids' => array(
+						'type'     => 'string',
+						'required' => true,
+					),
+				),
+			)
+		);
+
 		register_rest_route(
 			self::REST_NAMESPACE,
 			'/peaks/generate',
@@ -206,6 +228,35 @@ final class PeaksController {
 	 *
 	 * @return WP_REST_Response|WP_Error
 	 */
+	/**
+	 * Report which attachments have a stored waveform.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function status( WP_REST_Request $request ): WP_REST_Response {
+		$ids = array_slice(
+			array_filter(
+				array_map( 'intval', explode( ',', (string) $request->get_param( 'ids' ) ) )
+			),
+			0,
+			200
+		);
+
+		$out = array();
+
+		foreach ( $ids as $id ) {
+			$record = $this->repository->get( 'att_' . $id );
+
+			$out[] = array(
+				'id'       => $id,
+				'hasPeaks' => is_array( $record ),
+				'url'      => (string) ( wp_get_attachment_url( $id ) ?: '' ),
+			);
+		}
+
+		return new WP_REST_Response( array( 'tracks' => $out ), 200 );
+	}
+
 	public function store_for_attachment( WP_REST_Request $request ) {
 		$attachment_id = (int) $request->get_param( 'attachmentId' );
 

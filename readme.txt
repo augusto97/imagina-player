@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.9.1
+Stable tag: 1.9.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,18 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.9.2 =
+* Fixed: after generating a waveform in the editor, the preview kept showing
+  the old plain bar — so the button looked as though it had done nothing. The
+  waveform is stored against the file rather than the block, so nothing in the
+  block changed to make the preview go and look again. It does now.
+* New: the playlist block checks all of its tracks and offers to measure the
+  ones that need it, in one go. That is the case that most needed it: several
+  files arrive at once, and nobody wants to press a button somewhere else once
+  per file.
+* Changed: the notice asks the server directly rather than waiting for a
+  preview, so it appears as soon as a file is chosen.
 
 = 1.9.1 =
 * Fixed: the block editor drew a waveform for tracks that did not have one. It

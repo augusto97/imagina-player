@@ -88,25 +88,72 @@ check(
 	! str_contains( $preview_src, 'data-peaks="${ peaks }"' ),
 	'injecting them is exactly what hid the problem'
 );
+// The dependency array specifically, not just the word somewhere in the file:
+// the prop declaration alone satisfies a plain substring check, and did.
+preg_match( '/\}, \[(.*?)\] \);/s', $preview_src, $deps );
+
 check(
-	'and it passes the waveform state up',
-	str_contains( $preview_src, 'onPeaks' )
+	'and it re-renders when a waveform is measured',
+	isset( $deps[1] ) && str_contains( $deps[1], 'refresh' ),
+	'measuring stores against the file, not the block, so nothing in the attributes changes to trigger a re-render: '
+		. trim( (string) ( $deps[1] ?? 'no dependency array found' ) )
 );
 
 $editor = (string) file_get_contents( $plugin . 'build/editor.js' );
 
 check(
 	'the editor bundle can tell the author their waveform is missing',
-	str_contains( $editor, 'no waveform stored' ),
+	str_contains( $editor, 'has no waveform' ),
 	'the notice is the only place an author would ever find out'
 );
 check(
-	'and offers to measure it there',
-	str_contains( $editor, 'Measure it in this browser' )
+	'and offers to make it there',
+	str_contains( $editor, 'Generate it now' )
 );
 check(
 	'writing to the store route',
 	str_contains( $editor, 'peaks/store' )
+);
+
+echo PHP_EOL . '# The fix is where the file is, not somewhere else' . PHP_EOL;
+
+$editor_src = (string) file_get_contents( $plugin . 'assets/src/editor/edit.tsx' );
+$list_src   = (string) file_get_contents( $plugin . 'assets/src/editor/playlist.tsx' );
+
+check(
+	'the audio and video block carries the notice',
+	str_contains( $editor_src, '<WaveformNotice' )
+);
+check(
+	'and so does the playlist, which is where several files arrive at once',
+	str_contains( $list_src, '<WaveformNotice' ),
+	'a playlist is exactly the case where nobody wants to press a button elsewhere five times'
+);
+check(
+	'the playlist checks every one of its items',
+	str_contains( $list_src, 'items.map( ( item ) => item.id ?? 0 )' )
+);
+check(
+	'the notice asks the server itself rather than waiting for a preview',
+	str_contains( (string) file_get_contents( $plugin . 'assets/src/editor/waveform-notice.tsx' ), 'peaks/status' ),
+	'so it appears the moment a file is chosen, not once a preview has come back'
+);
+
+$peaks_src = (string) file_get_contents( $plugin . 'src/Rest/PeaksController.php' );
+
+check( 'there is a route that reports several files at once', str_contains( $peaks_src, "'/peaks/status'" ) );
+check(
+	'and it needs the right to upload, since it names files',
+	str_contains( $peaks_src, "current_user_can( 'upload_files' )" )
+);
+
+$editor_bundle = (string) file_get_contents( $plugin . 'build/editor.js' );
+
+check( 'the bundle carries the status request', str_contains( $editor_bundle, 'peaks/status' ) );
+check(
+	'and measures more than one file in a run',
+	str_contains( $editor_bundle, 'Generate them now' ),
+	'a playlist of eight needs one button, not eight'
 );
 
 echo PHP_EOL . '# A host with no ffmpeg has a way out' . PHP_EOL;

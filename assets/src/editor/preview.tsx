@@ -29,11 +29,17 @@ interface PreviewProps {
 	 */
 	attributes: Record< string, unknown >;
 	assets: EditorAssets;
-	/** Told whether this track has a stored waveform, and which file it is. */
-	onPeaks?: ( state: { hasPeaks: boolean; attachmentId: number } ) => void;
+	/**
+	 * Bumped to force a re-render when nothing in the attributes changed.
+	 *
+	 * Measuring a waveform stores it against the file, not against the block,
+	 * so without this the preview kept showing the flat bar after the author
+	 * had just fixed it — which reads as the button having done nothing.
+	 */
+	refresh?: number;
 }
 
-export function Preview( { attributes, assets, onPeaks }: PreviewProps ) {
+export function Preview( { attributes, assets, refresh = 0 }: PreviewProps ) {
 	const [ doc, setDoc ] = useState( '' );
 	const [ failed, setFailed ] = useState( false );
 	const [ height, setHeight ] = useState( 150 );
@@ -57,11 +63,7 @@ export function Preview( { attributes, assets, onPeaks }: PreviewProps ) {
 						return;
 					}
 
-					const { html, hasPeaks, attachmentId } = result as {
-						html: string;
-						hasPeaks?: boolean;
-						attachmentId?: number;
-					};
+					const { html } = result as { html: string };
 
 					/*
 					 * No synthetic waveform here any more. It used to stand in
@@ -72,11 +74,6 @@ export function Preview( { attributes, assets, onPeaks }: PreviewProps ) {
 					 * is worse than one that looks plain.
 					 */
 					const markup = html;
-
-					onPeaks?.( {
-						hasPeaks: true === hasPeaks,
-						attachmentId: Number( attachmentId ?? 0 ),
-					} );
 
 					setFailed( false );
 					setDoc(
@@ -101,7 +98,13 @@ export function Preview( { attributes, assets, onPeaks }: PreviewProps ) {
 			window.clearTimeout( timer );
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ signature, assets.frontendCss, assets.frontendJs, assets.frameCss ] );
+	}, [
+		signature,
+		refresh,
+		assets.frontendCss,
+		assets.frontendJs,
+		assets.frameCss,
+	] );
 
 	const measure = (): void => {
 		const frameDoc = frame.current?.contentDocument;
