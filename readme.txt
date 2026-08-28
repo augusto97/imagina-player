@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.14.0
+Stable tag: 1.15.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,25 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.15.0 =
+* New: a video that follows the reader. Scroll away from one that is playing
+  and it detaches into a small card in a corner, keeping its shape, with the
+  controls on it and a button to send it away — which stays away. The switch
+  for this existed before but did the audio version of it: a full-width bar
+  across the foot of the window, which for a video is a whole picture lying
+  across the bottom of the screen.
+* Fixed: a player already off screen when playback started was never
+  reconsidered, because an observer reports changes and nothing had changed.
+  An autoplaying video below the fold, or a playlist carrying on to the next
+  track, would play to nobody.
+* New: stills on the seek bar. Point at the bar and the moment under the
+  pointer appears above it. Give the block a WebVTT storyboard — what most
+  video tools export — and nothing is downloaded until somebody actually drags
+  the bar, so a reader who never scrubs pays nothing for it.
+* New: the compressed size of the bundle and the stylesheet are now checked on
+  every test run, alongside the source sizes. Those are the numbers a visitor
+  pays and the ones the description claims.
 
 = 1.14.0 =
 * Fixed: autoplay, start muted and loop did nothing on a YouTube or Vimeo

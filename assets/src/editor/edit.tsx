@@ -1213,6 +1213,70 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							/>
 						) }
 
+						<BaseControl
+							__nextHasNoMarginBottom
+							id="imgp-storyboard"
+							label={ __( 'Scrub previews', 'imagina-player' ) }
+							help={ __(
+								'A WebVTT storyboard, which most video tools can export. It shows a still where the pointer is on the seek bar. Nothing is downloaded until a visitor actually drags it.',
+								'imagina-player'
+							) }
+						>
+							<div className="imgp-editor__media-picker">
+								<MediaUploadCheck>
+									<MediaUpload
+										allowedTypes={ [ 'text' ] }
+										value={ Number(
+											attributes.storyboardId ?? 0
+										) }
+										onSelect={ ( media: {
+											id?: number;
+											url?: string;
+										} ) =>
+											setAttributes( {
+												storyboard: media.url ?? '',
+												storyboardId: media.id ?? 0,
+											} )
+										}
+										render={ ( {
+											open,
+										}: {
+											open: () => void;
+										} ) => (
+											<Button
+												variant="secondary"
+												onClick={ open }
+											>
+												{ attributes.storyboard
+													? __(
+															'Replace',
+															'imagina-player'
+													  )
+													: __(
+															'Choose a storyboard file',
+															'imagina-player'
+													  ) }
+											</Button>
+										) }
+									/>
+								</MediaUploadCheck>
+								{ Boolean( attributes.storyboard ) && (
+									<Button
+										variant="tertiary"
+										isDestructive
+										onClick={ () =>
+											setAttributes( {
+												storyboard: '',
+												storyboardId: 0,
+											} )
+										}
+									>
+										{ __( 'Remove', 'imagina-player' ) }
+									</Button>
+								) }
+							</div>
+						</BaseControl>
+
 						<TextControl
 							__nextHasNoMarginBottom
 							type="number"

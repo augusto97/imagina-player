@@ -48,7 +48,16 @@ $budgets = array(
 	'the HLS glue'    => array( $glue, 6.0 ),
 	'the layer chunk' => array( $layers, 8.0 ),
 	'the playlist'    => array( $playlist, 6.0 ),
-	'the stylesheet'  => array( $css, 24.0 ),
+	/*
+	 * Raised from 24.0 in 1.15.0, deliberately. The stylesheet gained a block
+	 * that restates, for the elements this player owns, the handful of
+	 * properties a theme has any business setting on a button or a frame of its
+	 * own — a page of near-identical `!important` declarations that exists
+	 * because a theme was painting the video. It is about two kilobytes of
+	 * source and almost nothing on the wire, which is why the compressed budget
+	 * below is the one that matters.
+	 */
+	'the stylesheet'  => array( $css, 28.0 ),
 );
 
 foreach ( $budgets as $label => $budget ) {
@@ -63,6 +72,28 @@ foreach ( $budgets as $label => $budget ) {
 
 	check(
 		sprintf( '%s is within its budget (%.1f KB of %.1f KB)', $label, $size, $limit ),
+		$size <= $limit
+	);
+}
+
+/*
+ * And the numbers a visitor actually pays. Every server sends these compressed,
+ * so the source size above is a proxy — a useful one, because it catches code
+ * being added, but a misleading one for anything repetitive. These are the
+ * figures the readme claims, pinned so the claim cannot quietly stop being
+ * true.
+ */
+$compressed = array(
+	'the core bundle' => array( $core, 8.0 ),
+	'the stylesheet'  => array( $css, 6.5 ),
+);
+
+foreach ( $compressed as $label => $budget ) {
+	[ $file, $limit ] = $budget;
+	$size = round( strlen( (string) gzencode( (string) file_get_contents( $file ), 9 ) ) / 1024, 1 );
+
+	check(
+		sprintf( '%s is within its budget compressed (%.1f KB of %.1f KB)', $label, $size, $limit ),
 		$size <= $limit
 	);
 }

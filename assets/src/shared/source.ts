@@ -206,14 +206,12 @@ export function placement( raw: string ): Placement {
  * waveform. Switches that do nothing are worse than missing ones: they are a
  * promise the player does not keep.
  *
- * `sticky` is the worst of them, because it does something rather than nothing:
- * it pins the player to the bottom of the window as a full-width bar, which is
- * a mini audio player and, applied to a video, a whole sixteen-by-nine picture
- * lying across the foot of the screen. A floating video that follows the reader
- * is a real feature and a different one; offering this switch instead is not a
- * cheaper version of it.
+ * `sticky` used to be listed here, because the audio version of it — a bar
+ * across the foot of the window — laid a whole sixteen-by-nine picture across
+ * the bottom of the screen. It is offered again now that a video detaches as a
+ * card in a corner, keeping its shape, with a way to send it away.
  */
-const AUDIO_ONLY = [ 'show_thumbnail', 'show_artist', 'sticky' ];
+const AUDIO_ONLY = [ 'show_thumbnail', 'show_artist' ];
 
 const AUDIO_ONLY_COLOURS = [ 'waveColor', 'waveProgress', 'metaColor' ];
 

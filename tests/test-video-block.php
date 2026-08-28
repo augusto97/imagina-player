@@ -194,13 +194,6 @@ if ( '' === $node ) {
 			check( 'nor a played-portion colour', ! in_array( 'waveProgress', $video['colours'], true ) );
 
 			// And nothing was taken away that a video does use.
-			/*
-			 * The one that did something rather than nothing: it pins the
-			 * player to the foot of the window as a full-width bar, which for
-			 * a video is a whole picture lying across the bottom of the screen.
-			 */
-			check( 'nor the stick-to-the-bottom switch, which is an audio player', ! in_array( 'sticky', $video['controls'], true ) );
-
 			check( 'a video block keeps the volume switch', in_array( 'show_volume', $video['controls'], true ) );
 			check( 'and the times', in_array( 'show_time', $video['controls'], true ) );
 			check( 'and the accent colour', in_array( 'accent', $video['colours'], true ) );

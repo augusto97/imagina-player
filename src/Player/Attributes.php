@@ -164,6 +164,21 @@ final class Attributes {
 				'type'    => 'string',
 				'default' => self::INHERIT,
 			),
+			/*
+			 * A WebVTT storyboard: cues whose payload is a sprite sheet with a
+			 * `#xywh=` fragment naming the tile. Every tool that makes these
+			 * produces that shape, and one image holds a hundred stills, so the
+			 * whole feature costs one request — and only for a reader who
+			 * actually drags the bar.
+			 */
+			'storyboard'         => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'storyboardId'       => array(
+				'type'    => 'int',
+				'default' => 0,
+			),
 
 			// Video. Ignored for audio, which is why they carry empty defaults
 			// rather than being a separate schema: one block, one shape, and a

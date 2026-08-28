@@ -97,6 +97,7 @@ export class VideoChrome {
 		this.bindGestures();
 		this.bindCaptions();
 		this.bindChapters();
+		this.bindStoryboard();
 		this.hardenContextMenu();
 
 		if ( config.hls ) {
@@ -712,6 +713,97 @@ export class VideoChrome {
 	 * shows a viewer the shape of what they are about to watch without opening
 	 * anything.
 	 */
+	/**
+	 * The still that follows the pointer along the scrub bar.
+	 *
+	 * A bar without one is a guess: a reader looking for the moment the slide
+	 * changes has to drop the playhead somewhere and correct, twice, with the
+	 * sound jumping each time.
+	 *
+	 * Nothing is fetched until a pointer is actually on the bar — a reader who
+	 * never scrubs never downloads the sprite, which on a long video is most of
+	 * what this costs — and the parser is in its own chunk for the same reason.
+	 */
+	private bindStoryboard(): void {
+		const src = this.config.storyboard;
+		const seek = this.root.querySelector< HTMLElement >( '.imgp__seek' );
+
+		if ( ! src || ! seek ) {
+			return;
+		}
+
+		const preview = document.createElement( 'div' );
+
+		preview.className = 'imgp__preview';
+		preview.hidden = true;
+		seek.appendChild( preview );
+
+		let board: import('./storyboard').Storyboard | null = null;
+		let asked = false;
+		let paint: typeof import('./storyboard').paint | null = null;
+
+		const move = ( event: PointerEvent ): void => {
+			if ( ! asked ) {
+				asked = true;
+
+				void import(
+					/* webpackChunkName: "imagina-storyboard" */ './storyboard'
+				)
+					.then( async ( module ) => {
+						paint = module.paint;
+						board = await module.load( src );
+					} )
+					.catch( () => {
+						// No storyboard, no preview. The bar still works.
+					} );
+			}
+
+			const duration = this.media.duration;
+
+			if (
+				! board ||
+				! paint ||
+				! Number.isFinite( duration ) ||
+				duration <= 0
+			) {
+				return;
+			}
+
+			const box = seek.getBoundingClientRect();
+			const ratio = Math.min(
+				1,
+				Math.max( 0, ( event.clientX - box.left ) / box.width )
+			);
+			const tile = board.at( ratio * duration );
+
+			if ( ! tile ) {
+				preview.hidden = true;
+
+				return;
+			}
+
+			paint( preview, tile );
+			preview.hidden = false;
+
+			// Held inside the bar, so a still near either end does not hang off
+			// the side of the picture.
+			const half = tile.w / 2;
+			const left = Math.min(
+				box.width - half,
+				Math.max( half, ratio * box.width )
+			);
+
+			preview.style.left = `${ left }px`;
+		};
+
+		const leave = (): void => {
+			preview.hidden = true;
+		};
+
+		this.on( seek, 'pointermove', move as EventListener );
+		this.on( seek, 'pointerleave', leave );
+	}
+
 	private bindChapters(): void {
 		const chapters = this.config.chapters ?? [];
 

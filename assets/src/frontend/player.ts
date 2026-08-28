@@ -70,6 +70,9 @@ export class Player {
 
 	private stickyObserver: IntersectionObserver | null = null;
 
+	/** Set once the reader has sent a floating player away. */
+	private stickyDismissed = false;
+
 	private scrubbing = false;
 
 	private speedIndex = 0;
@@ -549,6 +552,20 @@ export class Player {
 			return;
 		}
 
+		const unstick =
+			this.root.querySelector< HTMLButtonElement >( '.imgp__unstick' );
+
+		unstick?.addEventListener( 'click', () => {
+			/*
+			 * For the rest of this page view. Sending it back only for it to
+			 * return on the next scroll is not dismissing it, and a floating
+			 * player that cannot be got rid of is the thing people actually
+			 * dislike about floating players.
+			 */
+			this.stickyDismissed = true;
+			this.setStuck( false );
+		} );
+
 		this.stickyObserver = new IntersectionObserver(
 			( entries ) => {
 				const entry = entries[ 0 ];
@@ -557,17 +574,68 @@ export class Player {
 					return;
 				}
 
-				// Only detach while something is actually playing — a paused player
-				// scrolling by should not pin itself to the viewport.
-				const shouldStick =
-					! entry.isIntersecting && ! this.media.paused;
-
-				this.setStuck( shouldStick );
+				void entry;
+				this.reviewSticky();
 			},
 			{ threshold: 0 }
 		);
 
 		this.stickyObserver.observe( this.root );
+
+		/*
+		 * Playing and pausing have to be asked as well. An observer only fires
+		 * when the intersection *changes*, so a player that is already out of
+		 * view when playback starts — the listener carried on from a playlist,
+		 * or a keyboard shortcut, or an autoplaying video scrolled past before
+		 * it began — would never be reconsidered, and would sit off-screen
+		 * playing to nobody.
+		 */
+		const review = (): void => this.reviewSticky();
+
+		this.media.addEventListener( 'play', review );
+		this.media.addEventListener( 'pause', review );
+	}
+
+	/**
+	 * Decide whether the player should be following the reader.
+	 *
+	 * Only while something is actually playing: a paused player pinning itself
+	 * to the corner because somebody scrolled past it is an advert.
+	 */
+	private reviewSticky(): void {
+		if ( this.stickyDismissed || this.media.paused ) {
+			this.setStuck( false );
+
+			return;
+		}
+
+		/*
+		 * Measured here rather than remembered from the observer. The observer
+		 * reports *changes*, so a player that was already off screen when the
+		 * page loaded has never been reported at all, and a remembered "it is
+		 * visible" would be wrong from the start — an autoplaying video below
+		 * the fold, or a listener carrying on from a playlist, would play to
+		 * nobody. Asking is one layout read on an event that is rare.
+		 */
+		const box = this.stuckBox();
+
+		this.setStuck(
+			box.bottom <= 0 ||
+				box.top >=
+					( window.innerHeight ||
+						document.documentElement.clientHeight )
+		);
+	}
+
+	/**
+	 * Where the player sits, or where it would sit if it were not floating.
+	 *
+	 * Once it has detached its own rectangle is the floating card, which is
+	 * always on screen — so asking it whether it is visible would always say
+	 * yes and it would snap back the moment it left.
+	 */
+	private stuckBox(): DOMRect {
+		return ( this.stickyPlaceholder ?? this.root ).getBoundingClientRect();
 	}
 
 	private setStuck( stuck: boolean ): void {
@@ -576,6 +644,9 @@ export class Player {
 		}
 
 		if ( stuck ) {
+			// Measured before the class lands, because the class is what makes
+			// the player small: reading it afterwards holds open the gap of the
+			// floating card rather than of the player that left.
 			const height = this.root.offsetHeight;
 
 			this.stickyPlaceholder = document.createElement( 'div' );

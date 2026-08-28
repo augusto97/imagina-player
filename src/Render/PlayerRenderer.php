@@ -128,6 +128,8 @@ final class PlayerRenderer {
 				// streaming, and loading 400 KB of hls.js to find out would be
 				// the whole cost of the feature paid on every video.
 				'hls'       => $track->is_hls(),
+				// Its absence is what keeps the storyboard chunk unloaded.
+				'storyboard' => (string) $atts['storyboard'],
 				// Chapter starts, so the module can draw markers on the scrub bar
 				// without parsing the VTT it just handed the browser.
 				'chapters'  => array_map(
@@ -195,6 +197,10 @@ final class PlayerRenderer {
 			'meta'     => $this->part_meta( $track, $config ),
 			'controls' => $this->part_controls( $track, $config ),
 			'logo'     => $this->part_logo(),
+			// Only when the player may detach. A floating player a reader
+			// cannot dismiss is the thing everybody hates about floating
+			// players; without this the only way out is to scroll back.
+			'unstick'  => $config['sticky'] ? $this->part_unstick() : '',
 		);
 
 		$parts['layers'] = $this->part_layers( $track, $config, $atts, $id );
@@ -273,6 +279,8 @@ final class PlayerRenderer {
 			if ( 'theater' !== $layout ) {
 				echo $parts['layers']; // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
 			}
+
+			echo $parts['unstick']; // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
 			?>
 		</div>
 		<?php
@@ -754,6 +762,21 @@ final class PlayerRenderer {
 		<?php
 
 		return (string) ob_get_clean();
+	}
+
+	/**
+	 * The way out of a player that has detached and started following.
+	 *
+	 * Hidden until it does. A floating player with no way to dismiss it is the
+	 * single most disliked thing about floating players, and scrolling back to
+	 * where it came from is not an answer on a long page.
+	 */
+	private function part_unstick(): string {
+		return sprintf(
+			'<button type="button" class="imgp__unstick" aria-label="%s">%s</button>',
+			esc_attr__( 'Stop following', 'imagina-player' ),
+			Icons::get( 'close' )
+		);
 	}
 
 	private function part_layers( Track $track, array $config, array $atts, string $id ): string {

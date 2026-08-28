@@ -707,6 +707,115 @@
 	right: 1rem;
 }
 
+/* --- A video that follows -----------------------------------------------
+   The audio version of this is a bar across the foot of the window, which is
+   the right shape for a row of controls and the wrong one for a picture: it
+   would lay a whole sixteen-by-nine across the bottom of the screen. A video
+   detaches as a small card in a corner instead, keeping its own shape, with
+   the controls it already had drawn over it. */
+
+.imgp--video.is-stuck {
+	inset: auto 1rem 1rem auto;
+	width: min(22rem, 46vw);
+	padding: 0;
+	overflow: hidden;
+	border-radius: 0.7rem;
+	background: #000;
+	box-shadow: 0 12px 34px rgb(0 0 0 / 38%);
+}
+
+.imgp--video.is-stuck.imgp--stick-bottom-left {
+	inset: auto auto 1rem 1rem;
+}
+
+.imgp--video.is-stuck.imgp--stick-bottom-right,
+.imgp--video.is-stuck.imgp--stick-bottom {
+	inset: auto 1rem 1rem auto;
+}
+
+/* At a third of the width the chrome has to be the controls and nothing else:
+   the title is two words of a sentence, a volume slider is a few pixels wide
+   and unusable, and a play button sized for a full-width picture takes a
+   quarter of the card. */
+.imgp--video.is-stuck .imgp__meta,
+.imgp--video.is-stuck .imgp__volume-slider,
+.imgp--video.is-stuck .imgp__skip,
+.imgp--video.is-stuck .imgp__speed {
+	display: none;
+}
+
+.imgp--video.is-stuck .imgp__chrome {
+	padding: 1.2rem 0.45rem 0.4rem;
+}
+
+/* The card is about twenty-two rem wide, so the narrow-container rules apply
+   and put the controls on a line of their own — which is right for a player
+   that is genuinely narrow and wrong for one that is small on purpose. Here
+   everything belongs on one row, because there is only one row. */
+.imgp--video.is-stuck .imgp__bar {
+	flex-wrap: nowrap;
+	gap: 0.35rem;
+}
+
+.imgp--video.is-stuck .imgp__controls {
+	flex: 0 0 auto;
+	margin-left: auto;
+}
+
+.imgp--video.is-stuck .imgp__play {
+	width: 2.1rem !important;
+	height: 2.1rem !important;
+}
+
+.imgp--video.is-stuck .imgp__play .imgp__icon {
+	width: 1rem;
+	height: 1rem;
+}
+
+.imgp--video.is-stuck .imgp__time {
+	font-size: 0.7rem;
+}
+
+.imgp--video.is-stuck .imgp__bigplay::before {
+	width: 3rem;
+	height: 3rem;
+}
+
+/* --- The way out of a player that is following --------------------------
+   Rendered by the server whenever a player may detach, and shown only once it
+   has. */
+
+.imgp__unstick {
+	display: none;
+}
+
+.imgp.is-stuck .imgp__unstick {
+	position: absolute;
+	top: 0.35rem;
+	right: 0.35rem;
+	z-index: 12;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.75rem;
+	height: 1.75rem;
+	border-radius: 999px;
+	background: rgb(0 0 0 / 55%);
+	color: #fff;
+	cursor: pointer;
+}
+
+.imgp.is-stuck .imgp__unstick:hover,
+.imgp.is-stuck .imgp__unstick:focus-visible {
+	background: rgb(0 0 0 / 78%);
+}
+
+.imgp.is-stuck .imgp__unstick svg {
+	width: 0.85rem;
+	height: 0.85rem;
+	fill: currentcolor;
+}
+
 /* --- Video: the theater layout ------------------------------------------
    Controls sit *on* the picture rather than beside it, which is the whole
    difference between the audio shell and this one. Everything is stacked
@@ -1745,8 +1854,16 @@
 	padding: 0.25rem !important;
 }
 
-.imgp .imgp__layer-close {
+.imgp .imgp__layer-close,
+.imgp .imgp__unstick {
 	border-radius: 999px !important;
+}
+
+/* Its own colour, restated: the blanket reset above makes every button
+   transparent, and this one is a control over a picture. */
+.imgp .imgp__unstick {
+	background-color: rgb(0 0 0 / 55%) !important;
+	color: #fff !important;
 }
 
 .imgp .imgp__play {
@@ -1859,4 +1976,26 @@
 
 .imgp .imgp__wave {
 	background-color: transparent !important;
+}
+
+/* --- The still that follows the pointer on the seek bar -----------------
+   Built by the browser only when a storyboard is configured and a pointer
+   has actually touched the bar, so a page pays nothing for a feature
+   nobody uses. */
+
+.imgp__preview {
+	position: absolute;
+	bottom: calc(100% + 0.5rem);
+	transform: translateX(-50%);
+	z-index: 9;
+	border-radius: 0.3rem;
+	background-repeat: no-repeat;
+	box-shadow: 0 6px 18px rgb(0 0 0 / 45%);
+	outline: 2px solid rgb(255 255 255 / 85%);
+	outline-offset: -2px;
+	pointer-events: none;
+}
+
+.imgp__preview[hidden] {
+	display: none;
 }

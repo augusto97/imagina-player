@@ -83,6 +83,8 @@ export interface VideoConfig {
 	chapters: Array< { start: number; title: string } >;
 	/** The source is an HLS manifest, so adaptive streaming may be needed. */
 	hls: boolean;
+	/** A WebVTT storyboard, for the still that follows the pointer on the bar. */
+	storyboard?: string;
 	/** `youtube`, `vimeo`, or absent when the file is served from here. */
 	provider?: string;
 	/** The provider's identifier for the video. */
