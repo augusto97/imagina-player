@@ -1,28 +1,33 @@
-# Imagina Player — 1.12.0
+# Imagina Player — 1.13.0
 
-Download **imagina-player-1.12.0.zip** and install it in WordPress under
+Download **imagina-player-1.13.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  c180f95b9e17e3fa95426a1b4ed8953e605bffc205d1222db394137102d52584
+    SHA-256  a9b9f06573eedded35ddde81a937d19e10e73be47d10b8108af60c0944d28a84
 
-## What changed in 1.12.0
+## What changed in 1.13.0
 
-A call to action beside an audio player rendered as a full-width sheet of brand
-colour lying across the waveform and the title, with a button in almost exactly
-the colour of the sheet behind it. Three faults behind that:
+**YouTube and Vimeo.** Pasting a YouTube address into the Video block used to
+produce an audio player that showed nothing, played nothing and had no
+thumbnail: WordPress reports no file type for a web page, so the track was not
+a video and the renderer wrapped an `<audio>` element around a link to
+youtube.com. Provider support had never been written.
 
-* The layers sat inside a wrapper positioned to cover a video's picture. Audio
-  has no picture, so it covered the player. On audio the wrapper is now in the
-  flow, and the panel sits under the controls.
-* The panel was 92% of the accent and the button 100% of it — 1.18:1. The panel
-  is now a dark surface with a hairline of the accent down its edge, laid out as
-  a strip: the offer on the left, the button on the right. Over a video it stays
-  a sheet over the picture, with the copy held to a readable column.
-* Button labels were always white. On a bright accent white reads at 2.2:1, so
-  the label colour is now worked out from the accent's luminance.
+Now such an address is recognised, laid out as video with the provider's own
+still image, and driven through the provider's API — so the picture carries
+this player's controls, colours and calls to action rather than theirs. A call
+to action at 60%, chapters, the keyboard and the scrub bar all work on a
+YouTube video.
 
-The layout is measured in a real browser on every test run — that the panel sits
-beside the player rather than on it, stays inside its width, is a strip rather
-than a slab, and that the button can be told apart from its background.
+Nothing is requested from YouTube or Vimeo until somebody presses play. The
+page holds their still image until then, so a video nobody watches costs a
+visitor no third-party request and no cookie. YouTube loads from its no-cookie
+domain by default; there is a setting for it under Video.
 
-739 checks green.
+The block now says what it made of the address before you save, including when
+it cannot play it at all — which used to be silent.
+
+A video hosted by them is not a file on your site, so the download protection
+does not apply to it, and their subtitles are drawn inside their frame.
+
+796 checks green.
