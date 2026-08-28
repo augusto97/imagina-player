@@ -5,28 +5,55 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.8.0.zip`.
+1. Descarga `imagina-player-1.9.0.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Imagina Player** (menú lateral), o desde el enlace
    **Ajustes** de la fila del plugin en **Plugins → Plugins instalados**.
 
+## Los bloques
+
+En el insertador de Gutenberg, buscando «imagina»:
+
+| Bloque | Para qué |
+| --- | --- |
+| **Imagina Audio Player** | un audio, con onda |
+| **Imagina Video Player** | un vídeo o un stream HLS |
+| **Imagina Playlist** | varias pistas, en lista o cuadrícula |
+
 ## Versión actual
 
 | | |
 | --- | --- |
-| Versión | `1.8.0` |
-| Fichero | `imagina-player-1.8.0.zip` |
-| Tamaño | 316 KB |
-| SHA-256 | `19b9ca7d6de150740b3e1b9b58a65cf2f665b5f2199a20f2f13c4179fbf6d879` |
+| Versión | `1.9.0` |
+| Fichero | `imagina-player-1.9.0.zip` |
+| Tamaño | 320 KB |
+| SHA-256 | `11ea69f5ceb2eb3f9f199450157d04e03cb92151710269bcefd6c3712768ecb5` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.8.0.zip
+sha256sum imagina-player-1.9.0.zip
 ```
+
+## Novedades en 1.9.0
+
+- **Nuevo: bloque de vídeo.** El reproductor maneja vídeo desde la 1.6.0, pero
+  el único bloque se llamaba «Imagina Audio Player» y decía «sube un archivo de
+  audio», así que quien buscaba vídeo en el insertador no encontraba nada — y
+  concluía, con razón, que no había nada que encontrar. Ahora hay un bloque
+  **Imagina Video Player**, con su icono y sus palabras.
+- **Nuevo: sección Vídeo en los ajustes.** Forma, comportamiento del póster,
+  cuánto tardan en ocultarse los controles, qué botones aparecen, cómo se ven
+  los subtítulos, y si se quita el botón de descarga del navegador. Todo eso
+  estaba cableado en el código.
+- **Corregido:** los paneles de vídeo del bloque solo aparecían si el nombre del
+  archivo parecía de vídeo. El bloque de vídeo es vídeo se llame como se llame
+  el archivo.
+- **Corregido:** un bloque que no fija forma ahora sigue el ajuste del sitio en
+  vez de asumir panorámico.
 
 ## Novedades en 1.8.0
 
