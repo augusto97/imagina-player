@@ -14,6 +14,7 @@ declare( strict_types = 1 );
 
 namespace ImaginaPlayer\Rest;
 
+use ImaginaPlayer\Media\Track;
 use ImaginaPlayer\Peaks\PeaksGenerator;
 use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Player\Attributes;
@@ -209,7 +210,10 @@ final class SettingsController {
 		// see exactly what it will publish; the settings screen sends a candidate
 		// preset that is not saved anywhere yet.
 		if ( is_array( $attributes ) ) {
-			return $this->preview_response( $attributes, null );
+			// A block previewing a real file gets that file's real waveform. It
+			// used to get the demo one, which told the author their waveform was
+			// working when it was not — they only found out on the front end.
+			return $this->preview_response( $attributes, null, false );
 		}
 
 		return $this->preview_response(
@@ -229,9 +233,10 @@ final class SettingsController {
 	 * @param array<string, mixed>      $attributes Player attributes.
 	 * @param array<string, mixed>|null $preset     Preset to force, or null to resolve normally.
 	 */
-	private function preview_response( array $attributes, ?array $preset ): WP_REST_Response {
+	private function preview_response( array $attributes, ?array $preset, bool $demo = true ): WP_REST_Response {
 		// A duration the player can lay a scrubber over. Without it the preview
-		// shows `--:--` and the elapsed badge has nowhere to sit.
+		// shows `--:--` and the elapsed badge has nowhere to sit. Only for the
+		// settings screen, whose "track" is a file that does not exist.
 		$fake_duration = static function ( array $config ): array {
 			if ( empty( $config['duration'] ) ) {
 				$config['duration'] = 214.0;
@@ -247,7 +252,9 @@ final class SettingsController {
 			add_filter( 'imagina_player_resolved_config', $override, 99 );
 		}
 
-		add_filter( 'imagina_player_client_config', $fake_duration, 99 );
+		if ( $demo ) {
+			add_filter( 'imagina_player_client_config', $fake_duration, 99 );
+		}
 
 		$renderer = new PlayerRenderer();
 		$html     = $renderer->render( $attributes );
@@ -256,12 +263,33 @@ final class SettingsController {
 			remove_filter( 'imagina_player_resolved_config', $override, 99 );
 		}
 
-		remove_filter( 'imagina_player_client_config', $fake_duration, 99 );
+		if ( $demo ) {
+			remove_filter( 'imagina_player_client_config', $fake_duration, 99 );
+
+			return new WP_REST_Response(
+				array(
+					'html'  => $html,
+					'peaks' => self::demo_peaks(),
+					'real'  => false,
+				),
+				200
+			);
+		}
+
+		// The real thing, or nothing. An empty string is what the editor needs
+		// in order to say "this track has no waveform yet" rather than draw one
+		// that does not exist.
+		$track  = Track::from_attributes( Attributes::sanitize( $attributes ) );
+		$key    = $track->peaks_key();
+		$record = '' === $key ? null : ( new PeaksRepository() )->get( $key );
 
 		return new WP_REST_Response(
 			array(
-				'html'  => $html,
-				'peaks' => self::demo_peaks(),
+				'html'         => $html,
+				'peaks'        => is_array( $record ) ? (string) $record['peaks'] : '',
+				'real'         => true,
+				'hasPeaks'     => is_array( $record ),
+				'attachmentId' => $track->attachment_id,
 			),
 			200
 		);

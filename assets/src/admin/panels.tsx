@@ -1,10 +1,12 @@
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
+import { canMeasure, measure } from '../shared/measure';
 import {
 	generateWaveform,
 	listPendingWaveforms,
 	runProtectionSelfCheck,
+	storeWaveform,
 } from './api';
 import type { SelfCheckResult } from './api';
 import {
@@ -73,6 +75,58 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 	 * Sequential, not parallel: each call runs ffmpeg over a whole file, and
 	 * twenty at once is how a shared host falls over.
 	 */
+	/**
+	 * Measure one file in this browser and store the result.
+	 *
+	 * Only reached when the server has no ffmpeg. It downloads the whole file,
+	 * which is why progress is reported down to the percent: a ninety-megabyte
+	 * recording takes a while, and silence reads as a hang.
+	 *
+	 * @param item       The pending file.
+	 * @param item.id    Its attachment id.
+	 * @param item.title Its name, for the progress line.
+	 * @param item.url   Where to fetch it from.
+	 * @param index      Its place in the run.
+	 * @param total      How many there are.
+	 */
+	const measureHere = async (
+		item: { id: number; title: string; url: string },
+		index: number,
+		total: number
+	): Promise< void > => {
+		if ( ! item.url ) {
+			throw new Error( 'no-url' );
+		}
+
+		const result = await measure(
+			item.url,
+			peaks.resolution,
+			( progress ) => {
+				setStatus(
+					sprintf(
+						/* translators: 1: current file number, 2: total, 3: file name, 4: what is happening */
+						__( '%1$d of %2$d — %3$s — %4$s', 'imagina-player' ),
+						index,
+						total,
+						item.title,
+						'decoding' === progress.stage
+							? __( 'measuring', 'imagina-player' )
+							: sprintf(
+									/* translators: %d: percentage downloaded. */
+									__( 'downloading %d%%', 'imagina-player' ),
+									Math.max(
+										0,
+										Math.round( progress.ratio * 100 )
+									)
+							  )
+					)
+				);
+			}
+		);
+
+		await storeWaveform( item.id, result.peaks, result.duration );
+	};
+
 	const generateAll = async (): Promise< void > => {
 		setBusy( true );
 		setStatus(
@@ -104,10 +158,19 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 				);
 
 				try {
-					await generateWaveform( pending[ i ].id );
+					if ( settings.system.ffmpeg ) {
+						await generateWaveform( pending[ i ].id );
+					} else {
+						await measureHere(
+							pending[ i ],
+							i + 1,
+							pending.length
+						);
+					}
+
 					done++;
 				} catch {
-					// A file ffmpeg cannot read should not stop the rest.
+					// One unreadable file should not stop the rest.
 				}
 			}
 
@@ -156,7 +219,7 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 							{ ffmpegProblem( settings.system.ffmpegState ) }
 						</strong>{ ' ' }
 						{ __(
-							'Nothing is broken: files small enough to analyse in the visitor’s browser still get a waveform, and longer recordings show a plain progress bar instead. Server-side generation only removes that limit.',
+							'Short files still get a waveform from the visitor’s own browser. Long ones do not — nobody browsing a page should download ninety megabytes to look at a picture — so without ffmpeg they show a plain progress bar. You can measure them here instead: “Generate missing waveforms” below downloads each file once, in this browser, and stores the result for everyone.',
 							'imagina-player'
 						) }
 					</Notice>
@@ -253,7 +316,10 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 					<button
 						type="button"
 						className="imgpa-btn"
-						disabled={ busy || ! settings.system.ffmpeg }
+						disabled={
+							busy ||
+							( ! settings.system.ffmpeg && ! canMeasure() )
+						}
 						onClick={ generateAll }
 					>
 						{ busy

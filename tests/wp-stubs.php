@@ -24,6 +24,15 @@ function do_action( $hook, ...$args ) {
 }
 function add_filter( $hook, $callback, $priority = 10, $args = 1 ) { $GLOBALS['stub_filters'][ $hook ][ $priority ][] = $callback; }
 function remove_all_filters( $hook ) { unset( $GLOBALS['stub_filters'][ $hook ] ); }
+function remove_filter( $hook, $callback, $priority = 10 ) {
+	foreach ( $GLOBALS['stub_filters'][ $hook ][ $priority ] ?? array() as $index => $registered ) {
+		if ( $registered === $callback ) {
+			unset( $GLOBALS['stub_filters'][ $hook ][ $priority ][ $index ] );
+			return true;
+		}
+	}
+	return false;
+}
 /**
  * Real dispatch, not a pass-through: the plugin's own filters are part of what
  * the tests are checking.

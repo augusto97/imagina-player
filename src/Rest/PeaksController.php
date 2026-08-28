@@ -97,6 +97,41 @@ final class PeaksController {
 			)
 		);
 
+		/*
+		 * Storing peaks measured in the *admin's* browser.
+		 *
+		 * On a host with no ffmpeg, a long recording never gets a waveform: the
+		 * visitor-side fallback refuses anything over the size cap, and rightly
+		 * so — nobody should download 90 MB to look at a picture. But the person
+		 * editing the post can afford it once, and then nobody else has to.
+		 */
+		register_rest_route(
+			self::REST_NAMESPACE,
+			'/peaks/store',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'store_for_attachment' ),
+				'permission_callback' => static function ( WP_REST_Request $request ): bool {
+					return current_user_can( 'edit_post', (int) $request->get_param( 'attachmentId' ) );
+				},
+				'args'                => array(
+					'attachmentId' => array(
+						'type'     => 'integer',
+						'required' => true,
+					),
+					'peaks'        => array(
+						'type'     => 'array',
+						'required' => true,
+						'items'    => array( 'type' => 'number' ),
+					),
+					'duration'     => array(
+						'type'    => 'number',
+						'default' => 0,
+					),
+				),
+			)
+		);
+
 		register_rest_route(
 			self::REST_NAMESPACE,
 			'/peaks/generate',
@@ -161,6 +196,61 @@ final class PeaksController {
 	 * a user capability — the whole point is that anonymous visitors warm the
 	 * cache on hosts without ffmpeg.
 	 */
+	/**
+	 * Store peaks an editor measured in their own browser.
+	 *
+	 * The visitor path is write-once and token-gated, because it is public.
+	 * This one is not public: it needs rights over the attachment. That also
+	 * makes overwriting reasonable — an editor asking again is asking again,
+	 * not racing anybody.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function store_for_attachment( WP_REST_Request $request ) {
+		$attachment_id = (int) $request->get_param( 'attachmentId' );
+
+		if ( 'attachment' !== get_post_type( $attachment_id ) ) {
+			return new WP_Error(
+				'imagina_player_not_attachment',
+				__( 'That is not a media file.', 'imagina-player' ),
+				array( 'status' => 404 )
+			);
+		}
+
+		$raw = $request->get_param( 'peaks' );
+
+		if ( ! is_array( $raw ) || array() === $raw ) {
+			return new WP_Error(
+				'imagina_player_invalid_peaks',
+				__( 'No waveform data was supplied.', 'imagina-player' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		if ( count( $raw ) > self::MAX_SUBMITTED_BARS ) {
+			$raw = array_slice( $raw, 0, self::MAX_SUBMITTED_BARS );
+		}
+
+		$peaks = array();
+
+		foreach ( $raw as $value ) {
+			if ( ! is_numeric( $value ) ) {
+				return new WP_Error(
+					'imagina_player_invalid_peaks',
+					__( 'The waveform data is malformed.', 'imagina-player' ),
+					array( 'status' => 400 )
+				);
+			}
+
+			$peaks[] = max( 0.0, min( 1.0, (float) $value ) );
+		}
+
+		$peaks  = PeaksRepository::normalize( PeaksRepository::resample( $peaks, PeaksRepository::resolution() ) );
+		$stored = $this->repository->save( 'att_' . $attachment_id, $peaks, (float) $request->get_param( 'duration' ) );
+
+		return new WP_REST_Response( array( 'stored' => $stored ), $stored ? 201 : 500 );
+	}
+
 	public function store_peaks( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		$token = (string) $request->get_param( 'token' );
 		$claim = PeaksToken::verify( $token );
@@ -277,9 +367,14 @@ final class PeaksController {
 		$pending = array();
 
 		foreach ( $query->posts as $attachment_id ) {
+			$file = get_attached_file( (int) $attachment_id );
+
 			$pending[] = array(
 				'id'    => (int) $attachment_id,
 				'title' => (string) get_the_title( $attachment_id ),
+				// So the browser can fetch it when the server cannot measure it.
+				'url'   => (string) ( wp_get_attachment_url( (int) $attachment_id ) ?: '' ),
+				'bytes' => is_string( $file ) && is_readable( $file ) ? (int) filesize( $file ) : 0,
 			);
 		}
 

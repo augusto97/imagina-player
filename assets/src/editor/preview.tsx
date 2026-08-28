@@ -29,9 +29,11 @@ interface PreviewProps {
 	 */
 	attributes: Record< string, unknown >;
 	assets: EditorAssets;
+	/** Told whether this track has a stored waveform, and which file it is. */
+	onPeaks?: ( state: { hasPeaks: boolean; attachmentId: number } ) => void;
 }
 
-export function Preview( { attributes, assets }: PreviewProps ) {
+export function Preview( { attributes, assets, onPeaks }: PreviewProps ) {
 	const [ doc, setDoc ] = useState( '' );
 	const [ failed, setFailed ] = useState( false );
 	const [ height, setHeight ] = useState( 150 );
@@ -55,19 +57,26 @@ export function Preview( { attributes, assets }: PreviewProps ) {
 						return;
 					}
 
-					const { html, peaks } = result as {
+					const { html, hasPeaks, attachmentId } = result as {
 						html: string;
-						peaks: string;
+						hasPeaks?: boolean;
+						attachmentId?: number;
 					};
 
-					// Real peaks win; the synthetic set only stands in when the track
-					// has none cached yet, so the preview is never a flat bar.
-					const markup = html.includes( 'data-peaks=' )
-						? html
-						: html.replace(
-								'data-imagina-player=',
-								`data-peaks="${ peaks }" data-imagina-player=`
-						  );
+					/*
+					 * No synthetic waveform here any more. It used to stand in
+					 * whenever a track had none cached, on the reasoning that a
+					 * flat bar looks broken — but it meant the editor drew a
+					 * waveform the front end would never show, so the only place
+					 * anybody found out was the live site. A preview that lies
+					 * is worse than one that looks plain.
+					 */
+					const markup = html;
+
+					onPeaks?.( {
+						hasPeaks: true === hasPeaks,
+						attachmentId: Number( attachmentId ?? 0 ),
+					} );
 
 					setFailed( false );
 					setDoc(

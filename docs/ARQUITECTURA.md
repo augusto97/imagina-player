@@ -357,6 +357,39 @@ sitio al host que el manifiesto mencione sería regalarlo.
 recibe y comprueba que **todos** los segmentos llevaban el token. Quitar el
 `xhrSetup` hace fallar el test con la lista de segmentos desnudos; lo comprobé.
 
+## Ondas: los dos agujeros que se vieron en producción
+
+Ninguno lo detectó un test, y por eso hay un fichero entero sobre ellos.
+
+**El editor dibujaba una onda que no existía.** Cuando una pista no tenía picos
+guardados, la vista previa metía los sintéticos —los mismos de la pantalla de
+ajustes— para que no se viera una barra plana. La intención era buena y el
+efecto era mentir: el autor veía onda en el editor y barra plana en su sitio,
+y solo se enteraba mirando la web publicada. Ahora la vista previa del bloque
+muestra lo que mostrará el sitio, y cuando falta la onda **lo dice** y ofrece
+generarla. La pantalla de ajustes sí conserva su demo, porque su «pista» es un
+fichero que no existe.
+
+**Sin ffmpeg, un archivo largo no conseguía onda jamás.** El servidor no podía
+medirlo y el respaldo del navegador se niega por encima del límite de tamaño
+—y hace bien, nadie que navega debe bajarse noventa megas para ver un dibujo—,
+así que se quedaba en barra plana para siempre, en silencio. Una conferencia de
+77 minutos en un hosting sin ffmpeg era exactamente eso.
+
+La salida es que **una persona puede permitirse lo que no puede permitirse
+todo el mundo**: quien edita el sitio mide el archivo una vez en su propio
+navegador y se guarda para todos. `assets/src/shared/measure.ts` es el camino
+del visitante sin el tope y con informe de progreso, y decodifica a 8 kHz con
+`OfflineAudioContext` — a la frecuencia del hardware, 77 minutos son unos 900 MB
+de muestras en memoria, que es como se muere una pestaña.
+
+La ruta `/peaks/store` va autenticada contra `edit_post` del propio adjunto, no
+con el token público: la ruta pública es de una sola escritura y con token
+porque cualquiera la alcanza; esta no es pública, así que sobrescribir es
+razonable —quien lo pide otra vez lo está pidiendo, no compitiendo con nadie.
+
+**El tope del visitante no se ha tocado.**
+
 ## Bloques
 
 Tres: `imagina/audio-player`, `imagina/video-player` e `imagina/playlist`.
@@ -478,7 +511,7 @@ paquetes.
 ## Pruebas
 
 `./tests/run.sh` ejecuta la suite contra stubs de WordPress, sin necesidad de una
-instalación: 581 comprobaciones. Cubre sanitización, codificación de picos,
+instalación: 600 comprobaciones. Cubre sanitización, codificación de picos,
 remuestreo, firma de tokens, escapado del markup, el movimiento real de ficheros
 dentro y fuera del vault, y —con un binario ffmpeg simulado— la extracción de
 picos completa.

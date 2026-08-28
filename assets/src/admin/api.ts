@@ -42,7 +42,13 @@ export function renderPreview(
 }
 
 export interface PendingWaveforms {
-	pending: Array< { id: number; title: string } >;
+	pending: Array< {
+		id: number;
+		title: string;
+		/** So the browser can fetch it when the server cannot measure it. */
+		url: string;
+		bytes: number;
+	} >;
 	total: number;
 	available: boolean;
 }
@@ -140,4 +146,26 @@ export function exportUrl(
 	}
 
 	return restUrl + '/leads/export?' + query.toString();
+}
+
+/**
+ * Store a waveform measured here, in this browser.
+ *
+ * The way out for a host with no ffmpeg: the visitor-side fallback refuses
+ * anything large, and rightly so, but the person running the site can afford
+ * the download once so that nobody else has to.
+ * @param attachmentId
+ * @param peaks
+ * @param duration
+ */
+export function storeWaveform(
+	attachmentId: number,
+	peaks: number[],
+	duration: number
+): Promise< unknown > {
+	return apiFetch( {
+		path: '/imagina-player/v1/peaks/store',
+		method: 'POST',
+		data: { attachmentId, peaks, duration },
+	} );
 }

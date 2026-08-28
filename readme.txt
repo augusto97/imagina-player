@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.9.0
+Stable tag: 1.9.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,18 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.9.1 =
+* Fixed: the block editor drew a waveform for tracks that did not have one. It
+  was synthetic — a stand-in so the preview would not look like a flat bar —
+  and the effect was that the editor told you your waveform worked while your
+  site showed a plain bar. The preview now shows what the site will show, and
+  says when a waveform is missing.
+* Fixed: on a host without ffmpeg, a recording longer than the visitor size
+  limit could never get a waveform at all, and nothing said why. You can now
+  measure it in your own browser — from the block, or in bulk under Waveforms —
+  which downloads the file once, there, and stores the result for every
+  visitor. Nobody browsing your site downloads anything extra.
 
 = 1.9.0 =
 * New: a video block. The player has handled video since 1.6.0, but the only

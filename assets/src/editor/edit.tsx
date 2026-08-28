@@ -17,9 +17,11 @@ import {
 	TextControl,
 	ToggleControl,
 } from '@wordpress/components';
+import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
 import { Preview } from './preview';
+import { WaveformNotice } from './waveform-notice';
 import type { EditorData } from './types';
 
 /** A subtitle track or a chapter, as the block stores it. */
@@ -145,6 +147,15 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 		} );
 
 	const layers = ( attributes.layers ?? [] ) as ListItem[];
+
+	/*
+	 * Assumed present until the preview reports otherwise, so the notice does
+	 * not flash up on every keystroke while the preview is in flight.
+	 */
+	const [ peaksState, setPeaksState ] = useState< {
+		hasPeaks: boolean;
+		attachmentId: number;
+	} >( { hasPeaks: true, attachmentId: 0 } );
 
 	const patchLayer = ( index: number, patch: ListItem ): void =>
 		setAttributes( {
@@ -1164,7 +1175,20 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 
+			<WaveformNotice
+				attachmentId={ peaksState.attachmentId }
+				hasPeaks={ peaksState.hasPeaks }
+				isVideo={ isVideo }
+				onMeasured={ () =>
+					setPeaksState( ( current ) => ( {
+						...current,
+						hasPeaks: true,
+					} ) )
+				}
+			/>
+
 			<Preview
+				onPeaks={ setPeaksState }
 				attributes={ attributes }
 				assets={ {
 					frontendCss: data.frontendCss,
