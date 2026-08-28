@@ -55,7 +55,13 @@ async function start( root: HTMLElement, video: VideoConfig ): Promise< void > {
 			/* webpackChunkName: "imagina-provider" */ './provider'
 		);
 
-		build( root, createProviderMedia( root, video ) );
+		const standIn = createProviderMedia( root, video );
+
+		build( root, standIn );
+
+		// After the player exists, so the chrome is already listening when the
+		// first `play` arrives.
+		void standIn?.start();
 	} catch ( error ) {
 		// The still image and the link under it are already in the page, so a
 		// failure here leaves something that works rather than a blank box.

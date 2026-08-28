@@ -89,6 +89,16 @@ $renderer = new PlayerRenderer();
 // A call to action half way through, because that is the part of the player
 // that has to know where playback is — and where playback is, for a video on
 // YouTube, is something only the adapter can say.
+$autostart = $renderer->render(
+	array(
+		'src'      => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+		'title'    => 'Arranca solo',
+		'autoplay' => true,
+		'muted'    => true,
+		'loop'     => true,
+	)
+);
+
 $html = $renderer->render(
 	array(
 		'src'    => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
@@ -111,6 +121,7 @@ $page = <<<HTML
 <style>html,body{margin:0}</style>
 </head><body>
 {$html}
+<div id="autostart">{$autostart}</div>
 <script>
 /*
  * Stand-in for YouTube's iframe API. It records what it was told to do and
@@ -131,6 +142,11 @@ window.YT = {
 		var frame = document.createElement('iframe');
 		frame.className = 'imgp__fake-frame';
 		element.appendChild(frame);
+
+		// What the frame was built with. For autoplay and looping that is the
+		// whole of it — they are parameters on the frame, not commands sent to
+		// it afterwards.
+		window.__ytVars = options.playerVars;
 
 		this.playVideo = function () {
 			window.__calls.push('play');
@@ -179,8 +195,16 @@ setTimeout(function () {
 	var root = document.querySelector('.imgp');
 	var box = document.querySelector('.imgp__embed');
 	var out = {
+		ytVars: window.__ytVars || null,
+		autostarted: (function () {
+			var second = document.querySelector('#autostart .imgp');
+
+			return !!second && second.classList.contains('is-playing');
+		})(),
 		enhanced: root.classList.contains('is-enhanced'),
-		framesBeforePlay: document.querySelectorAll('iframe').length,
+		// Scoped to this player: the page also holds one that starts by
+		// itself, whose frame is supposed to exist already.
+		framesBeforePlay: root.querySelectorAll('iframe').length,
 		chrome: !!document.querySelector('.imgp__chrome'),
 		bigPlay: !!document.querySelector('.imgp__bigplay')
 	};
@@ -189,7 +213,7 @@ setTimeout(function () {
 	document.querySelector('.imgp__play').click();
 
 	setTimeout(function () {
-		out.framesAfterPlay = document.querySelectorAll('iframe').length;
+		out.framesAfterPlay = root.querySelectorAll('iframe').length;
 		out.callsAfterPlay = window.__calls.slice();
 		out.playingClass = root.classList.contains('is-playing');
 
@@ -292,6 +316,33 @@ $end = (array) ( $r['callsAtEnd'] ?? array() );
 
 check( 'seeking from the keyboard reaches the provider', (bool) preg_grep( '/^seek:/', $end ), implode( ',', $end ) );
 check( 'and our pause button reaches it too', in_array( 'pause', $end, true ), implode( ',', $end ) );
+
+echo PHP_EOL . '# A block that asked to start by itself' . PHP_EOL;
+
+/*
+ * The reported fault. `autoplay`, `muted` and `loop` are printed as attributes
+ * on an `<audio>` or `<video>`, and a provider video has neither element — so
+ * all three were switches in the block wired to nothing at all. They are frame
+ * parameters here, which means they have to be right when the frame is built;
+ * there is no sending them afterwards.
+ */
+$vars = (array) ( $r['ytVars'] ?? array() );
+
+check( 'is built with autoplay on', 1 === (int) ( $vars['autoplay'] ?? 0 ), wp_json_encode( $vars['autoplay'] ?? null ) );
+check( 'and muted, which is the only way a browser allows it', 1 === (int) ( $vars['mute'] ?? 0 ), wp_json_encode( $vars['mute'] ?? null ) );
+check( 'and looping', 1 === (int) ( $vars['loop'] ?? 0 ), wp_json_encode( $vars['loop'] ?? null ) );
+
+/*
+ * YouTube loops a playlist rather than a video, so `loop=1` on its own is
+ * quietly ignored — which looks exactly like a broken switch.
+ */
+check(
+	'as a playlist of itself, which is the only way YouTube loops one video',
+	'dQw4w9WgXcQ' === ( $vars['playlist'] ?? '' ),
+	wp_json_encode( $vars['playlist'] ?? null )
+);
+
+check( 'and it is playing without anybody pressing anything', true === ( $r['autostarted'] ?? false ) );
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
 exit( $failures ? 1 : 0 );

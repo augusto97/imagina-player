@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.13.2
+Stable tag: 1.14.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,35 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.14.0 =
+* Fixed: autoplay, start muted and loop did nothing on a YouTube or Vimeo
+  video. The renderer prints them as attributes on an `<audio>` or `<video>`
+  element, and a provider video has neither — so all three were switches in the
+  block wired to nothing at all. They are now passed to the provider when the
+  frame is built, which is the only moment they can be set. Looping a single
+  YouTube video also needs it handed a playlist of that one video, without
+  which `loop` is quietly ignored.
+* New: the Video panel in the block now has real settings — the play button
+  over the picture, the fullscreen and picture-in-picture buttons, the speed
+  control, how the poster fills its box, how long before the controls fade, and
+  whether the browser download is blocked. These existed, but only site-wide:
+  per-block overrides run off the preset, and the video settings are not in a
+  preset, so there was no path from a block to them. Two videos in one post
+  could not behave differently from each other.
+* Changed: each of those is three-way — "use site setting", show, hide — rather
+  than a switch, so a block left alone keeps following the site rather than
+  freezing today's setting into itself.
+* Changed: audio controls no longer appear on a video block. "Show thumbnail"
+  did nothing, because a video's still is the poster and has its own field; the
+  waveform and played-portion colours had nothing to draw; and "stick to the
+  bottom while playing" did something worse than nothing — it pinned the whole
+  picture across the foot of the window, which is an audio mini-player.
+* New: turning on autoplay without muting now says so in the block. No browser
+  starts a video with sound by itself, and a help line under a switch is not
+  the same as being told this block is in exactly that state.
+* Changed: preload is no longer offered for a provider video, where nothing is
+  fetched until somebody presses play.
 
 = 1.13.2 =
 * Changed: the editor no longer prints anything into the block itself except a

@@ -194,3 +194,33 @@ export function placement( raw: string ): Placement {
 	// the preview underneath is about to show it working.
 	return 'file' === kind || 'hls' === kind ? 'none' : 'canvas';
 }
+
+/**
+ * Which of the shared control toggles mean anything for this medium.
+ *
+ * The block's Controls panel was generated straight from the preset override
+ * map, which describes an audio player, so a video block offered "Show
+ * thumbnail" — a field the video layout never renders, because a video's still
+ * is the poster and has its own control — and the Colours panel offered a
+ * waveform colour and a played-portion colour for a picture that has no
+ * waveform. Switches that do nothing are worse than missing ones: they are a
+ * promise the player does not keep.
+ *
+ * `sticky` is the worst of them, because it does something rather than nothing:
+ * it pins the player to the bottom of the window as a full-width bar, which is
+ * a mini audio player and, applied to a video, a whole sixteen-by-nine picture
+ * lying across the foot of the screen. A floating video that follows the reader
+ * is a real feature and a different one; offering this switch instead is not a
+ * cheaper version of it.
+ */
+const AUDIO_ONLY = [ 'show_thumbnail', 'show_artist', 'sticky' ];
+
+const AUDIO_ONLY_COLOURS = [ 'waveColor', 'waveProgress', 'metaColor' ];
+
+export function controlApplies( key: string, isVideo: boolean ): boolean {
+	return ! isVideo || ! AUDIO_ONLY.includes( key );
+}
+
+export function colourApplies( attribute: string, isVideo: boolean ): boolean {
+	return ! isVideo || ! AUDIO_ONLY_COLOURS.includes( attribute );
+}

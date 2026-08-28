@@ -91,6 +91,10 @@ export interface VideoConfig {
 	providerHash?: string;
 	/** The frame address, built by the server so the privacy setting applies. */
 	embedUrl?: string;
+	/* A provider has no element to carry these as attributes, so it is told. */
+	autoplay?: boolean;
+	muted?: boolean;
+	loop?: boolean;
 }
 
 /** One item of a playlist, as the server hands it over. */

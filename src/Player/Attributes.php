@@ -127,6 +127,44 @@ final class Attributes {
 				'default' => '',
 			),
 
+			/*
+			 * The video settings a block may answer for itself. Tristate, like
+			 * every other override: an unset one inherits whatever the site was
+			 * set up with, which is what an author who configured it once
+			 * expects and what keeps a block from freezing today's defaults
+			 * into every post.
+			 */
+			'videoBigPlay'       => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			'videoFullscreen'    => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			'videoPip'           => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			'videoSpeed'         => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			'videoBlockDownload' => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			'videoPosterFit'     => array(
+				'type'    => 'string',
+				'default' => self::INHERIT,
+			),
+			// Milliseconds before the controls fade during playback; empty
+			// inherits, and zero is a real answer meaning "never".
+			'videoHideAfter'     => array(
+				'type'    => 'string',
+				'default' => self::INHERIT,
+			),
+
 			// Video. Ignored for audio, which is why they carry empty defaults
 			// rather than being a separate schema: one block, one shape, and a
 			// track that changes kind does not lose its settings.

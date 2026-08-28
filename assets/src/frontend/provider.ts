@@ -78,6 +78,31 @@ abstract class ProviderMedia extends EventTarget implements PlayerMedia {
 		super();
 		this.host = host;
 		this.config = config;
+
+		// So the mute button starts in the position the provider was actually
+		// told to start in, rather than claiming sound is on over a silent
+		// video.
+		this.isMuted = Boolean( config.muted );
+	}
+
+	/**
+	 * Start without being asked.
+	 *
+	 * Autoplay on a provider means building the frame at once: there is no
+	 * element to carry the attribute, and nothing else would ever build it —
+	 * which is why the switch did nothing at all on a YouTube video.
+	 *
+	 * Only when muted. Every browser refuses autoplay with sound, so doing it
+	 * anyway would fetch half a megabyte from the provider to be told no; a
+	 * block that asked for autoplay without muting keeps the still image and
+	 * its play button, which is where the browser would have left it.
+	 */
+	async start(): Promise< void > {
+		if ( ! this.config.autoplay || ! this.config.muted ) {
+			return;
+		}
+
+		await this.play().catch( () => undefined );
 	}
 
 	abstract capabilities: MediaCapabilities;
@@ -311,8 +336,10 @@ class YouTubeMedia extends ProviderMedia {
 		this.frameHost().replaceChildren( mountPoint );
 
 		await new Promise< void >( ( resolve ) => {
+			const id = this.config.providerId ?? '';
+
 			this.player = new api.Player( mountPoint, {
-				videoId: this.config.providerId ?? '',
+				videoId: id,
 				playerVars: {
 					// No related videos from other channels at the end, no
 					// YouTube chrome we are about to draw ourselves, and no
@@ -324,6 +351,17 @@ class YouTubeMedia extends ProviderMedia {
 					playsinline: 1,
 					// Required by YouTube for a frame not on youtube.com.
 					origin: window.location.origin,
+					autoplay: this.config.autoplay ? 1 : 0,
+					mute: this.config.muted ? 1 : 0,
+					/*
+					 * YouTube loops a *playlist*, not a video, so looping one
+					 * video means handing it a playlist of that one video.
+					 * Without the second parameter `loop=1` is quietly ignored,
+					 * which is the sort of thing that makes a switch look
+					 * broken rather than unsupported.
+					 */
+					loop: this.config.loop ? 1 : 0,
+					...( this.config.loop ? { playlist: id } : {} ),
 				},
 				events: {
 					onReady: () => {
@@ -446,6 +484,9 @@ class VimeoMedia extends ProviderMedia {
 			controls: false,
 			playsinline: true,
 			dnt: true,
+			autoplay: Boolean( this.config.autoplay ),
+			muted: Boolean( this.config.muted ),
+			loop: Boolean( this.config.loop ),
 		} );
 
 		this.player = player;
@@ -511,7 +552,11 @@ export function createProviderMedia(
 	root: HTMLElement,
 	config: VideoConfig
 ):
-	| ( PlayerMedia & { capabilities: MediaCapabilities; destroy: () => void } )
+	| ( PlayerMedia & {
+			capabilities: MediaCapabilities;
+			destroy: () => void;
+			start: () => Promise< void >;
+	  } )
 	| null {
 	const host = root.querySelector< HTMLElement >( '.imgp__embed' );
 

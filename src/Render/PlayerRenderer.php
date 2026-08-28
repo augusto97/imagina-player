@@ -24,6 +24,7 @@ use ImaginaPlayer\Player\Attributes;
 use ImaginaPlayer\Protection\Vault;
 use ImaginaPlayer\Player\Config;
 use ImaginaPlayer\Player\Skins;
+use ImaginaPlayer\Player\Video;
 use ImaginaPlayer\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -59,6 +60,11 @@ final class PlayerRenderer {
 
 		$peaks_payload = $this->peaks_payload( $track, $config );
 
+		// Resolved once: the site's video settings with this block's own
+		// answers over them. Every reader below takes it rather than going back
+		// to the options table, or two of them could disagree.
+		$video_config = Video::resolve( $atts );
+
 		$classes = array(
 			'imgp',
 			'imgp--skin-' . $config['skin'],
@@ -66,8 +72,8 @@ final class PlayerRenderer {
 			$config['sticky'] ? 'imgp--sticky' : '',
 			$config['sticky'] ? 'imgp--stick-' . $config['sticky_position'] : '',
 			$track->is_video() ? 'imgp--video' : 'imgp--audio',
-			$track->is_video() ? 'imgp--cc-' . sanitize_html_class( (string) Settings::video()['caption_size'] ) : '',
-			$track->is_video() ? 'imgp--ccbg-' . sanitize_html_class( (string) Settings::video()['caption_bg'] ) : '',
+			$track->is_video() ? 'imgp--cc-' . sanitize_html_class( (string) $video_config['caption_size'] ) : '',
+			$track->is_video() ? 'imgp--ccbg-' . sanitize_html_class( (string) $video_config['caption_bg'] ) : '',
 			(int) $config['border_radius'] > 0 ? 'imgp--rounded-box' : '',
 			$config['rounded_bars'] ? 'imgp--rounded' : '',
 			$atts['className'],
@@ -112,7 +118,7 @@ final class PlayerRenderer {
 		// Namespaced rather than flattened: the video module reads `video` and
 		// nothing else, so growing it later cannot collide with an audio key.
 		if ( $track->is_video() ) {
-			$video = Settings::video();
+			$video = $video_config;
 
 			$client_config['video'] = array(
 				'ratio'     => $track->aspect_ratio,
@@ -144,8 +150,20 @@ final class PlayerRenderer {
 				$client_config['video']['providerId']   = $track->provider->id;
 				$client_config['video']['providerHash'] = $track->provider->hash;
 				$client_config['video']['embedUrl']     = $track->provider->embed_url(
-					(bool) ( Settings::video()['provider_privacy'] ?? true )
+					(bool) ( $video_config['provider_privacy'] ?? true )
 				);
+
+				/*
+				 * A provider video has no element, so `autoplay`, `muted` and
+				 * `loop` — which the renderer prints as attributes on an
+				 * `<audio>` or `<video>` — reached nothing at all. They were
+				 * switches in the block that did nothing on a YouTube video,
+				 * with no sign of it anywhere. The provider takes them as
+				 * parameters instead.
+				 */
+				$client_config['video']['autoplay'] = (bool) $atts['autoplay'];
+				$client_config['video']['muted']    = (bool) $atts['muted'];
+				$client_config['video']['loop']     = (bool) $atts['loop'];
 			}
 		}
 
@@ -166,7 +184,7 @@ final class PlayerRenderer {
 		$layout = $track->is_video() ? 'theater' : Skins::layout( (string) $config['skin'] );
 
 		$parts = array(
-			'media'    => $this->part_media( $track, $atts, $config ),
+			'media'    => $this->part_media( $track, $atts, $config, $video_config ),
 			// A video always gets a scrubber. A skin that hides it was designed for
 			// a bar of audio controls, and a video without a seek bar is broken.
 			'scrubber' => $track->is_video() || Skins::has_scrubber( (string) $config['skin'] )
@@ -182,11 +200,11 @@ final class PlayerRenderer {
 		$parts['layers'] = $this->part_layers( $track, $config, $atts, $id );
 
 		if ( 'theater' === $layout ) {
-			$video_settings = Settings::video();
+			$video_settings = $video_config;
 
 			$parts['poster']  = $this->part_poster( $track, $video_settings );
 			$parts['bigplay'] = empty( $video_settings['big_play'] ) ? '' : $this->part_big_play();
-			$parts['video']   = $this->part_video_controls( $config, $atts );
+			$parts['video']   = $this->part_video_controls( $config, $atts, $video_config );
 		}
 
 		ob_start();
@@ -281,7 +299,7 @@ final class PlayerRenderer {
 	 * @param array<string, mixed> $atts   Sanitised attributes.
 	 * @param array<string, mixed> $config Effective settings.
 	 */
-	private function part_media( Track $track, array $atts, array $config ): string {
+	private function part_media( Track $track, array $atts, array $config, array $video_config ): string {
 		if ( $track->is_provider() ) {
 			return $this->part_embed( $track );
 		}
@@ -306,7 +324,7 @@ final class PlayerRenderer {
 			<?php if ( $is_video ) : ?>
 				playsinline
 				<?php echo '' !== $track->poster ? 'poster="' . esc_url( $track->poster ) . '"' : ''; ?>
-				<?php echo $this->download_guards( $track, $config ); // phpcs:ignore WordPress.Security.EscapeOutput -- fixed attribute names. ?>
+				<?php echo $this->download_guards( $track, $config, $video_config ); // phpcs:ignore WordPress.Security.EscapeOutput -- fixed attribute names. ?>
 			<?php endif; ?>
 		><?php echo $this->text_tracks( $track, $atts ); // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts. ?></<?php echo esc_attr( $tag ); ?>>
 		<?php
@@ -368,10 +386,11 @@ final class PlayerRenderer {
 	 * URL to a device. The link expiring is what does the real work; this is
 	 * the layer above it.
 	 *
-	 * @param array<string, mixed> $config Effective settings.
+	 * @param array<string, mixed> $config       Effective settings.
+	 * @param array<string, mixed> $video_config Effective video settings.
 	 */
-	private function download_guards( Track $track, array $config ): string {
-		if ( ! empty( $config['show_download'] ) || empty( Settings::video()['block_download'] ) ) {
+	private function download_guards( Track $track, array $config, array $video_config ): string {
+		if ( ! empty( $config['show_download'] ) || empty( $video_config['block_download'] ) ) {
 			// Two reasons not to: the setting is off, or a download was offered
 			// deliberately — and hiding the browser's own next to our own
 			// download button would be theatre.
@@ -500,7 +519,12 @@ final class PlayerRenderer {
 	 *
 	 * @param array<string, mixed> $config Effective settings.
 	 */
-	private function part_video_controls( array $config, array $atts = array() ): string {
+	/**
+	 * @param array<string, mixed> $config       Effective player settings.
+	 * @param array<string, mixed> $atts         Sanitised attributes.
+	 * @param array<string, mixed> $video_config Effective video settings.
+	 */
+	private function part_video_controls( array $config, array $atts, array $video_config ): string {
 		$buttons = array();
 
 		if ( array() !== (array) ( $atts['tracks'] ?? array() ) ) {
@@ -524,7 +548,7 @@ final class PlayerRenderer {
 			'label' => __( 'Quality', 'imagina-player' ),
 		);
 
-		$video = Settings::video();
+		$video = $video_config;
 
 		if ( ! empty( $video['show_pip'] ) ) {
 			$buttons['pip'] = array(

@@ -11,6 +11,7 @@ import {
 	BaseControl,
 	Button,
 	ExternalLink,
+	Notice,
 	PanelBody,
 	RangeControl,
 	SelectControl,
@@ -21,7 +22,12 @@ import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { Preview } from './preview';
-import { identify, isVideoSource } from '../shared/source';
+import {
+	colourApplies,
+	controlApplies,
+	identify,
+	isVideoSource,
+} from '../shared/source';
 import { SourceStatus, SourceWarning } from './source-notice';
 import { WaveformNotice } from './waveform-notice';
 import type { EditorData } from './types';
@@ -111,6 +117,17 @@ const LAYER_TYPES: Array< { value: string; label: string } > = [
 		label: __( 'Bar (does not stop playback)', 'imagina-player' ),
 	},
 	{ value: 'email', label: __( 'Email gate', 'imagina-player' ) },
+];
+
+/*
+ * Three answers, not two: a switch would force every block to freeze today's
+ * site setting into itself, so changing the site later would leave old posts
+ * behind. "Use site setting" is the default and stays live.
+ */
+const TRISTATE: Array< { value: string; label: string } > = [
+	{ value: INHERIT, label: __( 'Use site setting', 'imagina-player' ) },
+	{ value: 'yes', label: __( 'Show', 'imagina-player' ) },
+	{ value: 'no', label: __( 'Hide', 'imagina-player' ) },
 ];
 
 const RATIOS: Array< { value: string; label: string } > = [
@@ -532,19 +549,21 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					title={ __( 'Controls', 'imagina-player' ) }
 					initialOpen={ false }
 				>
-					{ visibilityToggles( data ).map( ( { key, attribute } ) => (
-						<ToggleControl
-							__nextHasNoMarginBottom
-							key={ attribute }
-							label={ humanise( key ) }
-							checked={ inherited( attribute, key ) }
-							onChange={ ( value: boolean ) =>
-								setAttributes( {
-									[ attribute ]: value ? 'yes' : 'no',
-								} )
-							}
-						/>
-					) ) }
+					{ visibilityToggles( data )
+						.filter( ( { key } ) => controlApplies( key, isVideo ) )
+						.map( ( { key, attribute } ) => (
+							<ToggleControl
+								__nextHasNoMarginBottom
+								key={ attribute }
+								label={ humanise( key ) }
+								checked={ inherited( attribute, key ) }
+								onChange={ ( value: boolean ) =>
+									setAttributes( {
+										[ attribute ]: value ? 'yes' : 'no',
+									} )
+								}
+							/>
+						) ) }
 				</PanelBody>
 
 				<PanelBody
@@ -579,32 +598,63 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							setAttributes( { muted: value } )
 						}
 					/>
-					<SelectControl
-						__nextHasNoMarginBottom
-						label={ __( 'Preload', 'imagina-player' ) }
-						value={ String( attributes.preload ?? INHERIT ) as '' }
-						options={ [
-							{
-								value: INHERIT,
-								label: __( 'Use preset', 'imagina-player' ),
-							},
-							{
-								value: 'none',
-								label: __( 'None', 'imagina-player' ),
-							},
-							{
-								value: 'metadata',
-								label: __( 'Metadata', 'imagina-player' ),
-							},
-							{
-								value: 'auto',
-								label: __( 'Auto', 'imagina-player' ),
-							},
-						] }
-						onChange={ ( value: string ) =>
-							setAttributes( { preload: value } )
-						}
-					/>
+
+					{ /* The help text under Autoplay has always said browsers
+					     need it muted. Saying it is not the same as showing
+					     that this block is in exactly that state, which reads
+					     as the feature being broken. */ }
+					{ Boolean( attributes.autoplay ) &&
+						! Boolean( attributes.muted ) && (
+							<Notice status="warning" isDismissible={ false }>
+								<p>
+									{ __(
+										'Autoplay is on but the sound is not muted, so no browser will start this by itself. It will show its play button instead.',
+										'imagina-player'
+									) }
+								</p>
+								<Button
+									variant="secondary"
+									onClick={ () =>
+										setAttributes( { muted: true } )
+									}
+								>
+									{ __(
+										'Start muted as well',
+										'imagina-player'
+									) }
+								</Button>
+							</Notice>
+						) }
+					{ ! isProvider && (
+						<SelectControl
+							__nextHasNoMarginBottom
+							label={ __( 'Preload', 'imagina-player' ) }
+							value={
+								String( attributes.preload ?? INHERIT ) as ''
+							}
+							options={ [
+								{
+									value: INHERIT,
+									label: __( 'Use preset', 'imagina-player' ),
+								},
+								{
+									value: 'none',
+									label: __( 'None', 'imagina-player' ),
+								},
+								{
+									value: 'metadata',
+									label: __( 'Metadata', 'imagina-player' ),
+								},
+								{
+									value: 'auto',
+									label: __( 'Auto', 'imagina-player' ),
+								},
+							] }
+							onChange={ ( value: string ) =>
+								setAttributes( { preload: value } )
+							}
+						/>
+					) }
 					<BaseControl __nextHasNoMarginBottom id="imgp-start-time">
 						<TextControl
 							__nextHasNoMarginBottom
@@ -645,67 +695,76 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							[ 'textColor', __( 'Title', 'imagina-player' ) ],
 							[ 'metaColor', __( 'Artist', 'imagina-player' ) ],
 						] as const
-					 ).map( ( [ attribute, label ] ) => {
-						const value = String( attributes[ attribute ] ?? '' );
+					 )
+						.filter( ( [ attribute ] ) =>
+							colourApplies( attribute, isVideo )
+						)
+						.map( ( [ attribute, label ] ) => {
+							const value = String(
+								attributes[ attribute ] ?? ''
+							);
 
-						return (
-							<BaseControl
-								__nextHasNoMarginBottom
-								key={ attribute }
-								id={ `imgp-colour-${ attribute }` }
-								label={ label }
-							>
-								<div className="imgp-editor__colour">
-									<input
-										type="color"
-										id={ `imgp-colour-${ attribute }` }
-										// A swatch cannot show "unset"; it falls back to a
-										// neutral while the text field carries the real state.
-										value={
-											HEX.test( value )
-												? value
-												: '#cccccc'
-										}
-										onChange={ ( event ) =>
-											setAttributes( {
-												[ attribute ]:
-													event.target.value,
-											} )
-										}
-									/>
-									<input
-										type="text"
-										className="imgp-editor__colour-text"
-										value={ value }
-										placeholder={ __(
-											'From preset',
-											'imagina-player'
-										) }
-										spellCheck={ false }
-										onChange={ ( event ) =>
-											setAttributes( {
-												[ attribute ]:
-													event.target.value,
-											} )
-										}
-									/>
-									{ value && (
-										<Button
-											variant="tertiary"
-											size="small"
-											onClick={ () =>
+							return (
+								<BaseControl
+									__nextHasNoMarginBottom
+									key={ attribute }
+									id={ `imgp-colour-${ attribute }` }
+									label={ label }
+								>
+									<div className="imgp-editor__colour">
+										<input
+											type="color"
+											id={ `imgp-colour-${ attribute }` }
+											// A swatch cannot show "unset"; it falls back to a
+											// neutral while the text field carries the real state.
+											value={
+												HEX.test( value )
+													? value
+													: '#cccccc'
+											}
+											onChange={ ( event ) =>
 												setAttributes( {
-													[ attribute ]: INHERIT,
+													[ attribute ]:
+														event.target.value,
 												} )
 											}
-										>
-											{ __( 'Reset', 'imagina-player' ) }
-										</Button>
-									) }
-								</div>
-							</BaseControl>
-						);
-					} ) }
+										/>
+										<input
+											type="text"
+											className="imgp-editor__colour-text"
+											value={ value }
+											placeholder={ __(
+												'From preset',
+												'imagina-player'
+											) }
+											spellCheck={ false }
+											onChange={ ( event ) =>
+												setAttributes( {
+													[ attribute ]:
+														event.target.value,
+												} )
+											}
+										/>
+										{ value && (
+											<Button
+												variant="tertiary"
+												size="small"
+												onClick={ () =>
+													setAttributes( {
+														[ attribute ]: INHERIT,
+													} )
+												}
+											>
+												{ __(
+													'Reset',
+													'imagina-player'
+												) }
+											</Button>
+										) }
+									</div>
+								</BaseControl>
+							);
+						} ) }
 				</PanelBody>
 
 				{ ! isVideo && (
@@ -1041,6 +1100,137 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								) }
 							</div>
 						</BaseControl>
+
+						<SelectControl
+							__nextHasNoMarginBottom
+							label={ __(
+								'Poster fills the box',
+								'imagina-player'
+							) }
+							help={ __(
+								'Crop to fill, or show the whole image and let the black show through.',
+								'imagina-player'
+							) }
+							value={
+								String(
+									attributes.videoPosterFit ?? INHERIT
+								) as ''
+							}
+							options={ [
+								{
+									value: INHERIT,
+									label: __(
+										'Use site setting',
+										'imagina-player'
+									),
+								},
+								{
+									value: 'cover',
+									label: __(
+										'Crop to fill',
+										'imagina-player'
+									),
+								},
+								{
+									value: 'contain',
+									label: __(
+										'Show all of it',
+										'imagina-player'
+									),
+								},
+							] }
+							onChange={ ( value: string ) =>
+								setAttributes( { videoPosterFit: value } )
+							}
+						/>
+
+						{ /* Everything below overrides the site-wide Video
+						     settings for this one video. Until now they were
+						     only settable for the whole site, so two videos in
+						     one post could not behave differently. */ }
+						{ (
+							[
+								[
+									'videoBigPlay',
+									__(
+										'Play button over the picture',
+										'imagina-player'
+									),
+								],
+								[
+									'videoFullscreen',
+									__( 'Fullscreen button', 'imagina-player' ),
+								],
+								[
+									'videoPip',
+									__(
+										'Picture-in-picture button',
+										'imagina-player'
+									),
+								],
+								[
+									'videoSpeed',
+									__( 'Speed control', 'imagina-player' ),
+								],
+							] as const
+						 ).map( ( [ attribute, label ] ) => (
+							<SelectControl
+								__nextHasNoMarginBottom
+								key={ attribute }
+								label={ label }
+								value={ String(
+									attributes[ attribute ] ?? INHERIT
+								) }
+								options={ TRISTATE }
+								onChange={ ( value: string ) =>
+									setAttributes( { [ attribute ]: value } )
+								}
+							/>
+						) ) }
+
+						{ /* Not offered for a provider: the file is not on this
+						     site, so there is nothing here to withhold. */ }
+						{ ! isProvider && (
+							<SelectControl
+								__nextHasNoMarginBottom
+								label={ __(
+									'Block the browser download',
+									'imagina-player'
+								) }
+								help={ __(
+									'Also removes “Save video as” and casting the raw file. It has no effect on a player that deliberately offers a download.',
+									'imagina-player'
+								) }
+								value={ String(
+									attributes.videoBlockDownload ?? INHERIT
+								) }
+								options={ TRISTATE }
+								onChange={ ( value: string ) =>
+									setAttributes( {
+										videoBlockDownload: value,
+									} )
+								}
+							/>
+						) }
+
+						<TextControl
+							__nextHasNoMarginBottom
+							type="number"
+							min={ 0 }
+							step={ 100 }
+							label={ __(
+								'Hide the controls after (ms)',
+								'imagina-player'
+							) }
+							help={ __(
+								'While the video plays and nobody moves. Empty uses the site setting; zero keeps them up.',
+								'imagina-player'
+							) }
+							value={ String( attributes.videoHideAfter ?? '' ) }
+							onChange={ ( value: string ) =>
+								setAttributes( { videoHideAfter: value } )
+							}
+						/>
 					</PanelBody>
 				) }
 
