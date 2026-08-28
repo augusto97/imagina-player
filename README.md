@@ -1,30 +1,27 @@
-# Imagina Player — 1.15.0
+# Imagina Player — 1.16.0
 
-Download **imagina-player-1.15.0.zip** and install it in WordPress under
+Download **imagina-player-1.16.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  ad4fe95e3ef33ffd22d553c5c1d65f15d919774d75e27c1f4115068c0eb8d220
+    SHA-256  934f9f435e162077257c9ff1811f2c63c949b487173419bf4d2ece3fe41224ae
 
-## What changed in 1.15.0
+## What changed in 1.16.0
 
-**A video that follows the reader.** Scroll away from one that is playing and
-it detaches into a small card in a corner, keeping its shape, with the controls
-on it and a button to send it away — which stays away. The switch existed
-before but did the audio version of it: a full-width bar across the foot of the
-window, which for a video is a whole picture lying across the bottom of the
-screen.
+**The seek bar on a video could not be dragged.** It was drawn correctly and
+looked exactly like a seek bar, but the element a pointer has to land on was
+zero pixels tall. There is now a real hit area, a line that thickens under the
+pointer, and a test that presses every control of every skin at the point where
+it appears.
 
-Writing the test for it found a fault it had from the start: a player already
-off screen when playback began was never reconsidered, so an autoplaying video
-below the fold, or a playlist carrying on to the next track, would play to
-nobody.
+**Video skins of their own.** Theater (controls over the picture, fading while
+it plays), Minimal (a line and little else), Stacked (a solid bar under the
+picture that never covers it). Until now a video block was offered the seven
+audio skins, every one of which arranges a waveform — so choosing one either
+did nothing or did something meaningless. A block now offers only the skins
+that apply to what it is playing.
 
-**Stills on the seek bar.** Point at the bar and the moment under the pointer
-appears above it. Give the block a WebVTT storyboard — what most video tools
-export — and nothing is downloaded until somebody actually drags the bar, so a
-reader who never scrubs pays nothing for it.
+**** lists what the video player still lacks next to
+Presto Player and Fluent Player, read from their source, and the order it is
+being done in. This release is step one of five.
 
-**The sizes a visitor actually pays are now checked too**, alongside the source
-sizes: 7.4 KB for the bundle and 5.1 KB for the stylesheet, compressed.
-
-904 checks green.
+929 checks green.
