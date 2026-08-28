@@ -9,6 +9,7 @@ define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'WEEK_IN_SECONDS', 604800 );
+define( 'MONTH_IN_SECONDS', 2592000 );
 define( 'MB_IN_BYTES', 1048576 );
 define( 'ARRAY_A', 'ARRAY_A' );
 
@@ -296,6 +297,14 @@ function wp_remote_get( $url, $args = array() ) {
 
 	return array( 'code' => $status, 'body' => $body );
 }
+
+/*
+ * The safe variant. Under a real WordPress this is the one that refuses to
+ * fetch a private address; here it is the same fetch, because these tests point
+ * it at a local server on purpose and the SSRF rules are exercised by
+ * `wp_http_validate_url` in the protection tests instead.
+ */
+function wp_safe_remote_get( $url, $args = array() ) { return wp_remote_get( $url, $args ); }
 
 function wp_remote_retrieve_response_code( $response ) { return is_array( $response ) ? (int) ( $response['code'] ?? 0 ) : 0; }
 function wp_remote_retrieve_body( $response ) { return is_array( $response ) ? (string) ( $response['body'] ?? '' ) : ''; }

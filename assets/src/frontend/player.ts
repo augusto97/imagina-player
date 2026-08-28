@@ -6,11 +6,19 @@ import {
 	storePeaks,
 } from './peaks';
 import type {
+	MediaCapabilities,
 	PlayerConfig,
+	PlayerMedia,
 	RuntimeData,
 	TrackChange,
 	VideoConfig,
 } from './types';
+
+/** What the provider chunk hands over: a media stand-in that can be torn down. */
+type ProviderStandIn = PlayerMedia & {
+	capabilities: MediaCapabilities;
+	destroy: () => void;
+};
 import { clamp, formatTime, rafThrottle } from './utils';
 import { Waveform } from './waveform';
 
@@ -32,7 +40,7 @@ const instances = new Set< Player >();
 export class Player {
 	readonly root: HTMLElement;
 
-	readonly media: HTMLMediaElement;
+	readonly media: PlayerMedia;
 
 	private readonly config: PlayerConfig;
 
@@ -72,26 +80,51 @@ export class Player {
 
 	private destroyed = false;
 
+	/**
+	 * The real element, when there is one. A video on YouTube has no element,
+	 * so anything that needs one — full screen on the picture, picture in
+	 * picture, our own subtitles — has to check rather than assume.
+	 */
+	private readonly element: HTMLMediaElement | null;
+
+	private readonly standIn: ProviderStandIn | null;
+
 	/** Set once the video chunk has loaded; absent for audio, always. */
 	private video: { destroy: () => void } | null = null;
 
 	/** Set once the layer chunk has loaded; absent unless one was configured. */
 	private layers: { destroy: () => void } | null = null;
 
-	constructor( root: HTMLElement, runtime: RuntimeData ) {
+	/**
+	 * @param root    The player element.
+	 * @param runtime Page-wide settings.
+	 * @param standIn What to drive instead of an element, for a video that
+	 *                lives on YouTube or Vimeo. Built by the provider chunk,
+	 *                which is why it arrives from outside rather than being
+	 *                looked up here.
+	 */
+	constructor(
+		root: HTMLElement,
+		runtime: RuntimeData,
+		standIn?: ProviderStandIn | null
+	) {
 		this.root = root;
 		this.runtime = runtime;
 		this.config = JSON.parse(
 			root.dataset.imaginaPlayer || '{}'
 		) as PlayerConfig;
 
-		const media = root.querySelector< HTMLMediaElement >( '.imgp__media' );
+		const element = root.querySelector< HTMLMediaElement >(
+			'audio.imgp__media, video.imgp__media'
+		);
 
-		if ( ! media ) {
+		if ( ! standIn && ! element ) {
 			throw new Error( 'Imagina Player: no media element found.' );
 		}
 
-		this.media = media;
+		this.standIn = standIn ?? null;
+		this.element = element;
+		this.media = standIn ?? ( element as HTMLMediaElement );
 		this.playButton = root.querySelector( '.imgp__play' );
 		this.seek = root.querySelector( '.imgp__seek' );
 		this.currentTimeEl = root.querySelector( '.imgp__time--current' );
@@ -144,7 +177,14 @@ export class Player {
 	 * @param config
 	 */
 	private async setupVideo( config: VideoConfig ): Promise< void > {
-		if ( ! ( this.media instanceof HTMLVideoElement ) ) {
+		/*
+		 * A video on YouTube is not an element, and gating on `instanceof
+		 * HTMLVideoElement` meant a provider video got no chrome at all — no
+		 * play button, no scrub bar, nothing. What the chrome needs is a
+		 * picture to draw on, which both have; what only an element can do is
+		 * declared separately and checked where it is used.
+		 */
+		if ( ! this.standIn && ! ( this.media instanceof HTMLVideoElement ) ) {
 			return;
 		}
 
@@ -161,6 +201,12 @@ export class Player {
 				{
 					root: this.root,
 					media: this.media,
+					element: this.element as HTMLVideoElement | null,
+					can: this.standIn?.capabilities ?? {
+						captions: true,
+						pictureInPicture: true,
+						elementFullscreen: true,
+					},
 					i18n: this.runtime.i18n,
 					toggle: () => this.toggle(),
 					seekBy: ( seconds: number ) =>
@@ -806,7 +852,9 @@ export class Player {
 
 			this.root.classList.remove( 'has-error' );
 			this.media.src = data.url;
-			this.media.load();
+			// Only a real element reloads. A provider link is not ours to sign
+			// and never expires, so there is nothing here for a stand-in to do.
+			this.element?.load();
 
 			if ( resumeAt > 0 ) {
 				this.media.addEventListener(
@@ -903,7 +951,7 @@ export class Player {
 		this.root.classList.remove( 'imgp--no-peaks' );
 
 		this.media.src = track.src;
-		this.media.load();
+		this.element?.load();
 
 		if ( track.peaks ) {
 			this.waveform?.setPeaks( decodePeaks( track.peaks ) );

@@ -77,6 +77,8 @@ export interface SettingsPayload {
 		show_speed: boolean;
 		big_play: boolean;
 		block_download: boolean;
+		/** Load YouTube from the domain that sets no cookie before playback. */
+		provider_privacy: boolean;
 		poster_fit: string;
 		caption_size: string;
 		caption_bg: string;

@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.12.0
+Stable tag: 1.13.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -33,12 +33,29 @@ support, every control is a real button, and the player is server-rendered aroun
 a native `<audio controls>` element — if the script fails to load, the audio still
 plays.
 
+**Video, including YouTube and Vimeo.** Paste the address of a video and it plays
+in this player, with your own controls, your own colours and your own calls to
+action rather than the provider's chrome. Nothing is requested from them until a
+visitor presses play, so a video nobody watches costs the page nothing.
+
 = Blocks and shortcodes =
 
 * Block: **Imagina Audio Player**
 * Shortcode: `[imagina_player src="https://example.com/track.mp3" artist="…" title="…"]`
 
 == Frequently Asked Questions ==
+
+= Can I use a YouTube or Vimeo video? =
+
+Yes. Paste the address into the Video block. It plays inside this player with your
+own controls and your own calls to action, and the provider's still image is used
+as the poster. Nothing is loaded from YouTube or Vimeo until a visitor presses
+play — until then the page holds a picture, so there is no third-party request and
+no cookie for a visitor who never watches.
+
+A video hosted by them is not a file on your site, so the download protection does
+not apply to it, and their own subtitles are drawn inside their frame rather than
+by this player.
 
 = Does it need ffmpeg? =
 
@@ -65,6 +82,28 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.13.0 =
+* New: YouTube and Vimeo. Pasting a YouTube address into the Video block used to
+  produce an audio player that showed nothing, played nothing and had no
+  thumbnail — WordPress reports no file type for a web page, so the track was
+  not a video and the renderer built a row of audio controls around an `<audio>`
+  element pointed at youtube.com. Provider videos are now recognised, laid out
+  as video, and driven through the provider's own API so the picture carries
+  this player's controls rather than theirs.
+* New: calls to action, chapters, the keyboard and the scrub bar all work on a
+  provider video, because the player asks the provider where playback is instead
+  of assuming there is an element to read it off.
+* New: nothing is requested from YouTube or Vimeo until somebody presses play.
+  The page holds their still image until then, so a video nobody watches costs a
+  visitor no third-party request and no cookie. YouTube is loaded from its
+  no-cookie domain by default, which is a new setting under Video.
+* New: the block says what it made of the address you gave it, before you save —
+  including when it cannot play it at all, which used to be silent.
+* Fixed: pasting a video address into the *audio* block made it look for a
+  waveform inside a web page.
+* Changed: subtitles are no longer offered for a provider video. They are drawn
+  inside the provider's frame and a file added here would never have appeared.
 
 = 1.12.0 =
 * Fixed: a call to action beside an audio player rendered as a full-width sheet

@@ -21,6 +21,8 @@ import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { Preview } from './preview';
+import { identify, isVideoSource } from '../shared/source';
+import { SourceNotice } from './source-notice';
 import { WaveformNotice } from './waveform-notice';
 import type { EditorData } from './types';
 
@@ -133,8 +135,15 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 	// and a guess is why these panels used to appear only sometimes.
 	const isVideoBlock = 'imagina/video-player' === name;
 
-	const isVideo =
-		isVideoBlock || /\.(mp4|m4v|webm|ogv|mov|m3u8)(\?|#|$)/i.test( src );
+	/*
+	 * Through the shared recogniser rather than a regular expression on the
+	 * extension: a YouTube address has no extension, so the audio block used to
+	 * treat one as audio and go looking for a waveform in a web page.
+	 */
+	const isVideo = isVideoBlock || isVideoSource( src );
+
+	/** The video is somebody else's to serve, which narrows what we can offer. */
+	const isProvider = [ 'youtube', 'vimeo' ].includes( identify( src ).kind );
 
 	const tracks = ( attributes.tracks ?? [] ) as ListItem[];
 	const chapters = ( attributes.chapters ?? [] ) as ListItem[];
@@ -199,7 +208,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							: __( 'Imagina Audio Player', 'imagina-player' ),
 						instructions: isVideoBlock
 							? __(
-									'Upload a video, pick one from your media library, or paste the address of an MP4 or an HLS stream (.m3u8).',
+									'Upload a video, pick one from your media library, or paste a YouTube or Vimeo address, an MP4, or an HLS stream (.m3u8).',
 									'imagina-player'
 							  )
 							: __(
@@ -723,7 +732,10 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					</PanelBody>
 				) }
 
-				{ isVideo && (
+				{ /* Not for a provider: YouTube and Vimeo draw their own subtitles
+				     inside their own frame and will not hand the text over, so
+				     a file added here would simply never appear. */ }
+				{ isVideo && ! isProvider && (
 					<PanelBody
 						title={ __( 'Subtitles', 'imagina-player' ) }
 						initialOpen={ false }
@@ -1209,6 +1221,8 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					</Button>
 				</PanelBody>
 			</InspectorControls>
+
+			<SourceNotice src={ src } isVideoBlock={ isVideoBlock } />
 
 			<WaveformNotice
 				attachmentIds={ [ Number( attributes.attachmentId ?? 0 ) ] }

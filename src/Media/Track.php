@@ -9,6 +9,7 @@ declare( strict_types = 1 );
 
 namespace ImaginaPlayer\Media;
 
+use ImaginaPlayer\Media\Providers\VimeoThumbnail;
 use ImaginaPlayer\Settings;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,7 +28,9 @@ final class Track {
 		public readonly float $duration = 0.0,
 		public readonly string $download_url = '',
 		public readonly string $poster = '',
-		public readonly string $aspect_ratio = '16:9'
+		public readonly string $aspect_ratio = '16:9',
+		/** Set when the video lives on YouTube or Vimeo rather than here. */
+		public readonly ?Provider $provider = null
 	) {}
 
 	public function is_playable(): bool {
@@ -53,7 +56,18 @@ final class Track {
 	}
 
 	public function is_video(): bool {
-		return str_starts_with( $this->mime, 'video/' ) || $this->is_hls();
+		return str_starts_with( $this->mime, 'video/' ) || $this->is_hls() || $this->is_provider();
+	}
+
+	/**
+	 * The video is somebody else's to serve.
+	 *
+	 * WordPress reports no MIME type for a YouTube address, so without this the
+	 * track was not a video and the block rendered a row of audio controls
+	 * around an `<audio>` element pointed at a web page.
+	 */
+	public function is_provider(): bool {
+		return null !== $this->provider && $this->provider->exists();
 	}
 
 	/**
@@ -167,6 +181,10 @@ final class Track {
 			$mime    = (string) ( $checked['type'] ?: '' );
 		}
 
+		// Only for an address, never for something in the library: a file in
+		// the media library is served from here whatever its name looks like.
+		$provider = 0 === $attachment_id ? Provider::detect( $src ) : new Provider();
+
 		if ( '' === $thumbnail && $thumbnail_id > 0 ) {
 			$thumbnail = (string) ( wp_get_attachment_image_url( $thumbnail_id, 'medium' ) ?: '' );
 		}
@@ -184,6 +202,23 @@ final class Track {
 			$poster = $thumbnail;
 		}
 
+		/*
+		 * The provider's own still, when the author has not chosen one. This is
+		 * the picture people expect to see before they press play, and its
+		 * absence was most of what made a pasted YouTube link look broken.
+		 */
+		if ( '' === $poster && $provider->exists() ) {
+			$poster = 'vimeo' === $provider->name
+				? VimeoThumbnail::get( $provider )
+				: $provider->thumbnail_url();
+		}
+
+		// Nobody wants a filename-derived title for a YouTube address, because
+		// there is no filename in it — only an identifier.
+		if ( $provider->exists() && $title === self::title_from_filename( $src ) ) {
+			$title = '';
+		}
+
 		return new self(
 			src: $src,
 			attachment_id: $attachment_id,
@@ -194,7 +229,8 @@ final class Track {
 			duration: $duration,
 			download_url: $download,
 			poster: $poster,
-			aspect_ratio: $ratio
+			aspect_ratio: $ratio,
+			provider: $provider->exists() ? $provider : null
 		);
 	}
 

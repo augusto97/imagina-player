@@ -13,7 +13,7 @@
  * keyboard and touch.
  */
 
-import type { VideoConfig } from './types';
+import type { MediaCapabilities, PlayerMedia, VideoConfig } from './types';
 
 /** How long a tap counts as part of a double tap. */
 const DOUBLE_TAP_MS = 300;
@@ -26,7 +26,14 @@ const CAPTION_KEY = 'imagina-player-captions';
 
 interface Host {
 	root: HTMLElement;
-	media: HTMLVideoElement;
+	/* The transport, which for a video on YouTube is a stand-in rather than an
+	   element: everything about the picture works the same either way. */
+	media: PlayerMedia;
+	/* The element itself, when there is one. Full screen on the picture,
+	   picture-in-picture, HLS and our own subtitles all need a real element,
+	   and a provider video has none. */
+	element: HTMLVideoElement | null;
+	can: MediaCapabilities;
 	i18n: Record< string, string >;
 	/** The core's own play/pause, so both buttons agree on what toggling means. */
 	toggle: () => void;
@@ -47,7 +54,12 @@ interface WebkitFullscreen {
 export class VideoChrome {
 	private readonly root: HTMLElement;
 
-	private readonly media: HTMLVideoElement;
+	private readonly media: PlayerMedia;
+
+	/** Null for a video the provider serves; see `Host.element`. */
+	private readonly element: HTMLVideoElement | null;
+
+	private readonly can: MediaCapabilities;
 
 	private readonly host: Host;
 
@@ -71,6 +83,8 @@ export class VideoChrome {
 		this.host = host;
 		this.root = host.root;
 		this.media = host.media;
+		this.element = host.element;
+		this.can = host.can;
 		this.config = config;
 		this.stage = this.root.querySelector< HTMLElement >( '.imgp__stage' );
 
@@ -98,6 +112,14 @@ export class VideoChrome {
 	 * that will never touch it.
 	 */
 	private async setupHls(): Promise< void > {
+		const element = this.element;
+
+		// hls.js feeds a MediaSource into an element. A provider serves its own
+		// adaptive stream inside its own frame, so there is nothing here to do.
+		if ( ! element ) {
+			return;
+		}
+
 		try {
 			const { HlsStream } = await import(
 				/* webpackChunkName: "imagina-hls-glue" */ './hls'
@@ -105,14 +127,12 @@ export class VideoChrome {
 
 			const stream = new HlsStream( {
 				root: this.root,
-				media: this.media,
+				media: element,
 				i18n: this.host.i18n,
 				menu: ( items ) => this.openMenu( items ),
 			} );
 
-			if (
-				await stream.attach( this.media.currentSrc || this.media.src )
-			) {
+			if ( await stream.attach( element.currentSrc || element.src ) ) {
 				this.hls = stream;
 			}
 		} catch {
@@ -237,7 +257,16 @@ export class VideoChrome {
 		}
 
 		const element = this.root as HTMLElement & WebkitFullscreen;
-		const media = this.media as HTMLVideoElement & WebkitFullscreen;
+
+		/*
+		 * The iPhone fallback only exists for a real element. A provider frame
+		 * has no `webkitEnterFullscreen`, so on an iPhone a YouTube video goes
+		 * full screen through YouTube's own button inside the frame instead —
+		 * which is the only thing that works there.
+		 */
+		const media = ( this.can.elementFullscreen ? this.element : null ) as
+			| ( HTMLVideoElement & WebkitFullscreen )
+			| null;
 
 		// iPhone Safari has no element fullscreen at all: only the video element
 		// can go full screen, with its own native controls. Better than a button
@@ -245,7 +274,7 @@ export class VideoChrome {
 		const supported =
 			document.fullscreenEnabled ||
 			'webkitRequestFullscreen' in element ||
-			'webkitEnterFullscreen' in media;
+			( !! media && 'webkitEnterFullscreen' in media );
 
 		if ( ! supported ) {
 			return;
@@ -268,7 +297,7 @@ export class VideoChrome {
 				void element.requestFullscreen().catch( () => undefined );
 			} else if ( element.webkitRequestFullscreen ) {
 				void element.webkitRequestFullscreen();
-			} else if ( media.webkitEnterFullscreen ) {
+			} else if ( media?.webkitEnterFullscreen ) {
 				media.webkitEnterFullscreen();
 			}
 		} );
@@ -291,10 +320,14 @@ export class VideoChrome {
 
 		// `disablePictureInPicture` is set by the renderer when the file is meant
 		// to stay put; honouring it here keeps one decision in one place.
+		const element = this.element;
+
 		if (
+			! element ||
+			! this.can.pictureInPicture ||
 			! ( 'pictureInPictureEnabled' in document ) ||
 			! document.pictureInPictureEnabled ||
-			this.media.disablePictureInPicture
+			element.disablePictureInPicture
 		) {
 			return;
 		}
@@ -308,7 +341,7 @@ export class VideoChrome {
 				return;
 			}
 
-			void this.media.requestPictureInPicture().catch( () => undefined );
+			void element.requestPictureInPicture().catch( () => undefined );
 		} );
 	}
 
@@ -601,9 +634,16 @@ export class VideoChrome {
 	/** Every subtitle track, in DOM order, chapters excluded. */
 	private subtitleTracks(): TextTrack[] {
 		const tracks: TextTrack[] = [];
+		const element = this.element;
 
-		for ( let i = 0; i < this.media.textTracks.length; i++ ) {
-			const track = this.media.textTracks[ i ];
+		// A provider draws its own subtitles inside its own frame and will not
+		// hand the text over, so there is no track list here to offer.
+		if ( ! element || ! this.can.captions ) {
+			return tracks;
+		}
+
+		for ( let i = 0; i < element.textTracks.length; i++ ) {
+			const track = element.textTracks[ i ];
 
 			if ( 'subtitles' === track.kind || 'captions' === track.kind ) {
 				tracks.push( track );
@@ -779,7 +819,9 @@ export class VideoChrome {
 	 * public folder — this is the layer above that, not a substitute for it.
 	 */
 	private hardenContextMenu(): void {
-		if ( ! this.media.hasAttribute( 'controlslist' ) ) {
+		// A provider's frame has its own context menu and this page cannot
+		// touch it; there is also no file of ours behind it to protect.
+		if ( ! this.element || ! this.element.hasAttribute( 'controlslist' ) ) {
 			// Downloading is allowed for this player; do not pretend otherwise.
 			return;
 		}

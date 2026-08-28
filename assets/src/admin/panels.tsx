@@ -1009,6 +1009,38 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 					) }
 				</Notice>
 			</Card>
+
+			<Card
+				title={ __( 'YouTube and Vimeo', 'imagina-player' ) }
+				description={ __(
+					'Paste the address of a video into a Video block and it plays here, with your own controls and your own calls to action.',
+					'imagina-player'
+				) }
+			>
+				<div className="imgpa-toggles">
+					<Toggle
+						label={ __(
+							'Use YouTube’s no-cookie domain',
+							'imagina-player'
+						) }
+						help={ __(
+							'Loads the video from youtube-nocookie.com, which sets nothing until a visitor presses play. Turn this off only if you need YouTube’s own analytics for these videos.',
+							'imagina-player'
+						) }
+						checked={ Boolean( video.provider_privacy ) }
+						onChange={ ( value ) =>
+							set( { provider_privacy: value } )
+						}
+					/>
+				</div>
+
+				<Notice tone="info">
+					{ __(
+						'Nothing is requested from YouTube or Vimeo until somebody presses play — the page shows their still image until then, so a video nobody watches costs your visitors nothing. These videos are not files on your site, so the protection above does not apply to them.',
+						'imagina-player'
+					) }
+				</Notice>
+			</Card>
 		</>
 	);
 }

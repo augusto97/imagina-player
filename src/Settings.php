@@ -144,6 +144,13 @@ final class Settings {
 				'caption_size'    => 'medium',
 				'caption_bg'      => 'solid',
 				'big_play'        => true,
+				/*
+				 * For a video on YouTube: use the domain that sets no cookie
+				 * until playback begins. On by default, because the alternative
+				 * is a third-party cookie on every visitor who never presses
+				 * play, and in the EU that needs a banner.
+				 */
+				'provider_privacy' => true,
 			),
 			/*
 			 * Where a track's name comes from when the block does not say.

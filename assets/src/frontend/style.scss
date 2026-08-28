@@ -740,6 +740,40 @@
 	background: #000;
 }
 
+/* --- A video somebody else serves ---------------------------------------
+   Empty until play is pressed. The frame is built by the browser at that
+   moment: an iframe printed into the page is a request to the provider on
+   every page view whether or not anyone watches, and a third-party cookie
+   with it. Until then this box holds nothing and the poster covers it. */
+
+.imgp__embed {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	background: #000;
+}
+
+.imgp__embed iframe,
+.imgp__embed > div {
+	width: 100%;
+	height: 100%;
+	border: 0;
+	display: block;
+}
+
+/* Only ever seen with JavaScript off, where the still image is all there is
+   and the offer has to be a plain link to where the video actually lives. */
+.imgp__embed-link {
+	position: absolute;
+	inset: auto 0 0;
+	z-index: 3;
+	padding: 0.6rem 1rem;
+	background: rgb(0 0 0 / 72%);
+	color: #fff;
+	font-size: 0.9rem;
+	text-align: center;
+}
+
 /* --- Poster -------------------------------------------------------------
    A real image, so it can be given loading priority: the poster is very
    often the page's largest contentful paint. */

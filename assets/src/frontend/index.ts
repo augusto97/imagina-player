@@ -1,6 +1,6 @@
 import './public-path';
 import { Player } from './player';
-import type { RuntimeData, TrackChange } from './types';
+import type { RuntimeData, TrackChange, VideoConfig } from './types';
 import './style.scss';
 
 const SELECTOR = '[data-imagina-player]';
@@ -30,8 +30,47 @@ function create( root: HTMLElement ): void {
 
 	initialised.add( root );
 
+	/*
+	 * A video on YouTube or Vimeo has no element to drive, so a stand-in has to
+	 * exist before the player is built. That lives in its own chunk and arrives
+	 * asynchronously; everything else stays synchronous, so a page of audio
+	 * players pays nothing for this.
+	 */
+	const config = JSON.parse( root.dataset.imaginaPlayer || '{}' ) as {
+		video?: VideoConfig;
+	};
+
+	if ( config.video?.provider ) {
+		void start( root, config.video );
+
+		return;
+	}
+
+	build( root, null );
+}
+
+async function start( root: HTMLElement, video: VideoConfig ): Promise< void > {
 	try {
-		players.set( root, new Player( root, runtime() ) );
+		const { createProviderMedia } = await import(
+			/* webpackChunkName: "imagina-provider" */ './provider'
+		);
+
+		build( root, createProviderMedia( root, video ) );
+	} catch ( error ) {
+		// The still image and the link under it are already in the page, so a
+		// failure here leaves something that works rather than a blank box.
+		if ( window.console ) {
+			window.console.warn( 'Imagina Player:', error );
+		}
+	}
+}
+
+function build(
+	root: HTMLElement,
+	standIn: ConstructorParameters< typeof Player >[ 2 ]
+): void {
+	try {
+		players.set( root, new Player( root, runtime(), standIn ) );
 	} catch ( error ) {
 		// A single broken player must not take the rest of the page with it.
 		if ( window.console ) {

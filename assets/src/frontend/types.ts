@@ -31,6 +31,45 @@ export interface PlayerConfig {
 	} >;
 }
 
+/**
+ * What the player core needs from whatever is playing.
+ *
+ * `HTMLMediaElement` satisfies this by simply being itself, which is the point:
+ * for a file on this site nothing is adapted and nothing costs anything. A
+ * video on YouTube or Vimeo cannot be an element — it is a frame this page is
+ * not allowed to reach into — so it is driven through the provider's own API
+ * and presented here as the same handful of members.
+ *
+ * Deliberately the members the core actually uses and no more. Widening this
+ * means writing more of somebody else's player, and every one of them behaves
+ * slightly differently.
+ */
+export interface PlayerMedia extends EventTarget {
+	currentTime: number;
+	readonly duration: number;
+	readonly paused: boolean;
+	readonly ended: boolean;
+	volume: number;
+	muted: boolean;
+	playbackRate: number;
+	src: string;
+	readonly currentSrc: string;
+	play: () => Promise< void >;
+	pause: () => void;
+	/** Only ever used to take the native controls off; a stand-in ignores it. */
+	removeAttribute: ( name: string ) => void;
+	setAttribute: ( name: string, value: string ) => void;
+}
+
+/** What a provider stand-in can do beyond the transport, if anything. */
+export interface MediaCapabilities {
+	/** Text tracks belong to us, rather than to somebody else's player. */
+	captions: boolean;
+	pictureInPicture: boolean;
+	/** Full screen goes to the element itself rather than to the stage around it. */
+	elementFullscreen: boolean;
+}
+
 export interface VideoConfig {
 	/** As `w:h`, already validated server-side. */
 	ratio: string;
@@ -44,6 +83,14 @@ export interface VideoConfig {
 	chapters: Array< { start: number; title: string } >;
 	/** The source is an HLS manifest, so adaptive streaming may be needed. */
 	hls: boolean;
+	/** `youtube`, `vimeo`, or absent when the file is served from here. */
+	provider?: string;
+	/** The provider's identifier for the video. */
+	providerId?: string;
+	/** Vimeo's unlisted hash, which the embed will not load without. */
+	providerHash?: string;
+	/** The frame address, built by the server so the privacy setting applies. */
+	embedUrl?: string;
 }
 
 /** One item of a playlist, as the server hands it over. */

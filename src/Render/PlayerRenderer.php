@@ -132,6 +132,21 @@ final class PlayerRenderer {
 					(array) $atts['chapters']
 				),
 			);
+
+			/*
+			 * Its presence is what makes the browser load the provider chunk at
+			 * all, so it is added only when there is a provider — and the frame
+			 * address is built here rather than in the browser, so the privacy
+			 * setting is applied in one place.
+			 */
+			if ( $track->is_provider() && null !== $track->provider ) {
+				$client_config['video']['provider']     = $track->provider->name;
+				$client_config['video']['providerId']   = $track->provider->id;
+				$client_config['video']['providerHash'] = $track->provider->hash;
+				$client_config['video']['embedUrl']     = $track->provider->embed_url(
+					(bool) ( Settings::video()['provider_privacy'] ?? true )
+				);
+			}
 		}
 
 		/**
@@ -267,6 +282,10 @@ final class PlayerRenderer {
 	 * @param array<string, mixed> $config Effective settings.
 	 */
 	private function part_media( Track $track, array $atts, array $config ): string {
+		if ( $track->is_provider() ) {
+			return $this->part_embed( $track );
+		}
+
 		$is_video = $track->is_video();
 		$tag      = $is_video ? 'video' : 'audio';
 
@@ -676,6 +695,43 @@ final class PlayerRenderer {
 	 *
 	 * @param array<string, mixed> $config Effective settings.
 	 */
+	/**
+	 * The stand-in for a video somebody else serves.
+	 *
+	 * No iframe. An iframe in the markup is a request to Google on every page
+	 * view whether or not anyone watches — a third-party cookie and a few
+	 * hundred kilobytes charged to a page that may never use them. What is here
+	 * instead is the still image the visitor would see anyway, and a link to
+	 * the video, which is what somebody with no JavaScript gets. The frame is
+	 * built by the browser when play is pressed.
+	 */
+	private function part_embed( Track $track ): string {
+		$provider = $track->provider;
+
+		if ( null === $provider ) {
+			return '';
+		}
+
+		ob_start();
+		?>
+		<div class="imgp__embed" data-provider="<?php echo esc_attr( $provider->name ); ?>">
+			<noscript>
+				<a class="imgp__embed-link" href="<?php echo esc_url( $track->src ); ?>" rel="noopener noreferrer" target="_blank">
+					<?php
+					printf(
+						/* translators: %s: YouTube or Vimeo. */
+						esc_html__( 'Watch this video on %s', 'imagina-player' ),
+						esc_html( $provider->label() )
+					);
+					?>
+				</a>
+			</noscript>
+		</div>
+		<?php
+
+		return (string) ob_get_clean();
+	}
+
 	private function part_layers( Track $track, array $config, array $atts, string $id ): string {
 		$layers = array();
 

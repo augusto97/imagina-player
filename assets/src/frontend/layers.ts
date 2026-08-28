@@ -9,7 +9,7 @@
  * them; all this file does is decide when to stop hiding it.
  */
 
-import type { PlayerConfig, RuntimeData } from './types';
+import type { PlayerConfig, PlayerMedia, RuntimeData } from './types';
 
 /** How long the thank-you stays up before the gate lets go. */
 const THANKS_MS = 1600;
@@ -19,7 +19,9 @@ const SEEN_KEY = 'imagina-player-layers';
 
 interface LayerHost {
 	root: HTMLElement;
-	media: HTMLMediaElement;
+	/* Not an element: a call to action at 60% has to work on a YouTube video
+	   too, and that is driven through a stand-in rather than an element. */
+	media: PlayerMedia;
 	config: PlayerConfig;
 	runtime: RuntimeData;
 }
