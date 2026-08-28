@@ -1,20 +1,20 @@
 /**
- * What the block makes of the address it was given.
+ * What the block made of the address it was given.
  *
- * This exists because of a report that reads badly and was entirely fair: a
- * YouTube address pasted into the video block produced an audio player that
- * showed nothing, played nothing, and had no thumbnail. YouTube was never
- * supported — but nothing anywhere said so, so the only way to find out was to
- * publish the page and look at it.
+ * Two things, in two places, for one reason: the block canvas is where an
+ * author looks to see the post. Anything printed there reads as content that
+ * will be published, so a remark about how the block works does not belong in
+ * it — it belongs in the sidebar, with the rest of the block's settings.
  *
- * Now the block says what it recognised, before saving. When it recognises
- * nothing, it says that too, which is the case that was silent before.
+ * A fault is different. An address the player cannot play will publish as a
+ * broken player, and telling the author only in a panel they may never open is
+ * how that reaches the live site. That one stays in the canvas.
  */
 
 import { ExternalLink, Notice } from '@wordpress/components';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
-import { identify } from '../shared/source';
+import { identify, placement } from '../shared/source';
 
 interface Props {
 	src: string;
@@ -22,42 +22,51 @@ interface Props {
 	isVideoBlock: boolean;
 }
 
-export function SourceNotice( { src, isVideoBlock }: Props ) {
-	if ( ! src.trim() ) {
+/**
+ * The sidebar half: what this address is, beside the fields that describe it.
+ *
+ * @param props     Component props.
+ * @param props.src The address the block holds.
+ */
+export function SourceStatus( { src }: Pick< Props, 'src' > ) {
+	if ( 'sidebar' !== placement( src ) ) {
 		return null;
 	}
 
-	const source = identify( src );
+	const name = 'youtube' === identify( src ).kind ? 'YouTube' : 'Vimeo';
 
-	if ( 'youtube' === source.kind || 'vimeo' === source.kind ) {
-		const name = 'youtube' === source.kind ? 'YouTube' : 'Vimeo';
-
-		/*
-		 * One quiet line, not a banner. This confirms something the author
-		 * already believes — that the address they pasted is a video — and the
-		 * preview underneath is about to show it. A green box three lines deep
-		 * saying so sits above every video block for the life of the post.
-		 */
-		return (
-			<p className="imgp-editor__source">
+	return (
+		<div className="imgp-editor__source">
+			<p className="imgp-editor__source-line">
 				<span className="imgp-editor__source-badge">{ name }</span>
+				{ sprintf(
+					/* translators: %s: YouTube or Vimeo. */
+					__( 'This video is hosted by %s.', 'imagina-player' ),
+					name
+				) }
+			</p>
+			<p className="imgp-editor__hint">
 				{ __(
-					'Plays here with your controls. Nothing loads from them until a visitor presses play, and the download protection does not cover it.',
+					'It plays here with your own controls. Nothing is requested from them until a visitor presses play, and because the file is not on your site the download protection does not cover it.',
 					'imagina-player'
 				) }
 			</p>
-		);
-	}
+		</div>
+	);
+}
 
-	/*
-	 * A file or a stream. Nothing to say — the player has always handled these
-	 * and a notice on every well-formed block is just noise.
-	 */
-	if ( 'file' === source.kind || 'hls' === source.kind ) {
+/**
+ * The canvas half: only when the block will publish something broken.
+ *
+ * @param props              Component props.
+ * @param props.src          The address the block holds.
+ * @param props.isVideoBlock Whether this is the video block.
+ */
+export function SourceWarning( { src, isVideoBlock }: Props ) {
+	if ( 'canvas' !== placement( src ) ) {
 		return null;
 	}
 
-	// Anything left is an address this cannot play, which used to be silent.
 	return (
 		<Notice status="warning" isDismissible={ false }>
 			<p>

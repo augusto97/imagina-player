@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.13.1
+Stable tag: 1.13.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,15 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.13.2 =
+* Changed: the editor no longer prints anything into the block itself except a
+  fault. The line saying a video came from YouTube sat inside the block, above
+  the preview, where everything reads as the post about to be published — so it
+  looked like content the visitor would see, and it was telling the author
+  something they already knew. It now lives in the sidebar with the block's
+  other settings. An address the player cannot play still says so in the block,
+  because that will publish broken and the author has to see it.
 
 = 1.13.1 =
 * Fixed: on a site whose theme styles its own buttons — which is most of them —

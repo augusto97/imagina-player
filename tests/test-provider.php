@@ -212,19 +212,75 @@ if ( '' === $node ) {
 	} else {
 		file_put_contents(
 			$script,
-			"import { identify } from '" . $compiled . "';\n"
+			"import { identify, placement } from '" . $compiled . "';\n"
 			. 'const cases = ' . wp_json_encode( $cases ) . ";\n"
 			. "const out = {};\n"
-			. "for (const c of cases) { const s = identify(c); out[c] = ('youtube' === s.kind || 'vimeo' === s.kind) ? s.kind + '/' + s.id : ''; }\n"
-			. "console.log(JSON.stringify(out));\n"
+			. "const where = {};\n"
+			. "for (const c of cases) { const s = identify(c); out[c] = ('youtube' === s.kind || 'vimeo' === s.kind) ? s.kind + '/' + s.id : ''; where[c] = placement(c); }\n"
+			. "console.log(JSON.stringify({ kinds: out, placement: where, extra: {"
+			. "  file: placement('https://cdn.example.com/clip.mp4'),"
+			. "  hls: placement('https://cdn.example.com/live.m3u8'),"
+			. "  audio: placement('https://cdn.example.com/track.mp3'),"
+			. "  empty: placement('   ')"
+			. "} }));\n"
 		);
 
-		$raw = (string) shell_exec( 'node ' . escapeshellarg( $script ) . ' 2>/dev/null' );
-		$js  = json_decode( trim( $raw ), true );
+		$raw    = (string) shell_exec( 'node ' . escapeshellarg( $script ) . ' 2>/dev/null' );
+		$parsed = json_decode( trim( $raw ), true );
+		$js     = is_array( $parsed ) ? ( $parsed['kinds'] ?? null ) : null;
 
 		if ( ! is_array( $js ) ) {
 			check( 'the editor copy ran', false, trim( $raw ) );
 		} else {
+			echo PHP_EOL . '# Where the editor is allowed to say it' . PHP_EOL;
+
+			/*
+			 * The block canvas is where an author looks to see the post, so
+			 * anything printed there reads as content about to be published. A
+			 * line saying "this is a YouTube video" sat in it above every video
+			 * block — telling the author something they already knew, in the one
+			 * place where it could be mistaken for the page.
+			 *
+			 * So: remarks go to the sidebar, faults stay in the canvas, and the
+			 * ordinary case says nothing anywhere.
+			 */
+			$where = (array) ( $parsed['placement'] ?? array() );
+			$extra = (array) ( $parsed['extra'] ?? array() );
+
+			check(
+				'a YouTube video is reported in the sidebar, not in the block',
+				'sidebar' === ( $where['https://www.youtube.com/watch?v=dQw4w9WgXcQ'] ?? '' ),
+				(string) ( $where['https://www.youtube.com/watch?v=dQw4w9WgXcQ'] ?? '?' )
+			);
+
+			check(
+				'and so is a Vimeo one',
+				'sidebar' === ( $where['https://vimeo.com/123456789'] ?? '' ),
+				(string) ( $where['https://vimeo.com/123456789'] ?? '?' )
+			);
+
+			check(
+				'an address the player cannot play is reported in the block, where it will break',
+				'canvas' === ( $where['https://www.youtube.com/playlist?list=PLabcdefghij'] ?? '' ),
+				(string) ( $where['https://www.youtube.com/playlist?list=PLabcdefghij'] ?? '?' )
+			);
+
+			check(
+				'a channel too',
+				'canvas' === ( $where['https://www.youtube.com/@somechannel'] ?? '' ),
+				(string) ( $where['https://www.youtube.com/@somechannel'] ?? '?' )
+			);
+
+			foreach ( array( 'file' => 'an MP4', 'hls' => 'a stream', 'audio' => 'an audio file', 'empty' => 'an empty block' ) as $key => $what ) {
+				check(
+					"{$what} is remarked on nowhere at all",
+					'none' === ( $extra[ $key ] ?? '' ),
+					(string) ( $extra[ $key ] ?? '?' )
+				);
+			}
+
+			echo PHP_EOL . '# The two recognisers still agree' . PHP_EOL;
+
 			$disagreements = array();
 
 			foreach ( $cases as $url ) {

@@ -122,18 +122,20 @@
 	gap: 2px;
 }
 
-/* What the block made of the address it was given.
-   Deliberately a line of text rather than a notice: it confirms something the
-   author already expects, and the preview underneath is about to show it. A
-   coloured banner three lines deep would sit above every video block for the
-   life of the post. */
+/* What the block made of the address it was given. Lives in the sidebar, with
+   the settings: printed into the block canvas it read as content that was
+   about to be published, which is what the canvas is for. */
 .imgp-editor__source {
+	margin: 0 0 1rem;
+}
+
+.imgp-editor__source-line {
 	display: flex;
 	align-items: baseline;
-	gap: 0.5rem;
-	margin: 0 0 0.75rem;
-	color: #50575e;
-	font-size: 12px;
+	gap: 0.4rem;
+	margin: 0 0 0.25rem;
+	color: #1e1e1e;
+	font-size: 13px;
 	line-height: 1.5;
 }
 

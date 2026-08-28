@@ -22,7 +22,7 @@ import { __, sprintf } from '@wordpress/i18n';
 
 import { Preview } from './preview';
 import { identify, isVideoSource } from '../shared/source';
-import { SourceNotice } from './source-notice';
+import { SourceStatus, SourceWarning } from './source-notice';
 import { WaveformNotice } from './waveform-notice';
 import type { EditorData } from './types';
 
@@ -266,6 +266,8 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 
 			<InspectorControls>
 				<PanelBody title={ __( 'Track', 'imagina-player' ) }>
+					<SourceStatus src={ src } />
+
 					<TextControl
 						__nextHasNoMarginBottom
 						label={ __( 'Title', 'imagina-player' ) }
@@ -1222,7 +1224,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 				</PanelBody>
 			</InspectorControls>
 
-			<SourceNotice src={ src } isVideoBlock={ isVideoBlock } />
+			<SourceWarning src={ src } isVideoBlock={ isVideoBlock } />
 
 			<WaveformNotice
 				attachmentIds={ [ Number( attributes.attachmentId ?? 0 ) ] }

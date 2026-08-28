@@ -163,3 +163,34 @@ export function isVideoSource( raw: string ): boolean {
 
 	return VIDEO.includes( extension( raw.split( '?' )[ 0 ] ) );
 }
+
+/**
+ * Where, if anywhere, the editor should say something about this address.
+ *
+ * The rule is about what an author is looking at. Inside the block canvas
+ * everything reads as the post — that is what the canvas is for — so a line
+ * saying "this is a YouTube video" printed there looks like something that will
+ * be published, and reporting a fact the author already knows is not worth that
+ * confusion. It belongs in the sidebar with the rest of the block's settings.
+ *
+ * The exception is an address the player cannot play. That is not a remark
+ * about the block, it is a fault in it, and a fault has to be where the eye
+ * already is.
+ */
+export type Placement = 'none' | 'sidebar' | 'canvas';
+
+export function placement( raw: string ): Placement {
+	if ( ! raw.trim() ) {
+		return 'none';
+	}
+
+	const kind = identify( raw ).kind;
+
+	if ( 'youtube' === kind || 'vimeo' === kind ) {
+		return 'sidebar';
+	}
+
+	// A file or a stream needs no remark at all: it is the ordinary case and
+	// the preview underneath is about to show it working.
+	return 'file' === kind || 'hls' === kind ? 'none' : 'canvas';
+}
