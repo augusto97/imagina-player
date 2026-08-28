@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.10.0.zip`.
+1. Descarga `imagina-player-1.11.0.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Imagina Player** (menú lateral), o desde el enlace
@@ -25,28 +25,46 @@ En el insertador de Gutenberg, buscando «imagina»:
 
 Tres niveles, en este orden:
 
-1. **ffmpeg en el servidor**, si lo hay. Mide una vez y ya está.
-2. **El navegador del primer visitante**, para archivos por debajo de 25 MB.
-   Lo mide, lo guarda, y el resto ya lo encuentran hecho.
-3. **Tu navegador, desde el editor.** Sin límite de tamaño y sin depender de
-   ffmpeg. Es lo que hay que usar para grabaciones largas.
+1. **ffmpeg en el servidor**, si lo hay.
+2. **El navegador del primer visitante**, por debajo de 25 MB.
+3. **Tu navegador, desde el editor.** Sin límite y sin depender de ffmpeg.
+
+## De dónde sale el nombre
+
+Etiquetas del propio fichero → título en la biblioteca → nombre del fichero. Lo
+que escribas en el bloque gana siempre. Se ajusta en **Detalles de la pista**.
 
 ## Versión actual
 
 | | |
 | --- | --- |
-| Versión | `1.10.0` |
-| Fichero | `imagina-player-1.10.0.zip` |
-| Tamaño | 324 KB |
-| SHA-256 | `efd5cb155c95134685a782f2bea523e956b60ae98b339e928e5f369a7ea06c64` |
+| Versión | `1.11.0` |
+| Fichero | `imagina-player-1.11.0.zip` |
+| Tamaño | 328 KB |
+| SHA-256 | `c7ec8662a04c9880fb6c475c5ea7eece68cd2fc8b2a345be8a8423e4170302b5` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.10.0.zip
+sha256sum imagina-player-1.11.0.zip
 ```
+
+## Novedades en 1.11.0
+
+- **Nuevo: sección Detalles de la pista.** De dónde salen el título y el artista
+  cuando dejas vacíos los campos del bloque: las etiquetas del fichero, el
+  nombre que tiene en tu biblioteca, o el nombre del archivo. Parte ya pasaba;
+  nada se podía cambiar ni ver.
+- **Nuevo:** el nombre del archivo como último recurso.
+  `2024-03-11_mi-conferencia.mp3` se convierte en «Mi conferencia» — la fecha
+  de delante es archivado, no título. Es lo único que tiene una dirección pegada
+  de un proveedor de streaming.
+- **Nuevo:** la carátula incrustada en el audio se usa como miniatura.
+- **Cambiado:** los campos Título y Artista del bloque muestran en gris lo que
+  el archivo les daría, en vez de quedarse vacíos junto a un reproductor que sí
+  tiene título.
 
 ## Novedades en 1.10.0
 
