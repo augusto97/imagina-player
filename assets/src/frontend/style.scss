@@ -1650,3 +1650,213 @@
 .imgp-playlist--grid .imgp-playlist__time {
 	align-self: flex-start;
 }
+
+/* --- Standing up to the theme -------------------------------------------
+   A plugin's markup lands inside somebody else's stylesheet, and a theme that
+   says `.entry-content button { background: #ff87ac; min-height: 48px }` is not
+   doing anything strange — it is styling its own buttons, and ours are caught
+   by the same rule. A class on its own loses to that: `.imgp__bigplay` is one
+   class, `.entry-content button` is a class and an element, and the theme wins.
+
+   This is how that stopped being theoretical. The play button over a video
+   covers the whole picture on purpose, so it can be clicked anywhere; during
+   playback only its circle and its icon fade out, and the button itself stays.
+   Painted by a theme, it became a flat sheet of pink over the video with no
+   sign of what it was — and every test in this suite passed, because they all
+   render into an empty page.
+
+   So these few declarations are deliberately unarguable. They are only the
+   properties a theme has any business setting on a button or a frame of its
+   own, restated for the elements this player owns; nothing here changes how the
+   player looks on a page that leaves it alone. `tests/test-hostile-theme.php`
+   renders every skin under a stylesheet built out of what themes really ship
+   and checks that none of it gets through. */
+
+.imgp button,
+.imgp input,
+.imgp iframe,
+.imgp canvas,
+.imgp img {
+	min-width: 0 !important;
+	min-height: 0 !important;
+	box-shadow: none !important;
+	text-transform: none !important;
+	letter-spacing: normal !important;
+	float: none !important;
+	text-indent: 0 !important;
+	font-family: inherit !important;
+}
+
+
+/* Every control starts with no colour of its own — the sheet over the picture
+   most of all, since it is a click target the size of what it covers and a
+   background on it is a background over the video — and the handful that do
+   carry one say so again below. Restating them costs a few lines and removes
+   the whole question of whose selector is more specific. */
+.imgp button {
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 0 !important;
+	background-color: transparent !important;
+	background-image: none !important;
+
+	/* A theme's `button { color: #fff }` is for its own filled buttons. On a
+	   transport icon over a pale player it is a white shape on white. */
+	color: inherit !important;
+}
+
+/* The download control is an anchor, not a button, so `a { color: #d6336c;
+   text-decoration: underline }` reaches it and nothing above does. */
+.imgp a {
+	color: inherit !important;
+	text-decoration: none !important;
+	box-shadow: none !important;
+}
+
+/* Except the one that is only ever seen with JavaScript off, where it is the
+   whole offer and should look like the link it is. */
+.imgp .imgp__embed-link {
+	color: #fff !important;
+	text-decoration: underline !important;
+}
+
+/*
+ * And the handful that do have a shape of their own, said again. Every value
+ * here is the one in the component rule above it; the duplication buys the
+ * guarantee that no theme selector, however specific, can reach them.
+ * `test-hostile-theme.php` compares each element with the theme and without it,
+ * so anything left out of this list shows up as a difference rather than as a
+ * surprise on somebody's site.
+ */
+.imgp .imgp__vbtn,
+.imgp .imgp__menuitem {
+	border-radius: 0.35rem !important;
+}
+
+.imgp .imgp__menuitem {
+	padding: 0.45rem 0.6rem !important;
+}
+
+.imgp .imgp__mute,
+.imgp .imgp__skip,
+.imgp .imgp__speed,
+.imgp .imgp__download {
+	padding: 0.25rem !important;
+}
+
+.imgp .imgp__layer-close {
+	border-radius: 999px !important;
+}
+
+.imgp .imgp__play {
+	border-radius: 50% !important;
+	background-color: var(--imgp-accent) !important;
+	color: #fff !important;
+}
+
+.imgp .imgp__vbtn,
+.imgp .imgp__bigplay {
+	color: var(--imgp-on-chrome) !important;
+}
+
+.imgp .imgp__menuitem:hover,
+.imgp .imgp__menuitem:focus-visible {
+	background-color: rgb(255 255 255 / 14%) !important;
+}
+
+.imgp .imgp__layer-close:hover,
+.imgp .imgp__layer-close:focus-visible {
+	background-color: rgb(255 255 255 / 24%) !important;
+}
+
+.imgp .imgp__layer--bar .imgp__layer-close {
+	background-color: rgb(0 0 0 / 12%) !important;
+}
+
+/* The one button with padding of its own, restated so the blanket reset above
+   cannot flatten it. */
+.imgp .imgp__layer-button {
+	padding: 0.6rem 1.15rem !important;
+	border-radius: 0.4rem !important;
+	background-color: var(--imgp-accent) !important;
+	color: var(--imgp-on-accent, #fff) !important;
+	text-decoration: none !important;
+}
+
+.imgp .imgp__layer--bar .imgp__layer-button {
+	background-color: var(--imgp-on-accent, #fff) !important;
+	color: var(--imgp-accent) !important;
+}
+
+/* The volume slider is an `<input type="range">`, which themes dress up as a
+   form field: a border, a background and forty-eight pixels of height. */
+.imgp input {
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 0 !important;
+	background-color: transparent !important;
+}
+
+.imgp .imgp__layer-input {
+	padding: 0.55rem 0.75rem !important;
+	border: 1px solid rgb(255 255 255 / 28%) !important;
+	border-radius: 0.4rem !important;
+	background-color: rgb(255 255 255 / 10%) !important;
+}
+
+.imgp .imgp__vbtn:hover,
+.imgp .imgp__vbtn:focus-visible {
+	background-color: rgb(255 255 255 / 16%) !important;
+}
+
+.imgp .imgp__vbtn.is-active {
+	background-color: rgb(255 255 255 / 22%) !important;
+}
+
+/* The picture itself, whoever is serving it. */
+.imgp .imgp__embed {
+	background-color: #000 !important;
+}
+
+.imgp .imgp__embed iframe {
+	display: block !important;
+	width: 100% !important;
+	height: 100% !important;
+	border: 0 !important;
+	border-radius: 0 !important;
+	background-color: transparent !important;
+}
+
+.imgp .imgp__media {
+	border-radius: 0 !important;
+	background-color: transparent !important;
+}
+
+.imgp--video .imgp__media {
+	background-color: #000 !important;
+}
+
+/* `img { height: auto }` is in every theme on earth, and it is what turns a
+   poster that should fill a 16:9 box into a letterboxed thumbnail sitting at
+   its own size. */
+.imgp .imgp__poster img {
+	width: 100% !important;
+	height: 100% !important;
+	border-radius: 0 !important;
+}
+
+/* The cover beside an audio player is a different problem: its size is ours to
+   set and changes with the skin and the width, so it cannot be pinned here.
+   Holding it square is enough — a theme's `height: auto` then has nothing left
+   to stretch, and the crop survives. */
+.imgp .imgp__thumb img {
+	aspect-ratio: 1 !important;
+	object-fit: cover !important;
+	border-radius: 0.35rem !important;
+}
+
+.imgp .imgp__wave {
+	background-color: transparent !important;
+}

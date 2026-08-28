@@ -107,11 +107,8 @@ final class Dashboard {
 				array(
 					'restUrl'     => esc_url_raw( rest_url( 'imagina-player/v1' ) ),
 					'nonce'       => wp_create_nonce( 'wp_rest' ),
-					'frontendCss' => \ImaginaPlayer\URL . 'build/style-frontend.css',
-					'frontendJs'  => \ImaginaPlayer\URL . 'build/frontend.js',
-					'frameCss'    => \ImaginaPlayer\URL . 'assets/preview-frame.css',
 					'docsUrl'     => 'https://github.com/augusto97/imagina-player',
-				)
+				) + Assets::preview_assets()
 			) . ';',
 			'before'
 		);

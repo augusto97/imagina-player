@@ -121,3 +121,28 @@
 	align-items: center;
 	gap: 2px;
 }
+
+/* What the block made of the address it was given.
+   Deliberately a line of text rather than a notice: it confirms something the
+   author already expects, and the preview underneath is about to show it. A
+   coloured banner three lines deep would sit above every video block for the
+   life of the post. */
+.imgp-editor__source {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	margin: 0 0 0.75rem;
+	color: #50575e;
+	font-size: 12px;
+	line-height: 1.5;
+}
+
+.imgp-editor__source-badge {
+	flex: 0 0 auto;
+	padding: 0.1rem 0.4rem;
+	border-radius: 3px;
+	background: #e8f0f5;
+	color: #1e4657;
+	font-size: 11px;
+	font-weight: 600;
+}

@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.13.0
+Stable tag: 1.13.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,28 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.13.1 =
+* Fixed: on a site whose theme styles its own buttons — which is most of them —
+  the play button over a video was painted in the theme's colour. It covers the
+  whole picture on purpose so it can be clicked anywhere, and during playback
+  only its circle and icon fade out, so what was left was a flat sheet of the
+  theme's colour over the video. Round buttons became rounded squares, icons
+  took the theme's text colour, and the download control took its link colour.
+* New: the player now defends the properties a theme has any business setting
+  on a button, an input, an anchor or a frame of its own. The site's typeface
+  still flows in, as it should; nothing else does.
+* New: the whole player is rendered twice on every test run — once inside a
+  stylesheet built out of what themes really ship, once without it — and every
+  element of the two is compared. Until now every browser test rendered into an
+  empty page, which is why none of this was caught.
+* Fixed: the block preview loaded the front-end stylesheet with no version, so
+  after an update the browser went on serving whatever it had cached. On a site
+  updated from an older release the editor drew a video with a stylesheet that
+  predated video: the picture had no shape, the poster sat at its own size and
+  the controls fell out underneath it.
+* Changed: the "this is a YouTube video" notice in the editor is one quiet line
+  instead of a banner three lines deep above every block.
 
 = 1.13.0 =
 * New: YouTube and Vimeo. Pasting a YouTube address into the Video block used to

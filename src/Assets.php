@@ -71,6 +71,31 @@ final class Assets {
 	}
 
 	/**
+	 * The addresses the preview iframe loads, with a cache-busting version.
+	 *
+	 * The block preview and the settings screen both build an iframe by hand and
+	 * point it at the real front-end files, so they miss everything WordPress
+	 * does for an enqueued asset — including `?ver=`. Without it the browser is
+	 * entitled to keep serving whatever it cached the first time, and it does:
+	 * after an update the editor went on drawing a video with a stylesheet that
+	 * predated video, so the picture had no shape and the controls fell out from
+	 * under it. Nothing was wrong with the page; it was months old.
+	 *
+	 * @return array<string, string>
+	 */
+	public static function preview_assets(): array {
+		$version = self::asset_meta( 'frontend' )['version'];
+
+		return array(
+			'frontendCss' => add_query_arg( array( 'ver' => $version ), URL . 'build/style-frontend.css' ),
+			'frontendJs'  => add_query_arg( array( 'ver' => $version ), URL . 'build/frontend.js' ),
+			// Not built by webpack, so it has no hash of its own; the plugin
+			// version is enough, since it only changes when the plugin does.
+			'frameCss'    => add_query_arg( array( 'ver' => VERSION ), URL . 'assets/preview-frame.css' ),
+		);
+	}
+
+	/**
 	 * Enqueue the front-end bundle, once, for a page that renders a player.
 	 */
 	public static function enqueue_frontend(): void {

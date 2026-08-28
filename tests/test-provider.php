@@ -136,6 +136,48 @@ $vimeo = $renderer->render( array( 'src' => 'https://vimeo.com/123456789/abc123d
 check( 'a Vimeo video renders as a video too', str_contains( $vimeo, 'imgp--video' ) && str_contains( $vimeo, 'imgp__embed' ) );
 check( 'and carries its unlisted hash to the browser', str_contains( $vimeo, 'abc123def4' ) );
 
+echo PHP_EOL . '# What the editor loads to preview it' . PHP_EOL;
+
+/*
+ * The block preview builds an iframe by hand and points it at the real
+ * front-end files, so it gets none of what WordPress does for an enqueued
+ * asset — `?ver=` included. Without that the browser keeps serving whatever it
+ * cached the first time, and after an update the editor went on drawing a video
+ * with a stylesheet from before video existed: the picture had no shape, the
+ * poster sat at its own size and the controls fell out underneath. Nothing was
+ * wrong with the markup; the stylesheet was months old.
+ */
+$assets = \ImaginaPlayer\Assets::preview_assets();
+
+foreach ( array( 'frontendCss', 'frontendJs', 'frameCss' ) as $name ) {
+	check(
+		"the preview's {$name} carries a version",
+		isset( $assets[ $name ] ) && (bool) preg_match( '/[?&]ver=[^&]+/', (string) $assets[ $name ] ),
+		(string) ( $assets[ $name ] ?? 'missing' )
+	);
+}
+
+check(
+	'and the stylesheet version tracks the build rather than the release',
+	str_contains( (string) $assets['frontendCss'], 'ver=' )
+		&& ! str_contains( (string) $assets['frontendCss'], 'ver=' . \ImaginaPlayer\VERSION ),
+	(string) $assets['frontendCss']
+);
+
+echo PHP_EOL . '# The preview renders the same thing as the page' . PHP_EOL;
+
+/*
+ * The editor preview goes through the same renderer over REST. It is worth
+ * asserting because the report that started this arrived as two complaints —
+ * the front end and the editor — and only one of them was the renderer.
+ */
+$attributes  = array( 'src' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'title' => 'Prueba' );
+$from_editor = ( new PlayerRenderer() )->render( $attributes );
+
+check( 'the preview lays a provider video out as a video', str_contains( $from_editor, 'imgp--video' ) );
+check( 'with the stage that gives it its shape', str_contains( $from_editor, 'imgp__stage' ) );
+check( 'and the box the frame goes in', str_contains( $from_editor, 'imgp__embed' ) );
+
 echo PHP_EOL . '# The two recognisers agree' . PHP_EOL;
 
 /*

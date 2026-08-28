@@ -12,7 +12,7 @@
  */
 
 import { ExternalLink, Notice } from '@wordpress/components';
-import { __, sprintf } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 
 import { identify } from '../shared/source';
 
@@ -32,25 +32,20 @@ export function SourceNotice( { src, isVideoBlock }: Props ) {
 	if ( 'youtube' === source.kind || 'vimeo' === source.kind ) {
 		const name = 'youtube' === source.kind ? 'YouTube' : 'Vimeo';
 
+		/*
+		 * One quiet line, not a banner. This confirms something the author
+		 * already believes — that the address they pasted is a video — and the
+		 * preview underneath is about to show it. A green box three lines deep
+		 * saying so sits above every video block for the life of the post.
+		 */
 		return (
-			<Notice status="success" isDismissible={ false }>
-				<p>
-					{ sprintf(
-						/* translators: %s: YouTube or Vimeo. */
-						__(
-							'A video from %s. It plays in this player, with your own controls — the picture and the sound come from them.',
-							'imagina-player'
-						),
-						name
-					) }
-				</p>
-				<p className="imgp-editor__hint">
-					{ __(
-						'Nothing is requested from them until a visitor presses play, so the video costs your page nothing until it is watched. It is also not a file on your site, so the download protection does not apply to it.',
-						'imagina-player'
-					) }
-				</p>
-			</Notice>
+			<p className="imgp-editor__source">
+				<span className="imgp-editor__source-badge">{ name }</span>
+				{ __(
+					'Plays here with your controls. Nothing loads from them until a visitor presses play, and the download protection does not cover it.',
+					'imagina-player'
+				) }
+			</p>
 		);
 	}
 
