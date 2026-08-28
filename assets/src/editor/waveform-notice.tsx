@@ -24,14 +24,17 @@ import type { MeasureProgress } from '../shared/measure';
 const BARS = 400;
 
 interface Track {
+	/** Zero for a track pasted from a streaming provider. */
 	id: number;
+	src: string;
 	hasPeaks: boolean;
-	url: string;
 }
 
 interface Props {
-	/** The files to check. Empty, or all zeroes, renders nothing. */
-	attachmentIds: number[];
+	/** Library files to check. Zeroes are ignored. */
+	attachmentIds?: number[];
+	/** Addresses to check, for tracks that are not in the library. */
+	urls?: string[];
 	/** Videos draw no waveform, so a missing one is not a problem to report. */
 	disabled?: boolean;
 	/** Called after at least one waveform has been stored. */
@@ -39,7 +42,8 @@ interface Props {
 }
 
 export function WaveformNotice( {
-	attachmentIds,
+	attachmentIds = [],
+	urls = [],
 	disabled,
 	onMeasured,
 }: Props ) {
@@ -47,11 +51,17 @@ export function WaveformNotice( {
 	const [ status, setStatus ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
 
-	const ids = attachmentIds.filter( Boolean );
-	const signature = ids.join( ',' );
+	const ids = attachmentIds.filter( Boolean ).join( ',' );
+
+	/*
+	 * Newline-separated, not comma-separated: a URL may legally contain a
+	 * comma, and splitting on one would cut somebody's signed link in half.
+	 */
+	const addresses = urls.filter( Boolean ).join( '\n' );
+	const signature = ids + '|' + addresses;
 
 	useEffect( () => {
-		if ( disabled || '' === signature ) {
+		if ( disabled || '|' === signature ) {
 			setMissing( [] );
 
 			return;
@@ -59,7 +69,19 @@ export function WaveformNotice( {
 
 		let cancelled = false;
 
-		apiFetch( { path: '/imagina-player/v1/peaks/status?ids=' + signature } )
+		const query = new URLSearchParams();
+
+		if ( ids ) {
+			query.set( 'ids', ids );
+		}
+
+		if ( addresses ) {
+			query.set( 'urls', addresses );
+		}
+
+		apiFetch( {
+			path: '/imagina-player/v1/peaks/status?' + query.toString(),
+		} )
 			.then( ( result ) => {
 				if ( cancelled ) {
 					return;
@@ -79,6 +101,7 @@ export function WaveformNotice( {
 		return () => {
 			cancelled = true;
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ signature, disabled ] );
 
 	if ( disabled || 0 === missing.length ) {
@@ -94,19 +117,34 @@ export function WaveformNotice( {
 		for ( let i = 0; i < missing.length; i++ ) {
 			const track = missing[ i ];
 
+			const report = ( progress: MeasureProgress ): void =>
+				setStatus( label( progress, i + 1, missing.length ) );
+
 			try {
-				const result = await measure(
-					track.url,
-					BARS,
-					( progress: MeasureProgress ) =>
-						setStatus( label( progress, i + 1, missing.length ) )
-				);
+				let result;
+
+				try {
+					result = await measure( track.src, BARS, report );
+				} catch {
+					/*
+					 * Almost always CORS: the file is on another domain and
+					 * that domain has not said this one may read it. Nothing
+					 * about the file is wrong, so rather than give up, ask our
+					 * own server to fetch it and hand it over same-origin.
+					 */
+					result = await measure(
+						proxied( track.src ),
+						BARS,
+						report
+					);
+				}
 
 				await apiFetch( {
 					path: '/imagina-player/v1/peaks/store',
 					method: 'POST',
 					data: {
 						attachmentId: track.id,
+						src: track.src,
 						peaks: result.peaks,
 						duration: result.duration,
 					},
@@ -115,13 +153,13 @@ export function WaveformNotice( {
 				done++;
 			} catch {
 				// One file that will not decode should not stop the others.
-				failed.push( String( track.id ) );
+				failed.push( track.src );
 			}
 		}
 
 		setBusy( false );
 		setMissing( ( current ) =>
-			current.filter( ( track ) => failed.includes( String( track.id ) ) )
+			current.filter( ( track ) => failed.includes( track.src ) )
 		);
 		setStatus(
 			0 === failed.length
@@ -188,6 +226,26 @@ export function WaveformNotice( {
 }
 
 /**
+ * The same file, fetched through this site rather than directly.
+ *
+ * @param src The remote address.
+ */
+function proxied( src: string ): string {
+	const root = ( window.wpApiSettings?.root ?? '/wp-json/' ).replace(
+		/\/$/,
+		'/'
+	);
+
+	return (
+		root +
+		'imagina-player/v1/peaks/proxy?src=' +
+		encodeURIComponent( src ) +
+		'&_wpnonce=' +
+		encodeURIComponent( window.wpApiSettings?.nonce ?? '' )
+	);
+}
+
+/**
  * What is happening, said in the button.
  *
  * A ninety-megabyte download in silence reads as a hang, so the percentage is
@@ -222,4 +280,11 @@ function label(
 		total,
 		what
 	);
+}
+
+declare global {
+	interface Window {
+		/** Printed by WordPress on any screen that loads the REST client. */
+		wpApiSettings?: { root?: string; nonce?: string };
+	}
 }

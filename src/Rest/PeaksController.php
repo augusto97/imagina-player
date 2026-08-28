@@ -12,6 +12,7 @@ namespace ImaginaPlayer\Rest;
 use ImaginaPlayer\Peaks\PeaksGenerator;
 use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Peaks\PeaksToken;
+use ImaginaPlayer\Player\Attributes;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -112,12 +113,23 @@ final class PeaksController {
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'store_for_attachment' ),
 				'permission_callback' => static function ( WP_REST_Request $request ): bool {
-					return current_user_can( 'edit_post', (int) $request->get_param( 'attachmentId' ) );
+					$attachment_id = (int) $request->get_param( 'attachmentId' );
+
+					// An external track belongs to no post, so there is nothing
+					// to check rights over. Being able to add media to the site
+					// is the right bar: the same person could upload the file.
+					return $attachment_id > 0
+						? current_user_can( 'edit_post', $attachment_id )
+						: current_user_can( 'upload_files' );
 				},
 				'args'                => array(
 					'attachmentId' => array(
-						'type'     => 'integer',
-						'required' => true,
+						'type'    => 'integer',
+						'default' => 0,
+					),
+					'src'          => array(
+						'type'    => 'string',
+						'default' => '',
 					),
 					'peaks'        => array(
 						'type'     => 'array',
@@ -146,7 +158,40 @@ final class PeaksController {
 				'callback'            => array( $this, 'status' ),
 				'permission_callback' => static fn(): bool => current_user_can( 'upload_files' ),
 				'args'                => array(
-					'ids' => array(
+					'ids'  => array( 'type' => 'string' ),
+					// A track pasted from a streaming provider has no attachment
+					// to name, so it is identified by its address instead.
+					'urls' => array( 'type' => 'string' ),
+				),
+			)
+		);
+
+		/*
+		 * A same-origin doorway to a remote media file, for measuring it.
+		 *
+		 * A browser cannot read a file from another domain unless that domain
+		 * says it may, and most media hosts do not. Without this, a track
+		 * pasted from a streaming provider can never be measured anywhere: not
+		 * on the server, which has no decoder, and not in the browser, which is
+		 * not allowed to look.
+		 *
+		 * A route that fetches a URL on request is a server-side request
+		 * forgery waiting to happen, so it is fenced in: it needs the right to
+		 * add media, the URL goes through WordPress's own validator (which
+		 * refuses anything but http and https, and refuses private and loopback
+		 * addresses), the fetch uses the `safe` client so redirects are checked
+		 * the same way, the size is capped, and the answer is only ever bytes
+		 * with a media content type.
+		 */
+		register_rest_route(
+			self::REST_NAMESPACE,
+			'/peaks/proxy',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'proxy' ),
+				'permission_callback' => static fn(): bool => current_user_can( 'upload_files' ),
+				'args'                => array(
+					'src' => array(
 						'type'     => 'string',
 						'required' => true,
 					),
@@ -229,11 +274,132 @@ final class PeaksController {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	/**
+	 * Largest remote file this will fetch. Beyond it, no browser was going to
+	 * decode the thing anyway.
+	 */
+	private const PROXY_MAX_BYTES = 250 * MB_IN_BYTES;
+
+	/**
+	 * Hand a remote media file to the editor's browser, same-origin.
+	 *
+	 * Never echoes anything from the remote server but its bytes: no headers
+	 * are passed through, and the content type is one we chose from a short
+	 * list rather than one it told us.
+	 */
+	public function proxy( WP_REST_Request $request ): void {
+		$src = Attributes::sanitize_media_url( (string) $request->get_param( 'src' ) );
+
+		// WordPress's own check: http and https only, no private or loopback
+		// addresses, no unusual ports.
+		if ( '' === $src || ! wp_http_validate_url( $src ) ) {
+			$this->refuse( 400 );
+		}
+
+		$head = wp_safe_remote_head(
+			$src,
+			array(
+				'timeout'     => 15,
+				'redirection' => 3,
+			)
+		);
+
+		if ( is_wp_error( $head ) ) {
+			$this->refuse( 502 );
+		}
+
+		$length = (int) wp_remote_retrieve_header( $head, 'content-length' );
+
+		if ( $length > self::PROXY_MAX_BYTES ) {
+			$this->refuse( 413 );
+		}
+
+		$type = strtolower( (string) wp_remote_retrieve_header( $head, 'content-type' ) );
+
+		if ( ! $this->looks_like_media( $type ) ) {
+			$this->refuse( 415 );
+		}
+
+		$temp = wp_tempnam( 'imagina-peaks' );
+
+		if ( ! $temp ) {
+			$this->refuse( 500 );
+		}
+
+		$body = wp_safe_remote_get(
+			$src,
+			array(
+				'timeout'     => 120,
+				'redirection' => 3,
+				'stream'      => true,
+				'filename'    => $temp,
+			)
+		);
+
+		$size = (int) ( @filesize( $temp ) ?: 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- missing file is handled below.
+
+		if ( is_wp_error( $body ) || 200 !== (int) wp_remote_retrieve_response_code( $body ) || $size > self::PROXY_MAX_BYTES ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- our own temp file.
+			@unlink( $temp ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best effort.
+			$this->refuse( is_wp_error( $body ) ? 502 : 413 );
+		}
+
+		nocache_headers();
+		status_header( 200 );
+		header( 'Content-Type: ' . ( str_starts_with( $type, 'video/' ) ? 'video/mp4' : 'audio/mpeg' ) );
+		header( 'Content-Length: ' . $size );
+		header( 'X-Content-Type-Options: nosniff' );
+
+		// Chunked, because the whole point is that this file is large.
+		$handle = fopen( $temp, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- our own temp file.
+
+		if ( $handle ) {
+			while ( ! feof( $handle ) ) {
+				echo fread( $handle, 65536 ); // phpcs:ignore WordPress.Security.EscapeOutput -- media bytes.
+				flush();
+			}
+
+			fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- as above.
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- our own temp file.
+		@unlink( $temp ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best effort.
+		exit;
+	}
+
+	/**
+	 * Whether a content type is plausibly a media file.
+	 *
+	 * `octet-stream` is allowed because plenty of storage buckets serve every
+	 * file that way, and refusing it would refuse half the world's audio.
+	 */
+	private function looks_like_media( string $type ): bool {
+		$type = trim( explode( ';', $type )[0] );
+
+		return str_starts_with( $type, 'audio/' )
+			|| str_starts_with( $type, 'video/' )
+			|| 'application/octet-stream' === $type
+			|| '' === $type;
+	}
+
+	/**
+	 * Say no without saying why: the reasons name what is reachable from this
+	 * server, and that is not the caller's business even when they are staff.
+	 */
+	private function refuse( int $status ): void {
+		status_header( $status );
+		header( 'Content-Type: text/plain; charset=utf-8' );
+		echo 'No';
+		exit;
+	}
+
+	/**
 	 * Report which attachments have a stored waveform.
 	 *
 	 * @return WP_REST_Response
 	 */
 	public function status( WP_REST_Request $request ): WP_REST_Response {
+		$out = array();
+
 		$ids = array_slice(
 			array_filter(
 				array_map( 'intval', explode( ',', (string) $request->get_param( 'ids' ) ) )
@@ -242,15 +408,35 @@ final class PeaksController {
 			200
 		);
 
-		$out = array();
-
 		foreach ( $ids as $id ) {
-			$record = $this->repository->get( 'att_' . $id );
-
 			$out[] = array(
 				'id'       => $id,
-				'hasPeaks' => is_array( $record ),
-				'url'      => (string) ( wp_get_attachment_url( $id ) ?: '' ),
+				'src'      => (string) ( wp_get_attachment_url( $id ) ?: '' ),
+				'hasPeaks' => null !== $this->repository->get( 'att_' . $id ),
+			);
+		}
+
+		/*
+		 * URLs are newline-separated rather than comma-separated: a URL can
+		 * contain a comma perfectly legally, and splitting on one would quietly
+		 * cut somebody's signed link in half.
+		 */
+		$urls = array_slice(
+			array_filter(
+				array_map(
+					array( Attributes::class, 'sanitize_media_url' ),
+					array_map( 'trim', explode( "\n", (string) $request->get_param( 'urls' ) ) )
+				)
+			),
+			0,
+			200
+		);
+
+		foreach ( $urls as $url ) {
+			$out[] = array(
+				'id'       => 0,
+				'src'      => $url,
+				'hasPeaks' => null !== $this->repository->get( 'url_' . md5( $url ) ),
 			);
 		}
 
@@ -259,14 +445,27 @@ final class PeaksController {
 
 	public function store_for_attachment( WP_REST_Request $request ) {
 		$attachment_id = (int) $request->get_param( 'attachmentId' );
+		$src           = Attributes::sanitize_media_url( (string) $request->get_param( 'src' ) );
 
-		if ( 'attachment' !== get_post_type( $attachment_id ) ) {
+		if ( $attachment_id > 0 && 'attachment' !== get_post_type( $attachment_id ) ) {
 			return new WP_Error(
 				'imagina_player_not_attachment',
 				__( 'That is not a media file.', 'imagina-player' ),
 				array( 'status' => 404 )
 			);
 		}
+
+		if ( $attachment_id <= 0 && '' === $src ) {
+			return new WP_Error(
+				'imagina_player_no_track',
+				__( 'No track was named.', 'imagina-player' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// The same key the renderer will look under, so what is stored here is
+		// what gets found there.
+		$key = $attachment_id > 0 ? 'att_' . $attachment_id : 'url_' . md5( $src );
 
 		$raw = $request->get_param( 'peaks' );
 
@@ -297,7 +496,7 @@ final class PeaksController {
 		}
 
 		$peaks  = PeaksRepository::normalize( PeaksRepository::resample( $peaks, PeaksRepository::resolution() ) );
-		$stored = $this->repository->save( 'att_' . $attachment_id, $peaks, (float) $request->get_param( 'duration' ) );
+		$stored = $this->repository->save( $key, $peaks, (float) $request->get_param( 'duration' ) );
 
 		return new WP_REST_Response( array( 'stored' => $stored ), $stored ? 201 : 500 );
 	}

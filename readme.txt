@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.9.2
+Stable tag: 1.10.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,17 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.10.0 =
+* New: tracks hosted somewhere else can have a waveform. Until now they could
+  not, by any route: ffmpeg reads local files, the generate and store endpoints
+  were keyed on a media library item, and the editor's notice ignored anything
+  that was not one — so a track pasted from a streaming provider got a plain
+  bar and no explanation.
+* New: when a host does not allow this site to read its files — which is most
+  of them — the measuring goes through this site instead. That doorway needs
+  the right to add media, refuses anything but http and https, refuses private
+  and internal addresses, caps the size, and only ever answers with media.
 
 = 1.9.2 =
 * Fixed: after generating a waveform in the editor, the preview kept showing

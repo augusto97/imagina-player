@@ -183,6 +183,9 @@ export function PlaylistEdit( { attributes, setAttributes }: EditProps ) {
 
 			<WaveformNotice
 				attachmentIds={ items.map( ( item ) => item.id ?? 0 ) }
+				urls={ items
+					.filter( ( item ) => ! item.id )
+					.map( ( item ) => item.src ?? '' ) }
 				onMeasured={ () => setRefresh( ( n ) => n + 1 ) }
 			/>
 

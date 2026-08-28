@@ -406,6 +406,39 @@ esto buscaba la palabra `refresh` en el fichero, y la declaración de la prop ya
 la satisfacía: no detectaba nada. Ahora comprueba la lista de dependencias en
 concreto, y quitarla hace fallar el test.
 
+### Pistas que no están en la biblioteca
+
+Los clientes están moviendo sus audios a proveedores de streaming, así que una
+dirección pegada es el caso normal, no la excepción. Y hasta la 1.10.0 no había
+**ningún** camino a una onda para ellas: ffmpeg lee ficheros locales,
+`/peaks/generate` y `/peaks/store` iban por id de adjunto, y el aviso del editor
+descartaba el id 0. Ni onda, ni aviso, ni explicación.
+
+Ahora `/peaks/status` y `/peaks/store` aceptan también la dirección, con la
+misma clave `url_<md5>` que usa el renderizador al buscarla — si no coincidiera,
+guardaríamos una onda que nadie encontrará jamás. Las URLs viajan separadas por
+saltos de línea y no por comas, porque una coma es legal dentro de una URL y
+partir por ahí corta un enlace firmado a la mitad.
+
+**CORS** es el muro de verdad: el navegador no puede leer un fichero de otro
+dominio salvo que ese dominio lo autorice, y la mayoría no lo hace. Así que se
+intenta directo y, si falla, se pide por `/peaks/proxy` — el propio sitio trae
+el fichero y lo entrega al navegador del editor desde su mismo origen.
+
+Un endpoint que descarga una URL a petición es un SSRF si no se vigila, así que
+está cercado: requiere `upload_files`, la URL pasa por `wp_http_validate_url()`
+(que rechaza todo lo que no sea http/https, las direcciones privadas y de
+loopback, y los puertos raros), la descarga usa el cliente `safe` para que las
+redirecciones se comprueben igual, hay tope de tamaño, el content-type tiene que
+parecer medio, y **la respuesta nunca reenvía la cabecera del servidor remoto**
+—se elige de una lista corta, porque pasar el content-type ajeno es como un
+proxy se convierte en XSS. El fichero temporal se borra por los dos caminos, y
+el cuerpo sale a trozos: 200 MB leídos a una cadena son 200 MB de pico en un
+hosting compartido.
+
+Lo que la negativa **no** dice es por qué: las razones nombran lo que este
+servidor alcanza, y eso no es asunto de quien pregunta ni siendo del equipo.
+
 ## Bloques
 
 Tres: `imagina/audio-player`, `imagina/video-player` e `imagina/playlist`.
@@ -527,7 +560,7 @@ paquetes.
 ## Pruebas
 
 `./tests/run.sh` ejecuta la suite contra stubs de WordPress, sin necesidad de una
-instalación: 608 comprobaciones. Cubre sanitización, codificación de picos,
+instalación: 644 comprobaciones. Cubre sanitización, codificación de picos,
 remuestreo, firma de tokens, escapado del markup, el movimiento real de ficheros
 dentro y fuera del vault, y —con un binario ffmpeg simulado— la extracción de
 picos completa.

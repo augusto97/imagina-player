@@ -1177,6 +1177,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 
 			<WaveformNotice
 				attachmentIds={ [ Number( attributes.attachmentId ?? 0 ) ] }
+				urls={ Number( attributes.attachmentId ?? 0 ) ? [] : [ src ] }
 				disabled={ isVideo }
 				onMeasured={ () => setRefresh( ( n ) => n + 1 ) }
 			/>
