@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.7.0.zip`.
+1. Descarga `imagina-player-1.8.0.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Imagina Player** (menú lateral), o desde el enlace
@@ -15,18 +15,44 @@ código fuente está en la rama de desarrollo.
 
 | | |
 | --- | --- |
-| Versión | `1.7.0` |
-| Fichero | `imagina-player-1.7.0.zip` |
-| Tamaño | 296 KB |
-| SHA-256 | `a57d9c732daa5747c589c276e068f0838c4453a6741e98c1c5bf9c315f54c83b` |
+| Versión | `1.8.0` |
+| Fichero | `imagina-player-1.8.0.zip` |
+| Tamaño | 316 KB |
+| SHA-256 | `19b9ca7d6de150740b3e1b9b58a65cf2f665b5f2199a20f2f13c4179fbf6d879` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.7.0.zip
+sha256sum imagina-player-1.8.0.zip
 ```
+
+## Novedades en 1.8.0
+
+- **Nuevo: llamadas a la acción.** Tres tipos — un panel que pausa, una barra
+  que no, y una puerta de email. Funcionan en audio igual que en vídeo: una
+  puerta a dos tercios de un podcast es la misma función.
+- **Nuevo:** las direcciones capturadas se guardan, se listan en **Emails** y se
+  descargan en CSV. Las celdas que una hoja de cálculo ejecutaría como fórmula
+  se neutralizan al exportar.
+- **Nuevo: playlists**, en lista o en cuadrícula de portadas. Cada pista es un
+  enlace a su propio archivo, así que pinchar una la reproduce incluso antes de
+  que corra un solo script; el runtime intercepta el clic y se lo pasa al
+  reproductor que ya está en la página, de modo que el volumen y la velocidad
+  que eligió el oyente sobreviven al cambio.
+- Cada una de estas funciones solo la descargan las páginas que la usan. Una
+  página con un reproductor normal no cambia ni un byte.
+
+### Lo que pesa, comprimido
+
+| | |
+| --- | --- |
+| cualquier página con reproductor | 7 KB |
+| página con vídeo | 9 KB |
+| + llamadas a la acción | +1.5 KB |
+| + playlist | +0.7 KB |
+| página con stream, fuera de Safari | 183 KB |
 
 ## Novedades en 1.7.0
 
