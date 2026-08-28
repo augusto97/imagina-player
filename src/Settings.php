@@ -122,6 +122,29 @@ final class Settings {
 				'logo_link'     => '',
 				'logo_height'   => 20,
 			),
+			/*
+			 * Video. These were hardcoded in the renderer until somebody went
+			 * looking for them and, quite reasonably, concluded the feature was
+			 * not finished. A setting nobody can reach is not a setting.
+			 */
+			'video'      => array(
+				'ratio'           => '16:9',
+				// Milliseconds of stillness before the controls fade during
+				// playback. Zero keeps them up for good.
+				'hide_after'      => 2600,
+				'show_pip'        => true,
+				'show_fullscreen' => true,
+				'show_speed'      => true,
+				// How the poster fills its box. `cover` crops to fill, `contain`
+				// shows the whole image and lets the black show through.
+				'poster_fit'      => 'cover',
+				// The browser's own download button, "Save video as" and casting
+				// the raw file. Off by default, since that is the point.
+				'block_download'  => true,
+				'caption_size'    => 'medium',
+				'caption_bg'      => 'solid',
+				'big_play'        => true,
+			),
 			'protection' => array(
 				'enabled'       => false,
 				'require_login' => false,
@@ -132,6 +155,17 @@ final class Settings {
 				'xaccel_prefix' => '/imagina-protected/',
 			),
 		);
+	}
+
+	/**
+	 * Video defaults.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function video(): array {
+		$all = self::all();
+
+		return is_array( $all['video'] ?? null ) ? $all['video'] : self::defaults()['video'];
 	}
 
 	/**

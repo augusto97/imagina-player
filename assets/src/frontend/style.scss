@@ -753,6 +753,10 @@
 	display: block;
 }
 
+.imgp__poster--contain img {
+	object-fit: contain;
+}
+
 .imgp--video.is-started .imgp__poster {
 	opacity: 0;
 	pointer-events: none;
@@ -1068,6 +1072,27 @@
 .imgp--video .imgp__media::cue {
 	background: rgb(0 0 0 / 70%);
 	color: #fff;
+	font-size: 1em;
+}
+
+/* Size and backing come from the settings screen. A solid band is the only
+   one that holds up over any footage; a shadow is lighter but fails over a
+   bright, busy shot, which is why it is a choice and not the default. */
+.imgp--cc-small .imgp__media::cue {
+	font-size: 0.8em;
+}
+
+.imgp--cc-large .imgp__media::cue {
+	font-size: 1.3em;
+}
+
+.imgp--ccbg-shadow .imgp__media::cue {
+	background: transparent;
+	text-shadow: 0 1px 3px rgb(0 0 0 / 95%), 0 0 8px rgb(0 0 0 / 80%);
+}
+
+.imgp--ccbg-none .imgp__media::cue {
+	background: transparent;
 }
 
 .imgp--video .imgp__media::-webkit-media-text-track-container {

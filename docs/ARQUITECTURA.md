@@ -357,6 +357,40 @@ sitio al host que el manifiesto mencione sería regalarlo.
 recibe y comprueba que **todos** los segmentos llevaban el token. Quitar el
 `xhrSetup` hace fallar el test con la lista de segmentos desnudos; lo comprobé.
 
+## Bloques
+
+Tres: `imagina/audio-player`, `imagina/video-player` e `imagina/playlist`.
+
+El de vídeo es un bloque aparte y no un modo del de audio, por una razón que
+costó una versión aprender: el bloque de audio **siempre** aceptó un archivo de
+vídeo, pero se llamaba «Imagina Audio Player», llevaba icono de audio y decía
+«sube un archivo de audio» — así que quien buscaba vídeo en el insertador no
+encontraba nada y concluía, con toda la razón, que no había nada que encontrar.
+Una función que existe pero no se puede encontrar no está terminada.
+
+Los dos comparten renderizador, atributos y componente de edición; lo que
+cambia es cómo se presentan y que el de vídeo **es** vídeo diga lo que diga la
+extensión del archivo. Antes los paneles de vídeo salían solo si el nombre del
+archivo encajaba con una expresión regular, que es adivinar.
+
+## Ajustes de vídeo
+
+Estaban cableados en el renderizador hasta la 1.9.0: la relación de aspecto, el
+tiempo de ocultado de los controles, qué botones aparecen, el ajuste del
+póster, el aspecto de los subtítulos y el bloqueo de descarga. Ahora son
+`Settings::video()` y hay una sección **Vídeo** en la pantalla de ajustes.
+
+`tests/test-video-settings.php` existe por ese fallo concreto, y por eso cada
+comprobación **cambia un ajuste y afirma que la salida cambia con él**: un
+control que no hace nada falla. Lo verifiqué rompiendo tres cosas a propósito
+—un interruptor decorativo que dejaba el botón puesto, una clase CSS sin regla
+que la responda, y el registro del bloque de vídeo borrado— y las tres hicieron
+fallar el test.
+
+Un detalle que sí importa: la relación de aspecto del bloque por defecto es
+**vacía**, no `16:9`. Vacía significa «lo que diga el sitio», así que un sitio
+que trabaja en vertical no tiene que ponerlo bloque por bloque.
+
 ## Capas de conversión
 
 Tres tipos, porque responden a tres preguntas distintas: **cta** interrumpe
@@ -444,7 +478,7 @@ paquetes.
 ## Pruebas
 
 `./tests/run.sh` ejecuta la suite contra stubs de WordPress, sin necesidad de una
-instalación: 528 comprobaciones. Cubre sanitización, codificación de picos,
+instalación: 581 comprobaciones. Cubre sanitización, codificación de picos,
 remuestreo, firma de tokens, escapado del markup, el movimiento real de ficheros
 dentro y fuera del vault, y —con un binario ffmpeg simulado— la extracción de
 picos completa.

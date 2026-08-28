@@ -63,6 +63,18 @@ export interface SettingsPayload {
 		logo_link: string;
 		logo_height: number;
 	};
+	video: {
+		ratio: string;
+		hide_after: number;
+		show_pip: boolean;
+		show_fullscreen: boolean;
+		show_speed: boolean;
+		big_play: boolean;
+		block_download: boolean;
+		poster_fit: string;
+		caption_size: string;
+		caption_bg: string;
+	};
 	schema: {
 		presetDefaults: Preset;
 		skins: Record< string, string >;

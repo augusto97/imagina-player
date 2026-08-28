@@ -16,6 +16,7 @@ namespace ImaginaPlayer\Rest;
 
 use ImaginaPlayer\Peaks\PeaksGenerator;
 use ImaginaPlayer\Peaks\PeaksRepository;
+use ImaginaPlayer\Player\Attributes;
 use ImaginaPlayer\Player\Skins;
 use ImaginaPlayer\Protection\SelfCheck;
 use ImaginaPlayer\Protection\Vault;
@@ -128,6 +129,27 @@ final class SettingsController {
 			$settings['peaks']['client_fallback']   = ! empty( $peaks['client_fallback'] );
 			$settings['peaks']['ffmpeg_path']       = sanitize_text_field( (string) ( $peaks['ffmpeg_path'] ?? '' ) );
 			$settings['peaks']['max_client_bytes']  = max( 1, min( 200, (int) ( $peaks['max_client_mb'] ?? 25 ) ) ) * MB_IN_BYTES;
+		}
+
+		if ( isset( $incoming['video'] ) && is_array( $incoming['video'] ) ) {
+			$video = $incoming['video'];
+
+			$settings['video']['ratio']           = Attributes::sanitize_ratio( (string) ( $video['ratio'] ?? '16:9' ) );
+			// Zero is a real answer here — "never hide them" — so it is clamped
+			// rather than treated as unset.
+			$settings['video']['hide_after']      = max( 0, min( 20000, (int) ( $video['hide_after'] ?? 2600 ) ) );
+			$settings['video']['show_pip']        = ! empty( $video['show_pip'] );
+			$settings['video']['show_fullscreen'] = ! empty( $video['show_fullscreen'] );
+			$settings['video']['show_speed']      = ! empty( $video['show_speed'] );
+			$settings['video']['big_play']        = ! empty( $video['big_play'] );
+			$settings['video']['block_download']  = ! empty( $video['block_download'] );
+			$settings['video']['poster_fit']      = 'contain' === ( $video['poster_fit'] ?? '' ) ? 'contain' : 'cover';
+			$settings['video']['caption_size']    = in_array( $video['caption_size'] ?? '', array( 'small', 'medium', 'large' ), true )
+				? (string) $video['caption_size']
+				: 'medium';
+			$settings['video']['caption_bg']      = in_array( $video['caption_bg'] ?? '', array( 'solid', 'shadow', 'none' ), true )
+				? (string) $video['caption_bg']
+				: 'solid';
 		}
 
 		if ( isset( $incoming['protection'] ) && is_array( $incoming['protection'] ) ) {
@@ -295,6 +317,7 @@ final class SettingsController {
 				'skinNotes'      => Skins::descriptions(),
 				'defaultPreset'  => Settings::DEFAULT_PRESET,
 			),
+			'video'      => Settings::video(),
 			'system'     => array(
 				'ffmpeg'        => PeaksGenerator::is_available(),
 				'ffmpegBinary'  => PeaksGenerator::binary(),

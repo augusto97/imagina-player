@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.8.0
+Stable tag: 1.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,20 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.9.0 =
+* New: a video block. The player has handled video since 1.6.0, but the only
+  block was called "Imagina Audio Player" and said "upload an audio file", so
+  anyone looking for video in the inserter found nothing — and reasonably
+  concluded there was nothing to find. There is now an **Imagina Video Player**
+  block, with its own icon and its own words.
+* New: a Video section in the settings. Shape, poster behaviour, how long the
+  controls stay up, which buttons appear, how subtitles look, and whether the
+  browser's download button is taken away. All of it was hardcoded before.
+* Fixed: the video panels in the block appeared only when the file name looked
+  like a video. The video block is video whatever the file is called.
+* Fixed: a block that sets no shape now follows the site setting rather than
+  assuming widescreen.
 
 = 1.8.0 =
 * New: calls to action. Three kinds — a panel that stops playback, a bar that

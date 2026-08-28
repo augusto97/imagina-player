@@ -28,6 +28,8 @@ final class BlockRegistrar {
 
 	public const BLOCK_NAME = 'imagina/audio-player';
 
+	public const VIDEO_BLOCK = 'imagina/video-player';
+
 	public const PLAYLIST_BLOCK = 'imagina/playlist';
 
 	public function hooks(): void {
@@ -42,6 +44,21 @@ final class BlockRegistrar {
 
 		register_block_type(
 			\ImaginaPlayer\PATH . 'blocks/audio',
+			array(
+				'attributes'      => self::block_attributes(),
+				'render_callback' => array( $this, 'render' ),
+			)
+		);
+
+		/*
+		 * A block of its own rather than a mode of the audio one. The audio
+		 * block always handled a video file, but it is called "Imagina Audio
+		 * Player", carries an audio icon and says "upload an audio file" — so
+		 * somebody looking for video in the inserter found nothing, and
+		 * reasonably concluded there was nothing to find.
+		 */
+		register_block_type(
+			\ImaginaPlayer\PATH . 'blocks/video',
 			array(
 				'attributes'      => self::block_attributes(),
 				'render_callback' => array( $this, 'render' ),

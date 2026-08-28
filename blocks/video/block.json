@@ -1,13 +1,22 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
-	"name": "imagina/playlist",
+	"name": "imagina/video-player",
 	"version": "1.9.0",
-	"title": "Imagina Playlist",
+	"title": "Imagina Video Player",
 	"category": "media",
-	"icon": "playlist-audio",
-	"description": "Several tracks in one player, as a list or a grid.",
-	"keywords": [ "playlist", "album", "series", "course", "podcast" ],
+	"icon": "format-video",
+	"description": "A light video player with chapters, subtitles, calls to action and protected files.",
+	"keywords": [
+		"video",
+		"mp4",
+		"hls",
+		"stream",
+		"course",
+		"lesson",
+		"webinar",
+		"player"
+	],
 	"textdomain": "imagina-player",
 	"supports": {
 		"html": false,

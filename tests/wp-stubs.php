@@ -9,6 +9,7 @@ define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'WEEK_IN_SECONDS', 604800 );
+define( 'MB_IN_BYTES', 1048576 );
 define( 'ARRAY_A', 'ARRAY_A' );
 
 $GLOBALS['stub_options'] = array();
@@ -314,6 +315,8 @@ class WP_REST_Request {
 	}
 
 	public function get_param( $name ) { return $this->params[ $name ] ?? null; }
+	public function get_json_params() { return $this->params; }
+	public function get_params() { return $this->params; }
 	public function set_param( $name, $value ) { $this->params[ $name ] = $value; }
 	public function get_header( $name ) { return $this->headers[ strtolower( $name ) ] ?? ''; }
 }

@@ -33,6 +33,8 @@ type Attributes = Record<
 interface EditProps {
 	attributes: Attributes;
 	setAttributes: ( next: Partial< Attributes > ) => void;
+	/** Which block this is; the video one is video whatever the file says. */
+	name?: string;
 }
 
 const INHERIT = '';
@@ -114,7 +116,7 @@ const RATIOS: Array< { value: string; label: string } > = [
 	{ value: '9:16', label: __( 'Vertical (9:16)', 'imagina-player' ) },
 ];
 
-export function Edit( { attributes, setAttributes }: EditProps ) {
+export function Edit( { attributes, setAttributes, name }: EditProps ) {
 	const data = editorData();
 	const blockProps = useBlockProps( { className: 'imgp-block-editor' } );
 
@@ -124,10 +126,13 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 	const downloadUrl = String( attributes.downloadUrl ?? '' );
 	const poster = String( attributes.poster ?? '' );
 
-	// From the file, because that is what the renderer decides on too. A URL
-	// pasted from a provider has no attachment to ask, so the extension is all
-	// there is — and it is what `wp_check_filetype()` looks at server-side.
-	const isVideo = /\.(mp4|m4v|webm|ogv|mov|m3u8)(\?|#|$)/i.test( src );
+	// The block decides first. Falling back to the extension is what the audio
+	// block needs — it has always accepted a video file — but it is a guess,
+	// and a guess is why these panels used to appear only sometimes.
+	const isVideoBlock = 'imagina/video-player' === name;
+
+	const isVideo =
+		isVideoBlock || /\.(mp4|m4v|webm|ogv|mov|m3u8)(\?|#|$)/i.test( src );
 
 	const tracks = ( attributes.tracks ?? [] ) as ListItem[];
 	const chapters = ( attributes.chapters ?? [] ) as ListItem[];
@@ -169,16 +174,25 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 		return (
 			<div { ...blockProps }>
 				<MediaPlaceholder
-					icon="format-audio"
+					icon={ isVideoBlock ? 'format-video' : 'format-audio' }
 					labels={ {
-						title: __( 'Imagina Audio Player', 'imagina-player' ),
-						instructions: __(
-							'Upload an audio file, pick one from your media library, or paste a URL from your streaming provider.',
-							'imagina-player'
-						),
+						title: isVideoBlock
+							? __( 'Imagina Video Player', 'imagina-player' )
+							: __( 'Imagina Audio Player', 'imagina-player' ),
+						instructions: isVideoBlock
+							? __(
+									'Upload a video, pick one from your media library, or paste the address of an MP4 or an HLS stream (.m3u8).',
+									'imagina-player'
+							  )
+							: __(
+									'Upload an audio file, pick one from your media library, or paste a URL from your streaming provider.',
+									'imagina-player'
+							  ),
 					} }
-					accept="audio/*,video/*"
-					allowedTypes={ [ 'audio', 'video' ] }
+					accept={ isVideoBlock ? 'video/*' : 'audio/*,video/*' }
+					allowedTypes={
+						isVideoBlock ? [ 'video' ] : [ 'audio', 'video' ]
+					}
 					onSelect={ ( media: {
 						id?: number;
 						url?: string;
@@ -637,29 +651,31 @@ export function Edit( { attributes, setAttributes }: EditProps ) {
 					} ) }
 				</PanelBody>
 
-				<PanelBody
-					title={ __( 'Size', 'imagina-player' ) }
-					initialOpen={ false }
-				>
-					<RangeControl
-						__nextHasNoMarginBottom
-						label={ __( 'Waveform height', 'imagina-player' ) }
-						min={ 24 }
-						max={ 240 }
-						allowReset
-						resetFallbackValue={ undefined }
-						value={ Number( attributes.height ) || undefined }
-						onChange={ ( value?: number ) =>
-							setAttributes( {
-								height: value ? String( value ) : INHERIT,
-							} )
-						}
-						help={ __(
-							'Unset uses the preset’s height.',
-							'imagina-player'
-						) }
-					/>
-				</PanelBody>
+				{ ! isVideo && (
+					<PanelBody
+						title={ __( 'Size', 'imagina-player' ) }
+						initialOpen={ false }
+					>
+						<RangeControl
+							__nextHasNoMarginBottom
+							label={ __( 'Waveform height', 'imagina-player' ) }
+							min={ 24 }
+							max={ 240 }
+							allowReset
+							resetFallbackValue={ undefined }
+							value={ Number( attributes.height ) || undefined }
+							onChange={ ( value?: number ) =>
+								setAttributes( {
+									height: value ? String( value ) : INHERIT,
+								} )
+							}
+							help={ __(
+								'Unset uses the preset’s height.',
+								'imagina-player'
+							) }
+						/>
+					</PanelBody>
+				) }
 
 				{ isVideo && (
 					<PanelBody

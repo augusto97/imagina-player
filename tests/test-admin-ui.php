@@ -72,6 +72,7 @@ $payload  = array(
 		'ffmpeg_path'       => '',
 		'max_client_mb'     => 25,
 	),
+	'video'      => $defaults['video'],
 	'protection' => $defaults['protection'],
 	'advanced'   => $defaults['advanced'],
 	'branding'   => $defaults['branding'],
@@ -239,7 +240,9 @@ setTimeout(function () {
 		// Phase three: Branding, where the logo field lives.
 		var nav = document.querySelectorAll('.imgpa-nav__item');
 
-		if (nav.length >= 2) { nav[1].click(); }
+		Array.prototype.forEach.call(nav, function (item) {
+			if (item.textContent.trim() === 'Branding') { item.click(); }
+		});
 
 		setTimeout(function () {
 			var media = document.querySelector('.imgpa-media');
@@ -272,10 +275,15 @@ setTimeout(function () {
 				var box = document.querySelector('.imgpa-media input[type="text"]');
 				result.branding.valueAfterPick = box ? box.value : '';
 
-				// Phase four: Protection, and the self-check.
-				var nav2 = document.querySelectorAll('.imgpa-nav__item');
-
-				if (nav2.length >= 4) { nav2[3].click(); }
+				// Phase four: Protection, and the self-check. By name, not by
+				// position — an index breaks the moment a section is inserted
+				// before it, which is exactly what happened when Video arrived.
+				Array.prototype.forEach.call(
+					document.querySelectorAll('.imgpa-nav__item'),
+					function (item) {
+						if (item.textContent.trim() === 'Protection') { item.click(); }
+					}
+				);
 
 				setTimeout(function () {
 					var cards = Array.prototype.map.call(
@@ -289,10 +297,31 @@ setTimeout(function () {
 
 					result.protection = { cards: cards, hasRunButton: !!runner };
 
-					var out = document.createElement('pre');
-					out.id = 'result';
-					out.textContent = 'RESULT:' + JSON.stringify(result);
-					document.body.appendChild(out);
+					// Phase five: the Video section, which has to have real
+					// controls in it and not just a heading.
+					Array.prototype.forEach.call(
+						document.querySelectorAll('.imgpa-nav__item'),
+						function (item) {
+							if (item.textContent.trim() === 'Video') { item.click(); }
+						}
+					);
+
+					setTimeout(function () {
+						result.video = {
+							cards: Array.prototype.map.call(
+								document.querySelectorAll('.imgpa-card__head h2'),
+								function (el) { return el.textContent.trim(); }
+							),
+							selects: document.querySelectorAll('.imgpa-main select').length,
+							toggles: document.querySelectorAll('.imgpa-main .imgpa-toggle').length,
+							numbers: document.querySelectorAll('.imgpa-main .imgpa-number input').length
+						};
+
+						var out = document.createElement('pre');
+						out.id = 'result';
+						out.textContent = 'RESULT:' + JSON.stringify(result);
+						document.body.appendChild(out);
+					}, 400);
 				}, 400);
 			}, 300);
 		}, 400);
@@ -427,6 +456,31 @@ check(
 	implode( ' / ', $protection['cards'] ?? array() )
 );
 check( 'with a button to run it', ! empty( $protection['hasRunButton'] ) );
+
+// The Video section is the one this release exists for. A heading with nothing
+// under it would be the same failure in a new place.
+$video_panel = $result['video'] ?? array();
+
+check(
+	'the Video section renders its cards',
+	count( array_intersect( array( 'The picture', 'Controls', 'Subtitles' ), $video_panel['cards'] ?? array() ) ) === 3,
+	implode( ' / ', $video_panel['cards'] ?? array() )
+);
+check(
+	'with real dropdowns in it',
+	(int) ( $video_panel['selects'] ?? 0 ) >= 4,
+	(string) ( $video_panel['selects'] ?? 0 )
+);
+check(
+	'real toggles',
+	(int) ( $video_panel['toggles'] ?? 0 ) >= 4,
+	(string) ( $video_panel['toggles'] ?? 0 )
+);
+check(
+	'and the hide delay as a number field',
+	(int) ( $video_panel['numbers'] ?? 0 ) >= 1,
+	(string) ( $video_panel['numbers'] ?? 0 )
+);
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
 exit( $failures ? 1 : 0 );

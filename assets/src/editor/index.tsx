@@ -18,6 +18,11 @@ registerBlockType( 'imagina/audio-player', {
 	save: () => null,
 } as unknown as BlockSettings );
 
+registerBlockType( 'imagina/video-player', {
+	edit: Edit,
+	save: () => null,
+} as unknown as BlockSettings );
+
 registerBlockType( 'imagina/playlist', {
 	edit: PlaylistEdit,
 	save: () => null,

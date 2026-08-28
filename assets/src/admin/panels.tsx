@@ -579,6 +579,251 @@ const STATUS_LABELS: Record< SelfCheckResult[ 'status' ], () => string > = {
 };
 
 /**
+ * How every video behaves, unless a block says otherwise.
+ *
+ * These were hardcoded in the renderer until 1.9.0. That is worth saying out
+ * loud: the video player worked, and none of it could be changed, which from
+ * the outside is indistinguishable from the feature not being finished.
+ * @param root0
+ * @param root0.settings
+ * @param root0.onChange
+ */
+export function VideoPanel( { settings, onChange }: PanelProps ) {
+	const video = settings.video;
+	const set = ( patch: Partial< SettingsPayload[ 'video' ] > ): void =>
+		onChange( { video: { ...video, ...patch } } );
+
+	return (
+		<>
+			<Card
+				title={ __( 'The picture', 'imagina-player' ) }
+				description={ __(
+					'How a video is shaped and what shows before it plays.',
+					'imagina-player'
+				) }
+			>
+				<Field
+					label={ __( 'Shape', 'imagina-player' ) }
+					help={ __(
+						'What a block uses when you have not chosen one. The box holds this shape before the video loads, so the page does not jump.',
+						'imagina-player'
+					) }
+				>
+					<Select
+						value={ video.ratio }
+						onChange={ ( value ) => set( { ratio: value } ) }
+						options={ [
+							{
+								value: '16:9',
+								label: __(
+									'Widescreen (16:9)',
+									'imagina-player'
+								),
+							},
+							{
+								value: '4:3',
+								label: __( 'Classic (4:3)', 'imagina-player' ),
+							},
+							{
+								value: '1:1',
+								label: __( 'Square (1:1)', 'imagina-player' ),
+							},
+							{
+								value: '9:16',
+								label: __(
+									'Vertical (9:16)',
+									'imagina-player'
+								),
+							},
+						] }
+					/>
+				</Field>
+
+				<Field
+					label={ __( 'Poster', 'imagina-player' ) }
+					help={ __(
+						'Crop fills the box and cuts the edges. Fit shows the whole image and lets the black show through.',
+						'imagina-player'
+					) }
+				>
+					<Select
+						value={ video.poster_fit }
+						onChange={ ( value ) => set( { poster_fit: value } ) }
+						options={ [
+							{
+								value: 'cover',
+								label: __( 'Crop to fill', 'imagina-player' ),
+							},
+							{
+								value: 'contain',
+								label: __(
+									'Fit whole image',
+									'imagina-player'
+								),
+							},
+						] }
+					/>
+				</Field>
+
+				<div className="imgpa-toggles">
+					<Toggle
+						label={ __(
+							'Big play button over the picture',
+							'imagina-player'
+						) }
+						help={ __(
+							'Turn off for a bare picture with only the control bar.',
+							'imagina-player'
+						) }
+						checked={ video.big_play }
+						onChange={ ( value ) => set( { big_play: value } ) }
+					/>
+				</div>
+			</Card>
+
+			<Card
+				title={ __( 'Controls', 'imagina-player' ) }
+				description={ __(
+					'What appears on the bar over the video, and how long it stays.',
+					'imagina-player'
+				) }
+			>
+				<Field
+					label={ __( 'Hide the controls after', 'imagina-player' ) }
+					help={ __(
+						'Seconds of stillness while playing. Zero keeps them up for good, which suits a lesson more than a film.',
+						'imagina-player'
+					) }
+				>
+					<NumberInput
+						value={ Math.round( video.hide_after / 100 ) / 10 }
+						min={ 0 }
+						max={ 20 }
+						step={ 0.5 }
+						suffix="s"
+						onChange={ ( value ) =>
+							set( { hide_after: Math.round( value * 1000 ) } )
+						}
+					/>
+				</Field>
+
+				<div className="imgpa-toggles">
+					<Toggle
+						label={ __( 'Full screen', 'imagina-player' ) }
+						checked={ video.show_fullscreen }
+						onChange={ ( value ) =>
+							set( { show_fullscreen: value } )
+						}
+					/>
+					<Toggle
+						label={ __( 'Picture in picture', 'imagina-player' ) }
+						help={ __(
+							'The button only appears where the browser supports it.',
+							'imagina-player'
+						) }
+						checked={ video.show_pip }
+						onChange={ ( value ) => set( { show_pip: value } ) }
+					/>
+					<Toggle
+						label={ __( 'Playback speed', 'imagina-player' ) }
+						checked={ video.show_speed }
+						onChange={ ( value ) => set( { show_speed: value } ) }
+					/>
+				</div>
+			</Card>
+
+			<Card
+				title={ __( 'Subtitles', 'imagina-player' ) }
+				description={ __(
+					'How captions look over the picture. They are added per video, in the block.',
+					'imagina-player'
+				) }
+			>
+				<Field label={ __( 'Size', 'imagina-player' ) }>
+					<Select
+						value={ video.caption_size }
+						onChange={ ( value ) => set( { caption_size: value } ) }
+						options={ [
+							{
+								value: 'small',
+								label: __( 'Small', 'imagina-player' ),
+							},
+							{
+								value: 'medium',
+								label: __( 'Medium', 'imagina-player' ),
+							},
+							{
+								value: 'large',
+								label: __( 'Large', 'imagina-player' ),
+							},
+						] }
+					/>
+				</Field>
+
+				<Field
+					label={ __( 'Behind the text', 'imagina-player' ) }
+					help={ __(
+						'A solid band is the most readable over any footage. A shadow is lighter but fails over busy, bright shots.',
+						'imagina-player'
+					) }
+				>
+					<Select
+						value={ video.caption_bg }
+						onChange={ ( value ) => set( { caption_bg: value } ) }
+						options={ [
+							{
+								value: 'solid',
+								label: __( 'Solid band', 'imagina-player' ),
+							},
+							{
+								value: 'shadow',
+								label: __( 'Shadow only', 'imagina-player' ),
+							},
+							{
+								value: 'none',
+								label: __( 'Nothing', 'imagina-player' ),
+							},
+						] }
+					/>
+				</Field>
+			</Card>
+
+			<Card
+				title={ __( 'Keeping the file', 'imagina-player' ) }
+				description={ __(
+					'What stops a visitor walking off with the video itself.',
+					'imagina-player'
+				) }
+			>
+				<div className="imgpa-toggles">
+					<Toggle
+						label={ __(
+							'Take away the browser download button',
+							'imagina-player'
+						) }
+						help={ __(
+							'Also removes “Save video as” and casting the raw file to a device. It has no effect on a player that deliberately offers a download.',
+							'imagina-player'
+						) }
+						checked={ video.block_download }
+						onChange={ ( value ) =>
+							set( { block_download: value } )
+						}
+					/>
+				</div>
+
+				<Notice tone="info">
+					{ __(
+						'None of this stops a screen recorder, and neither does DRM. What protects the file is that it lives outside the public folder and its link expires — see Protection.',
+						'imagina-player'
+					) }
+				</Notice>
+			</Card>
+		</>
+	);
+}
+
+/**
  * Site-wide brand defaults.
  *
  * These do not restyle existing presets — that would silently rewrite work

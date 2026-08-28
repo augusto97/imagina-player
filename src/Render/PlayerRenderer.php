@@ -66,6 +66,8 @@ final class PlayerRenderer {
 			$config['sticky'] ? 'imgp--sticky' : '',
 			$config['sticky'] ? 'imgp--stick-' . $config['sticky_position'] : '',
 			$track->is_video() ? 'imgp--video' : 'imgp--audio',
+			$track->is_video() ? 'imgp--cc-' . sanitize_html_class( (string) Settings::video()['caption_size'] ) : '',
+			$track->is_video() ? 'imgp--ccbg-' . sanitize_html_class( (string) Settings::video()['caption_bg'] ) : '',
 			(int) $config['border_radius'] > 0 ? 'imgp--rounded-box' : '',
 			$config['rounded_bars'] ? 'imgp--rounded' : '',
 			$atts['className'],
@@ -110,10 +112,12 @@ final class PlayerRenderer {
 		// Namespaced rather than flattened: the video module reads `video` and
 		// nothing else, so growing it later cannot collide with an audio key.
 		if ( $track->is_video() ) {
+			$video = Settings::video();
+
 			$client_config['video'] = array(
 				'ratio'     => $track->aspect_ratio,
 				'poster'    => $track->poster,
-				'hideAfter' => 2600,
+				'hideAfter' => max( 0, (int) $video['hide_after'] ),
 				// The browser cannot tell from the element that this is adaptive
 				// streaming, and loading 400 KB of hls.js to find out would be
 				// the whole cost of the feature paid on every video.
@@ -163,8 +167,10 @@ final class PlayerRenderer {
 		$parts['layers'] = $this->part_layers( $track, $config, $atts, $id );
 
 		if ( 'theater' === $layout ) {
-			$parts['poster']  = $this->part_poster( $track );
-			$parts['bigplay'] = $this->part_big_play();
+			$video_settings = Settings::video();
+
+			$parts['poster']  = $this->part_poster( $track, $video_settings );
+			$parts['bigplay'] = empty( $video_settings['big_play'] ) ? '' : $this->part_big_play();
 			$parts['video']   = $this->part_video_controls( $config, $atts );
 		}
 
@@ -346,8 +352,10 @@ final class PlayerRenderer {
 	 * @param array<string, mixed> $config Effective settings.
 	 */
 	private function download_guards( Track $track, array $config ): string {
-		if ( ! empty( $config['show_download'] ) ) {
-			// Offering a download and then hiding the browser's own is theatre.
+		if ( ! empty( $config['show_download'] ) || empty( Settings::video()['block_download'] ) ) {
+			// Two reasons not to: the setting is off, or a download was offered
+			// deliberately — and hiding the browser's own next to our own
+			// download button would be theatre.
 			return '';
 		}
 
@@ -435,13 +443,16 @@ final class PlayerRenderer {
 	 * plain `loading=eager` say what this is: the one image on the page that
 	 * should not be deferred.
 	 */
-	private function part_poster( Track $track ): string {
+	private function part_poster( Track $track, array $video ): string {
 		if ( '' === $track->poster ) {
 			return '';
 		}
 
+		$fit = 'contain' === ( $video['poster_fit'] ?? 'cover' ) ? 'contain' : 'cover';
+
 		return sprintf(
-			'<div class="imgp__poster" aria-hidden="true"><img src="%s" alt="" decoding="async" fetchpriority="high" /></div>',
+			'<div class="imgp__poster imgp__poster--%s" aria-hidden="true"><img src="%s" alt="" decoding="async" fetchpriority="high" /></div>',
+			esc_attr( $fit ),
 			esc_url( $track->poster )
 		);
 	}
@@ -494,16 +505,21 @@ final class PlayerRenderer {
 			'label' => __( 'Quality', 'imagina-player' ),
 		);
 
-		$buttons += array(
-			'pip'        => array(
+		$video = Settings::video();
+
+		if ( ! empty( $video['show_pip'] ) ) {
+			$buttons['pip'] = array(
 				'icons' => array( 'pip' ),
 				'label' => __( 'Picture in picture', 'imagina-player' ),
-			),
-			'fullscreen' => array(
+			);
+		}
+
+		if ( ! empty( $video['show_fullscreen'] ) ) {
+			$buttons['fullscreen'] = array(
 				'icons' => array( 'expand', 'collapse' ),
 				'label' => __( 'Full screen', 'imagina-player' ),
-			),
-		);
+			);
+		}
 
 		/**
 		 * Filter the buttons on the video control bar.

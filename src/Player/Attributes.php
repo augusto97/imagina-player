@@ -140,7 +140,8 @@ final class Attributes {
 			),
 			'aspectRatio'  => array(
 				'type'    => 'string',
-				'default' => self::DEFAULT_RATIO,
+				// Empty, not 16:9: an unset block follows the site's setting.
+				'default' => '',
 			),
 			'tracks'       => array(
 				'type'    => 'array',
@@ -216,7 +217,12 @@ final class Attributes {
 		$out['className']   = trim( preg_replace( '/[^A-Za-z0-9 _-]/', '', (string) $out['className'] ) ?? '' );
 		$out['startTime']   = max( 0.0, (float) $out['startTime'] );
 		$out['poster']      = self::sanitize_media_url( (string) $out['poster'] );
-		$out['aspectRatio'] = self::sanitize_ratio( (string) $out['aspectRatio'] );
+		// An empty ratio means "whatever the site says", not "16:9 regardless":
+		// a site that works in vertical video should not have to set it on
+		// every block.
+		$out['aspectRatio'] = '' === trim( (string) $out['aspectRatio'] )
+			? self::sanitize_ratio( (string) ( Settings::video()['ratio'] ?? self::DEFAULT_RATIO ) )
+			: self::sanitize_ratio( (string) $out['aspectRatio'] );
 		$out['tracks']      = self::sanitize_tracks( (array) $out['tracks'] );
 		$out['chapters']    = self::sanitize_chapters( (array) $out['chapters'] );
 		$out['layers']      = Layers::sanitize( (array) $out['layers'] );
