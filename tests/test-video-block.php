@@ -109,6 +109,73 @@ foreach ( Video::override_map() as $key => $attribute ) {
 
 check( 'an unset block matches the site settings exactly', array() === $drift, implode( ', ', $drift ) );
 
+echo PHP_EOL . '# A skin belongs to a medium' . PHP_EOL;
+
+/*
+ * All seven of the original skins arrange a waveform, a row of transport
+ * buttons and a title beside them. A video block offered them anyway, so
+ * choosing one either did nothing visible or did something meaningless — a
+ * "card with cover" on a video that already has a poster, a "waveform,
+ * mirrored" on a picture with no waveform.
+ */
+$audio_only = array_diff( array_keys( \ImaginaPlayer\Player\Skins::all() ), array_keys( \ImaginaPlayer\Player\Skins::video() ) );
+
+check( 'there are video skins at all', count( \ImaginaPlayer\Player\Skins::video() ) >= 3 );
+check( 'and audio skins a video does not share', count( $audio_only ) >= 5, implode( ',', $audio_only ) );
+
+foreach ( array( 'theater', 'minimal', 'stacked' ) as $skin ) {
+	$html = $renderer->render( array( 'src' => $file, 'skin' => $skin ) );
+
+	check(
+		"a video keeps its own skin: {$skin}",
+		str_contains( $html, 'imgp--skin-' . $skin ),
+		$skin
+	);
+}
+
+/*
+ * And an audio skin on a video falls back rather than rendering something
+ * meaningless — which is what happens when an author replaces an audio file
+ * with a video and the block keeps the skin it was saved with.
+ */
+foreach ( $audio_only as $skin ) {
+	$html = $renderer->render( array( 'src' => $file, 'skin' => $skin ) );
+
+	check(
+		"an audio skin on a video falls back: {$skin}",
+		str_contains( $html, 'imgp--skin-theater' ),
+		$skin
+	);
+}
+
+foreach ( array( 'theater', 'stacked' ) as $skin ) {
+	$html = $renderer->render( array( 'src' => 'https://cdn.example.com/track.mp3', 'skin' => $skin ) );
+
+	check(
+		"and a video skin on audio falls back: {$skin}",
+		str_contains( $html, 'imgp--skin-wave' ),
+		$skin
+	);
+}
+
+/*
+ * The stacked skin is the one that is a difference in markup rather than in
+ * paint: the stage crops to the video's shape, so a bar inside it can only ever
+ * be over the picture.
+ */
+$stacked = $renderer->render( array( 'src' => $file, 'skin' => 'stacked' ) );
+$theater = $renderer->render( array( 'src' => $file, 'skin' => 'theater' ) );
+
+check(
+	'the stacked skin puts its bar outside the picture',
+	strpos( $stacked, 'imgp__chrome' ) > strpos( $stacked, '</div>', strpos( $stacked, 'imgp__stage' ) )
+);
+
+check(
+	'and the theater skin keeps it on the picture',
+	strpos( $theater, 'imgp__chrome' ) < strpos( $theater, '</div>', strrpos( $theater, 'imgp__stage' ) ) + 400
+);
+
 echo PHP_EOL . '# Autoplay, muted and loop on a video nobody here is serving' . PHP_EOL;
 
 /*

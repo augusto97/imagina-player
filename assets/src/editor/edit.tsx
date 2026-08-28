@@ -58,6 +58,7 @@ function editorData(): EditorData {
 				{ value: 'default', label: __( 'Default', 'imagina-player' ) },
 			],
 			skins: { wave: __( 'Waveform', 'imagina-player' ) },
+			videoSkins: { theater: __( 'Theater', 'imagina-player' ) },
 			overrides: {},
 			presetShape: {},
 			settingsUrl: '',
@@ -528,9 +529,12 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								value: INHERIT,
 								label: __( 'Use preset', 'imagina-player' ),
 							},
-							...Object.entries( data.skins ).map(
-								( [ value, label ] ) => ( { value, label } )
-							),
+							...Object.entries(
+								isVideo ? data.videoSkins : data.skins
+							).map( ( [ value, label ] ) => ( {
+								value,
+								label,
+							} ) ),
 						] }
 						onChange={ ( value: string ) =>
 							setAttributes( { skin: value } )

@@ -65,9 +65,17 @@ final class PlayerRenderer {
 		// to the options table, or two of them could disagree.
 		$video_config = Video::resolve( $atts );
 
+		/*
+		 * A skin belongs to a medium. The saved one is used when it is one of
+		 * this medium's own and replaced by that medium's default when it is
+		 * not — an author who swaps an audio file for a video is otherwise left
+		 * with "card with cover" on a picture that has no cover.
+		 */
+		$skin = Skins::resolve( (string) $config['skin'], $track->is_video() );
+
 		$classes = array(
 			'imgp',
-			'imgp--skin-' . $config['skin'],
+			'imgp--skin-' . $skin,
 			$track->thumbnail && $config['show_thumbnail'] ? 'imgp--has-thumb' : '',
 			$config['sticky'] ? 'imgp--sticky' : '',
 			$config['sticky'] ? 'imgp--stick-' . $config['sticky_position'] : '',
@@ -81,8 +89,8 @@ final class PlayerRenderer {
 
 		$client_config = array(
 			'id'          => $id,
-			'skin'        => $config['skin'],
-			'centered'    => Skins::is_centered( (string) $config['skin'] ),
+			'skin'        => $skin,
+			'centered'    => Skins::is_centered( $skin ),
 			'bars'        => (int) $config['wave_bars'],
 			'gap'         => (int) $config['wave_gap'],
 			'reflection'  => (float) $config['wave_reflection'],
@@ -183,13 +191,13 @@ final class PlayerRenderer {
 		// Layout follows the *medium*, not the skin. Every audio skin arranges a
 		// row of controls beside a scrubber; a video needs them over the picture,
 		// and no choice of skin changes that.
-		$layout = $track->is_video() ? 'theater' : Skins::layout( (string) $config['skin'] );
+		$layout = $track->is_video() ? 'theater' : Skins::layout( $skin );
 
 		$parts = array(
 			'media'    => $this->part_media( $track, $atts, $config, $video_config ),
 			// A video always gets a scrubber. A skin that hides it was designed for
 			// a bar of audio controls, and a video without a seek bar is broken.
-			'scrubber' => $track->is_video() || Skins::has_scrubber( (string) $config['skin'] )
+			'scrubber' => $track->is_video() || Skins::has_scrubber( $skin )
 				? $this->part_scrubber( $track, $config )
 				: '',
 			'thumb'    => $config['show_thumbnail'] && '' !== $track->thumbnail ? $this->part_thumb( $track ) : '',
@@ -232,18 +240,33 @@ final class PlayerRenderer {
 			}
 
 			if ( 'theater' === $layout ) {
-				printf(
-					'<div class="imgp__stage" style="--imgp-ratio:%s">%s%s%s%s<div class="imgp__chrome">%s<div class="imgp__bar">%s%s%s%s</div></div></div>',
-					esc_attr( str_replace( ':', ' / ', $track->aspect_ratio ) ),
-					$parts['media'], // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
-					$parts['poster'], // phpcs:ignore WordPress.Security.EscapeOutput
-					$parts['bigplay'], // phpcs:ignore WordPress.Security.EscapeOutput
-					$parts['layers'], // phpcs:ignore WordPress.Security.EscapeOutput
+				$chrome = sprintf(
+					'<div class="imgp__chrome">%s<div class="imgp__bar">%s%s%s%s</div></div>',
 					$parts['scrubber'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['play'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['controls'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['video'] . $parts['logo'] // phpcs:ignore WordPress.Security.EscapeOutput
+				);
+
+				/*
+				 * The stacked skin puts the bar under the picture instead of on
+				 * it, and that is a difference in where the markup goes rather
+				 * than in how it is painted: the stage crops to the video's
+				 * shape and hides anything past it, so a bar inside it can only
+				 * ever be over the picture.
+				 */
+				$outside = 'stacked' === $skin;
+
+				printf(
+					'<div class="imgp__stage" style="--imgp-ratio:%s">%s%s%s%s%s</div>%s',
+					esc_attr( str_replace( ':', ' / ', $track->aspect_ratio ) ),
+					$parts['media'], // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
+					$parts['poster'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['bigplay'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['layers'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$outside ? '' : $chrome, // phpcs:ignore WordPress.Security.EscapeOutput
+					$outside ? $chrome : '' // phpcs:ignore WordPress.Security.EscapeOutput
 				);
 			} elseif ( 'card' === $layout ) {
 				printf(

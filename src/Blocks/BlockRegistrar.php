@@ -181,6 +181,10 @@ final class BlockRegistrar {
 				array(
 					'presets'     => $presets,
 					'skins'       => Settings::skins(),
+					// Separately, because a skin belongs to a medium: the seven
+					// above all arrange a waveform and a row of transport
+					// buttons, which is not what a video needs.
+					'videoSkins'  => \ImaginaPlayer\Player\Skins::video(),
 					'overrides'   => Attributes::override_map(),
 					'presetShape' => Settings::preset_defaults(),
 					'settingsUrl' => esc_url_raw( admin_url( 'admin.php?page=imagina-player' ) ),

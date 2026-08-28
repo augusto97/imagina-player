@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.15.0
+Stable tag: 1.16.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,27 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.16.0 =
+* Fixed: the seek bar on a video could not be dragged. It was drawn correctly —
+  the line paints at the right place and looks like a seek bar — but the element
+  a pointer has to land on was zero pixels tall, because everything inside the
+  scrubber is positioned absolutely and the video rule set the box to auto
+  height. The video could not be scrubbed at all, and it looked like it should
+  be. There is now a real hit area, a line that thickens under the pointer, and
+  a test that presses every control of every skin at the point where it appears.
+* New: video skins of their own — Theater (controls over the picture, fading
+  out while it plays), Minimal (a line and little else), and Stacked (a solid
+  bar under the picture that never covers it). Until now a video block was
+  offered the seven audio skins, every one of which arranges a waveform and a
+  row of transport buttons, so choosing one either did nothing or did something
+  meaningless.
+* Changed: a block offers only the skins that apply to what it is playing, and
+  a skin saved for the other medium falls back instead of rendering wrongly —
+  which is what happened when an audio file was replaced with a video.
+* New: `docs/VIDEO-ROADMAP.md`, which lists what the video player still lacks
+  next to Presto Player and Fluent Player, read from their source, and the
+  order it is being done in.
 
 = 1.15.0 =
 * New: a video that follows the reader. Scroll away from one that is playing

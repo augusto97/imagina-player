@@ -37,6 +37,65 @@ final class Skins {
 	 */
 	private const NO_SCRUBBER = array( 'minimal' );
 
+	/** What a video skin decides, and the one it starts with. */
+	public const DEFAULT_VIDEO_SKIN = 'theater';
+
+	/**
+	 * Skins for a picture rather than for a waveform.
+	 *
+	 * The seven below are all audio skins: each arranges a waveform, a row of
+	 * transport buttons and a title beside them. A video block offered them
+	 * anyway, so choosing one either did nothing visible or did something that
+	 * made no sense — a "card with cover" on a video that already has a poster,
+	 * a "waveform, mirrored" on a picture with no waveform.
+	 *
+	 * A video skin decides different things: where the control bar sits, how it
+	 * behaves when the pointer leaves, and whether the title is drawn over the
+	 * picture. Presto ships three of these and Fluent two; the shapes below are
+	 * the ones both of them converged on.
+	 *
+	 * @return array<string, string> Skin key => translated label.
+	 */
+	public static function video(): array {
+		return apply_filters(
+			'imagina_player_video_skins',
+			array(
+				'theater'  => __( 'Theater', 'imagina-player' ),
+				'minimal'  => __( 'Minimal', 'imagina-player' ),
+				'stacked'  => __( 'Stacked', 'imagina-player' ),
+			)
+		);
+	}
+
+	/** What each video skin is, for a screen that has to choose one. */
+	public static function video_descriptions(): array {
+		return array(
+			'theater' => __( 'Controls over the picture, fading out while it plays. What most video players do.', 'imagina-player' ),
+			'minimal' => __( 'A thin progress line and nothing else until the pointer arrives. For a video that is part of the page rather than the point of it.', 'imagina-player' ),
+			'stacked' => __( 'Controls in a solid bar under the picture, always visible. Nothing ever covers the video.', 'imagina-player' ),
+		);
+	}
+
+	public static function is_video_skin( string $skin ): bool {
+		return array_key_exists( $skin, self::video() );
+	}
+
+	/**
+	 * The skin a player should actually use.
+	 *
+	 * A block carries one skin, and a track can change medium — an author
+	 * replaces an audio file with a video and the saved skin is now meaningless.
+	 * Rather than render something wrong, each medium falls back to its own
+	 * default when the saved skin is not one of its own.
+	 */
+	public static function resolve( string $skin, bool $is_video ): string {
+		if ( $is_video ) {
+			return self::is_video_skin( $skin ) ? $skin : self::DEFAULT_VIDEO_SKIN;
+		}
+
+		return array_key_exists( $skin, self::all() ) ? $skin : self::DEFAULT_SKIN;
+	}
+
 	/**
 	 * @return array<string, string> Skin key => translated label.
 	 */
@@ -77,8 +136,18 @@ final class Skins {
 		return array_key_exists( $skin, self::all() );
 	}
 
+	/**
+	 * Keep a skin that any medium recognises.
+	 *
+	 * A preset is shared between audio and video blocks, so a saved skin has to
+	 * survive being stored even when it belongs to the other medium — deciding
+	 * which one actually applies is `resolve()`'s job, at render time, where the
+	 * medium is known.
+	 */
 	public static function normalize( string $skin ): string {
-		return self::exists( $skin ) ? $skin : self::DEFAULT_SKIN;
+		return self::exists( $skin ) || self::is_video_skin( $skin )
+			? $skin
+			: self::DEFAULT_SKIN;
 	}
 
 	public static function uses_waveform( string $skin ): bool {

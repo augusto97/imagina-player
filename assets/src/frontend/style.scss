@@ -1014,13 +1014,34 @@
 	color: var(--imgp-on-chrome);
 }
 
+/*
+ * A real height, because everything inside the scrubber is positioned
+ * absolutely: the track sits at `top: 50%` and the seek area is `inset: 0`. On
+ * `height: auto` the box collapsed to nothing, so the bar was drawn — the track
+ * paints at the baseline and looks exactly right — while the thing a pointer
+ * has to land on was zero pixels tall. The video could not be scrubbed at all,
+ * and it looked like it should be.
+ *
+ * Twenty pixels is the hit area, not the bar: the line stays thin and thickens
+ * under the pointer, which is what every video player does and what makes a
+ * six-pixel line usable with a mouse and a thumb.
+ */
 .imgp--video .imgp__scrubber {
-	height: auto;
-	margin-bottom: 0.25rem;
+	height: 1.25rem;
+	margin-bottom: 0.1rem;
+	cursor: pointer;
 }
 
 .imgp--video .imgp__track {
+	height: 5px;
+	border-radius: 999px;
 	background: rgb(255 255 255 / 30%);
+	transition: height 0.12s ease;
+}
+
+.imgp--video .imgp__scrubber:hover .imgp__track,
+.imgp--video.is-scrubbing .imgp__track {
+	height: 9px;
 }
 
 .imgp--video .imgp__title,
@@ -1998,4 +2019,74 @@
 
 .imgp__preview[hidden] {
 	display: none;
+}
+
+/* --- Video skins --------------------------------------------------------
+   A skin for a picture decides different things from a skin for a waveform:
+   where the control bar sits, whether it goes away while the video plays, and
+   whether anything is drawn over the picture at all. Offering the audio skins
+   on a video meant offering "card with cover" for something that already has a
+   poster, and "waveform, mirrored" for something with no waveform.
+
+   `theater` is the default and needs no rules: it is the layout the video half
+   was built around — controls over the picture, fading out during playback. */
+
+/* Minimal: nothing over the picture until the pointer arrives, and then only a
+   line. For a video that is part of a page rather than the point of it. */
+
+.imgp--video.imgp--skin-minimal .imgp__chrome {
+	padding: 2rem 0.5rem 0.35rem;
+	background: linear-gradient(to top, rgb(0 0 0 / 55%), transparent);
+}
+
+.imgp--video.imgp--skin-minimal .imgp__meta,
+.imgp--video.imgp--skin-minimal .imgp__skip,
+.imgp--video.imgp--skin-minimal .imgp__speed,
+.imgp--video.imgp--skin-minimal .imgp__volume-slider {
+	display: none;
+}
+
+.imgp--video.imgp--skin-minimal .imgp__play {
+	width: 2.2rem;
+	height: 2.2rem;
+}
+
+.imgp--video.imgp--skin-minimal .imgp__play .imgp__icon {
+	width: 1rem;
+	height: 1rem;
+}
+
+/* Stacked: the bar lives under the picture in a solid strip and never goes
+   away, so nothing is ever drawn over the video. The one people ask for when
+   the video is a recorded lesson and the bottom of the frame carries text. */
+
+.imgp--video.imgp--skin-stacked {
+	background: var(--imgp-chrome-bg, #14161a);
+	border-radius: var(--imgp-radius, 0);
+	overflow: hidden;
+}
+
+/* Outside the stage, so it needs the positioning the theater bar got from
+   sitting on the picture. */
+.imgp--video.imgp--skin-stacked .imgp__chrome {
+	position: static;
+	inset: auto;
+	padding: 0.45rem 0.7rem 0.6rem;
+	background: none;
+	opacity: 1;
+}
+
+/* The whole point of it: the bar is outside the picture, so the rule that
+   fades the chrome during playback must not apply. */
+.imgp--video.imgp--skin-stacked.is-chrome-idle .imgp__chrome {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.imgp--video.imgp--skin-stacked .imgp__stage {
+	border-radius: 0;
+}
+
+.imgp--video.imgp--skin-stacked .imgp__meta {
+	color: var(--imgp-on-chrome);
 }
