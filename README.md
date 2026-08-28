@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.6.0.zip`.
+1. Descarga `imagina-player-1.7.0.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Imagina Player** (menú lateral), o desde el enlace
@@ -15,18 +15,44 @@ código fuente está en la rama de desarrollo.
 
 | | |
 | --- | --- |
-| Versión | `1.6.0` |
-| Fichero | `imagina-player-1.6.0.zip` |
-| Tamaño | 112 KB |
-| SHA-256 | `a9710bd9593bd5afe084713a6f8b73560db747818bd07aa2ecd4f8994b7532d5` |
+| Versión | `1.7.0` |
+| Fichero | `imagina-player-1.7.0.zip` |
+| Tamaño | 296 KB |
+| SHA-256 | `a57d9c732daa5747c589c276e068f0838c4453a6741e98c1c5bf9c315f54c83b` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.6.0.zip
+sha256sum imagina-player-1.7.0.zip
 ```
+
+## Novedades en 1.7.0
+
+- **Nuevo: subtítulos.** WebVTT y SubRip, varios idiomas, un menú para
+  cambiarlos y la elección recordada entre vídeos. Los `.srt` se convierten
+  solos: el navegador solo lee WebVTT, y mandar al usuario a buscarse un
+  conversor no es una función.
+- **Nuevo: capítulos.** Marcas en la barra de progreso y un menú para saltar
+  entre secciones. Los tiempos se escriben como 90, 1:30 o 0:01:30.
+- **Nuevo: HLS**, con menú de calidad construido desde el propio stream. La
+  librería de streaming solo la descargan las páginas que tienen un stream, y
+  solo donde el navegador no sabe reproducirlo por su cuenta: Safari y iOS lo
+  hacen de forma nativa y no pagan nada.
+- **Nuevo:** en un stream protegido se firma **cada segmento**, no solo la
+  lista. Firmar solo la lista no protege nada, porque las direcciones de los
+  segmentos están dentro de ella en texto plano.
+- **Corregido:** un stream (`.m3u8`) se dibujaba como reproductor de audio,
+  porque WordPress no reconoce el tipo de archivo de una lista de reproducción.
+
+### Lo que pesa, comprimido
+
+| | |
+| --- | --- |
+| cualquier página con reproductor | 7 KB |
+| página con vídeo | 9 KB |
+| página con stream, fuera de Safari | 183 KB |
 
 ## Novedades en 1.6.0
 
