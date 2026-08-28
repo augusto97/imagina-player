@@ -1,33 +1,30 @@
-# Imagina Player — 1.14.0
+# Imagina Player — 1.15.0
 
-Download **imagina-player-1.14.0.zip** and install it in WordPress under
+Download **imagina-player-1.15.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  70c4f868d510bbebe32e81e55e58d8c072521d592b44f162f9cce543fff66c23
+    SHA-256  ad4fe95e3ef33ffd22d553c5c1d65f15d919774d75e27c1f4115068c0eb8d220
 
-## What changed in 1.14.0
+## What changed in 1.15.0
 
-**Autoplay, start muted and loop now work on YouTube and Vimeo.** They were
-printed as attributes on an `<audio>` or `<video>` element, and a provider
-video has neither, so all three were switches wired to nothing. They are passed
-to the provider when the frame is built.
+**A video that follows the reader.** Scroll away from one that is playing and
+it detaches into a small card in a corner, keeping its shape, with the controls
+on it and a button to send it away — which stays away. The switch existed
+before but did the audio version of it: a full-width bar across the foot of the
+window, which for a video is a whole picture lying across the bottom of the
+screen.
 
-**The Video panel has real settings.** The play button over the picture, the
-fullscreen and picture-in-picture buttons, the speed control, how the poster
-fills its box, how long before the controls fade, and whether the browser
-download is blocked. These existed only site-wide before — per-block overrides
-run off the preset, and the video settings are not in a preset, so there was no
-path from a block to them at all. Each is three-way, so a block left alone
-keeps following the site rather than freezing today's setting into itself.
+Writing the test for it found a fault it had from the start: a player already
+off screen when playback began was never reconsidered, so an autoplaying video
+below the fold, or a playlist carrying on to the next track, would play to
+nobody.
 
-**Audio controls are out of the video block.** "Show thumbnail" did nothing —
-a video's still is the poster and has its own field. The waveform colours had
-nothing to draw. "Stick to the bottom while playing" did something worse than
-nothing: it pins the whole picture across the foot of the window, which is an
-audio mini-player.
+**Stills on the seek bar.** Point at the bar and the moment under the pointer
+appears above it. Give the block a WebVTT storyboard — what most video tools
+export — and nothing is downloaded until somebody actually drags the bar, so a
+reader who never scrubs pays nothing for it.
 
-**Autoplay without muting says so.** No browser starts a video with sound by
-itself, and a help line under a switch is not the same as being told this block
-is in exactly that state.
+**The sizes a visitor actually pays are now checked too**, alongside the source
+sizes: 7.4 KB for the bundle and 5.1 KB for the stylesheet, compressed.
 
-872 checks green.
+904 checks green.
