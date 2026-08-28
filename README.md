@@ -5,7 +5,7 @@ código fuente está en la rama de desarrollo.
 
 ## Instalar
 
-1. Descarga `imagina-player-1.9.2.zip`.
+1. Descarga `imagina-player-1.10.0.zip`.
 2. En WordPress: **Plugins → Añadir nuevo → Subir plugin**.
 3. Sube el ZIP y actívalo.
 4. Configura los presets en **Imagina Player** (menú lateral), o desde el enlace
@@ -21,22 +21,44 @@ En el insertador de Gutenberg, buscando «imagina»:
 | **Imagina Video Player** | un vídeo o un stream HLS |
 | **Imagina Playlist** | varias pistas, en lista o cuadrícula |
 
+## De dónde sale la onda
+
+Tres niveles, en este orden:
+
+1. **ffmpeg en el servidor**, si lo hay. Mide una vez y ya está.
+2. **El navegador del primer visitante**, para archivos por debajo de 25 MB.
+   Lo mide, lo guarda, y el resto ya lo encuentran hecho.
+3. **Tu navegador, desde el editor.** Sin límite de tamaño y sin depender de
+   ffmpeg. Es lo que hay que usar para grabaciones largas.
+
 ## Versión actual
 
 | | |
 | --- | --- |
-| Versión | `1.9.2` |
-| Fichero | `imagina-player-1.9.2.zip` |
+| Versión | `1.10.0` |
+| Fichero | `imagina-player-1.10.0.zip` |
 | Tamaño | 324 KB |
-| SHA-256 | `ff220b6e16a12f0952318db3991f9fa13b899156d064fad191b619dea5224040` |
+| SHA-256 | `efd5cb155c95134685a782f2bea523e956b60ae98b339e928e5f369a7ea06c64` |
 | Requiere WordPress | 6.5 o superior |
 | Requiere PHP | 8.0 o superior |
 
 Verifica la descarga con:
 
 ```sh
-sha256sum imagina-player-1.9.2.zip
+sha256sum imagina-player-1.10.0.zip
 ```
+
+## Novedades en 1.10.0
+
+- **Nuevo:** las pistas alojadas fuera (streaming, CDN) ya pueden tener onda.
+  Hasta ahora no podían por ningún camino: ffmpeg lee ficheros locales, y las
+  rutas de generar y guardar iban por id de la biblioteca — así que una
+  dirección pegada se quedaba en barra plana y sin explicación.
+- **Nuevo:** cuando el servidor remoto no autoriza a este sitio a leer sus
+  ficheros —que es lo normal—, la medición pasa por este sitio. Esa puerta
+  requiere permiso para añadir medios, rechaza todo lo que no sea http/https,
+  rechaza direcciones privadas e internas, tiene tope de tamaño y solo responde
+  con medios.
 
 ## Novedades en 1.9.2
 
