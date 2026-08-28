@@ -645,6 +645,130 @@ const STATUS_LABELS: Record< SelfCheckResult[ 'status' ], () => string > = {
 };
 
 /**
+ * Where a track's name comes from when a block does not say.
+ *
+ * All of this already happened and none of it could be seen or changed: an
+ * author saw two empty fields and no reason to believe anything would fill
+ * them, which is indistinguishable from the feature not existing.
+ * @param root0
+ * @param root0.settings
+ * @param root0.onChange
+ */
+export function MetadataPanel( { settings, onChange }: PanelProps ) {
+	const metadata = settings.metadata;
+	const set = ( patch: Partial< SettingsPayload[ 'metadata' ] > ): void =>
+		onChange( { metadata: { ...metadata, ...patch } } );
+
+	return (
+		<>
+			<Card
+				title={ __( 'Track details', 'imagina-player' ) }
+				description={ __(
+					'What a player shows when you leave the title or the artist empty in the block. Anything you type in the block always wins.',
+					'imagina-player'
+				) }
+			>
+				<Field
+					label={ __( 'Title', 'imagina-player' ) }
+					help={ __(
+						'Everything tries the file’s own tags first, then what the file is called in your library, then the file name itself.',
+						'imagina-player'
+					) }
+				>
+					<Select
+						value={ metadata.title_from }
+						onChange={ ( value ) => set( { title_from: value } ) }
+						options={ [
+							{
+								value: 'auto',
+								label: __(
+									'Whatever is there, in that order',
+									'imagina-player'
+								),
+							},
+							{
+								value: 'tags',
+								label: __(
+									'Only the file’s tags',
+									'imagina-player'
+								),
+							},
+							{
+								value: 'post',
+								label: __(
+									'Only the media library title',
+									'imagina-player'
+								),
+							},
+							{
+								value: 'file',
+								label: __(
+									'Only the file name',
+									'imagina-player'
+								),
+							},
+							{
+								value: 'none',
+								label: __( 'Leave it empty', 'imagina-player' ),
+							},
+						] }
+					/>
+				</Field>
+
+				<Field label={ __( 'Artist', 'imagina-player' ) }>
+					<Select
+						value={ metadata.artist_from }
+						onChange={ ( value ) => set( { artist_from: value } ) }
+						options={ [
+							{
+								value: 'auto',
+								label: __(
+									'From the file’s tags',
+									'imagina-player'
+								),
+							},
+							{
+								value: 'none',
+								label: __( 'Leave it empty', 'imagina-player' ),
+							},
+						] }
+					/>
+				</Field>
+
+				<div className="imgpa-toggles">
+					<Toggle
+						label={ __(
+							'Fall back to the file name',
+							'imagina-player'
+						) }
+						help={ __(
+							'“2024–03–11_mi-conferencia_01.mp3” becomes “Mi conferencia 01”. It is the only thing a track pasted from a streaming provider has, since there are no tags to read.',
+							'imagina-player'
+						) }
+						checked={ metadata.from_filename }
+						onChange={ ( value ) =>
+							set( { from_filename: value } )
+						}
+					/>
+					<Toggle
+						label={ __(
+							'Use the cover art inside the file',
+							'imagina-player'
+						) }
+						help={ __(
+							'Audio files often carry their own artwork, and WordPress pulls it out when you upload.',
+							'imagina-player'
+						) }
+						checked={ metadata.use_cover }
+						onChange={ ( value ) => set( { use_cover: value } ) }
+					/>
+				</div>
+			</Card>
+		</>
+	);
+}
+
+/**
  * How every video behaves, unless a block says otherwise.
  *
  * These were hardcoded in the renderer until 1.9.0. That is worth saying out

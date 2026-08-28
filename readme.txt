@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.10.0
+Stable tag: 1.11.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,20 @@ The renderer and the front-end core already handle `<video>` sources, but the
 video-specific UI (fullscreen, captions, poster, chapters) is not built yet.
 
 == Changelog ==
+
+= 1.11.0 =
+* New: a Track details section. Where a title and an artist come from when you
+  leave the block's fields empty — the file's own tags, the name it has in your
+  library, or the file name itself. Some of this already happened; none of it
+  could be changed or seen.
+* New: the file name is used as a last resort. "2024-03-11_mi-conferencia.mp3"
+  becomes "Mi conferencia" — the leading date is filing, not a title. It is the
+  only thing a track pasted from a streaming provider has, since there are no
+  tags to read.
+* New: cover art embedded in an audio file is used as the thumbnail.
+* Changed: the block's Title and Artist fields now show what the file would
+  give them, in grey, instead of sitting empty next to a player that has a
+  title. An empty box gave no reason to believe anything would fill it.
 
 = 1.10.0 =
 * New: tracks hosted somewhere else can have a waveform. Until now they could

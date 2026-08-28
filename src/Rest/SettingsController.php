@@ -132,6 +132,19 @@ final class SettingsController {
 			$settings['peaks']['max_client_bytes']  = max( 1, min( 200, (int) ( $peaks['max_client_mb'] ?? 25 ) ) ) * MB_IN_BYTES;
 		}
 
+		if ( isset( $incoming['metadata'] ) && is_array( $incoming['metadata'] ) ) {
+			$metadata = $incoming['metadata'];
+
+			$settings['metadata']['title_from']    = in_array( $metadata['title_from'] ?? '', array( 'auto', 'tags', 'post', 'file', 'none' ), true )
+				? (string) $metadata['title_from']
+				: 'auto';
+			$settings['metadata']['artist_from']   = in_array( $metadata['artist_from'] ?? '', array( 'auto', 'tags', 'none' ), true )
+				? (string) $metadata['artist_from']
+				: 'auto';
+			$settings['metadata']['from_filename'] = ! empty( $metadata['from_filename'] );
+			$settings['metadata']['use_cover']     = ! empty( $metadata['use_cover'] );
+		}
+
 		if ( isset( $incoming['video'] ) && is_array( $incoming['video'] ) ) {
 			$video = $incoming['video'];
 
@@ -290,6 +303,14 @@ final class SettingsController {
 				'real'         => true,
 				'hasPeaks'     => is_array( $record ),
 				'attachmentId' => $track->attachment_id,
+				// What the block will show if its own fields are left empty, so
+				// the editor can put it in the field as a placeholder rather
+				// than showing a blank box beside a filled-in player.
+				'resolved'     => array(
+					'title'     => $track->title,
+					'artist'    => $track->artist,
+					'thumbnail' => $track->thumbnail,
+				),
 			),
 			200
 		);
@@ -346,6 +367,7 @@ final class SettingsController {
 				'defaultPreset'  => Settings::DEFAULT_PRESET,
 			),
 			'video'      => Settings::video(),
+			'metadata'   => Settings::metadata(),
 			'system'     => array(
 				'ffmpeg'        => PeaksGenerator::is_available(),
 				'ffmpegBinary'  => PeaksGenerator::binary(),

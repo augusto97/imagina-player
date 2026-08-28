@@ -145,6 +145,25 @@ final class Settings {
 				'caption_bg'      => 'solid',
 				'big_play'        => true,
 			),
+			/*
+			 * Where a track's name comes from when the block does not say.
+			 *
+			 * This already happened — ID3 tags, then the attachment's title —
+			 * but it was neither configurable nor visible, so an author saw two
+			 * empty fields and no reason to believe anything would fill them.
+			 */
+			'metadata'   => array(
+				// auto: the file's own tags, then the library title, then the
+				// file name. Or pin it to one of those.
+				'title_from'  => 'auto',
+				'artist_from' => 'auto',
+				// A file called `mi-conferencia_01.mp3` becomes "Mi conferencia
+				// 01" rather than being left blank.
+				'from_filename' => true,
+				// Audio files often carry their own cover art, and WordPress
+				// already extracts it on upload.
+				'use_cover'   => true,
+			),
 			'protection' => array(
 				'enabled'       => false,
 				'require_login' => false,
@@ -155,6 +174,17 @@ final class Settings {
 				'xaccel_prefix' => '/imagina-protected/',
 			),
 		);
+	}
+
+	/**
+	 * Where track details come from.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function metadata(): array {
+		$all = self::all();
+
+		return is_array( $all['metadata'] ?? null ) ? $all['metadata'] : self::defaults()['metadata'];
 	}
 
 	/**

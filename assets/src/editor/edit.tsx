@@ -18,7 +18,7 @@ import {
 	ToggleControl,
 } from '@wordpress/components';
 import { useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 import { Preview } from './preview';
 import { WaveformNotice } from './waveform-notice';
@@ -157,6 +157,13 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 	// the block, so nothing in the attributes changes to trigger it.
 	const [ refresh, setRefresh ] = useState( 0 );
 
+	// What the server would show for the fields left empty here.
+	const [ resolved, setResolved ] = useState( {
+		title: '',
+		artist: '',
+		thumbnail: '',
+	} );
+
 	const patchLayer = ( index: number, patch: ListItem ): void =>
 		setAttributes( {
 			layers: layers.map( ( item, i ) =>
@@ -254,20 +261,48 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 						__nextHasNoMarginBottom
 						label={ __( 'Title', 'imagina-player' ) }
 						value={ String( attributes.title ?? '' ) }
+						// The placeholder is what the server would show, not a
+						// hint: an empty box beside a filled-in player gives no
+						// reason to believe anything is happening.
+						placeholder={ resolved.title }
 						onChange={ ( value: string ) =>
 							setAttributes( { title: value } )
 						}
-						help={ __(
-							'Leave empty to use the file’s own title.',
-							'imagina-player'
-						) }
+						help={
+							resolved.title
+								? sprintf(
+										/* translators: %s: the title the file itself carries. */
+										__(
+											'Empty shows “%s”, taken from the file.',
+											'imagina-player'
+										),
+										resolved.title
+								  )
+								: __(
+										'Leave empty to use the file’s own title. This one has none, so set where titles come from under Track details.',
+										'imagina-player'
+								  )
+						}
 					/>
 					<TextControl
 						__nextHasNoMarginBottom
 						label={ __( 'Artist', 'imagina-player' ) }
 						value={ String( attributes.artist ?? '' ) }
+						placeholder={ resolved.artist }
 						onChange={ ( value: string ) =>
 							setAttributes( { artist: value } )
+						}
+						help={
+							resolved.artist
+								? sprintf(
+										/* translators: %s: the artist the file itself carries. */
+										__(
+											'Empty shows “%s”, taken from the file.',
+											'imagina-player'
+										),
+										resolved.artist
+								  )
+								: undefined
 						}
 					/>
 					<BaseControl
@@ -1183,6 +1218,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 			/>
 
 			<Preview
+				onResolved={ setResolved }
 				refresh={ refresh }
 				attributes={ attributes }
 				assets={ {

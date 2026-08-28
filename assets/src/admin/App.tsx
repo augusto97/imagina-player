@@ -5,6 +5,7 @@ import { loadSettings, saveSettings } from './api';
 import {
 	AdvancedPanel,
 	BrandingPanel,
+	MetadataPanel,
 	ProtectionPanel,
 	VideoPanel,
 	WaveformsPanel,
@@ -18,6 +19,7 @@ type Section =
 	| 'branding'
 	| 'waveforms'
 	| 'video'
+	| 'metadata'
 	| 'protection'
 	| 'leads'
 	| 'advanced';
@@ -27,6 +29,7 @@ const SECTIONS: Array< { id: Section; label: string } > = [
 	{ id: 'branding', label: __( 'Branding', 'imagina-player' ) },
 	{ id: 'waveforms', label: __( 'Waveforms', 'imagina-player' ) },
 	{ id: 'video', label: __( 'Video', 'imagina-player' ) },
+	{ id: 'metadata', label: __( 'Track details', 'imagina-player' ) },
 	{ id: 'protection', label: __( 'Protection', 'imagina-player' ) },
 	{ id: 'leads', label: __( 'Emails', 'imagina-player' ) },
 	{ id: 'advanced', label: __( 'Advanced', 'imagina-player' ) },
@@ -206,6 +209,12 @@ export function App() {
 					) }
 					{ 'video' === section && (
 						<VideoPanel settings={ settings } onChange={ patch } />
+					) }
+					{ 'metadata' === section && (
+						<MetadataPanel
+							settings={ settings }
+							onChange={ patch }
+						/>
 					) }
 					{ 'protection' === section && (
 						<ProtectionPanel

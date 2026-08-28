@@ -63,6 +63,12 @@ export interface SettingsPayload {
 		logo_link: string;
 		logo_height: number;
 	};
+	metadata: {
+		title_from: string;
+		artist_from: string;
+		from_filename: boolean;
+		use_cover: boolean;
+	};
 	video: {
 		ratio: string;
 		hide_after: number;

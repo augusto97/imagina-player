@@ -9,6 +9,8 @@ declare( strict_types = 1 );
 
 namespace ImaginaPlayer\Media;
 
+use ImaginaPlayer\Settings;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -105,27 +107,59 @@ final class Track {
 				$src  = $attachment_url;
 				$mime = (string) get_post_mime_type( $attachment_id );
 
-				$meta = wp_get_attachment_metadata( $attachment_id );
+				$meta     = wp_get_attachment_metadata( $attachment_id );
+				$settings = Settings::metadata();
 
 				if ( is_array( $meta ) ) {
 					$duration = isset( $meta['length'] ) ? (float) $meta['length'] : 0.0;
 
-					if ( '' === $title && ! empty( $meta['title'] ) ) {
+					// The file's own tags, if they are wanted.
+					if ( '' === $title && in_array( $settings['title_from'], array( 'auto', 'tags' ), true ) && ! empty( $meta['title'] ) ) {
 						$title = (string) $meta['title'];
 					}
 
-					if ( '' === $artist && ! empty( $meta['artist'] ) ) {
-						$artist = (string) $meta['artist'];
+					if ( '' === $artist && in_array( $settings['artist_from'], array( 'auto', 'tags' ), true ) ) {
+						// `artist` is the performer; `album_artist` is who the
+						// record is filed under. For a lecture series the second
+						// is usually the one that is filled in.
+						foreach ( array( 'artist', 'album_artist', 'author' ) as $field ) {
+							if ( ! empty( $meta[ $field ] ) ) {
+								$artist = (string) $meta[ $field ];
+								break;
+							}
+						}
 					}
 				}
 
-				if ( '' === $title ) {
+				// The name it was given in the library.
+				if ( '' === $title && in_array( $settings['title_from'], array( 'auto', 'post' ), true ) ) {
 					$title = (string) get_the_title( $attachment_id );
+				}
+
+				// The cover art WordPress pulled out of the file on upload.
+				if ( '' === $thumbnail && ! empty( $settings['use_cover'] ) ) {
+					$cover = wp_get_attachment_image_url( $attachment_id, 'medium' );
+
+					if ( $cover ) {
+						$thumbnail = (string) $cover;
+					}
 				}
 			} else {
 				// The attachment was deleted; fall back to whatever URL was stored.
 				$attachment_id = 0;
 			}
+		}
+
+		/*
+		 * Last resort, and the only one an external address has: the file name
+		 * itself. A track pasted from a streaming provider has no attachment to
+		 * ask and no tags we can read, so without this it is nameless.
+		 */
+		$settings = Settings::metadata();
+
+		if ( '' === $title && '' !== $src && ! empty( $settings['from_filename'] )
+			&& in_array( $settings['title_from'], array( 'auto', 'file' ), true ) ) {
+			$title = self::title_from_filename( $src );
 		}
 
 		if ( '' === $mime && '' !== $src ) {
@@ -162,6 +196,40 @@ final class Track {
 			poster: $poster,
 			aspect_ratio: $ratio
 		);
+	}
+
+	/**
+	 * A readable title out of a file name.
+	 *
+	 * `2024-03-11_mi-conferencia_01.mp3` becomes "Mi conferencia 01". Dashes and
+	 * underscores become spaces, the extension goes, and a leading date — which
+	 * is how most people keep recordings in order — is dropped, because it is
+	 * filing, not a title.
+	 *
+	 * Deliberately not title-cased word by word: doing that to Spanish turns
+	 * "La historia de un quiste" into "La Historia De Un Quiste", which is
+	 * wrong in a way that looks deliberate.
+	 */
+	public static function title_from_filename( string $src ): string {
+		$path = (string) wp_parse_url( $src, PHP_URL_PATH );
+		$name = pathinfo( '' !== $path ? $path : $src, PATHINFO_FILENAME );
+		$name = rawurldecode( (string) $name );
+
+		// A leading date, in the shapes people actually use.
+		$name = (string) preg_replace( '/^\d{4}[-_.]?\d{2}[-_.]?\d{2}[-_. ]+/', '', $name );
+
+		$name = str_replace( array( '-', '_', '+' ), ' ', $name );
+		$name = trim( (string) preg_replace( '/\s+/', ' ', $name ) );
+
+		if ( '' === $name ) {
+			return '';
+		}
+
+		// Only the first letter, and only when the name is not already using
+		// capitals of its own — an acronym should stay one.
+		return $name === strtolower( $name )
+			? ( function_exists( 'mb_strtoupper' ) ? mb_strtoupper( mb_substr( $name, 0, 1 ) ) . mb_substr( $name, 1 ) : ucfirst( $name ) )
+			: $name;
 	}
 
 	/**

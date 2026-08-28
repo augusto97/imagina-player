@@ -113,9 +113,9 @@ function wp_check_filetype( $filename, $mimes = null ) {
 	$map = array( 'mp3' => 'audio/mpeg', 'm4a' => 'audio/mp4', 'wav' => 'audio/wav', 'ogg' => 'audio/ogg', 'mp4' => 'video/mp4' );
 	return array( 'ext' => $ext, 'type' => $map[ $ext ] ?? '' );
 }
-function wp_get_attachment_url( $id ) { return false; }
-function wp_get_attachment_metadata( $id ) { return false; }
-function wp_get_attachment_image_url( $id, $size = '' ) { return false; }
+function wp_get_attachment_url( $id ) { return $GLOBALS['stub_posts'][ $id ]['url'] ?? false; }
+function wp_get_attachment_metadata( $id ) { return $GLOBALS['stub_attachment_meta'][ $id ] ?? false; }
+function wp_get_attachment_image_url( $id, $size = '' ) { return $GLOBALS['stub_covers'][ $id ] ?? false; }
 function get_post_mime_type( $id ) { return $GLOBALS['stub_posts'][ $id ]['mime'] ?? ''; }
 function get_the_title( $id ) { return ''; }
 function get_post_meta( $id, $key, $single = false ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['get_post_meta']++; } return $GLOBALS['stub_meta'][ $id ][ $key ] ?? ''; }

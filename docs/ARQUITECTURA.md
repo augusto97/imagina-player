@@ -439,6 +439,32 @@ hosting compartido.
 Lo que la negativa **no** dice es por qué: las razones nombran lo que este
 servidor alcanza, y eso no es asunto de quien pregunta ni siendo del equipo.
 
+## De dónde sale el nombre de una pista
+
+Cadena, y configurable en **Detalles de la pista**: etiquetas del propio fichero
+→ título en la biblioteca → nombre del fichero. Lo que se escriba en el bloque
+gana siempre.
+
+Parte de esto ya pasaba —las etiquetas y el título del adjunto— pero no era ni
+configurable ni **visible**: el autor veía dos campos vacíos y ningún motivo
+para creer que algo los rellenaría, que desde fuera es igual que no existir. Por
+eso los campos del bloque muestran ahora como *placeholder* lo que el servidor
+va a poner, y el texto de ayuda lo nombra en vez de describirlo.
+
+El nombre del fichero es lo único que tiene una dirección pegada de un
+proveedor de streaming: no hay adjunto al que preguntar ni etiquetas que leer.
+`2024-03-11_mi-conferencia_01.mp3` se convierte en «Mi conferencia 01» — la
+fecha de delante es archivado, no título.
+
+Un detalle que importa en español: **no** se capitaliza palabra por palabra.
+Hacerlo convierte «La historia de un quiste» en «La Historia De Un Quiste», que
+está mal de una forma que parece deliberada. Solo la primera letra, y solo si el
+nombre no traía mayúsculas propias — un acrónimo se queda como está. Hay un test
+por cada una de esas reglas, y quitarlas hace fallar once comprobaciones.
+
+Para el artista se miran `artist`, `album_artist` y `author` en ese orden:
+en una serie de conferencias el segundo suele ser el que está relleno.
+
 ## Bloques
 
 Tres: `imagina/audio-player`, `imagina/video-player` e `imagina/playlist`.
@@ -560,7 +586,7 @@ paquetes.
 ## Pruebas
 
 `./tests/run.sh` ejecuta la suite contra stubs de WordPress, sin necesidad de una
-instalación: 644 comprobaciones. Cubre sanitización, codificación de picos,
+instalación: 679 comprobaciones. Cubre sanitización, codificación de picos,
 remuestreo, firma de tokens, escapado del markup, el movimiento real de ficheros
 dentro y fuera del vault, y —con un binario ffmpeg simulado— la extracción de
 picos completa.

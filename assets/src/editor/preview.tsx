@@ -30,6 +30,15 @@ interface PreviewProps {
 	attributes: Record< string, unknown >;
 	assets: EditorAssets;
 	/**
+	 * What the server will show for fields the block leaves empty, so they can
+	 * be offered as placeholders rather than as blank boxes.
+	 */
+	onResolved?: ( resolved: {
+		title: string;
+		artist: string;
+		thumbnail: string;
+	} ) => void;
+	/**
 	 * Bumped to force a re-render when nothing in the attributes changed.
 	 *
 	 * Measuring a waveform stores it against the file, not against the block,
@@ -39,7 +48,12 @@ interface PreviewProps {
 	refresh?: number;
 }
 
-export function Preview( { attributes, assets, refresh = 0 }: PreviewProps ) {
+export function Preview( {
+	attributes,
+	assets,
+	onResolved,
+	refresh = 0,
+}: PreviewProps ) {
 	const [ doc, setDoc ] = useState( '' );
 	const [ failed, setFailed ] = useState( false );
 	const [ height, setHeight ] = useState( 150 );
@@ -63,7 +77,18 @@ export function Preview( { attributes, assets, refresh = 0 }: PreviewProps ) {
 						return;
 					}
 
-					const { html } = result as { html: string };
+					const { html, resolved } = result as {
+						html: string;
+						resolved?: {
+							title: string;
+							artist: string;
+							thumbnail: string;
+						};
+					};
+
+					if ( resolved ) {
+						onResolved?.( resolved );
+					}
 
 					/*
 					 * No synthetic waveform here any more. It used to stand in
