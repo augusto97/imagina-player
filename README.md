@@ -1,73 +1,71 @@
-# Imagina Player — 1.19.0
+# Imagina Player — 1.20.0
 
-Download **imagina-player-1.19.0.zip** and install it in WordPress under
+Download **imagina-player-1.20.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  75876b9a1bd0036f590b104abeff521857d601994d56af2c272b6f4a3eaa9ae0
+    SHA-256  f18b78d6fc7174cc99c05e328cefa9c9ed33c9273ef12c9423be9d243bc1f3ec
 
-## Rounded corners drew a frame
+## The close button on a call to action
 
-Turning on rounded corners for a video put a pale ring and a faint border
-around the picture.
+It was nearly invisible, and it was broken rather than unconfigurable.
 
-The rounded shell is the audio player's card. Asking for a radius on a row of
-controls means asking for the card those controls sit in, so the rule carries
-padding and a tint along with the curve — which is right, and is what it was
-written for. The same class landed on a video, and there the padding became a
-ring and the tint became a border.
+The stylesheet defends itself against themes by stripping every button's
+background — a theme's own `button { background: #ff87ac }` would otherwise
+paint the sheet that covers the video pink — and the handful of buttons that do
+have a shape of their own restate it. This one restated its hover state and not
+the state it spends its life in. On any real site it was a white glyph at
+three-quarter opacity with nothing behind it, over whatever the video happened
+to be showing.
 
-A video already rounds the right thing: the picture itself. So the shell just
-had to stop drawing a card.
+## Three more the same test found
 
-## The playback controls have colours now
+The test that should have caught it walks every element inside the player and
+compares it with and without a theme. That reads as exhaustive. It was not: no
+case it rendered had a call to action on it, so the panel, its button, its form
+and its close button were never in the tree being walked.
 
-Two of them were literals in the stylesheet with no way to reach them.
+Adding those cases found:
 
-**The buttons and the clock on the bar** were white, whatever colour the bar
-behind them was set to. Pick a pale control bar and every button on it
-disappeared.
+- A theme's `p { margin: 1.5em 0; line-height: 2; font-size: 18px }` — one of
+  the most ordinary things a theme says — reaching the panel's copy and nearly
+  doubling its height beside audio.
+- The email gate's field landing 43 pixels outside the player, because a
+  theme's padding was added to its width rather than taken out of it.
+- The spam honeypot parked at `left: -9999px`, which inside page content is an
+  element ten thousand pixels to the left of the article. It is clipped in
+  place now.
 
-**The played part of the seek bar** took the waveform's progress colour — an
-audio setting the video block does not show, because a video has no waveform.
-The one moving coloured thing on the picture could not be changed at all.
+## The block's settings are reorganised
 
-Both are settings now, site-wide and per block, and both default to
-**Automatic**: the buttons are worked out from the bar the way the accent's
-foreground already was, and the played line takes the accent. An existing site
-gets readable controls without touching anything.
+Ten panels for a video, two of them called "Colours", the subtitle sizes filed
+under "Video", and a "Video" panel holding a corner radius, a poster, thirteen
+three-way dropdowns and a second set of colours.
 
-The audio player's small buttons — mute, skip, speed, download, and the rail
-the volume slider runs along — have a colour too, on the preset and on the
-block. That was a fixed slate grey, which all but disappears on a dark page.
+Nothing was missing. It was impossible to guess where anything was, which for
+somebody using it is the same problem.
 
-## Three more found on the way
+Eight panels now — Media, Appearance, Controls, Playback, Subtitles, Chapters
+and previews, Calls to action, Advanced — each named for the question it
+answers, every setting in exactly one of them, and only the first one open.
 
-The volume rail on a video was drawn from the audio icon colour: a slate grey
-line on a near-black bar.
+**A setting that can inherit is now a segmented control, not a dropdown.** All
+three answers are visible at once, the inherit segment says what the site is
+actually set to rather than just "Site", and the rows this block has changed
+are marked down the side. Thirteen dropdowns in a column cost a click each to
+read; the same thirteen now fit in a third of the height and can be scanned.
 
-The play button in the control row printed a white icon on the accent without
-checking, while the big play button over the picture worked the same thing out
-properly.
+**What a player shows and how it behaves were in the same list.** Sticking to
+the corner, remembering the position and stopping when the video leaves the
+screen are in Playback. Subtitles-on-from-the-start is with the subtitles.
 
-The time chips kept a black pill on a pale control bar, so a correctly darkened
-clock was printed on black anyway.
+## Previews for video
 
-## How it is checked
+A preset's accent paints the play button over a picture, its corner radius
+rounds the picture, its button colour sits on the bar — and the preset preview
+only ever drew audio. It now switches between the two.
 
-Neither report is a thing a string search settles, so both are measured in a
-browser.
+The Video settings had no preview at all, so every setting there was a guess
+followed by publishing a post to look at it. They have one now, showing the
+settings as they stand on screen rather than as they were last saved.
 
-One test measures the rendered boxes: is the picture flush with the shell, is
-anything painted behind it, is the curve actually there — and, in the other
-direction, does the audio card keep the padding and the tint the rule exists
-for. A fix that flattened both would be no fix.
-
-The other measures real contrast on the control bar for a dark bar, a pale bar
-and a hand-picked one. It caught a bug in itself first: it read translucent
-colours as opaque, so a rail drawn at thirty per cent alpha came back as its
-base colour and reported 1.29:1 for a pair that is plainly legible. Every
-sample is composited over what is behind it now.
-
-Both tests were checked by putting each bug back and watching them fail.
-
-1062 checks green.
+1087 checks green.
