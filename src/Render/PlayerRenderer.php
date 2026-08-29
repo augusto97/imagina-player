@@ -617,6 +617,18 @@ final class PlayerRenderer {
 			);
 		}
 
+		/*
+		 * Finding the moment a word is said. Only offered when the video
+		 * carries subtitles, because that is the text it searches — there is
+		 * nothing to index on the server and nothing extra to fetch.
+		 */
+		if ( array() !== (array) ( $atts['tracks'] ?? array() ) && ! empty( $video_config['show_search'] ) ) {
+			$buttons['search'] = array(
+				'icons' => array( 'search' ),
+				'label' => __( 'Search what is said', 'imagina-player' ),
+			);
+		}
+
 		// Hidden until the manifest reports more than one rendition; a stream with
 		// a single quality is not a choice.
 		$buttons['quality'] = array(

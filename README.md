@@ -33,6 +33,28 @@ constante `VERSION`), en `package.json`, en `blocks/audio/block.json` y en el
 `Stable tag` de `readme.txt`; añade la entrada al changelog; y ejecuta
 `./tests/run.sh`, que falla si alguno de esos números no coincide.
 
+## Traducciones
+
+El plugin viene traducido al español (`languages/imagina-player-es_ES.po`). No
+hace falta `gettext` ni `msgfmt` instalados: las tres herramientas están en
+`bin/`.
+
+```sh
+php bin/make-pot.php                              # extrae las cadenas del código
+php bin/merge-po.php languages/imagina-player-es_ES.po   # trae las nuevas al .po
+#   … rellena los msgstr vacíos …
+php bin/make-mo.php languages/imagina-player-es_ES.po    # compila el .mo y los .json
+```
+
+Para un idioma nuevo, copia `languages/imagina-player.pot` a
+`languages/imagina-player-<locale>.po`, ajusta `Language:` y `Plural-Forms:` en
+la cabecera, traduce y compílalo igual.
+
+`tests/test-translations.php` comprueba que la plantilla sigue al día con el
+código, que no queda nada sin traducir, que los `%s` y `%d` de cada traducción
+coinciden con los del original, y que una página renderizada de verdad sale en
+español.
+
 ## Uso
 
 **Bloque:** _Imagina Audio Player_, en la categoría Multimedia.

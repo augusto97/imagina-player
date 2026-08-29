@@ -98,6 +98,7 @@ export class VideoChrome {
 		this.bindCaptions();
 		this.bindChapters();
 		this.bindStoryboard();
+		this.bindSearch();
 		this.bindFocusMode();
 		this.hardenContextMenu();
 
@@ -862,6 +863,205 @@ export class VideoChrome {
 		this.cleanup.push( () => observer.disconnect() );
 	}
 
+	/**
+	 * Finding the moment a word is said.
+	 *
+	 * On a forty-minute talk this is the difference between a video somebody
+	 * watches and a video somebody uses: getting to the part about pricing
+	 * without dragging the bar and guessing. Chapters do that when the author
+	 * wrote them; this works on what was actually said.
+	 *
+	 * The text is the subtitle tracks the player already has, so there is
+	 * nothing to index on the server and nothing extra to download. The reading
+	 * and matching are in their own chunk, fetched when somebody opens the box.
+	 */
+	private bindSearch(): void {
+		const button = this.root.querySelector< HTMLButtonElement >(
+			'.imgp__vbtn--search'
+		);
+		const element = this.element;
+
+		if ( ! button || ! element ) {
+			return;
+		}
+
+		button.hidden = false;
+
+		/*
+		 * Ask the browser for the subtitle files now, rather than when somebody
+		 * opens the box. A track left `disabled` never fetches its file, so
+		 * reading the cues at open time found none of them and the box reported
+		 * that the subtitles had not loaded — which was true, and stayed true.
+		 *
+		 * `hidden` loads the text without putting it on the picture, so this
+		 * does not turn subtitles on for anybody.
+		 */
+		for ( let i = 0; i < element.textTracks.length; i++ ) {
+			const track = element.textTracks[ i ];
+
+			if (
+				( 'subtitles' === track.kind || 'captions' === track.kind ) &&
+				'disabled' === track.mode
+			) {
+				track.mode = 'hidden';
+			}
+		}
+
+		let hits: import('./search').Hit[] | null = null;
+		let find: typeof import('./search').search | null = null;
+		let collect: typeof import('./search').collect | null = null;
+
+		this.on( button, 'click', () => {
+			void ( async () => {
+				if ( ! find ) {
+					try {
+						const module = await import(
+							/* webpackChunkName: "imagina-search" */ './search'
+						);
+
+						find = module.search;
+						collect = module.collect;
+						hits = collect( element );
+					} catch {
+						return;
+					}
+				}
+
+				this.openSearch( hits ?? [], find, () =>
+					collect ? collect( element ) : []
+				);
+			} )();
+		} );
+	}
+
+	/**
+	 * The box itself: type, and pick a moment.
+	 *
+	 * Built in the menu the other buttons already use, so it closes the same
+	 * way and there is only ever one thing open over the picture.
+	 *
+	 * @param initial   Every line of every subtitle track, as they stood when
+	 *                  the box was opened.
+	 * @param find      The matcher from the search chunk.
+	 * @param recollect Reads the cues again, for a subtitle file that had not
+	 *                  arrived yet when the box opened.
+	 */
+	private openSearch(
+		initial: import('./search').Hit[],
+		find: typeof import('./search').search,
+		recollect: () => import('./search').Hit[]
+	): void {
+		let hits = initial;
+		const menu = this.root.querySelector< HTMLElement >( '.imgp__menu' );
+
+		if ( ! menu ) {
+			return;
+		}
+
+		if ( ! menu.hidden ) {
+			this.closeMenu();
+
+			return;
+		}
+
+		const doc = this.root.ownerDocument;
+
+		menu.textContent = '';
+		menu.classList.add( 'imgp__menu--search' );
+
+		const input = doc.createElement( 'input' );
+
+		input.type = 'search';
+		input.className = 'imgp__search-input';
+		input.placeholder = this.i18n(
+			'searchPlaceholder',
+			'Search what is said'
+		);
+		input.setAttribute( 'aria-label', input.placeholder );
+
+		const list = doc.createElement( 'div' );
+
+		list.className = 'imgp__search-results';
+
+		const note = doc.createElement( 'p' );
+
+		note.className = 'imgp__search-note';
+		note.textContent =
+			0 === hits.length
+				? this.i18n(
+						'searchEmpty',
+						'The subtitles for this video have not loaded yet.'
+				  )
+				: '';
+
+		const render = (): void => {
+			list.textContent = '';
+
+			if ( input.value.trim().length < 2 ) {
+				note.textContent = '';
+
+				return;
+			}
+
+			/*
+			 * A file that had not arrived when the box opened has usually
+			 * arrived by the time somebody has finished typing, so asking
+			 * again costs one pass over the cues and saves a box that is
+			 * permanently empty.
+			 */
+			if ( 0 === hits.length ) {
+				hits = recollect();
+			}
+
+			const found = find( hits, input.value );
+
+			if ( 0 === found.length ) {
+				note.textContent = this.i18n( 'searchNone', 'Nothing found.' );
+
+				return;
+			}
+
+			note.textContent = '';
+
+			for ( const hit of found ) {
+				const row = doc.createElement( 'button' );
+
+				row.type = 'button';
+				row.className = 'imgp__search-hit';
+
+				const when = doc.createElement( 'span' );
+
+				when.className = 'imgp__search-at';
+				when.textContent = stamp( hit.at );
+
+				const said = doc.createElement( 'span' );
+
+				said.className = 'imgp__search-said';
+				said.textContent = hit.text;
+
+				row.append( when, said );
+				row.addEventListener( 'click', () => {
+					this.host.seekTo( hit.at );
+					this.closeMenu();
+				} );
+
+				list.appendChild( row );
+			}
+		};
+
+		input.addEventListener( 'input', render );
+		menu.append( input, note, list );
+		menu.hidden = false;
+		input.focus();
+
+		this.dismissMenu = () => {
+			menu.hidden = true;
+			menu.textContent = '';
+			menu.classList.remove( 'imgp__menu--search' );
+			this.dismissMenu = null;
+		};
+	}
+
 	private bindChapters(): void {
 		const chapters = this.config.chapters ?? [];
 
@@ -983,3 +1183,24 @@ export class VideoChrome {
 }
 
 export type { Host as VideoHost };
+
+/**
+ * A timestamp a person reads, for a search result.
+ *
+ * Its own function rather than the core's `formatTime`, which lives in the main
+ * bundle: this file is a chunk and pulling a helper across would drag the
+ * import graph the wrong way for one line of arithmetic.
+ *
+ * @param seconds Where in the video.
+ */
+function stamp( seconds: number ): string {
+	const whole = Math.max( 0, Math.floor( seconds ) );
+	const hours = Math.floor( whole / 3600 );
+	const minutes = Math.floor( ( whole % 3600 ) / 60 );
+	const rest = whole % 60;
+	const pad = ( n: number ): string => String( n ).padStart( 2, '0' );
+
+	return hours > 0
+		? `${ hours }:${ pad( minutes ) }:${ pad( rest ) }`
+		: `${ minutes }:${ pad( rest ) }`;
+}

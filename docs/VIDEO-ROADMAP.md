@@ -126,13 +126,25 @@ Each step ended with the players rendered and looked at, not only asserted.
 The list above is finished. What remains is smaller and is written here so it
 is not mistaken for nothing:
 
-- Corner radius per block. It exists on the preset, so a site can set one; a
-  single block cannot differ from it.
 - Presto's `hide_youtube` — a way to hide YouTube's own overlay. It is
-  experimental in Presto and unreliable by their own description.
-- Presto Pro's caption search. A search box that jumps to the moment a word is
-  said, which needs the caption text indexed.
-- Translations. Nothing here is in Spanish yet; the plugin ships no `.pot`.
+  experimental in Presto and unreliable by their own description, and it works
+  by covering parts of somebody else's player with opaque boxes, which breaks
+  whenever they change their layout. Not doing it.
+
+Done since this list was written:
+
+- Corner radius per block. `borderRadius` on all three blocks, overriding the
+  preset, clamped and sanitised on the way through.
+- Presto Pro's caption search. A box that reads the subtitle tracks the video
+  already carries — no index, no extra request — folds accents so *pagina*
+  finds *página*, and jumps to the cue.
+- Translations. `languages/imagina-player.pot` with 471 strings, a complete
+  `es_ES` translation, the compiled `.mo`, and a per-bundle `.json` for the
+  editor and the admin screen. `tests/test-translations.php` checks the
+  template against the source, the translation against the template, the
+  placeholders in every translated string, the compiled catalogue byte for
+  byte, and — the part that matters — renders a real player with the catalogue
+  loaded and reads the Spanish back out of the markup.
 
 ## Faults found while doing this, and fixed
 
@@ -148,3 +160,25 @@ is not mistaken for nothing:
 - The watermark class was `.imgp__mark`, which is already the chapter marker on
   the scrub bar. Caught before it shipped; every chapter tick would have become
   a full-size logo.
+- The plugin never called `load_plugin_textdomain`, so the `.mo` files would
+  have shipped and never been opened. WordPress loads a domain by itself only
+  from `wp-content/languages/plugins`; a plugin carrying its own has to say
+  where they are. Nothing errors when it is missing — `__()` hands back the
+  English it was given — so the whole translation would have been dead weight
+  (1.18.0).
+- The release archive had no `languages/` folder in its list of contents, so
+  even a working text domain would have found nothing to load on an installed
+  site (1.18.0).
+- Every bundle was handed the whole 45 KB catalogue, and the front-end bundle
+  — which contains no `__()` call at all, since its few strings come from PHP —
+  was told to fetch one on every page view. Now each `.json` carries only the
+  strings its own sources use, and the front end has no file (1.18.0).
+- The caption search's three strings were never in the runtime payload PHP
+  sends the player, so the search box would have stayed in English on a Spanish
+  site. This is the failure mode of a fallback: nothing breaks, it just never
+  translates. `test-translations.php` now compares the keys the front-end
+  sources read against the keys the server sends, in both directions (1.18.0).
+- The translation stubs in the test harness returned their input unchanged, so
+  nothing in the suite could tell a loaded catalogue from an unloaded one. They
+  now consult a catalogue when a test sets one — which is what lets the suite
+  render a player and read Spanish back out of it (1.18.0).

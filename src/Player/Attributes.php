@@ -41,6 +41,9 @@ final class Attributes {
 		'meta_color'        => 'metaColor',
 		'background'        => 'background',
 		'height'            => 'height',
+		// A block could not round its own corners: the radius existed on the
+		// preset, so a site had one answer and no single player could differ.
+		'border_radius'     => 'borderRadius',
 		'preload'           => 'preload',
 		'show_artist'       => 'showArtist',
 		'show_title'        => 'showTitle',
@@ -126,6 +129,10 @@ final class Attributes {
 				'type'    => 'string',
 				'default' => '',
 			),
+			'borderRadius' => array(
+				'type'    => 'string',
+				'default' => self::INHERIT,
+			),
 
 			/*
 			 * The video settings a block may answer for itself. Tristate, like
@@ -176,6 +183,10 @@ final class Attributes {
 			// answer for one video is the more useful of the two, and leaving
 			// them unset still follows the site.
 			'videoCaptions'      => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			'videoSearch'        => array(
 				'type'    => 'tristate',
 				'default' => self::INHERIT,
 			),

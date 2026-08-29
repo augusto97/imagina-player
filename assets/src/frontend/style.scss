@@ -1890,6 +1890,18 @@
 	border-radius: 999px !important;
 }
 
+.imgp .imgp__search-hit {
+	padding: 0.4rem 0.35rem !important;
+	border-radius: 0.3rem !important;
+}
+
+.imgp .imgp__search-input {
+	padding: 0.5rem 0.6rem !important;
+	border: 1px solid rgb(255 255 255 / 22%) !important;
+	border-radius: 0.35rem !important;
+	background-color: rgb(255 255 255 / 8%) !important;
+}
+
 /* Its own colour, restated: the blanket reset above makes every button
    transparent, and this one is a control over a picture. */
 .imgp .imgp__unstick {
@@ -2139,4 +2151,76 @@
 .imgp--video:not(.is-chrome-idle) .imgp__watermark--bottom-right {
 	opacity: 0;
 	transition: opacity 0.2s ease;
+}
+
+/* --- Finding the moment a word is said ----------------------------------
+   The same menu the other buttons open, so only one thing is ever over the
+   picture and it closes the same way. */
+
+.imgp__menu--search {
+	width: min(24rem, 80vw);
+	max-height: 60%;
+	padding: 0.5rem;
+}
+
+.imgp__search-input {
+	width: 100%;
+	padding: 0.5rem 0.6rem;
+	border: 1px solid rgb(255 255 255 / 22%);
+	border-radius: 0.35rem;
+	background: rgb(255 255 255 / 8%);
+	color: inherit;
+	font: inherit;
+	font-size: 0.9rem;
+}
+
+.imgp__search-input:focus-visible {
+	outline: 2px solid var(--imgp-accent);
+	outline-offset: 1px;
+}
+
+.imgp__search-note {
+	margin: 0.5rem 0 0;
+	font-size: 0.8rem;
+	opacity: 0.7;
+}
+
+.imgp__search-results {
+	display: flex;
+	flex-direction: column;
+	max-height: 14rem;
+	margin-top: 0.4rem;
+	overflow-y: auto;
+}
+
+.imgp__search-hit {
+	display: flex;
+	gap: 0.5rem;
+	align-items: baseline;
+	padding: 0.4rem 0.35rem;
+	border-radius: 0.3rem;
+	color: inherit;
+	font-size: 0.85rem;
+	text-align: left;
+	cursor: pointer;
+}
+
+.imgp__search-hit:hover,
+.imgp__search-hit:focus-visible {
+	background: rgb(255 255 255 / 12%);
+}
+
+.imgp__search-at {
+	flex: 0 0 auto;
+	font-variant-numeric: tabular-nums;
+	opacity: 0.7;
+}
+
+/* Two lines at most: a cue is a sentence, and a list of paragraphs is not a
+   list you can scan. */
+.imgp__search-said {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
 }

@@ -57,6 +57,32 @@ $plugin = $workdir . '/extracted/imagina-player/';
 
 check( 'the archive holds one plugin folder', is_dir( $plugin ) );
 
+/*
+ * Translations are a runtime asset like any other, and one whose absence is
+ * silent: the plugin installs, runs and stays in English. The archive shipped
+ * without a `languages/` folder at all until this was checked.
+ */
+check(
+	'the archive carries the compiled Spanish',
+	is_readable( $plugin . 'languages/imagina-player-es_ES.mo' )
+);
+
+check(
+	'and the template a new language starts from',
+	is_readable( $plugin . 'languages/imagina-player.pot' )
+);
+
+check(
+	'and the editor\'s own catalogue, which is a separate file',
+	is_readable( $plugin . 'languages/imagina-player-es_ES-' . md5( 'build/editor.js' ) . '.json' )
+);
+
+check(
+	'without the translator\'s working copy, which WordPress never reads',
+	array() === glob( $plugin . 'languages/*.po' ),
+	implode( ', ', array_map( 'basename', (array) glob( $plugin . 'languages/*.po' ) ) )
+);
+
 // Verified in its own process: this one has the repository's autoloader
 // registered, and it would happily satisfy any class the archive forgot.
 $verify = array();

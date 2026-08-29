@@ -66,7 +66,12 @@ final class Assets {
 			$editor['version']
 		);
 
-		wp_set_script_translations( self::FRONTEND_HANDLE, 'imagina-player', PATH . 'languages' );
+		/*
+		 * Only the editor bundle. Nothing in the front-end bundle calls `__()`
+		 * — every label a visitor sees is rendered by PHP — so pointing this at
+		 * the front-end handle only made WordPress print a translation file on
+		 * every page view for strings no script would ever ask for.
+		 */
 		wp_set_script_translations( self::EDITOR_HANDLE, 'imagina-player', PATH . 'languages' );
 	}
 
@@ -152,6 +157,9 @@ final class Assets {
 				'captionsOff' => __( 'Off', 'imagina-player' ),
 				'qualityAuto' => __( 'Auto', 'imagina-player' ),
 				'layerFailed' => __( 'That could not be sent. Please try again.', 'imagina-player' ),
+				'searchPlaceholder' => __( 'Search what is said', 'imagina-player' ),
+				'searchEmpty' => __( 'The subtitles for this video have not loaded yet.', 'imagina-player' ),
+				'searchNone' => __( 'Nothing found.', 'imagina-player' ),
 			),
 		);
 	}

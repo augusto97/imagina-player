@@ -53,6 +53,7 @@ final class Video {
 		'hide_after'      => 'videoHideAfter',
 		'show_captions'   => 'videoCaptions',
 		'show_chapters'   => 'videoChapters',
+		'show_search'     => 'videoSearch',
 		'show_skip'       => 'videoSkip',
 		'show_time'       => 'videoTime',
 		'show_volume'     => 'videoVolume',

@@ -25,6 +25,7 @@ final class Icons {
 		'play'     => '<path d="M8 5.14v13.72L19 12z"/>',
 		'pause'    => '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>',
 		'volume'   => '<path d="M3 9v6h4l5 5V4L7 9H3z"/>',
+		'search'   => '<path d="M10 4a6 6 0 104.47 10.03l4.25 4.25 1.41-1.41-4.25-4.25A6 6 0 0010 4zm0 2a4 4 0 110 8 4 4 0 010-8z"/>',
 		'muted'    => '<path d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16.5 8.5l5 5m0-5l-5 5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>',
 		'download' => '<path d="M12 3v10.2l3.6-3.6 1.4 1.4-6 6-6-6 1.4-1.4L10 13.2V3zM4 19h16v2H4z"/>',
 		'back'     => '<path d="M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/>',

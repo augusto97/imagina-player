@@ -82,9 +82,20 @@ function wp_cache_get( $k, $g = '' ) { return false; }
 function wp_cache_set( $k, $v, $g = '', $e = 0 ) { return true; }
 function wp_cache_delete( $k, $g = '' ) { return true; }
 function wp_schedule_single_event( $t, $h, $a = array() ) { return true; }
-function __( $text, $domain = '' ) { return $text; }
-function esc_html__( $text, $domain = '' ) { return htmlspecialchars( $text, ENT_QUOTES ); }
-function esc_attr__( $text, $domain = '' ) { return htmlspecialchars( $text, ENT_QUOTES ); }
+/*
+ * Translation is normally the identity, because almost every test is about
+ * what the code does rather than what language it says it in. A test that is
+ * about the language sets `$GLOBALS['imgp_catalogue']` to `original =>
+ * translation` first, and then these behave like a loaded text domain — which
+ * is the only way to prove a rendered page actually comes back in Spanish
+ * rather than merely that a .mo file parses.
+ */
+function imgp_translate( $text ) {
+	return $GLOBALS['imgp_catalogue'][ $text ] ?? $text;
+}
+function __( $text, $domain = '' ) { return imgp_translate( $text ); }
+function esc_html__( $text, $domain = '' ) { return htmlspecialchars( imgp_translate( $text ), ENT_QUOTES ); }
+function esc_attr__( $text, $domain = '' ) { return htmlspecialchars( imgp_translate( $text ), ENT_QUOTES ); }
 function esc_html( $text ) { return htmlspecialchars( (string) $text, ENT_QUOTES ); }
 function esc_attr( $text ) { return htmlspecialchars( (string) $text, ENT_QUOTES ); }
 /*
@@ -109,8 +120,8 @@ function esc_url_raw( $url, $protocols = null ) {
 	return $url;
 }
 function esc_js( $text ) { return $text; }
-function esc_html_e( $text, $domain = '' ) { echo esc_html( $text ); }
-function esc_attr_e( $text, $domain = '' ) { echo esc_attr( $text ); }
+function esc_html_e( $text, $domain = '' ) { echo esc_html( imgp_translate( $text ) ); }
+function esc_attr_e( $text, $domain = '' ) { echo esc_attr( imgp_translate( $text ) ); }
 function sanitize_text_field( $text ) { return trim( strip_tags( (string) $text ) ); }
 function sanitize_key( $key ) { return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $key ) ); }
 function sanitize_hex_color( $color ) { return preg_match( '/^#([A-Fa-f0-9]{3}){1,2}$/', (string) $color ) ? $color : null; }
@@ -140,6 +151,17 @@ function admin_url( $path = '' ) { return 'https://example.test/wp-admin/' . ltr
 function plugin_dir_url( $file ) { return 'https://example.test/wp-content/plugins/imagina-player/'; }
 function plugin_dir_path( $file ) { return dirname( $file ) . '/'; }
 function plugin_basename( $file ) { return basename( dirname( $file ) ) . '/' . basename( $file ); }
+
+/*
+ * Records the call rather than reading the catalogue. What the tests need to
+ * know is that the domain is loaded at all and where it is pointed — the .mo
+ * itself is read back byte for byte in test-translations.php.
+ */
+$GLOBALS['imgp_textdomains'] = array();
+function load_plugin_textdomain( $domain, $deprecated = false, $path = '' ) {
+	$GLOBALS['imgp_textdomains'][ $domain ] = $path;
+	return true;
+}
 function add_menu_page( ...$a ) { return 'toplevel_page_' . ( $a[3] ?? '' ); }
 function wp_add_inline_style( ...$a ) {}
 function wp_create_nonce( $action = -1 ) { return 'stub-nonce'; }
@@ -242,6 +264,14 @@ function wp_list_pluck( $list, $field ) {
 }
 
 function _n( $single, $plural, $number, $domain = 'default' ) {
+	$key = $single . "\0" . $plural;
+
+	if ( isset( $GLOBALS['imgp_catalogue'][ $key ] ) ) {
+		$forms = explode( "\0", $GLOBALS['imgp_catalogue'][ $key ] );
+
+		return 1 === (int) $number ? $forms[0] : ( $forms[1] ?? $forms[0] );
+	}
+
 	return 1 === (int) $number ? $single : $plural;
 }
 

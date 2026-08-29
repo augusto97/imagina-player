@@ -156,6 +156,9 @@ final class Settings {
 				 */
 				'show_captions'   => true,
 				'show_chapters'   => true,
+				// Presto keeps this for its paid tier. The text is already in
+				// the page, so it costs a few hundred bytes and no server work.
+				'show_search'     => true,
 				'show_skip'       => true,
 				'show_time'       => true,
 				'show_volume'     => true,

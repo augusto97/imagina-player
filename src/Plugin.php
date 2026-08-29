@@ -79,6 +79,7 @@ final class Plugin {
 		}
 
 		add_action( 'plugins_loaded', array( $this, 'maybe_upgrade' ), 5 );
+		add_action( 'init', array( $this, 'load_translations' ) );
 
 		/**
 		 * Fires once every Imagina Player service has registered its hooks.
@@ -86,6 +87,28 @@ final class Plugin {
 		 * @param Plugin $plugin The plugin instance.
 		 */
 		do_action( 'imagina_player_booted', $this );
+	}
+
+	/**
+	 * Point WordPress at the translations this plugin carries.
+	 *
+	 * Without this the `.mo` files in `/languages` are never opened. WordPress
+	 * loads a text domain by itself only from `wp-content/languages/plugins`,
+	 * which is where translations from translate.wordpress.org land — a plugin
+	 * shipping its own has to say where they are. The Spanish was complete and
+	 * compiled for a while before anybody noticed the interface was still in
+	 * English, because nothing errors: `__()` simply hands back what it was
+	 * given.
+	 *
+	 * On `init` rather than `plugins_loaded`, which is what WordPress 6.7
+	 * asks for — the locale is not settled before then.
+	 */
+	public function load_translations(): void {
+		load_plugin_textdomain(
+			'imagina-player',
+			false,
+			dirname( plugin_basename( FILE ) ) . '/languages'
+		);
 	}
 
 	/**

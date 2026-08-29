@@ -85,6 +85,8 @@ export interface SettingsPayload {
 		/* The rest of the controls, each its own answer for video. */
 		show_captions: boolean;
 		show_chapters: boolean;
+		/** A box that finds the moment a word is said. */
+		show_search: boolean;
 		show_skip: boolean;
 		show_time: boolean;
 		show_volume: boolean;

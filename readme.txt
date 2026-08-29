@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.17.0
+Stable tag: 1.18.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,34 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.18.0 =
+* New: the plugin speaks Spanish. 471 strings extracted into
+  `languages/imagina-player.pot`, a complete `es_ES` translation, and the
+  compiled `.mo` and per-bundle `.json` files, all shipped in the archive.
+* Fixed: the plugin never called `load_plugin_textdomain`. WordPress opens a
+  plugin's own `.mo` files only when it is told where they are, so a complete
+  translation would have shipped and never been read — and nothing errors when
+  that happens, `__()` simply hands back the English.
+* Fixed: the release archive had no `languages/` folder at all, so even a
+  correctly loaded text domain would have found nothing on an installed site.
+* Fixed: every bundle was handed the whole catalogue, and the front-end bundle
+  — which has no `__()` call in it, since its handful of strings come from PHP
+  — was told to fetch one on every page view. Each catalogue now carries only
+  the strings its own sources use, and the front end has no file to fetch.
+* Fixed: the caption search's three strings were missing from the payload PHP
+  sends the player, so that box would have stayed in English on a Spanish site.
+* New: the corner radius can be set per block, not only on the preset.
+* New: caption search — a box that finds the moment a word is said and jumps to
+  it, reading the subtitles the video already carries. Accents and case fold,
+  so *pagina* finds *página*, while `ñ` is left alone.
+* Testing: `tests/test-translations.php` checks the template against the source,
+  the translation against the template, the placeholders inside every translated
+  string, the compiled catalogue byte for byte, which strings each bundle
+  downloads, and then renders a real player with the catalogue loaded and reads
+  the Spanish back out of the markup. The harness's translation stubs used to
+  return their input unchanged, which meant no test could tell a loaded
+  catalogue from an unloaded one; they now consult one when a test sets it.
 
 = 1.17.0 =
 * Fixed: chapters were never delivered on a real site. Their track is a `data:`

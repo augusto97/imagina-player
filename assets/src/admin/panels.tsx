@@ -1031,6 +1031,15 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 						}
 					/>
 					<Toggle
+						label={ __( 'Search what is said', 'imagina-player' ) }
+						help={ __(
+							'A box that finds the moment a word is spoken and jumps to it. Uses the subtitles the video already carries, so there is nothing to index and nothing extra to download.',
+							'imagina-player'
+						) }
+						checked={ Boolean( video.show_search ) }
+						onChange={ ( value ) => set( { show_search: value } ) }
+					/>
+					<Toggle
 						label={ __(
 							'Subtitles on from the start',
 							'imagina-player'

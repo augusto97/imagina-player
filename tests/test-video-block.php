@@ -109,6 +109,60 @@ foreach ( Video::override_map() as $key => $attribute ) {
 
 check( 'an unset block matches the site settings exactly', array() === $drift, implode( ', ', $drift ) );
 
+echo PHP_EOL . '# Every setting is reachable from the block' . PHP_EOL;
+
+/*
+ * The guard against the mistake this file has now watched happen twice: a
+ * setting added to the schema, resolved by the renderer, tested end to end —
+ * and never put in the panel, so the only way to use it was to write the
+ * attribute by hand. Both times everything passed.
+ *
+ * The built editor bundle is the honest place to look. Reading the source would
+ * pass on a control that is written but unreachable because its file is not
+ * imported.
+ */
+$bundle = dirname( __DIR__ ) . '/build/editor.js';
+
+if ( ! is_readable( $bundle ) ) {
+	check( 'the editor bundle is built', false, $bundle );
+} else {
+	$editor  = (string) file_get_contents( $bundle );
+	$missing = array();
+
+	foreach ( \ImaginaPlayer\Player\Video::override_map() as $setting => $attribute ) {
+		if ( ! str_contains( $editor, $attribute ) ) {
+			$missing[] = $attribute . ' (' . $setting . ')';
+		}
+	}
+
+	check(
+		'every video setting has a control in the block',
+		array() === $missing,
+		implode( ', ', $missing )
+	);
+
+	// And the other direction: a setting the site can change but a block cannot
+	// is a setting two videos on one page cannot differ on.
+	$site_only = array();
+
+	foreach ( array_keys( Settings::video() ) as $setting ) {
+		if ( in_array( $setting, array( 'ratio', 'provider_privacy' ), true ) ) {
+			// The shape is its own field; the privacy domain is a site policy.
+			continue;
+		}
+
+		if ( ! array_key_exists( $setting, \ImaginaPlayer\Player\Video::override_map() ) ) {
+			$site_only[] = $setting;
+		}
+	}
+
+	check(
+		'and every video setting a site has, a block can answer for itself',
+		array() === $site_only,
+		implode( ', ', $site_only )
+	);
+}
+
 echo PHP_EOL . '# Every control has its own answer' . PHP_EOL;
 
 /*

@@ -41,6 +41,7 @@ for item in \
 	src \
 	build \
 	blocks \
+	languages \
 	assets/preview-cover.svg \
 	assets/preview-frame.css
 do
@@ -56,6 +57,11 @@ done
 
 # Source maps are for debugging the build, not for shipping.
 find "$target" -name '*.map' -delete
+
+# The .po is the translator's working copy; WordPress reads the compiled .mo
+# and the per-bundle .json. The .pot stays, because it is what somebody
+# starting a new language begins from.
+find "$target/languages" -name '*.po' -delete
 find "$target" -name '.DS_Store' -delete
 
 mkdir -p "$outdir"

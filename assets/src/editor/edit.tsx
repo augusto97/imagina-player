@@ -1013,6 +1013,25 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 
 				{ isVideo && (
 					<PanelBody title={ __( 'Video', 'imagina-player' ) }>
+						<TextControl
+							__nextHasNoMarginBottom
+							type="number"
+							min={ 0 }
+							max={ 40 }
+							label={ __(
+								'Rounded corners (px)',
+								'imagina-player'
+							) }
+							help={ __(
+								'Empty uses the preset. Rounds the picture, the bar and the floating card together.',
+								'imagina-player'
+							) }
+							value={ String( attributes.borderRadius ?? '' ) }
+							onChange={ ( value: string ) =>
+								setAttributes( { borderRadius: value } )
+							}
+						/>
+
 						<SelectControl
 							__nextHasNoMarginBottom
 							label={ __( 'Shape', 'imagina-player' ) }
@@ -1162,6 +1181,54 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 									),
 								],
 								[
+									'videoTitle',
+									__( 'Title on the bar', 'imagina-player' ),
+								],
+								[
+									'videoTime',
+									__(
+										'Elapsed and total time',
+										'imagina-player'
+									),
+								],
+								[
+									'videoSkip',
+									__(
+										'Skip back and forward',
+										'imagina-player'
+									),
+								],
+								[
+									'videoVolume',
+									__( 'Volume', 'imagina-player' ),
+								],
+								[
+									'videoSpeed',
+									__( 'Speed control', 'imagina-player' ),
+								],
+								[
+									'videoCaptions',
+									__( 'Subtitles button', 'imagina-player' ),
+								],
+								[
+									'videoChapters',
+									__( 'Chapters button', 'imagina-player' ),
+								],
+								[
+									'videoSearch',
+									__(
+										'Search what is said',
+										'imagina-player'
+									),
+								],
+								[
+									'videoPip',
+									__(
+										'Picture-in-picture button',
+										'imagina-player'
+									),
+								],
+								[
 									'videoFullscreen',
 									__( 'Fullscreen button', 'imagina-player' ),
 								],
@@ -1178,17 +1245,6 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 										'Stop when it leaves the screen',
 										'imagina-player'
 									),
-								],
-								[
-									'videoPip',
-									__(
-										'Picture-in-picture button',
-										'imagina-player'
-									),
-								],
-								[
-									'videoSpeed',
-									__( 'Speed control', 'imagina-player' ),
 								],
 							] as const
 						 ).map( ( [ attribute, label ] ) => (
