@@ -1,43 +1,65 @@
-# Imagina Player — 1.17.0
+# Imagina Player — 1.18.0
 
-Download **imagina-player-1.17.0.zip** and install it in WordPress under
+Download **imagina-player-1.18.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  df87b5b53a6fe7b22bc82dd08f9f834436efa0c2dfc9055505531c8c435186bf
+    SHA-256  328647c82c508eb8a0721de1beecb768d8bd1ea8a84fab395ceb42f746d1517c
 
-## What changed in 1.17.0
+## What changed in 1.18.0
 
-This finishes the video roadmap — steps two to five.
+**The plugin speaks Spanish.** 471 strings, a complete es_ES translation, and
+the compiled catalogue shipped in the archive — the admin screens, the block
+panels, the notices and the player's own labels.
 
-**Colours and subtitles.** The control bar's colour and the subtitles' colour,
-size and backing, per block and site-wide. All four were hard-coded, so a
-player carried a site's colours everywhere except the two places somebody looks
-at while a video plays.
+## Four ways it would not have
 
-**Every control has its own answer** — the play button over the picture, the
-title, the times, skip, volume, speed, subtitles, chapters, picture-in-picture,
-fullscreen. Half of these lived on the audio preset, which is why a video block
-showed a mixture of two lists and neither was complete.
+Translations are the one feature that fails by doing nothing. Nothing throws;
+the interface simply carries on in English. Four separate breaks were on the
+path between a finished translation and a Spanish page, and none of them
+raises an error:
 
-**Stop when nobody is watching.** Pauses when the tab goes to the background or
-the picture scrolls off. It does not start again by itself.
+**The plugin never called load_plugin_textdomain.** WordPress opens a plugin's
+own catalogue only when it is told where it is. The .mo would have shipped in
+every release and never been opened.
 
-**Subtitles from the first frame**, without overriding a viewer who has already
-chosen for themselves.
+**The release archive had no languages folder** in its list of contents, so
+even a correctly loaded text domain would have found nothing on an installed
+site.
 
-**A mark over the picture**, with a corner and an opacity. Not protection, and
-not offered as any: a screen recording keeps it and a crop removes it. It makes
-a copy traceable.
+**Every bundle was handed the whole 45 KB catalogue**, and the front-end
+bundle — which contains no translated string of its own, since its handful
+come from PHP — was told to fetch one on every page view. Each catalogue now
+carries only the strings its own sources use, and the front end has no file.
 
-## Two bugs the test harness was hiding
+**The caption search's three strings** were missing from the payload PHP sends
+the player, so that box would have stayed in English on a Spanish site.
 
-The harness's own esc_url() was htmlspecialchars alone. Real WordPress empties
-a URL whose scheme is not allowed; the stub passed javascript: straight
-through, so every test that leaned on it for safety was testing nothing.
+## How it is checked
 
-Making it honest found this within a minute: **chapters have never been
-delivered on a real site.** Their track is a data: URI, data is not an allowed
-protocol, so WordPress emptied the attribute — silently, on every install,
-while the suite stayed green. Fixed.
+The test does not stop at the files. It compares the template with the source,
+the translation with the template, the placeholders inside every translated
+string, and the compiled catalogue byte for byte against a reader written from
+the MO format rather than from the writer. Then it loads that catalogue into
+the harness and renders a real player, reading the Spanish back out of the
+markup.
 
-962 checks green.
+The harness's own translation stubs returned their input unchanged until now,
+which is why nothing in the suite could tell a loaded catalogue from an
+unloaded one.
+
+## Also in this release
+
+**Corner radius per block**, not only on the preset.
+
+**Caption search** — a box that finds the moment a word is said and jumps to
+it, reading the subtitles the video already carries. No index, no extra
+request. Accents and case fold, so *pagina* finds *página*, while ñ is left
+alone, because in Spanish it is a letter and *año* is not *ano*.
+
+## For translators
+
+No gettext and no msgfmt needed. Three scripts in bin/: make-pot.php extracts,
+merge-po.php brings a translation up to date without losing what is already
+there, make-mo.php compiles.
+
+1023 checks green.
