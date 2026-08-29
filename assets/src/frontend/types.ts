@@ -85,6 +85,10 @@ export interface VideoConfig {
 	hls: boolean;
 	/** A WebVTT storyboard, for the still that follows the pointer on the bar. */
 	storyboard?: string;
+	/** Stop when the tab is hidden or the picture leaves the screen. */
+	focus?: boolean;
+	/** Turn subtitles on from the first frame. */
+	captionsOn?: boolean;
 	/** `youtube`, `vimeo`, or absent when the file is served from here. */
 	provider?: string;
 	/** The provider's identifier for the video. */

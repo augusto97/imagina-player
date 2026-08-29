@@ -1249,7 +1249,11 @@
    control bar is. Lifted while the chrome is up so the two do not overlap. */
 .imgp--video .imgp__media::cue {
 	background: rgb(0 0 0 / 70%);
-	color: #fff;
+
+	/* Settable now. Subtitles were always white, so a player could carry a
+	   site's colours everywhere except the words a viewer reads for the whole
+	   length of the video. */
+	color: var(--imgp-cc, #fff);
 	font-size: 1em;
 }
 
@@ -1267,6 +1271,12 @@
 .imgp--ccbg-shadow .imgp__media::cue {
 	background: transparent;
 	text-shadow: 0 1px 3px rgb(0 0 0 / 95%), 0 0 8px rgb(0 0 0 / 80%);
+}
+
+/* One more size, because "medium or large" is not a range: a lecture watched
+   on a phone and a film watched on a television want different answers. */
+.imgp--cc-xlarge .imgp__media::cue {
+	font-size: 1.6em;
 }
 
 .imgp--ccbg-none .imgp__media::cue {
@@ -2089,4 +2099,44 @@
 
 .imgp--video.imgp--skin-stacked .imgp__meta {
 	color: var(--imgp-on-chrome);
+}
+
+/* --- A mark over the picture --------------------------------------------
+   Not protection, and not sold as any: a screen recording keeps it and a crop
+   removes it. What it does is make a copy traceable, and an embed on somebody
+   else's site obviously somebody else's. */
+
+.imgp__watermark {
+	position: absolute;
+	z-index: 5;
+	width: auto;
+	max-width: 22%;
+	max-height: 18%;
+	opacity: var(--imgp-mark-opacity, 0.55);
+	pointer-events: none;
+	user-select: none;
+}
+
+.imgp__watermark--top-left {
+	inset: 4% auto auto 4%;
+}
+
+.imgp__watermark--top-right {
+	inset: 4% 4% auto auto;
+}
+
+.imgp__watermark--bottom-left {
+	inset: auto auto 4% 4%;
+}
+
+.imgp__watermark--bottom-right {
+	inset: auto 4% 4% auto;
+}
+
+/* Out of the way of the bar, which is where the eye goes when the controls
+   come back. */
+.imgp--video:not(.is-chrome-idle) .imgp__watermark--bottom-left,
+.imgp--video:not(.is-chrome-idle) .imgp__watermark--bottom-right {
+	opacity: 0;
+	transition: opacity 0.2s ease;
 }

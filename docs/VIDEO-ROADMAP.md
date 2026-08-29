@@ -53,10 +53,16 @@ on a video, which has no waveform. There is no way to set the corner radius of
 the picture, the colour of the control bar, or how captions look, from either
 the block or the settings screen.
 
-- [ ] Corner radius for the picture, per block
-- [ ] Control-bar colour and its foreground
-- [ ] Caption size, colour and background, reachable rather than hard-coded
-- [ ] A logo/watermark over the picture, with a corner and an opacity
+- [x] **done (1.17.0)** — the control bar's colour, per block and site-wide.
+      It was hard-coded near-black, so a player carried a site's colours
+      everywhere except the strip somebody looks at while the video plays. The
+      alpha that lets the picture through it is kept whatever colour is chosen.
+- [x] **done (1.17.0)** — subtitle colour, size (four now, not three) and what
+      sits behind them, per block and site-wide.
+- [x] **done (1.17.0)** — a mark over the picture, with a corner and an
+      opacity. Not sold as protection: a screen recording keeps it and a crop
+      removes it. It makes a copy traceable, which is the honest reason.
+- [ ] Corner radius per block (it exists on the preset, not on the block)
 
 ### 3. Controls — a toggle each, as both competitors have
 
@@ -69,8 +75,11 @@ settings, which is why the block shows a mix of both and neither list is
 complete.
 
 - [x] **done** — the video settings a block may answer for itself (1.14.0)
-- [ ] One coherent list per medium, with every control in it
-- [ ] Rewind and fast-forward offered on video, not only on audio
+- [x] **done (1.17.0)** — one list per medium with every control in it: the
+      play button over the picture, the title, times, skip, volume, speed,
+      subtitles, chapters, picture-in-picture and fullscreen. For a video the
+      video settings are now the authority; the preset's `show_*` flags describe
+      an audio player, and letting both apply is what produced a mixture.
 
 ### 4. Behaviour
 
@@ -81,8 +90,12 @@ and the video is on screen), `on_video_end`, `sticky_scroll`.
 - [x] **done** — sticky on scroll, with a corner and a dismiss (1.15.0)
 - [x] **done** — remember playback position
 - [x] **done** — what happens at the end
-- [ ] Captions on by default
-- [ ] Focus mode: pause when the tab is hidden or the video scrolls away
+- [x] **done (1.17.0)** — subtitles on from the first frame, without
+      overriding a viewer who has chosen for themselves.
+- [x] **done (1.17.0)** — focus mode: stop when the tab goes to the background
+      or the picture scrolls away. It does not resume; starting a video under
+      somebody because they scrolled back is the behaviour everyone complains
+      about.
 
 ### 5. Things neither of them has that this one does
 
@@ -101,9 +114,37 @@ theme test, and a weight budget checked on every run.
 ## Order of work
 
 1. ~~Video skins, and offering only the skins that apply.~~ **Done in 1.16.0.**
-2. Video styling: radius, control-bar colour, captions.
-3. The full per-control list for video.
-4. Focus mode and captions-on-by-default.
-5. Watermark over the picture.
+2. ~~Video styling: control-bar colour, captions.~~ **Done in 1.17.0.**
+3. ~~The full per-control list for video.~~ **Done in 1.17.0.**
+4. ~~Focus mode and captions-on-by-default.~~ **Done in 1.17.0.**
+5. ~~Watermark over the picture.~~ **Done in 1.17.0.**
 
-Each step ends with the players rendered and looked at, not only asserted.
+Each step ended with the players rendered and looked at, not only asserted.
+
+## What is left
+
+The list above is finished. What remains is smaller and is written here so it
+is not mistaken for nothing:
+
+- Corner radius per block. It exists on the preset, so a site can set one; a
+  single block cannot differ from it.
+- Presto's `hide_youtube` — a way to hide YouTube's own overlay. It is
+  experimental in Presto and unreliable by their own description.
+- Presto Pro's caption search. A search box that jumps to the moment a word is
+  said, which needs the caption text indexed.
+- Translations. Nothing here is in Spanish yet; the plugin ships no `.pot`.
+
+## Faults found while doing this, and fixed
+
+- The seek bar on a video was zero pixels tall (1.16.0).
+- `esc_url()` in the test harness was `htmlspecialchars` alone, so it passed
+  `javascript:` straight through — every test that leaned on it for safety was
+  testing nothing and passing. Fixed in 1.17.0, and it immediately found the
+  next one.
+- Chapters were never delivered on a real site. Their track is a `data:` URI,
+  and `esc_url()` only allows the protocols in `wp_allowed_protocols()`, which
+  does not include `data` — so WordPress emptied the attribute. The weak stub
+  is why no test noticed.
+- The watermark class was `.imgp__mark`, which is already the chapter marker on
+  the scrub bar. Caught before it shipped; every chapter tick would have become
+  a full-size logo.

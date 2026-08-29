@@ -171,6 +171,78 @@ final class Attributes {
 			 * whole feature costs one request — and only for a reader who
 			 * actually drags the bar.
 			 */
+			// How the picture and its bar are painted, per block. Presto keeps
+			// these on the preset and Fluent on the player; a block that can
+			// answer for one video is the more useful of the two, and leaving
+			// them unset still follows the site.
+			'videoCaptions'      => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			'videoChapters'      => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			'videoSkip'          => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			'videoTime'          => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			'videoVolume'        => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			'videoTitle'         => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			// A mark over the picture: a logo in a corner, faint, the whole way
+			// through. Presto keeps one per preset; this one is per block,
+			// because the reason to put a mark on a video is usually that this
+			// particular video is going somewhere it should be traceable from.
+			'watermark'          => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'watermarkId'        => array(
+				'type'    => 'int',
+				'default' => 0,
+			),
+			'watermarkPosition'  => array(
+				'type'    => 'string',
+				'default' => 'top-right',
+			),
+			'watermarkOpacity'   => array(
+				'type'    => 'int',
+				'default' => 55,
+			),
+			'videoFocusMode'     => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			'videoCaptionsOn'    => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
+			'videoCaptionSize'   => array(
+				'type'    => 'string',
+				'default' => self::INHERIT,
+			),
+			'videoCaptionBg'     => array(
+				'type'    => 'string',
+				'default' => self::INHERIT,
+			),
+			'videoChromeColor'   => array(
+				'type'    => 'string',
+				'default' => self::INHERIT,
+			),
+			'videoCaptionColor'  => array(
+				'type'    => 'string',
+				'default' => self::INHERIT,
+			),
 			'storyboard'         => array(
 				'type'    => 'string',
 				'default' => '',

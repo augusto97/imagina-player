@@ -79,6 +79,19 @@ export interface SettingsPayload {
 		block_download: boolean;
 		/** Load YouTube from the domain that sets no cookie before playback. */
 		provider_privacy: boolean;
+		/** The bar over the picture, and the subtitle text on it. */
+		chrome_color: string;
+		caption_color: string;
+		/* The rest of the controls, each its own answer for video. */
+		show_captions: boolean;
+		show_chapters: boolean;
+		show_skip: boolean;
+		show_time: boolean;
+		show_volume: boolean;
+		show_title: boolean;
+		/** Stop when the tab is hidden or the picture leaves the screen. */
+		focus_mode: boolean;
+		captions_on: boolean;
 		poster_fit: string;
 		caption_size: string;
 		caption_bg: string;

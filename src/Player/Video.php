@@ -51,6 +51,18 @@ final class Video {
 		'block_download'  => 'videoBlockDownload',
 		'poster_fit'      => 'videoPosterFit',
 		'hide_after'      => 'videoHideAfter',
+		'show_captions'   => 'videoCaptions',
+		'show_chapters'   => 'videoChapters',
+		'show_skip'       => 'videoSkip',
+		'show_time'       => 'videoTime',
+		'show_volume'     => 'videoVolume',
+		'show_title'      => 'videoTitle',
+		'focus_mode'      => 'videoFocusMode',
+		'captions_on'     => 'videoCaptionsOn',
+		'caption_size'    => 'videoCaptionSize',
+		'caption_bg'      => 'videoCaptionBg',
+		'chrome_color'    => 'videoChromeColor',
+		'caption_color'   => 'videoCaptionColor',
 	);
 
 	/**
@@ -82,6 +94,20 @@ final class Video {
 				is_bool( $default ) => 'yes' === $override,
 				is_int( $default )  => max( 0, (int) $override ),
 				default             => (string) $override,
+			};
+
+			/*
+			 * A block's answer reaches a `style` attribute and a class name, so
+			 * it is checked here rather than trusted. The site's own settings
+			 * are sanitised on save; these are not saved anywhere.
+			 */
+			$settings[ $key ] = match ( $key ) {
+				'caption_size'  => in_array( $settings[ $key ], array( 'small', 'medium', 'large', 'xlarge' ), true ) ? $settings[ $key ] : 'medium',
+				'caption_bg'    => in_array( $settings[ $key ], array( 'solid', 'shadow', 'none' ), true ) ? $settings[ $key ] : 'solid',
+				'poster_fit'    => 'contain' === $settings[ $key ] ? 'contain' : 'cover',
+				'chrome_color'  => Settings::sanitize_color( (string) $settings[ $key ], '#000000' ),
+				'caption_color' => Settings::sanitize_color( (string) $settings[ $key ], '#ffffff' ),
+				default         => $settings[ $key ],
 			};
 		}
 

@@ -98,6 +98,7 @@ export class VideoChrome {
 		this.bindCaptions();
 		this.bindChapters();
 		this.bindStoryboard();
+		this.bindFocusMode();
 		this.hardenContextMenu();
 
 		if ( config.hls ) {
@@ -602,6 +603,17 @@ export class VideoChrome {
 
 		if ( remembered ) {
 			this.showTrack( tracks, remembered );
+		} else if (
+			this.config.captionsOn &&
+			! tracks.some( ( track ) => 'showing' === track.mode )
+		) {
+			/*
+			 * On from the first frame, for a site whose audience mostly watches
+			 * with the sound off. Only when the viewer has not chosen for
+			 * themselves: a remembered choice is a person's, and this is the
+			 * author's guess about people who have not made one.
+			 */
+			this.showTrack( tracks, tracks[ 0 ].language || tracks[ 0 ].label );
 		}
 
 		this.syncCaptionButton();
@@ -802,6 +814,52 @@ export class VideoChrome {
 
 		this.on( seek, 'pointermove', move as EventListener );
 		this.on( seek, 'pointerleave', leave );
+	}
+
+	/**
+	 * Stop when nobody is watching.
+	 *
+	 * Two ways to not be watching: the tab is in the background, or the picture
+	 * has scrolled off the screen. Presto calls this Focus Mode and it is off by
+	 * default here for the same reason — someone who scrolls on while a talk
+	 * plays is usually doing that on purpose — but for a lesson where the
+	 * picture carries the meaning, playing to an empty screen is worse.
+	 *
+	 * Deliberately does not resume. Starting a video under somebody because
+	 * they scrolled back is the behaviour everyone complains about.
+	 */
+	private bindFocusMode(): void {
+		if ( ! this.config.focus ) {
+			return;
+		}
+
+		const stop = (): void => {
+			if ( ! this.media.paused ) {
+				this.media.pause();
+			}
+		};
+
+		this.on( document, 'visibilitychange', () => {
+			if ( document.hidden ) {
+				stop();
+			}
+		} );
+
+		if ( typeof IntersectionObserver === 'undefined' ) {
+			return;
+		}
+
+		const observer = new IntersectionObserver(
+			( entries ) => {
+				if ( entries[ 0 ] && ! entries[ 0 ].isIntersecting ) {
+					stop();
+				}
+			},
+			{ threshold: 0.25 }
+		);
+
+		observer.observe( this.root );
+		this.cleanup.push( () => observer.disconnect() );
 	}
 
 	private bindChapters(): void {

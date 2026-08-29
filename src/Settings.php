@@ -143,6 +143,34 @@ final class Settings {
 				'block_download'  => true,
 				'caption_size'    => 'medium',
 				'caption_bg'      => 'solid',
+				// The control bar over the picture, and the subtitle text.
+				// Hard-coded until now, which meant a player whose brand is a
+				// pale grey still got a bar of near-black.
+				'chrome_color'    => '#000000',
+				'caption_color'   => '#ffffff',
+				/*
+				 * The rest of the controls, each its own answer. Presto toggles
+				 * thirteen individually and Fluent the same shape; here half of
+				 * them lived on the audio preset, which is why a video block
+				 * showed a mix of both lists and neither was complete.
+				 */
+				'show_captions'   => true,
+				'show_chapters'   => true,
+				'show_skip'       => true,
+				'show_time'       => true,
+				'show_volume'     => true,
+				'show_title'      => true,
+				/*
+				 * Presto's "Focus Mode": stop when the tab is hidden or the
+				 * video scrolls away. Off by default because it is a strong
+				 * opinion — a listener who scrolls on while a talk plays is
+				 * doing something deliberate — but for a lesson where the
+				 * picture carries the meaning it is the right one.
+				 */
+				'focus_mode'      => false,
+				// Subtitles on from the first frame, for a site whose audience
+				// mostly watches with the sound off.
+				'captions_on'     => false,
 				'big_play'        => true,
 				/*
 				 * For a video on YouTube: use the domain that sets no cookie

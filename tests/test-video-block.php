@@ -109,6 +109,132 @@ foreach ( Video::override_map() as $key => $attribute ) {
 
 check( 'an unset block matches the site settings exactly', array() === $drift, implode( ', ', $drift ) );
 
+echo PHP_EOL . '# Every control has its own answer' . PHP_EOL;
+
+/*
+ * Presto toggles thirteen controls individually and Fluent the same shape. Here
+ * half of them lived on the audio preset, which is why a video block showed a
+ * mixture of the two lists with neither complete.
+ */
+$all_on = $renderer->render( array( 'src' => $file, 'tracks' => array( array( 'src' => 'https://cdn.example.com/es.vtt', 'label' => 'es' ) ), 'chapters' => array( array( 'start' => 0, 'title' => 'Intro' ) ) ) );
+
+foreach ( array( 'imgp__skip' => 'skip', 'imgp__volume' => 'volume', 'imgp__time' => 'times', 'imgp__title' => 'title', 'vbtn--captions' => 'the subtitles button', 'vbtn--chapters' => 'the chapters button' ) as $needle => $what ) {
+	check( "by default a video has {$what}", str_contains( $all_on, $needle ), $needle );
+}
+
+$all_off = $renderer->render(
+	array(
+		'src'           => $file,
+		'tracks'        => array( array( 'src' => 'https://cdn.example.com/es.vtt', 'label' => 'es' ) ),
+		'chapters'      => array( array( 'start' => 0, 'title' => 'Intro' ) ),
+		'videoSkip'     => 'no',
+		'videoVolume'   => 'no',
+		'videoTime'     => 'no',
+		'videoTitle'    => 'no',
+		'videoCaptions' => 'no',
+		'videoChapters' => 'no',
+	)
+);
+
+foreach ( array( 'imgp__skip' => 'skip', 'imgp__volume' => 'volume', 'imgp__time' => 'times', 'imgp__title' => 'title', 'vbtn--captions' => 'the subtitles button', 'vbtn--chapters' => 'the chapters button' ) as $needle => $what ) {
+	check( "and the block can drop {$what}", ! str_contains( $all_off, $needle ), $needle );
+}
+
+/*
+ * Two conditions, and they say different things: whether there is anything to
+ * show, and whether the author wants the button for it.
+ */
+$no_tracks = $renderer->render( array( 'src' => $file ) );
+
+check( 'a video with no subtitles has no subtitles button', ! str_contains( $no_tracks, 'vbtn--captions' ) );
+
+echo PHP_EOL . '# Stopping when nobody is watching, and subtitles from the start' . PHP_EOL;
+
+$behaviour = client_config( $renderer->render( array( 'src' => $file, 'videoFocusMode' => 'yes', 'videoCaptionsOn' => 'yes' ) ) );
+
+check( 'focus mode reaches the browser', true === ( $behaviour['video']['focus'] ?? null ) );
+check( 'and subtitles on from the start', true === ( $behaviour['video']['captionsOn'] ?? null ) );
+
+$quiet_behaviour = client_config( $renderer->render( array( 'src' => $file ) ) );
+
+check( 'both are off unless asked for', false === ( $quiet_behaviour['video']['focus'] ?? null ) && false === ( $quiet_behaviour['video']['captionsOn'] ?? null ) );
+
+echo PHP_EOL . '# A mark over the picture' . PHP_EOL;
+
+$marked = $renderer->render(
+	array(
+		'src'               => $file,
+		'watermark'         => 'https://cdn.example.com/logo.png',
+		'watermarkPosition' => 'bottom-left',
+		'watermarkOpacity'  => 30,
+	)
+);
+
+check( 'the mark reaches the picture', str_contains( $marked, 'imgp__watermark' ) );
+check( 'in the corner it was given', str_contains( $marked, 'imgp__watermark--bottom-left' ) );
+check( 'at the opacity it was given', str_contains( $marked, '--imgp-mark-opacity:0.3' ) );
+
+/*
+ * The class it nearly shipped with was already the chapter marker on the scrub
+ * bar, which would have made every chapter tick a full-size logo.
+ */
+check( 'and does not collide with the chapter markers', ! str_contains( $marked, 'class="imgp__mark ' ) );
+
+$hostile_mark = $renderer->render( array( 'src' => $file, 'watermark' => 'javascript:alert(1)', 'watermarkPosition' => 'nowhere', 'watermarkOpacity' => 9999 ) );
+
+check( 'an address that is not one leaves no element at all', ! str_contains( $hostile_mark, 'imgp__watermark' ) );
+
+$odd_mark = $renderer->render( array( 'src' => $file, 'watermark' => 'https://cdn.example.com/logo.png', 'watermarkPosition' => 'nowhere', 'watermarkOpacity' => 9999 ) );
+
+check( 'a corner that does not exist falls back', str_contains( $odd_mark, 'imgp__watermark--top-right' ) );
+check( 'and an opacity out of range is clamped', str_contains( $odd_mark, '--imgp-mark-opacity:1' ) );
+
+echo PHP_EOL . '# How the picture and its bar are painted' . PHP_EOL;
+
+/*
+ * The bar over the picture and the subtitle text were hard-coded — near-black
+ * and white — so a player could carry a site's colours everywhere except the
+ * two places somebody actually looks at while a video plays.
+ */
+$painted = $renderer->render(
+	array(
+		'src'               => $file,
+		'videoChromeColor'  => '#1b2a4a',
+		'videoCaptionColor' => '#ffe08a',
+		'videoCaptionSize'  => 'xlarge',
+		'videoCaptionBg'    => 'shadow',
+	)
+);
+
+check( 'the control bar takes its colour from the block', str_contains( $painted, '--imgp-chrome:rgb(27 42 74' ), 'chrome colour missing' );
+check( 'and keeps the alpha that lets the video through it', str_contains( $painted, '/ 78%)' ) );
+check( 'the subtitles take theirs', str_contains( $painted, '--imgp-cc:#ffe08a' ) );
+check( 'their size reaches the player', str_contains( $painted, 'imgp--cc-xlarge' ) );
+check( 'and what sits behind them', str_contains( $painted, 'imgp--ccbg-shadow' ) );
+
+/*
+ * These reach a `style` attribute and a class name, and a block's attributes
+ * are not sanitised on save the way the site's settings are.
+ */
+$hostile = $renderer->render(
+	array(
+		'src'               => $file,
+		'videoChromeColor'  => 'javascript:alert(1)',
+		'videoCaptionColor' => '#zzz',
+		'videoCaptionSize'  => 'huge; }*/ body{display:none}',
+		'videoCaptionBg'    => '"><script>',
+	)
+);
+
+check( 'a colour that is not a colour falls back', str_contains( $hostile, '--imgp-chrome:rgb(0 0 0 / 78%)' ) );
+check( 'and does not reach the style attribute', ! str_contains( $hostile, 'javascript:' ) );
+check( 'a size that is not a size falls back', str_contains( $hostile, 'imgp--cc-medium' ) );
+check( 'and nothing of it reaches the class list', ! str_contains( $hostile, 'display:none' ) && ! str_contains( $hostile, '<script>' ) );
+
+$inherits = $renderer->render( array( 'src' => $file ) );
+
+check( 'and a block that says nothing uses the site colour', str_contains( $inherits, '--imgp-chrome:rgb(0 0 0 / 78%)' ) );
+
 echo PHP_EOL . '# A skin belongs to a medium' . PHP_EOL;
 
 /*

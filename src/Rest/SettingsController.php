@@ -158,12 +158,20 @@ final class SettingsController {
 			$settings['video']['big_play']        = ! empty( $video['big_play'] );
 			$settings['video']['block_download']  = ! empty( $video['block_download'] );
 			$settings['video']['poster_fit']      = 'contain' === ( $video['poster_fit'] ?? '' ) ? 'contain' : 'cover';
-			$settings['video']['caption_size']    = in_array( $video['caption_size'] ?? '', array( 'small', 'medium', 'large' ), true )
+			$settings['video']['caption_size']    = in_array( $video['caption_size'] ?? '', array( 'small', 'medium', 'large', 'xlarge' ), true )
 				? (string) $video['caption_size']
 				: 'medium';
 			$settings['video']['caption_bg']      = in_array( $video['caption_bg'] ?? '', array( 'solid', 'shadow', 'none' ), true )
 				? (string) $video['caption_bg']
 				: 'solid';
+			$settings['video']['provider_privacy'] = ! empty( $video['provider_privacy'] );
+
+			foreach ( array( 'show_captions', 'show_chapters', 'show_skip', 'show_time', 'show_volume', 'show_title', 'focus_mode', 'captions_on' ) as $flag ) {
+				$settings['video'][ $flag ] = ! empty( $video[ $flag ] );
+			}
+
+			$settings['video']['chrome_color']    = Settings::sanitize_color( (string) ( $video['chrome_color'] ?? '' ), '#000000' );
+			$settings['video']['caption_color']   = Settings::sanitize_color( (string) ( $video['caption_color'] ?? '' ), '#ffffff' );
 		}
 
 		if ( isset( $incoming['protection'] ) && is_array( $incoming['protection'] ) ) {

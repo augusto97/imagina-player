@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.16.0
+Stable tag: 1.17.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,33 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.17.0 =
+* Fixed: chapters were never delivered on a real site. Their track is a `data:`
+  URI, and WordPress's `esc_url()` only allows the protocols in
+  `wp_allowed_protocols()` — which does not include `data` — so the attribute
+  came out empty. No test noticed because the harness's own `esc_url()` was
+  `htmlspecialchars` alone, which also let `javascript:` through. Both are
+  fixed, and the honest one found the chapter bug within a minute.
+* New: the control bar's colour and the subtitles' colour, size and backing,
+  per block and site-wide. All four were hard-coded, so a player could carry a
+  site's colours everywhere except the two places somebody looks at while a
+  video is playing.
+* New: every video control has its own answer — the play button over the
+  picture, the title, the times, skip, volume, speed, subtitles, chapters,
+  picture-in-picture, fullscreen. Half of these lived on the audio preset,
+  which is why a video block showed a mixture of two lists and neither was
+  complete. For a video the video settings are now the authority.
+* New: stop when nobody is watching. Pauses when the tab goes to the background
+  or the picture scrolls off the screen. It does not start again by itself.
+* New: subtitles on from the first frame, for an audience that mostly watches
+  with the sound off. A viewer who turns them off is remembered and this does
+  not override that.
+* New: a mark over the picture, with a corner and an opacity. It is not
+  protection and is not offered as any — a screen recording keeps it and a crop
+  removes it — but it makes a copy traceable.
+* Fixed: an address that cannot be a mark now leaves no element at all, rather
+  than an empty `<img>` every browser reports as broken.
 
 = 1.16.0 =
 * Fixed: the seek bar on a video could not be dragged. It was drawn correctly —

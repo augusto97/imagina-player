@@ -87,7 +87,16 @@ function esc_html__( $text, $domain = '' ) { return htmlspecialchars( $text, ENT
 function esc_attr__( $text, $domain = '' ) { return htmlspecialchars( $text, ENT_QUOTES ); }
 function esc_html( $text ) { return htmlspecialchars( (string) $text, ENT_QUOTES ); }
 function esc_attr( $text ) { return htmlspecialchars( (string) $text, ENT_QUOTES ); }
-function esc_url( $url ) { return htmlspecialchars( (string) $url, ENT_QUOTES ); }
+/*
+ * Mirrors WordPress: a scheme that is not on the allowed list makes the whole
+ * URL empty, and only then is what is left escaped. This stub used to be
+ * `htmlspecialchars` alone, which escapes quotes and passes `javascript:`
+ * straight through — so every test that leaned on `esc_url` for safety was
+ * testing nothing, and passing.
+ */
+function esc_url( $url, $protocols = null ) {
+	return htmlspecialchars( esc_url_raw( (string) $url, $protocols ), ENT_QUOTES );
+}
 function esc_url_raw( $url, $protocols = null ) {
 	$url = (string) $url;
 	if ( '' === $url ) { return ''; }

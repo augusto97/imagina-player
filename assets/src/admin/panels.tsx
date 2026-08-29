@@ -987,6 +987,74 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 			>
 				<div className="imgpa-toggles">
 					<Toggle
+						label={ __( 'Title on the bar', 'imagina-player' ) }
+						checked={ Boolean( video.show_title ) }
+						onChange={ ( value ) => set( { show_title: value } ) }
+					/>
+					<Toggle
+						label={ __(
+							'Elapsed and total time',
+							'imagina-player'
+						) }
+						checked={ Boolean( video.show_time ) }
+						onChange={ ( value ) => set( { show_time: value } ) }
+					/>
+					<Toggle
+						label={ __(
+							'Skip back and forward',
+							'imagina-player'
+						) }
+						checked={ Boolean( video.show_skip ) }
+						onChange={ ( value ) => set( { show_skip: value } ) }
+					/>
+					<Toggle
+						label={ __( 'Volume', 'imagina-player' ) }
+						checked={ Boolean( video.show_volume ) }
+						onChange={ ( value ) => set( { show_volume: value } ) }
+					/>
+					<Toggle
+						label={ __( 'Subtitles button', 'imagina-player' ) }
+						help={ __(
+							'Only appears on a video that actually carries subtitles.',
+							'imagina-player'
+						) }
+						checked={ Boolean( video.show_captions ) }
+						onChange={ ( value ) =>
+							set( { show_captions: value } )
+						}
+					/>
+					<Toggle
+						label={ __( 'Chapters button', 'imagina-player' ) }
+						checked={ Boolean( video.show_chapters ) }
+						onChange={ ( value ) =>
+							set( { show_chapters: value } )
+						}
+					/>
+					<Toggle
+						label={ __(
+							'Subtitles on from the start',
+							'imagina-player'
+						) }
+						help={ __(
+							'For an audience that mostly watches with the sound off. A viewer who turns them off is remembered, and this does not override that.',
+							'imagina-player'
+						) }
+						checked={ Boolean( video.captions_on ) }
+						onChange={ ( value ) => set( { captions_on: value } ) }
+					/>
+					<Toggle
+						label={ __(
+							'Stop when it leaves the screen',
+							'imagina-player'
+						) }
+						help={ __(
+							'Pauses when the tab goes to the background or the picture scrolls away. It does not start again by itself.',
+							'imagina-player'
+						) }
+						checked={ Boolean( video.focus_mode ) }
+						onChange={ ( value ) => set( { focus_mode: value } ) }
+					/>
+					<Toggle
 						label={ __(
 							'Take away the browser download button',
 							'imagina-player'
@@ -1008,6 +1076,84 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 						'imagina-player'
 					) }
 				</Notice>
+			</Card>
+
+			<Card
+				title={ __( 'Colours and subtitles', 'imagina-player' ) }
+				description={ __(
+					'How the bar over the picture and the subtitles are painted. Every block can answer differently; this is what one that says nothing uses.',
+					'imagina-player'
+				) }
+			>
+				<Field label={ __( 'Control bar', 'imagina-player' ) }>
+					<ColorInput
+						value={ String( video.chrome_color ?? '#000000' ) }
+						onChange={ ( value: string ) =>
+							set( { chrome_color: value } )
+						}
+					/>
+				</Field>
+
+				<Field label={ __( 'Subtitles', 'imagina-player' ) }>
+					<ColorInput
+						value={ String( video.caption_color ?? '#ffffff' ) }
+						onChange={ ( value: string ) =>
+							set( { caption_color: value } )
+						}
+					/>
+				</Field>
+
+				<Field label={ __( 'Subtitle size', 'imagina-player' ) }>
+					<Select
+						value={ String( video.caption_size ?? 'medium' ) }
+						onChange={ ( value ) => set( { caption_size: value } ) }
+						options={ [
+							{
+								value: 'small',
+								label: __( 'Small', 'imagina-player' ),
+							},
+							{
+								value: 'medium',
+								label: __( 'Medium', 'imagina-player' ),
+							},
+							{
+								value: 'large',
+								label: __( 'Large', 'imagina-player' ),
+							},
+							{
+								value: 'xlarge',
+								label: __( 'Very large', 'imagina-player' ),
+							},
+						] }
+					/>
+				</Field>
+
+				<Field
+					label={ __( 'Behind the subtitles', 'imagina-player' ) }
+					help={ __(
+						'A solid band reads over any footage. A shadow is lighter but struggles over a bright, busy shot.',
+						'imagina-player'
+					) }
+				>
+					<Select
+						value={ String( video.caption_bg ?? 'solid' ) }
+						onChange={ ( value ) => set( { caption_bg: value } ) }
+						options={ [
+							{
+								value: 'solid',
+								label: __( 'Solid band', 'imagina-player' ),
+							},
+							{
+								value: 'shadow',
+								label: __( 'Shadow only', 'imagina-player' ),
+							},
+							{
+								value: 'none',
+								label: __( 'Nothing', 'imagina-player' ),
+							},
+						] }
+					/>
+				</Field>
 			</Card>
 
 			<Card

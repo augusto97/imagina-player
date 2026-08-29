@@ -1166,6 +1166,20 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 									__( 'Fullscreen button', 'imagina-player' ),
 								],
 								[
+									'videoCaptionsOn',
+									__(
+										'Subtitles on from the start',
+										'imagina-player'
+									),
+								],
+								[
+									'videoFocusMode',
+									__(
+										'Stop when it leaves the screen',
+										'imagina-player'
+									),
+								],
+								[
 									'videoPip',
 									__(
 										'Picture-in-picture button',
@@ -1216,6 +1230,159 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								}
 							/>
 						) }
+
+						{ /* How the picture and its bar are painted. Until now the
+						     bar was near-black and the subtitles white, whatever
+						     the site looked like. */ }
+						<BaseControl
+							__nextHasNoMarginBottom
+							id="imgp-video-colours"
+							label={ __( 'Colours', 'imagina-player' ) }
+							help={ __(
+								'Leave either empty to use the site setting.',
+								'imagina-player'
+							) }
+						>
+							<div className="imgp-editor__colour-pair">
+								{ (
+									[
+										[
+											'videoChromeColor',
+											__(
+												'Control bar',
+												'imagina-player'
+											),
+										],
+										[
+											'videoCaptionColor',
+											__( 'Subtitles', 'imagina-player' ),
+										],
+									] as const
+								 ).map( ( [ attribute, label ] ) => (
+									<div
+										className="imgp-editor__colour"
+										key={ attribute }
+									>
+										<input
+											type="color"
+											aria-label={ label }
+											value={
+												String(
+													attributes[ attribute ] ??
+														''
+												) || '#000000'
+											}
+											onChange={ ( event ) =>
+												setAttributes( {
+													[ attribute ]:
+														event.target.value,
+												} )
+											}
+										/>
+										<span>{ label }</span>
+										{ Boolean(
+											attributes[ attribute ]
+										) && (
+											<Button
+												variant="tertiary"
+												onClick={ () =>
+													setAttributes( {
+														[ attribute ]: '',
+													} )
+												}
+											>
+												{ __(
+													'Reset',
+													'imagina-player'
+												) }
+											</Button>
+										) }
+									</div>
+								) ) }
+							</div>
+						</BaseControl>
+
+						<SelectControl
+							__nextHasNoMarginBottom
+							label={ __( 'Subtitle size', 'imagina-player' ) }
+							value={
+								String(
+									attributes.videoCaptionSize ?? INHERIT
+								) as ''
+							}
+							options={ [
+								{
+									value: INHERIT,
+									label: __(
+										'Use site setting',
+										'imagina-player'
+									),
+								},
+								{
+									value: 'small',
+									label: __( 'Small', 'imagina-player' ),
+								},
+								{
+									value: 'medium',
+									label: __( 'Medium', 'imagina-player' ),
+								},
+								{
+									value: 'large',
+									label: __( 'Large', 'imagina-player' ),
+								},
+								{
+									value: 'xlarge',
+									label: __( 'Very large', 'imagina-player' ),
+								},
+							] }
+							onChange={ ( value: string ) =>
+								setAttributes( { videoCaptionSize: value } )
+							}
+						/>
+
+						<SelectControl
+							__nextHasNoMarginBottom
+							label={ __(
+								'Behind the subtitles',
+								'imagina-player'
+							) }
+							help={ __(
+								'A solid band reads over any footage. A shadow is lighter but struggles over a bright, busy shot.',
+								'imagina-player'
+							) }
+							value={
+								String(
+									attributes.videoCaptionBg ?? INHERIT
+								) as ''
+							}
+							options={ [
+								{
+									value: INHERIT,
+									label: __(
+										'Use site setting',
+										'imagina-player'
+									),
+								},
+								{
+									value: 'solid',
+									label: __( 'Solid band', 'imagina-player' ),
+								},
+								{
+									value: 'shadow',
+									label: __(
+										'Shadow only',
+										'imagina-player'
+									),
+								},
+								{
+									value: 'none',
+									label: __( 'Nothing', 'imagina-player' ),
+								},
+							] }
+							onChange={ ( value: string ) =>
+								setAttributes( { videoCaptionBg: value } )
+							}
+						/>
 
 						<BaseControl
 							__nextHasNoMarginBottom

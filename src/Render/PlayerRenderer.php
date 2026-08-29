@@ -66,6 +66,19 @@ final class PlayerRenderer {
 		$video_config = Video::resolve( $atts );
 
 		/*
+		 * For a video, the video settings are the authority on which controls
+		 * appear. The preset's own `show_*` flags describe an audio player —
+		 * they are what the Controls panel has always edited — and letting both
+		 * lists apply is exactly what made a video block show a mixture of the
+		 * two with neither of them complete.
+		 */
+		if ( $track->is_video() ) {
+			foreach ( array( 'show_skip', 'show_time', 'show_volume', 'show_title' ) as $key ) {
+				$config[ $key ] = (bool) $video_config[ $key ];
+			}
+		}
+
+		/*
 		 * A skin belongs to a medium. The saved one is used when it is one of
 		 * this medium's own and replaced by that medium's default when it is
 		 * not — an author who swaps an audio file for a video is otherwise left
@@ -136,6 +149,10 @@ final class PlayerRenderer {
 				// streaming, and loading 400 KB of hls.js to find out would be
 				// the whole cost of the feature paid on every video.
 				'hls'       => $track->is_hls(),
+				// Stop when the tab is hidden or the picture scrolls away.
+				'focus'     => (bool) $video_config['focus_mode'],
+				// Subtitles on from the first frame.
+				'captionsOn' => (bool) $video_config['captions_on'],
 				// Its absence is what keeps the storyboard chunk unloaded.
 				'storyboard' => (string) $atts['storyboard'],
 				// Chapter starts, so the module can draw markers on the scrub bar
@@ -186,7 +203,21 @@ final class PlayerRenderer {
 		 */
 		$client_config = apply_filters( 'imagina_player_client_config', $client_config, $atts, $track );
 
-		$style = Config::style_attribute( Config::css_variables( $config ) );
+		$vars = Config::css_variables( $config );
+
+		/*
+		 * The video half of the paint. These were hard-coded in the stylesheet
+		 * — a bar of near-black and white subtitles — so a player could carry a
+		 * site's colours everywhere except the two places a viewer looks at
+		 * most while a video is actually playing.
+		 */
+		if ( $track->is_video() ) {
+			$vars['--imgp-chrome']    = self::translucent( (string) $video_config['chrome_color'], 0.78 );
+			$vars['--imgp-chrome-bg'] = (string) $video_config['chrome_color'];
+			$vars['--imgp-cc']        = (string) $video_config['caption_color'];
+		}
+
+		$style = Config::style_attribute( $vars );
 
 		// Layout follows the *medium*, not the skin. Every audio skin arranges a
 		// row of controls beside a scrubber; a video needs them over the picture,
@@ -219,6 +250,7 @@ final class PlayerRenderer {
 			$parts['poster']  = $this->part_poster( $track, $video_settings );
 			$parts['bigplay'] = empty( $video_settings['big_play'] ) ? '' : $this->part_big_play();
 			$parts['video']   = $this->part_video_controls( $config, $atts, $video_config );
+			$parts['mark']    = $this->part_watermark( $atts );
 		}
 
 		ob_start();
@@ -264,7 +296,7 @@ final class PlayerRenderer {
 					$parts['media'], // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
 					$parts['poster'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['bigplay'], // phpcs:ignore WordPress.Security.EscapeOutput
-					$parts['layers'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['mark'] . $parts['layers'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$outside ? '' : $chrome, // phpcs:ignore WordPress.Security.EscapeOutput
 					$outside ? $chrome : '' // phpcs:ignore WordPress.Security.EscapeOutput
 				);
@@ -398,9 +430,20 @@ final class PlayerRenderer {
 		$chapters = Captions::chapters_vtt( (array) ( $atts['chapters'] ?? array() ), $track->duration );
 
 		if ( '' !== $chapters ) {
+			/*
+			 * `data` has to be asked for. `esc_url()` allows the protocols in
+			 * `wp_allowed_protocols()`, which does not include it, so escaping
+			 * this the ordinary way emptied the attribute and the chapters
+			 * simply were not there — on every real site, silently, because the
+			 * test stub for `esc_url()` was `htmlspecialchars` and passed it.
+			 *
+			 * Safe to allow here because the content is not a URL somebody
+			 * supplied: `Captions::data_uri()` base64-encodes a VTT file this
+			 * code just built out of already-sanitised chapter titles.
+			 */
 			$html .= sprintf(
 				'<track kind="chapters" src="%s" label="%s" default />',
-				esc_url( Captions::data_uri( $chapters ) ),
+				esc_url( Captions::data_uri( $chapters ), array( 'data' ) ),
 				esc_attr__( 'Chapters', 'imagina-player' )
 			);
 		}
@@ -558,14 +601,16 @@ final class PlayerRenderer {
 	private function part_video_controls( array $config, array $atts, array $video_config ): string {
 		$buttons = array();
 
-		if ( array() !== (array) ( $atts['tracks'] ?? array() ) ) {
+		// Two conditions each, and they say different things: whether there is
+		// anything to show, and whether the author wants the button for it.
+		if ( array() !== (array) ( $atts['tracks'] ?? array() ) && ! empty( $video_config['show_captions'] ) ) {
 			$buttons['captions'] = array(
 				'icons' => array( 'cc' ),
 				'label' => __( 'Subtitles', 'imagina-player' ),
 			);
 		}
 
-		if ( array() !== (array) ( $atts['chapters'] ?? array() ) ) {
+		if ( array() !== (array) ( $atts['chapters'] ?? array() ) && ! empty( $video_config['show_chapters'] ) ) {
 			$buttons['chapters'] = array(
 				'icons' => array( 'chapters' ),
 				'label' => __( 'Chapters', 'imagina-player' ),
@@ -751,6 +796,35 @@ final class PlayerRenderer {
 	 * @param array<string, mixed> $config Effective settings.
 	 */
 	/**
+	 * A colour with an alpha, for painting over a picture.
+	 *
+	 * The bar has always been translucent so the video is not lost behind it;
+	 * making the colour settable must not quietly make it opaque.
+	 *
+	 * @param string $hex   A colour from the settings, already sanitised.
+	 * @param float  $alpha How much of it to keep.
+	 */
+	private static function translucent( string $hex, float $alpha ): string {
+		$clean = ltrim( trim( $hex ), '#' );
+
+		if ( 3 === strlen( $clean ) ) {
+			$clean = $clean[0] . $clean[0] . $clean[1] . $clean[1] . $clean[2] . $clean[2];
+		}
+
+		if ( 6 !== strlen( $clean ) || ! ctype_xdigit( $clean ) ) {
+			return 'rgb(0 0 0 / 78%)';
+		}
+
+		return sprintf(
+			'rgb(%d %d %d / %d%%)',
+			hexdec( substr( $clean, 0, 2 ) ),
+			hexdec( substr( $clean, 2, 2 ) ),
+			hexdec( substr( $clean, 4, 2 ) ),
+			(int) round( $alpha * 100 )
+		);
+	}
+
+	/**
 	 * The stand-in for a video somebody else serves.
 	 *
 	 * No iframe. An iframe in the markup is a request to Google on every page
@@ -785,6 +859,40 @@ final class PlayerRenderer {
 		<?php
 
 		return (string) ob_get_clean();
+	}
+
+	/**
+	 * A mark over the picture.
+	 *
+	 * Not protection, and it should not be sold as any: anybody recording the
+	 * screen records the mark too, and anybody who wants it gone crops it. What
+	 * it does is make a copy traceable and an embed on somebody else's site
+	 * obviously somebody else's, which is the honest reason to want one.
+	 *
+	 * @param array<string, mixed> $atts Sanitised attributes.
+	 */
+	private function part_watermark( array $atts ): string {
+		// Checked before the element is built, not while it is printed: an
+		// address that does not survive escaping should leave no element at
+		// all, rather than an `<img src="">` that every browser reports as a
+		// broken image.
+		$src = esc_url_raw( (string) ( $atts['watermark'] ?? '' ) );
+
+		if ( '' === $src ) {
+			return '';
+		}
+
+		$positions = array( 'top-left', 'top-right', 'bottom-left', 'bottom-right' );
+		$position  = (string) ( $atts['watermarkPosition'] ?? 'top-right' );
+		$position  = in_array( $position, $positions, true ) ? $position : 'top-right';
+		$opacity   = max( 5, min( 100, (int) ( $atts['watermarkOpacity'] ?? 55 ) ) );
+
+		return sprintf(
+			'<img class="imgp__watermark imgp__watermark--%s" src="%s" alt="" aria-hidden="true" decoding="async" style="--imgp-mark-opacity:%s" />',
+			esc_attr( $position ),
+			esc_url( $src ),
+			esc_attr( (string) round( $opacity / 100, 2 ) )
+		);
 	}
 
 	/**
