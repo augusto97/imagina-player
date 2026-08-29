@@ -213,7 +213,18 @@ export function placement( raw: string ): Placement {
  */
 const AUDIO_ONLY = [ 'show_thumbnail', 'show_artist' ];
 
-const AUDIO_ONLY_COLOURS = [ 'waveColor', 'waveProgress', 'metaColor' ];
+/*
+ * `controlColor` paints the small icons beside an audio waveform. A video's
+ * icons sit on the bar over the picture and follow the video's own control
+ * colour instead, so showing this one on a video block would be a swatch that
+ * changes nothing.
+ */
+const AUDIO_ONLY_COLOURS = [
+	'waveColor',
+	'waveProgress',
+	'metaColor',
+	'controlColor',
+];
 
 export function controlApplies( key: string, isVideo: boolean ): boolean {
 	return ! isVideo || ! AUDIO_ONLY.includes( key );

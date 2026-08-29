@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.18.0
+Stable tag: 1.19.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,38 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.19.0 =
+* Fixed: rounding a video's corners drew a frame around it. The rounded shell
+  is the audio player's card — asking for a radius on a row of controls means
+  asking for the card they sit in, so it carries padding and a faint tint. On a
+  video that padding became a pale ring and the tint became a border nobody
+  asked for. A video already rounds the right thing: the picture itself.
+* New: the colours of the playback controls. The buttons and the clock on the
+  bar, and the played part of the seek bar with the volume knob beside it —
+  site-wide and per block. Both were fixed in the stylesheet: the icons were
+  white whatever colour the bar behind them was set to, so a pale control bar
+  hid its own buttons; and the played line took the waveform's progress colour,
+  an audio setting the video block does not show, so the one moving coloured
+  thing on the picture could not be reached at all.
+* New: left on Automatic, the buttons are worked out from the control bar the
+  same way the accent's foreground is, so an existing site gets readable
+  controls without touching anything.
+* New: the audio player's small buttons — mute, skip, speed, download, and the
+  volume rail — have a colour, on the preset and on the block. That was a fixed
+  slate grey, which all but disappears on a dark page.
+* Fixed: the play button in the control row printed a white icon on the accent
+  without checking. The big play button over a video already worked that out;
+  this one assumed.
+* Fixed: the time chips kept a black pill on a pale control bar, so a correctly
+  darkened clock was printed on black anyway.
+* Testing: two browser tests. One measures the rendered boxes — is the picture
+  flush with the shell, is anything painted behind it, is the curve there — and
+  checks the audio card keeps the padding and tint the rule exists for. The
+  other measures real contrast on the control bar for a dark bar, a pale bar and
+  a hand-picked one, compositing each translucent colour over what is behind it
+  first: the rail is thirty per cent of a colour, and reading it without its
+  backdrop reported 1.29:1 for a pair that is plainly legible.
 
 = 1.18.0 =
 * New: the plugin speaks Spanish. 471 strings extracted into

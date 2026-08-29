@@ -215,6 +215,42 @@ final class PlayerRenderer {
 			$vars['--imgp-chrome']    = self::translucent( (string) $video_config['chrome_color'], 0.78 );
 			$vars['--imgp-chrome-bg'] = (string) $video_config['chrome_color'];
 			$vars['--imgp-cc']        = (string) $video_config['caption_color'];
+
+			/*
+			 * The controls on the bar. `--imgp-on-chrome` was `#fff` in the
+			 * stylesheet and nowhere else, so the icons stayed white however
+			 * pale the bar behind them was set — pick a light control bar and
+			 * every icon disappeared into it. On `auto` the colour is worked
+			 * out from the bar, the same way the accent's foreground is.
+			 */
+			$control = (string) $video_config['control_color'];
+
+			$vars['--imgp-on-chrome'] = 'auto' === $control
+				? Config::readable_on( (string) $video_config['chrome_color'] )
+				: $control;
+
+			/*
+			 * The volume rail is drawn from `--imgp-control`, which on audio is
+			 * the icon colour. A video's icons are the ones above, so the rail
+			 * follows them rather than the audio preset's slate grey — which
+			 * was a dark line on a dark bar.
+			 */
+			$vars['--imgp-control'] = $vars['--imgp-on-chrome'];
+
+			/*
+			 * The played part of the seek bar, and the volume knob that goes
+			 * with it. It took `--imgp-wave-progress`, which is the waveform's
+			 * colour: an audio-only setting the video block does not show, so
+			 * the one coloured thing a viewer watches move could not be reached
+			 * from the block at all. On `auto` it is the accent.
+			 */
+			$progress = (string) $video_config['progress_color'];
+
+			$vars['--imgp-progress'] = 'auto' === $progress
+				? (string) $config['accent']
+				: $progress;
+
+			$vars['--imgp-on-progress'] = Config::readable_on( $vars['--imgp-progress'] );
 		}
 
 		$style = Config::style_attribute( $vars );

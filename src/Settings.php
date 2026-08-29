@@ -64,6 +64,7 @@ final class Settings {
 			'wave_reflection'   => 0.25,
 			'text_color'        => '#111827',
 			'meta_color'        => '#6b7280',
+			'control_color'     => '#374151',
 			'background'        => 'transparent',
 			'height'            => 60,
 			'border_radius'     => 0,
@@ -118,6 +119,11 @@ final class Settings {
 				'wave_color'    => '#c9ced6',
 				'text_color'    => '#111827',
 				'meta_color'    => '#6b7280',
+				// The small control icons — mute, skip, speed, download — and
+				// the rail the volume slider runs along. Hard-coded to a slate
+				// grey until now, so a player on a dark section of a page had
+				// controls that all but disappeared.
+				'control_color' => '#374151',
 				'logo'          => '',
 				'logo_link'     => '',
 				'logo_height'   => 20,
@@ -148,6 +154,21 @@ final class Settings {
 				// pale grey still got a bar of near-black.
 				'chrome_color'    => '#000000',
 				'caption_color'   => '#ffffff',
+				/*
+				 * The controls themselves: the icons and the times on the bar,
+				 * and the played part of the seek bar with the volume knob that
+				 * matches it.
+				 *
+				 * `auto` rather than a colour, because the right answer follows
+				 * the two colours above it. The icons were `#fff` in the
+				 * stylesheet with no way to change them, which is invisible the
+				 * moment somebody picks a pale control bar — so on `auto` they
+				 * are worked out from the bar's own colour. The played bar took
+				 * the *waveform* progress colour, an audio setting the video
+				 * block does not even show, so on `auto` it takes the accent.
+				 */
+				'control_color'   => 'auto',
+				'progress_color'  => 'auto',
 				/*
 				 * The rest of the controls, each its own answer. Presto toggles
 				 * thirteen individually and Fluent the same shape; here half of
@@ -354,6 +375,7 @@ final class Settings {
 		$preset['wave_progress'] = (string) $branding['accent'];
 		$preset['text_color']    = (string) $branding['text_color'];
 		$preset['meta_color']    = (string) $branding['meta_color'];
+		$preset['control_color'] = (string) ( $branding['control_color'] ?? '#374151' );
 
 		return $preset;
 	}
@@ -392,7 +414,7 @@ final class Settings {
 		$out['description'] = sanitize_text_field( (string) $out['description'] );
 		$out['skin']        = Player\Skins::normalize( (string) $out['skin'] );
 
-		foreach ( array( 'accent', 'wave_color', 'wave_progress', 'text_color', 'meta_color' ) as $color_key ) {
+		foreach ( array( 'accent', 'wave_color', 'wave_progress', 'text_color', 'meta_color', 'control_color' ) as $color_key ) {
 			$out[ $color_key ] = self::sanitize_color( (string) $out[ $color_key ], $defaults[ $color_key ] );
 		}
 

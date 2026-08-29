@@ -289,6 +289,69 @@ $inherits = $renderer->render( array( 'src' => $file ) );
 
 check( 'and a block that says nothing uses the site colour', str_contains( $inherits, '--imgp-chrome:rgb(0 0 0 / 78%)' ) );
 
+/*
+ * The controls themselves. Two colours that were fixed in the stylesheet: the
+ * icons and the clock on the bar were `#fff` with no way to change them, and
+ * the played part of the seek bar took `--imgp-wave-progress` — the waveform's
+ * colour, an audio setting a video block does not even show. So the one thing
+ * a viewer watches move could not be coloured from the block at all.
+ */
+echo PHP_EOL . '# The controls on the bar' . PHP_EOL;
+
+$controls = $renderer->render(
+	array(
+		'src'                => $file,
+		'videoControlColor'  => '#ffe08a',
+		'videoProgressColor' => '#00c2d8',
+	)
+);
+
+check( 'the buttons and times take their colour from the block', str_contains( $controls, '--imgp-on-chrome:#ffe08a' ) );
+check( 'the played portion takes its own', str_contains( $controls, '--imgp-progress:#00c2d8' ) );
+
+/*
+ * The rail the volume slider runs along is drawn from `--imgp-control`, which
+ * on an audio player is the icon colour and defaults to a slate grey. On a
+ * video that grey was a dark line on a dark bar, so it follows the control
+ * colour instead.
+ */
+check( 'and the volume rail follows the buttons rather than the audio grey', str_contains( $controls, '--imgp-control:#ffe08a' ) );
+
+/*
+ * Left alone, both are worked out rather than assumed. This is the case that
+ * matters most, because it is what every existing site gets without touching
+ * anything: a control bar somebody set to a pale colour used to keep its white
+ * icons and lose them.
+ */
+$auto_dark = $renderer->render( array( 'src' => $file ) );
+
+check( 'left alone, a near-black bar gets white buttons', str_contains( $auto_dark, '--imgp-on-chrome:#ffffff' ) );
+
+$auto_light = $renderer->render(
+	array(
+		'src'              => $file,
+		'videoChromeColor' => '#f5f5f5',
+	)
+);
+
+check( 'and a pale bar gets dark ones instead of invisible white', str_contains( $auto_light, '--imgp-on-chrome:#111111' ), 'white icons on a white bar' );
+
+check(
+	'the played portion falls back to the accent, not to the waveform colour',
+	str_contains( $renderer->render( array( 'src' => $file, 'accent' => '#7c3aed' ) ), '--imgp-progress:#7c3aed' )
+);
+
+$hostile_controls = $renderer->render(
+	array(
+		'src'                => $file,
+		'videoControlColor'  => 'url(javascript:alert(1))',
+		'videoProgressColor' => '}*/body{display:none}',
+	)
+);
+
+check( 'a control colour that is not a colour falls back to automatic', str_contains( $hostile_controls, '--imgp-on-chrome:#ffffff' ) );
+check( 'and neither reaches the style attribute', ! str_contains( $hostile_controls, 'javascript:' ) && ! str_contains( $hostile_controls, 'display:none' ) );
+
 echo PHP_EOL . '# A skin belongs to a medium' . PHP_EOL;
 
 /*

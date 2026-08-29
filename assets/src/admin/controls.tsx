@@ -198,6 +198,66 @@ export function ColorOrTransparent( { value, onChange }: ColorProps ) {
 	);
 }
 
+/**
+ * A colour that is also allowed to be "work it out for me".
+ *
+ * The same shape as the control above, for the two video colours whose right
+ * answer follows another setting: the buttons on the bar read against the bar's
+ * own colour, and the played part of the seek bar takes the accent. Both were
+ * fixed in the stylesheet before this — white icons and the waveform's colour —
+ * so a pale control bar hid its own buttons and the played line could not be
+ * reached from a video block at all.
+ *
+ * @param root0
+ * @param root0.value
+ * @param root0.onChange
+ * @param root0.fallback  What the picker opens on when leaving automatic.
+ * @param root0.autoLabel What automatic means here, in words.
+ */
+export function ColorOrAuto( {
+	value,
+	onChange,
+	fallback = '#ffffff',
+	autoLabel,
+}: ColorProps & { fallback?: string; autoLabel?: string } ) {
+	const auto = '' === value || 'auto' === value;
+
+	return (
+		<span className="imgpa-colorset">
+			<span className="imgpa-segment" role="group">
+				<button
+					type="button"
+					className={ `imgpa-segment__option${
+						auto ? ' is-active' : ''
+					}` }
+					aria-pressed={ auto }
+					onClick={ () => onChange( 'auto' ) }
+				>
+					{ __( 'Automatic', 'imagina-player' ) }
+				</button>
+				<button
+					type="button"
+					className={ `imgpa-segment__option${
+						auto ? '' : ' is-active'
+					}` }
+					aria-pressed={ ! auto }
+					onClick={ () => onChange( auto ? fallback : value ) }
+				>
+					{ __( 'Colour', 'imagina-player' ) }
+				</button>
+			</span>
+
+			{ auto ? (
+				Boolean( autoLabel ) && (
+					<span className="imgpa-hint">{ autoLabel }</span>
+				)
+			) : (
+				<ColorInput value={ value } onChange={ onChange } />
+			) }
+		</span>
+	);
+}
+
 interface TextProps {
 	value: string;
 	onChange: ( value: string ) => void;

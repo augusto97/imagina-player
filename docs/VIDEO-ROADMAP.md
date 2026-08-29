@@ -160,6 +160,28 @@ Done since this list was written:
 - The watermark class was `.imgp__mark`, which is already the chapter marker on
   the scrub bar. Caught before it shipped; every chapter tick would have become
   a full-size logo.
+- Rounding a video's corners drew a frame around it. `.imgp--rounded-box` is
+  the audio player's card — a radius on a row of controls means the card those
+  controls sit in, so the rule carries padding and a faint tint. The same class
+  went on a video, where the padding became a pale ring and the tint a border.
+  The rule was right where it was written, which is why no string search in the
+  stylesheet would have found this; it is measured in a browser now (1.19.0).
+- The video's control icons were `#fff` in the stylesheet and set nowhere else,
+  so a control bar set to a pale colour hid every button on it. They are worked
+  out from the bar now, and settable (1.19.0).
+- The played part of a video's seek bar was painted with `--imgp-wave-progress`
+  — the waveform's colour, an audio-only setting the video block does not show.
+  The one moving coloured thing on the picture could not be coloured (1.19.0).
+- The volume rail on a video used `--imgp-control`, the audio icon colour: a
+  slate grey line on a near-black bar (1.19.0).
+- `.imgp__play` printed a white icon on the accent without checking, while
+  `.imgp__bigplay` beside it worked the same thing out properly (1.19.0).
+- My own contrast probe read translucent colours as if they were opaque —
+  `getImageData` returns straight channels, so a rail drawn at 30% alpha came
+  back as its base colour and a legible pair measured 1.29:1. Every sample is
+  composited over its backdrop before it is measured now. This is the second
+  time a contrast check of mine has been wrong in a way that made it useless;
+  the first read `color(srgb …)` as 0–255 (1.19.0).
 - The plugin never called `load_plugin_textdomain`, so the `.mo` files would
   have shipped and never been opened. WordPress loads a domain by itself only
   from `wp-content/languages/plugins`; a plugin carrying its own has to say

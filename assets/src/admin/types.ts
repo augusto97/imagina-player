@@ -10,6 +10,7 @@ export interface Preset {
 	wave_reflection: number;
 	text_color: string;
 	meta_color: string;
+	control_color: string;
 	background: string;
 	height: number;
 	border_radius: number;
@@ -59,6 +60,7 @@ export interface SettingsPayload {
 		wave_color: string;
 		text_color: string;
 		meta_color: string;
+		control_color: string;
 		logo: string;
 		logo_link: string;
 		logo_height: number;
@@ -82,6 +84,8 @@ export interface SettingsPayload {
 		/** The bar over the picture, and the subtitle text on it. */
 		chrome_color: string;
 		caption_color: string;
+		control_color: string;
+		progress_color: string;
 		/* The rest of the controls, each its own answer for video. */
 		show_captions: boolean;
 		show_chapters: boolean;

@@ -64,6 +64,8 @@ final class Video {
 		'caption_bg'      => 'videoCaptionBg',
 		'chrome_color'    => 'videoChromeColor',
 		'caption_color'   => 'videoCaptionColor',
+		'control_color'   => 'videoControlColor',
+		'progress_color'  => 'videoProgressColor',
 	);
 
 	/**
@@ -108,6 +110,12 @@ final class Video {
 				'poster_fit'    => 'contain' === $settings[ $key ] ? 'contain' : 'cover',
 				'chrome_color'  => Settings::sanitize_color( (string) $settings[ $key ], '#000000' ),
 				'caption_color' => Settings::sanitize_color( (string) $settings[ $key ], '#ffffff' ),
+				// `auto` is a real answer here, not an empty one: it means the
+				// colour is worked out from the bar and the accent at render
+				// time. Anything else has to be a colour.
+				'control_color', 'progress_color' => 'auto' === $settings[ $key ]
+					? 'auto'
+					: Settings::sanitize_color( (string) $settings[ $key ], 'auto' ),
 				default         => $settings[ $key ],
 			};
 		}

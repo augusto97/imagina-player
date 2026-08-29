@@ -86,7 +86,15 @@
 	width: 100%;
 	transform: scaleX(0);
 	transform-origin: left center;
-	background: var(--imgp-wave-progress);
+
+	/*
+	 * A video sets `--imgp-progress` and an audio player does not, so audio
+	 * keeps taking the waveform's progress colour — which is the same line, and
+	 * the same setting, as the wave beside it. On a video that setting is not
+	 * shown at all, because there is no waveform to colour, which is how the
+	 * one moving coloured thing on the picture ended up unreachable.
+	 */
+	background: var(--imgp-progress, var(--imgp-wave-progress));
 	will-change: transform;
 }
 
@@ -170,7 +178,13 @@
 	border: 0;
 	border-radius: 50%;
 	background: var(--imgp-accent);
-	color: #fff;
+
+	/*
+	 * Not white: white on a pale accent is the icon nobody can see. The big
+	 * play button over a video already worked this out; this one, the disc in
+	 * the control row, did not.
+	 */
+	color: var(--imgp-on-accent, #fff);
 	cursor: pointer;
 	transition: transform 0.15s ease, filter 0.15s ease;
 
@@ -690,6 +704,25 @@
 	background: var(--imgp-bg, color-mix(in srgb, var(--imgp-text) 4%, transparent));
 }
 
+/*
+ * A video is not a card.
+ *
+ * The rule above is the audio player's shell: asking for rounded corners on a
+ * row of controls means asking for the card those controls sit in, so it gets
+ * padding and a faint tint. Applied to a video that padding became a pale ring
+ * around the picture and the tint became a border nobody asked for — the
+ * corners were rounded, and a grey frame arrived with them.
+ *
+ * A video already rounds the right thing. `.imgp__stage` carries the radius and
+ * clips the picture to it in the theater and minimal skins, and the stacked
+ * skin rounds the whole shell because its controls sit below the picture. So
+ * here the shell only needs to stop drawing a card.
+ */
+.imgp--video.imgp--rounded-box {
+	padding: 0;
+	background: transparent;
+}
+
 /* --- Sticky positions --------------------------------------------------- */
 
 .imgp.is-stuck.imgp--stick-bottom-left,
@@ -1035,7 +1068,7 @@
 .imgp--video .imgp__track {
 	height: 5px;
 	border-radius: 999px;
-	background: rgb(255 255 255 / 30%);
+	background: color-mix(in srgb, var(--imgp-on-chrome) 30%, transparent);
 	transition: height 0.12s ease;
 }
 
@@ -1044,10 +1077,39 @@
 	height: 9px;
 }
 
+/*
+ * The volume slider goes with the seek bar rather than with the site's accent:
+ * they are the two lines on the same bar, and a viewer reads them as one
+ * control. On `auto` the progress colour *is* the accent, so a site that never
+ * touches either sees no change.
+ */
+.imgp--video .imgp__volume-slider {
+	accent-color: var(--imgp-progress, var(--imgp-accent));
+
+	&::-webkit-slider-thumb {
+		background: var(--imgp-progress, var(--imgp-accent));
+	}
+
+	&::-moz-range-thumb {
+		background: var(--imgp-progress, var(--imgp-accent));
+	}
+}
+
 .imgp--video .imgp__title,
 .imgp--video .imgp__artist,
 .imgp--video .imgp__time {
 	color: var(--imgp-on-chrome);
+}
+
+/*
+ * The time chips carry their own dark pill, because on an audio player they
+ * float over the waveform and need something to sit on. Over a video they sit
+ * on the control bar, so the pill follows the bar's colour rather than staying
+ * black: on a pale control bar the text had gone dark, correctly, and was then
+ * printed on a black pill.
+ */
+.imgp--video .imgp__time {
+	background: color-mix(in srgb, var(--imgp-chrome-bg, #000) 72%, transparent);
 }
 
 .imgp--video .imgp__play,
@@ -1095,7 +1157,7 @@
 }
 
 .imgp__vbtn:hover {
-	background: rgb(255 255 255 / 16%);
+	background: color-mix(in srgb, var(--imgp-on-chrome) 16%, transparent);
 }
 
 .imgp__vbtn .imgp__icon--collapse {
@@ -1221,7 +1283,7 @@
 
 .imgp__menuitem:hover,
 .imgp__menuitem:focus-visible {
-	background: rgb(255 255 255 / 14%);
+	background: color-mix(in srgb, var(--imgp-on-chrome) 14%, transparent);
 }
 
 /* The chosen one is marked by more than colour: aria-checked is what a screen
@@ -1242,7 +1304,7 @@
 }
 
 .imgp__vbtn.is-active {
-	background: rgb(255 255 255 / 22%);
+	background: color-mix(in srgb, var(--imgp-on-chrome) 22%, transparent);
 }
 
 /* Native cues sit at the very bottom of the video, which is exactly where the

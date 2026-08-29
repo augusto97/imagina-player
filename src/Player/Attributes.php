@@ -39,6 +39,7 @@ final class Attributes {
 		'wave_progress'     => 'waveProgress',
 		'text_color'        => 'textColor',
 		'meta_color'        => 'metaColor',
+		'control_color'     => 'controlColor',
 		'background'        => 'background',
 		'height'            => 'height',
 		// A block could not round its own corners: the radius existed on the
@@ -251,6 +252,14 @@ final class Attributes {
 				'default' => self::INHERIT,
 			),
 			'videoCaptionColor'  => array(
+				'type'    => 'string',
+				'default' => self::INHERIT,
+			),
+			'videoControlColor'  => array(
+				'type'    => 'string',
+				'default' => self::INHERIT,
+			),
+			'videoProgressColor' => array(
 				'type'    => 'string',
 				'default' => self::INHERIT,
 			),

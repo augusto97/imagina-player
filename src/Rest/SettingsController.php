@@ -172,6 +172,19 @@ final class SettingsController {
 
 			$settings['video']['chrome_color']    = Settings::sanitize_color( (string) ( $video['chrome_color'] ?? '' ), '#000000' );
 			$settings['video']['caption_color']   = Settings::sanitize_color( (string) ( $video['caption_color'] ?? '' ), '#ffffff' );
+
+			/*
+			 * `auto` is a value in its own right for these two — the icons
+			 * follow the bar, the played line follows the accent — so it has to
+			 * survive the sanitiser rather than be turned into a colour here.
+			 */
+			foreach ( array( 'control_color', 'progress_color' ) as $key ) {
+				$value = (string) ( $video[ $key ] ?? 'auto' );
+
+				$settings['video'][ $key ] = 'auto' === $value
+					? 'auto'
+					: Settings::sanitize_color( $value, 'auto' );
+			}
 		}
 
 		if ( isset( $incoming['protection'] ) && is_array( $incoming['protection'] ) ) {
@@ -204,7 +217,7 @@ final class SettingsController {
 			$branding = $incoming['branding'];
 			$current  = $settings['branding'];
 
-			foreach ( array( 'accent', 'wave_color', 'text_color', 'meta_color' ) as $key ) {
+			foreach ( array( 'accent', 'wave_color', 'text_color', 'meta_color', 'control_color' ) as $key ) {
 				$settings['branding'][ $key ] = Settings::sanitize_color(
 					(string) ( $branding[ $key ] ?? '' ),
 					(string) $current[ $key ]

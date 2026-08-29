@@ -76,6 +76,10 @@ final class Config {
 			'--imgp-wave-progress'  => (string) $config['wave_progress'],
 			'--imgp-text'           => (string) $config['text_color'],
 			'--imgp-meta'           => (string) $config['meta_color'],
+			// The small control icons and the volume rail beside them. A fixed
+			// slate grey in the stylesheet until now, which is close to
+			// invisible on a player placed on a dark section of a page.
+			'--imgp-control'        => (string) $config['control_color'],
 			'--imgp-wave-height'    => (int) $config['height'] . 'px',
 			'--imgp-reflection'     => (string) (float) $config['wave_reflection'],
 			'--imgp-bar-radius'     => $config['rounded_bars'] ? '999px' : '0',

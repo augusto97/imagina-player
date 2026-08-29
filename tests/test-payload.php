@@ -56,8 +56,15 @@ $budgets = array(
 	 * because a theme was painting the video. It is about two kilobytes of
 	 * source and almost nothing on the wire, which is why the compressed budget
 	 * below is the one that matters.
+	 *
+	 * Raised again to 30.0 in 1.19.0, when the control colours stopped being
+	 * literals — `rgb(255 255 255 / 30%)` became a `color-mix()` on a custom
+	 * property, four times over, which is longer to write and identical to
+	 * send. A budget raised every release is not a budget, so the compressed
+	 * figure below was tightened in the same commit: the loose proxy loosens,
+	 * the number a visitor actually pays gets stricter.
 	 */
-	'the stylesheet'  => array( $css, 28.0 ),
+	'the stylesheet'  => array( $css, 30.0 ),
 );
 
 foreach ( $budgets as $label => $budget ) {
@@ -85,7 +92,10 @@ foreach ( $budgets as $label => $budget ) {
  */
 $compressed = array(
 	'the core bundle' => array( $core, 8.0 ),
-	'the stylesheet'  => array( $css, 6.5 ),
+	// Tightened from 6.5 in 1.19.0. Today's stylesheet compresses to 5.7 KB,
+	// and the raw budget above has now been raised twice; this is the half of
+	// the pair that has to hold.
+	'the stylesheet'  => array( $css, 6.0 ),
 );
 
 foreach ( $compressed as $label => $budget ) {

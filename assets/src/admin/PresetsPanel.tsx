@@ -518,6 +518,20 @@ export function PresetsPanel( { settings, onChange }: Props ) {
 								/>
 							</Field>
 							<Field
+								label={ __( 'Buttons', 'imagina-player' ) }
+								help={ __(
+									'Mute, skip, speed and download, and the rail the volume slider runs along.',
+									'imagina-player'
+								) }
+							>
+								<ColorInput
+									value={ preset.control_color }
+									onChange={ ( value ) =>
+										update( { control_color: value } )
+									}
+								/>
+							</Field>
+							<Field
 								label={ __( 'Background', 'imagina-player' ) }
 								help={ __(
 									'Transparent lets the page behind the player show through.',

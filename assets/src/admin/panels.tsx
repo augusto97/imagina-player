@@ -12,6 +12,7 @@ import type { SelfCheckResult } from './api';
 import {
 	Card,
 	ColorInput,
+	ColorOrAuto,
 	Field,
 	MediaInput,
 	Notice,
@@ -1103,6 +1104,46 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 					/>
 				</Field>
 
+				<Field
+					label={ __( 'Buttons and times', 'imagina-player' ) }
+					help={ __(
+						'The icons and the clock on the bar, the rail of the seek bar, and the volume slider’s groove.',
+						'imagina-player'
+					) }
+				>
+					<ColorOrAuto
+						value={ String( video.control_color ?? 'auto' ) }
+						onChange={ ( value: string ) =>
+							set( { control_color: value } )
+						}
+						fallback="#ffffff"
+						autoLabel={ __(
+							'Whichever of black or white reads on the control bar.',
+							'imagina-player'
+						) }
+					/>
+				</Field>
+
+				<Field
+					label={ __( 'Played portion', 'imagina-player' ) }
+					help={ __(
+						'The filled part of the seek bar as the video plays, and the volume knob beside it.',
+						'imagina-player'
+					) }
+				>
+					<ColorOrAuto
+						value={ String( video.progress_color ?? 'auto' ) }
+						onChange={ ( value: string ) =>
+							set( { progress_color: value } )
+						}
+						fallback="#1f2937"
+						autoLabel={ __(
+							'The preset’s accent colour.',
+							'imagina-player'
+						) }
+					/>
+				</Field>
+
 				<Field label={ __( 'Subtitles', 'imagina-player' ) }>
 					<ColorInput
 						value={ String( video.caption_color ?? '#ffffff' ) }
@@ -1252,6 +1293,20 @@ export function BrandingPanel( { settings, onChange }: PanelProps ) {
 					<ColorInput
 						value={ branding.meta_color }
 						onChange={ ( value ) => set( { meta_color: value } ) }
+					/>
+				</Field>
+				<Field
+					label={ __( 'Buttons', 'imagina-player' ) }
+					help={ __(
+						'Mute, skip, speed and download, and the rail the volume slider runs along.',
+						'imagina-player'
+					) }
+				>
+					<ColorInput
+						value={ branding.control_color }
+						onChange={ ( value ) =>
+							set( { control_color: value } )
+						}
 					/>
 				</Field>
 			</Card>

@@ -698,6 +698,10 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							],
 							[ 'textColor', __( 'Title', 'imagina-player' ) ],
 							[ 'metaColor', __( 'Artist', 'imagina-player' ) ],
+							[
+								'controlColor',
+								__( 'Buttons', 'imagina-player' ),
+							],
 						] as const
 					 )
 						.filter( ( [ attribute ] ) =>
@@ -1295,7 +1299,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							id="imgp-video-colours"
 							label={ __( 'Colours', 'imagina-player' ) }
 							help={ __(
-								'Leave either empty to use the site setting.',
+								'Leave any of them empty to use the site setting. The buttons follow the control bar and the played portion follows the accent unless you say otherwise.',
 								'imagina-player'
 							) }
 						>
@@ -1308,13 +1312,31 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 												'Control bar',
 												'imagina-player'
 											),
+											'#000000',
+										],
+										[
+											'videoControlColor',
+											__(
+												'Buttons and times',
+												'imagina-player'
+											),
+											'#ffffff',
+										],
+										[
+											'videoProgressColor',
+											__(
+												'Played portion',
+												'imagina-player'
+											),
+											'#1f2937',
 										],
 										[
 											'videoCaptionColor',
 											__( 'Subtitles', 'imagina-player' ),
+											'#ffffff',
 										],
 									] as const
-								 ).map( ( [ attribute, label ] ) => (
+								 ).map( ( [ attribute, label, fallback ] ) => (
 									<div
 										className="imgp-editor__colour"
 										key={ attribute }
@@ -1323,10 +1345,25 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 											type="color"
 											aria-label={ label }
 											value={
-												String(
-													attributes[ attribute ] ??
-														''
-												) || '#000000'
+												/*
+												 * `auto` is a stored answer for
+												 * two of these, and a colour
+												 * input cannot show it — so the
+												 * swatch falls back to what
+												 * `auto` would pick anyway.
+												 */
+												( () => {
+													const stored = String(
+														attributes[
+															attribute
+														] ?? ''
+													);
+
+													return stored &&
+														'auto' !== stored
+														? stored
+														: fallback;
+												} )()
 											}
 											onChange={ ( event ) =>
 												setAttributes( {
