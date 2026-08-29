@@ -1,31 +1,43 @@
-# Imagina Player — 1.16.0
+# Imagina Player — 1.17.0
 
-Download **imagina-player-1.16.0.zip** and install it in WordPress under
+Download **imagina-player-1.17.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  934f9f435e162077257c9ff1811f2c63c949b487173419bf4d2ece3fe41224ae
+    SHA-256  df87b5b53a6fe7b22bc82dd08f9f834436efa0c2dfc9055505531c8c435186bf
 
-## What changed in 1.16.0
+## What changed in 1.17.0
 
-**The seek bar on a video could not be dragged.** It was drawn correctly and
-looked exactly like a seek bar, but the element a pointer has to land on was
-zero pixels tall — everything inside the scrubber is positioned absolutely and
-the video rule set the box to auto height, so it collapsed. There is now a real
-hit area, a line that thickens under the pointer, and a test that presses every
-control of every skin at the point where it appears.
+This finishes the video roadmap — steps two to five.
 
-**Video skins of their own.** Theater (controls over the picture, fading while
-it plays), Minimal (a line and little else), Stacked (a solid bar under the
-picture that never covers it). Until now a video block was offered the seven
-audio skins, every one of which arranges a waveform and a row of transport
-buttons — so choosing one either did nothing or did something meaningless. A
-block now offers only the skins that apply to what it is playing, and a skin
-saved for the other medium falls back instead of rendering wrongly.
+**Colours and subtitles.** The control bar's colour and the subtitles' colour,
+size and backing, per block and site-wide. All four were hard-coded, so a
+player carried a site's colours everywhere except the two places somebody looks
+at while a video plays.
 
-**A roadmap.** `docs/VIDEO-ROADMAP.md` in the repository lists what the video
-player still lacks next to Presto Player and Fluent Player — read from their
-source, setting by setting — and the order it is being done in. This release is
-step one of five; styling, the full per-control list, focus mode and a
-watermark are the rest.
+**Every control has its own answer** — the play button over the picture, the
+title, the times, skip, volume, speed, subtitles, chapters, picture-in-picture,
+fullscreen. Half of these lived on the audio preset, which is why a video block
+showed a mixture of two lists and neither was complete.
 
-929 checks green.
+**Stop when nobody is watching.** Pauses when the tab goes to the background or
+the picture scrolls off. It does not start again by itself.
+
+**Subtitles from the first frame**, without overriding a viewer who has already
+chosen for themselves.
+
+**A mark over the picture**, with a corner and an opacity. Not protection, and
+not offered as any: a screen recording keeps it and a crop removes it. It makes
+a copy traceable.
+
+## Two bugs the test harness was hiding
+
+The harness's own esc_url() was htmlspecialchars alone. Real WordPress empties
+a URL whose scheme is not allowed; the stub passed javascript: straight
+through, so every test that leaned on it for safety was testing nothing.
+
+Making it honest found this within a minute: **chapters have never been
+delivered on a real site.** Their track is a data: URI, data is not an allowed
+protocol, so WordPress emptied the attribute — silently, on every install,
+while the suite stayed green. Fixed.
+
+962 checks green.
