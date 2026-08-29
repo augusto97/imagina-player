@@ -249,7 +249,12 @@ setTimeout(function () {
 	setTimeout(function () {
 		result.styleTab = {
 			colorPickers: document.querySelectorAll('.imgpa-color input[type="color"]').length,
-			backgroundChoices: text('.imgpa-segment__option')
+			/*
+			 * Inside the segmented group, not every button on the page that
+			 * happens to share the class: the preview's Audio/Video switch is
+			 * the same kind of control and this counted its buttons too.
+			 */
+			backgroundChoices: text('.imgpa-segment .imgpa-segment__option')
 		};
 
 		// Phase three: Branding, where the logo field lives.

@@ -83,6 +83,26 @@ final class SettingsController {
 					'attributes' => array(
 						'type' => 'object',
 					),
+					/*
+					 * Which medium the settings screen wants to look at. A
+					 * preset carries the accent, the corner radius, the button
+					 * colour and a skin, and every one of those is visible on a
+					 * video — but the preview only ever rendered audio, so the
+					 * half of the plugin most people came for could not be seen
+					 * before publishing it.
+					 */
+					'medium'     => array(
+						'type' => 'string',
+						'enum' => array( 'audio', 'video' ),
+					),
+					/*
+					 * Unsaved video settings, so the Video section can show
+					 * what a change looks like before it is saved — the same
+					 * courtesy the preset editor has always had.
+					 */
+					'video'      => array(
+						'type' => 'object',
+					),
 				),
 			)
 		);
@@ -248,6 +268,47 @@ final class SettingsController {
 			// used to get the demo one, which told the author their waveform was
 			// working when it was not — they only found out on the front end.
 			return $this->preview_response( $attributes, null, false );
+		}
+
+		if ( 'video' === $request->get_param( 'medium' ) ) {
+			/*
+			 * A file that does not exist, exactly like the audio demo: the
+			 * player is built from the attributes and the poster, and nothing
+			 * here ever plays. What matters is that it is the real renderer, so
+			 * the preview cannot drift away from the thing it previews.
+			 */
+			$video = $request->get_param( 'video' );
+
+			$override = null;
+
+			if ( is_array( $video ) ) {
+				$candidate = Settings::video();
+
+				foreach ( $video as $key => $value ) {
+					if ( array_key_exists( $key, $candidate ) ) {
+						$candidate[ $key ] = $value;
+					}
+				}
+
+				$override = static fn(): array => $candidate;
+				add_filter( 'imagina_player_video_settings', $override, 99 );
+			}
+
+			$response = $this->preview_response(
+				array(
+					'src'         => home_url( '/imagina-player-preview.mp4' ),
+					'title'       => (string) ( $request->get_param( 'title' ) ?: __( 'Your video title', 'imagina-player' ) ),
+					'poster'      => \ImaginaPlayer\URL . 'assets/preview-poster.svg',
+					'aspectRatio' => '16:9',
+				),
+				Settings::sanitize_preset( (array) $request->get_param( 'preset' ) )
+			);
+
+			if ( null !== $override ) {
+				remove_filter( 'imagina_player_video_settings', $override, 99 );
+			}
+
+			return $response;
 		}
 
 		return $this->preview_response(

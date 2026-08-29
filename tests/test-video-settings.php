@@ -220,6 +220,89 @@ foreach ( array( 'poster_fit', 'caption_size', 'block_download', 'hide_after' ) 
 	check( "the {$key} control is in the built bundle", str_contains( $admin, $key ) );
 }
 
+echo PHP_EOL . '# And a way to look at a video before publishing one' . PHP_EOL;
+
+/*
+ * The preset editor has had a live preview since the first version. The video
+ * settings had none, and the preset preview only ever drew audio — so a
+ * preset's accent on a play button over a picture, its corner radius on the
+ * picture, its button colour on the bar, and every setting in the Video section
+ * could only be seen by publishing a post and looking at the front end.
+ */
+$controller = new ImaginaPlayer\Rest\SettingsController();
+
+$video_preview = $controller->preview(
+	new WP_REST_Request(
+		array(
+			'medium' => 'video',
+			'preset' => array( 'accent' => '#00c2d8' ),
+		)
+	)
+);
+
+$video_data = $video_preview->get_data();
+$video_html = (string) ( $video_data['html'] ?? '' );
+
+check( 'the preview renders a video', str_contains( $video_html, 'imgp--video' ), substr( $video_html, 0, 120 ) );
+check( 'with a stage to hold the picture', str_contains( $video_html, 'imgp__stage' ) );
+check( 'and a poster, so it is not a black rectangle', str_contains( $video_html, 'preview-poster.svg' ) );
+check( 'the preset reaches it', str_contains( $video_html, '#00c2d8' ) );
+
+check(
+	'the poster it points at is actually in the plugin',
+	is_readable( $plugin . 'assets/preview-poster.svg' )
+);
+
+/*
+ * Unsaved settings, which is the whole point of a preview: seeing a change
+ * before committing to it.
+ */
+$candidate = $controller->preview(
+	new WP_REST_Request(
+		array(
+			'medium' => 'video',
+			'preset' => array(),
+			'video'  => array( 'chrome_color' => '#123456' ),
+		)
+	)
+);
+
+check(
+	'a setting that has not been saved yet shows in the preview',
+	str_contains( (string) ( $candidate->get_data()['html'] ?? '' ), 'rgb(18 52 86' ),
+	'otherwise every change is a guess followed by a save'
+);
+
+/*
+ * And the filter has to come back off. It is added at priority 99 for one
+ * render; left on, every player on the request would take the preview's
+ * settings.
+ */
+$after = $controller->preview(
+	new WP_REST_Request( array( 'medium' => 'video', 'preset' => array() ) )
+);
+
+check(
+	'and stops applying once that render is done',
+	! str_contains( (string) ( $after->get_data()['html'] ?? '' ), 'rgb(18 52 86' ),
+	'the override outlived the render it was for'
+);
+
+check(
+	'the audio preview is unchanged',
+	str_contains(
+		(string) ( $controller->preview( new WP_REST_Request( array( 'preset' => array() ) ) )->get_data()['html'] ?? '' ),
+		'imgp--audio'
+	)
+);
+
+$admin_bundle = (string) file_get_contents( $plugin . 'build/admin.js' );
+
+check(
+	'the settings screen can switch the preview between the two',
+	str_contains( $admin_bundle, 'imgpa-preview__medium' )
+);
+
 echo PHP_EOL;
 if ( $failures > 0 ) {
 	echo "{$failures} check(s) failed." . PHP_EOL;

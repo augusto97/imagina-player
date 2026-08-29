@@ -954,3 +954,14 @@
 .imgpa-table__url a {
 	color: var(--ip-accent-strong);
 }
+
+/* The preview's medium switch. A preset paints a video as much as it paints a
+   waveform, and until now only one of the two could be looked at. */
+.imgpa-preview__medium {
+	display: inline-flex;
+	margin-bottom: 8px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	overflow: hidden;
+	background: #fff;
+}

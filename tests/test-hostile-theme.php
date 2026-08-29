@@ -194,6 +194,71 @@ $sections .= sprintf(
 	)
 );
 
+/*
+ * And the things that sit on top of the picture.
+ *
+ * This whole file walks every element inside the player and compares it with
+ * and without the theme, which sounds exhaustive and was not: no case rendered
+ * here had a call to action on it, so the panel, its button, its form and its
+ * close button were never in the tree being walked. The blanket reset above
+ * strips every button's background, and the close button's was restated for
+ * `:hover` and not for the state it spends its life in — a white glyph at
+ * three-quarter opacity with nothing behind it, over whatever the video happens
+ * to be showing.
+ */
+$layers = array(
+	array(
+		'type'   => 'cta',
+		'at'     => 50,
+		'title'  => 'Sigue la clase completa',
+		'text'   => 'Cuarenta lecciones, con ejercicios.',
+		'button' => 'Ver el curso',
+		'url'    => 'https://example.test/curso',
+		'skip'   => true,
+	),
+	array(
+		'type'   => 'bar',
+		'at'     => 10,
+		'title'  => 'Descarga los apuntes',
+		'button' => 'Descargar',
+		'url'    => 'https://example.test/apuntes',
+		'skip'   => true,
+	),
+	array(
+		'type'    => 'email',
+		'at'      => 80,
+		'title'   => 'Recibe la siguiente',
+		'text'    => 'Una al mes, nada más.',
+		'button'  => 'Enviar',
+		'consent' => 'Puedes darte de baja cuando quieras.',
+		'skip'    => true,
+	),
+);
+
+$sections .= sprintf(
+	'<section data-case="video-layers">%s</section>',
+	$renderer->render(
+		array(
+			'src'    => 'https://cdn.example.com/clip.mp4',
+			'title'  => 'Vídeo con CTA',
+			'accent' => '#8e44ad',
+			'layers' => $layers,
+		)
+	)
+);
+
+$sections .= sprintf(
+	'<section data-case="audio-layers">%s</section>',
+	$renderer->render(
+		array(
+			'src'    => 'https://cdn.example.com/track.mp3',
+			'title'  => 'Audio con CTA',
+			'accent' => '#8e44ad',
+			'layers' => $layers,
+		)
+	)
+);
+
 $page = <<<HTML
 <!doctype html><html><head><meta charset="utf-8">
 <link rel="stylesheet" href="./theme.css">
@@ -283,12 +348,18 @@ window.__measure = function () {
 		var player = section.querySelector('.imgp');
 		var rect = player.getBoundingClientRect();
 		var overflow = 0;
+		// Which element, not just how far: "43px over" sends you reading the
+		// whole stylesheet, and the name sends you to one rule.
+		var offender = '';
 
 		player.querySelectorAll('*').forEach(function (el) {
 			var r = el.getBoundingClientRect();
 			var over = Math.round(Math.max(r.right - rect.right, rect.left - r.left));
 
-			if (over > overflow) { overflow = over; }
+			if (over > overflow) {
+				overflow = over;
+				offender = ('string' === typeof el.className ? el.className : el.tagName) || el.tagName;
+			}
 		});
 
 		// The transport buttons. A theme that gives every button 48px and
@@ -345,6 +416,7 @@ window.__measure = function () {
 				: null,
 			covers: coversPicture(player),
 			overflow: overflow,
+			offender: offender,
 			controls: controls,
 			height: Math.round(rect.height),
 			width: Math.round(rect.width)
@@ -475,7 +547,7 @@ foreach ( (array) $report as $case => $data ) {
 	check(
 		"{$case} stays inside its own box",
 		(int) ( $data['overflow'] ?? 0 ) <= 1,
-		$data['overflow'] . 'px over'
+		$data['overflow'] . 'px over — ' . (string) ( $data['offender'] ?? '?' )
 	);
 }
 

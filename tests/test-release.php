@@ -157,9 +157,35 @@ check(
 	'the editor ships no hand-made player lookalike',
 	! str_contains( $editor_bundle, 'imgp__wave-preview' )
 );
+/*
+ * Colours used to be their own panel, and this checked that they were. They are
+ * now a group inside Appearance, because two panels called "Colours" — one at
+ * the top level and one buried in the video panel — is how the inspector became
+ * something people got lost in.
+ *
+ * The invariant that survives the move is the one that mattered: every colour
+ * goes through the one shared control, so a new colour cannot be added as a
+ * loose picker somewhere nobody thinks to look.
+ */
 check(
-	'the colours section is a collapsible panel',
-	1 === preg_match( "/<PanelBody\s+title=\{ __\( 'Colours'/", $inspector )
+	'colours are rendered through the shared control',
+	str_contains( $inspector, '<Swatches' )
+);
+
+check(
+	'and no colour input is hand-rolled beside it',
+	! preg_match( '/<input\s+type="color"/', $inspector ),
+	'a loose colour picker is back in the inspector'
+);
+
+/*
+ * The grab-bag. A panel named after the medium collects whatever else is true
+ * of that medium — a corner radius, a poster, thirteen dropdowns, a second set
+ * of colours — and there is no answer to "where would I look for this".
+ */
+check(
+	'no panel is named after the medium rather than the question it answers',
+	! preg_match( "/<PanelBody title=\{ __\( 'Video'/", $inspector )
 );
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;

@@ -21,6 +21,7 @@ import {
 	TextInput,
 	Toggle,
 } from './controls';
+import { PreviewFrame } from './PreviewFrame';
 import type { SettingsPayload } from './types';
 
 interface PanelProps {
@@ -786,6 +787,36 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 
 	return (
 		<>
+			{ /*
+			     The preset editor has had a live preview since the beginning
+			     and this screen had none, so every video setting was a guess
+			     followed by publishing a post to look at it. It is the same
+			     frame, the same renderer, and it takes the settings as they
+			     are on screen rather than as they were last saved.
+			*/ }
+			<Card
+				title={ __( 'Preview', 'imagina-player' ) }
+				description={ __(
+					'The default preset, drawn as a video, with the settings below as they stand now.',
+					'imagina-player'
+				) }
+			>
+				<PreviewFrame
+					preset={
+						/*
+						 * Named, not "whichever came first": a site that has
+						 * renamed or reordered its presets would otherwise get
+						 * a preview of a different one than a block with no
+						 * preset chosen actually uses.
+						 */
+						settings.presets.default ??
+						settings.presets[ Object.keys( settings.presets )[ 0 ] ]
+					}
+					medium="video"
+					video={ video as unknown as Record< string, unknown > }
+				/>
+			</Card>
+
 			<Card
 				title={ __( 'The picture', 'imagina-player' ) }
 				description={ __(

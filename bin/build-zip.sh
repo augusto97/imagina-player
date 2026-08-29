@@ -43,6 +43,7 @@ for item in \
 	blocks \
 	languages \
 	assets/preview-cover.svg \
+	assets/preview-poster.svg \
 	assets/preview-frame.css
 do
 	if [ ! -e "$root/$item" ]; then

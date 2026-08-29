@@ -53,6 +53,10 @@ export function PresetsPanel( { settings, onChange }: Props ) {
 	);
 	const [ tab, setTab ] = useState< Tab >( 'controls' );
 
+	// Which player the preview draws. Kept beside the tabs rather than in the
+	// preset, because it is a way of looking at one, not part of one.
+	const [ medium, setMedium ] = useState< 'audio' | 'video' >( 'audio' );
+
 	const preset = settings.presets[ active ] ?? settings.schema.presetDefaults;
 
 	const update = ( changes: Partial< Preset > ): void => {
@@ -146,7 +150,35 @@ export function PresetsPanel( { settings, onChange }: Props ) {
 			</aside>
 
 			<div className="imgpa-presets__editor">
-				<PreviewFrame preset={ preset } />
+				{ /*
+				     A preset is not an audio-only thing. Its accent paints the
+				     play button over a video, its corner radius rounds the
+				     picture, its button colour is on the bar — and this showed
+				     audio and nothing else, so none of that could be seen
+				     before publishing a post with a video in it.
+				*/ }
+				<div className="imgpa-preview__medium" role="group">
+					{ (
+						[
+							[ 'audio', __( 'Audio', 'imagina-player' ) ],
+							[ 'video', __( 'Video', 'imagina-player' ) ],
+						] as Array< [ 'audio' | 'video', string ] >
+					 ).map( ( [ value, label ] ) => (
+						<button
+							key={ value }
+							type="button"
+							className={ `imgpa-segment__option${
+								medium === value ? ' is-active' : ''
+							}` }
+							aria-pressed={ medium === value }
+							onClick={ () => setMedium( value ) }
+						>
+							{ label }
+						</button>
+					) ) }
+				</div>
+
+				<PreviewFrame preset={ preset } medium={ medium } />
 
 				<div className="imgpa-tabs" role="tablist">
 					{ (

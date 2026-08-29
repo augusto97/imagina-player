@@ -161,3 +161,140 @@
 	align-items: center;
 	gap: 0.5rem;
 }
+
+/* --- A setting with three answers ---------------------------------------
+   Inherit, show, hide. As a dropdown it is a row you have to open to read;
+   as three segments it is a row you can scan. Thirteen of them in a column
+   was the video panel, and reading it meant opening thirteen dropdowns to
+   find the two that had been changed. */
+
+.imgp-editor__tri-list {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin-bottom: 16px;
+}
+
+.imgp-editor__tri {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 6px;
+	border-radius: 4px;
+}
+
+/* Marked where this block differs from the site, so a long list can be read
+   for what is different rather than from the top. */
+.imgp-editor__tri.is-set {
+	background: rgb(0 124 186 / 8%);
+	box-shadow: inset 2px 0 0 var(--wp-admin-theme-color, #007cba);
+}
+
+.imgp-editor__tri-label {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: 12px;
+	line-height: 1.4;
+}
+
+.imgp-editor__tri-options {
+	flex: 0 0 auto;
+	display: inline-flex;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	overflow: hidden;
+	background: #fff;
+}
+
+.imgp-editor__tri-option {
+	padding: 3px 7px;
+	border: 0;
+	border-right: 1px solid #eee;
+	background: none;
+	color: #50575e;
+	font-size: 11px;
+	line-height: 1.5;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.imgp-editor__tri-option:last-child {
+	border-right: 0;
+}
+
+.imgp-editor__tri-option:hover {
+	background: #f0f0f1;
+}
+
+.imgp-editor__tri-option.is-active {
+	background: var(--wp-admin-theme-color, #007cba);
+	color: #fff;
+}
+
+.imgp-editor__tri-help {
+	flex: 1 0 100%;
+	color: #757575;
+	font-size: 11px;
+}
+
+/* --- Colours, once ------------------------------------------------------- */
+
+.imgp-editor__swatches {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-bottom: 16px;
+}
+
+.imgp-editor__swatch {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 3px 6px;
+	border-radius: 4px;
+}
+
+.imgp-editor__swatch.is-set {
+	background: rgb(0 124 186 / 8%);
+	box-shadow: inset 2px 0 0 var(--wp-admin-theme-color, #007cba);
+}
+
+.imgp-editor__swatch input[type="color"] {
+	flex: 0 0 auto;
+	width: 26px;
+	height: 26px;
+	padding: 0;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	background: none;
+	cursor: pointer;
+}
+
+.imgp-editor__swatch label {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: 12px;
+}
+
+.imgp-editor__swatch-reset {
+	flex: 0 0 auto;
+	padding: 2px 6px;
+	border: 0;
+	border-radius: 3px;
+	background: none;
+	color: var(--wp-admin-theme-color, #007cba);
+	font-size: 11px;
+	cursor: pointer;
+}
+
+.imgp-editor__swatch-reset[disabled] {
+	visibility: hidden;
+}
+
+/* A short line of guidance above a group, rather than one under every row. */
+.imgp-editor__note {
+	margin: 0 0 12px;
+	color: #757575;
+	font-size: 12px;
+	line-height: 1.5;
+}

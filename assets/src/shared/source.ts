@@ -226,10 +226,24 @@ const AUDIO_ONLY_COLOURS = [
 	'controlColor',
 ];
 
+/*
+ * And the other direction. The control bar, the buttons on it and the subtitle
+ * colour only exist over a picture; offering them beside a waveform is a swatch
+ * that paints nothing.
+ */
+const VIDEO_ONLY_COLOURS = [
+	'videoChromeColor',
+	'videoControlColor',
+	'videoProgressColor',
+	'videoCaptionColor',
+];
+
 export function controlApplies( key: string, isVideo: boolean ): boolean {
 	return ! isVideo || ! AUDIO_ONLY.includes( key );
 }
 
 export function colourApplies( attribute: string, isVideo: boolean ): boolean {
-	return ! isVideo || ! AUDIO_ONLY_COLOURS.includes( attribute );
+	return isVideo
+		? ! AUDIO_ONLY_COLOURS.includes( attribute )
+		: ! VIDEO_ONLY_COLOURS.includes( attribute );
 }

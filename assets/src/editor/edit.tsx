@@ -21,6 +21,7 @@ import {
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
+import { Swatches, TristateList } from './controls';
 import { Preview } from './preview';
 import {
 	colourApplies,
@@ -49,7 +50,43 @@ interface EditProps {
 
 const INHERIT = '';
 
-const HEX = /^#[0-9a-fA-F]{6}$/;
+/*
+ * Two of the preset's switches are not about which controls appear at all —
+ * they are how the player behaves — and they sat in the list of buttons because
+ * that is where the loop that builds it happened to put them.
+ */
+const BEHAVIOUR = [ 'sticky', 'remember_position' ];
+
+/** Which controls a video shows. */
+const VIDEO_CONTROLS = [
+	[ 'videoBigPlay', __( 'Play button over the picture', 'imagina-player' ) ],
+	[ 'videoTitle', __( 'Title on the bar', 'imagina-player' ) ],
+	[ 'videoTime', __( 'Elapsed and total time', 'imagina-player' ) ],
+	[ 'videoSkip', __( 'Skip back and forward', 'imagina-player' ) ],
+	[ 'videoVolume', __( 'Volume', 'imagina-player' ) ],
+	[ 'videoSpeed', __( 'Speed control', 'imagina-player' ) ],
+	[ 'videoCaptions', __( 'Subtitles button', 'imagina-player' ) ],
+	[ 'videoChapters', __( 'Chapters button', 'imagina-player' ) ],
+	[ 'videoSearch', __( 'Search what is said', 'imagina-player' ) ],
+	[ 'videoPip', __( 'Picture-in-picture button', 'imagina-player' ) ],
+	[ 'videoFullscreen', __( 'Fullscreen button', 'imagina-player' ) ],
+] as const;
+
+/** How it behaves, which is a different question from what it shows. */
+const VIDEO_PLAYBACK = [
+	[
+		'videoFocusMode',
+		__( 'Stop when it leaves the screen', 'imagina-player' ),
+	],
+] as const;
+
+/** Settings that belong with the subtitles rather than with the buttons. */
+const VIDEO_SUBTITLES = [
+	[
+		'videoCaptionsOn',
+		__( 'Subtitles on from the start', 'imagina-player' ),
+	],
+] as const;
 
 function editorData(): EditorData {
 	return (
@@ -205,16 +242,6 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 			),
 		} );
 
-	const inherited = ( attribute: string, presetKey: string ): boolean => {
-		const override = attributes[ attribute ];
-
-		if ( INHERIT === override || undefined === override ) {
-			return Boolean( data.presetShape[ presetKey ] );
-		}
-
-		return 'yes' === override;
-	};
-
 	if ( ! src ) {
 		return (
 			<div { ...blockProps }>
@@ -283,7 +310,21 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 			</BlockControls>
 
 			<InspectorControls>
-				<PanelBody title={ __( 'Track', 'imagina-player' ) }>
+				{ /*
+				     The panels answer one question each, in the order somebody
+				     actually works: what is playing, how it looks, which
+				     controls it has, how it behaves, what sits on top of it.
+
+				     What was here before had grown by accretion: a "Video"
+				     panel holding a corner radius, a poster, thirteen
+				     dropdowns, a second thing called "Colours" and the
+				     subtitle sizes — while a separate "Colours" panel and a
+				     separate "Subtitles" panel sat above it. Nothing was
+				     missing; it was just impossible to guess where anything
+				     was.
+				*/ }
+
+				<PanelBody title={ __( 'Media', 'imagina-player' ) }>
 					<SourceStatus src={ src } />
 
 					<TextControl
@@ -334,101 +375,188 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								: undefined
 						}
 					/>
-					<BaseControl
-						__nextHasNoMarginBottom
-						id="imgp-thumbnail"
-						label={ __( 'Cover image', 'imagina-player' ) }
-						help={ __(
-							'Shown next to the title. Optional.',
-							'imagina-player'
-						) }
-					>
-						<div className="imgp-editor__media-picker">
-							{ thumbnail && (
-								<img
-									className="imgp-editor__media-preview"
-									src={ thumbnail }
-									alt=""
-								/>
-							) }
-							<MediaUploadCheck
-								fallback={
-									<TextControl
-										__nextHasNoMarginBottom
-										label={ __(
-											'Cover image URL',
-											'imagina-player'
-										) }
-										value={ thumbnail }
-										onChange={ ( value: string ) =>
-											setAttributes( {
-												thumbnail: value,
-												thumbnailId: 0,
-											} )
-										}
-									/>
-								}
+
+					{ isVideo ? (
+						<div className="imgp-editor__group">
+							<BaseControl
+								__nextHasNoMarginBottom
+								id="imgp-poster"
+								label={ __( 'Poster', 'imagina-player' ) }
+								help={ __(
+									'Shown before play. Often the largest image on the page, so pick one that is already the right size.',
+									'imagina-player'
+								) }
 							>
-								<MediaUpload
-									allowedTypes={ [ 'image' ] }
-									value={ Number(
-										attributes.thumbnailId ?? 0
+								<div className="imgp-editor__media-picker">
+									{ poster && (
+										<img
+											className="imgp-editor__thumb"
+											src={ poster }
+											alt=""
+										/>
 									) }
-									onSelect={ ( media: {
-										id?: number;
-										url?: string;
-										sizes?: Record<
-											string,
-											{ url: string }
-										>;
-									} ) =>
-										setAttributes( {
-											// Prefer a resized copy: the player shows it at 72px.
-											thumbnail:
-												media.sizes?.thumbnail?.url ??
-												media.url ??
-												'',
-											thumbnailId: media.id ?? 0,
-										} )
-									}
-									render={ ( {
-										open,
-									}: {
-										open: () => void;
-									} ) => (
+									<MediaUploadCheck>
+										<MediaUpload
+											allowedTypes={ [ 'image' ] }
+											value={ Number(
+												attributes.posterId ?? 0
+											) }
+											onSelect={ ( media: {
+												id?: number;
+												url?: string;
+												sizes?: Record<
+													string,
+													{ url?: string }
+												>;
+											} ) =>
+												setAttributes( {
+													poster:
+														media.sizes?.large
+															?.url ??
+														media.url ??
+														'',
+													posterId: media.id ?? 0,
+												} )
+											}
+											render={ ( {
+												open,
+											}: {
+												open: () => void;
+											} ) => (
+												<Button
+													variant="secondary"
+													onClick={ open }
+												>
+													{ poster
+														? __(
+																'Replace',
+																'imagina-player'
+														  )
+														: __(
+																'Choose from media library',
+																'imagina-player'
+														  ) }
+												</Button>
+											) }
+										/>
+									</MediaUploadCheck>
+									{ poster && (
 										<Button
-											variant="secondary"
-											onClick={ open }
+											variant="tertiary"
+											isDestructive
+											onClick={ () =>
+												setAttributes( {
+													poster: '',
+													posterId: 0,
+												} )
+											}
 										>
-											{ thumbnail
-												? __(
-														'Replace cover image',
-														'imagina-player'
-												  )
-												: __(
-														'Choose from media library',
-														'imagina-player'
-												  ) }
+											{ __( 'Remove', 'imagina-player' ) }
 										</Button>
 									) }
-								/>
-							</MediaUploadCheck>
-							{ thumbnail && (
-								<Button
-									variant="tertiary"
-									isDestructive
-									onClick={ () =>
-										setAttributes( {
-											thumbnail: '',
-											thumbnailId: 0,
-										} )
-									}
-								>
-									{ __( 'Remove', 'imagina-player' ) }
-								</Button>
-							) }
+								</div>
+							</BaseControl>
 						</div>
-					</BaseControl>
+					) : (
+						<div className="imgp-editor__group">
+							<BaseControl
+								__nextHasNoMarginBottom
+								id="imgp-thumbnail"
+								label={ __( 'Cover image', 'imagina-player' ) }
+								help={ __(
+									'Shown next to the title. Optional.',
+									'imagina-player'
+								) }
+							>
+								<div className="imgp-editor__media-picker">
+									{ thumbnail && (
+										<img
+											className="imgp-editor__media-preview"
+											src={ thumbnail }
+											alt=""
+										/>
+									) }
+									<MediaUploadCheck
+										fallback={
+											<TextControl
+												__nextHasNoMarginBottom
+												label={ __(
+													'Cover image URL',
+													'imagina-player'
+												) }
+												value={ thumbnail }
+												onChange={ ( value: string ) =>
+													setAttributes( {
+														thumbnail: value,
+														thumbnailId: 0,
+													} )
+												}
+											/>
+										}
+									>
+										<MediaUpload
+											allowedTypes={ [ 'image' ] }
+											value={ Number(
+												attributes.thumbnailId ?? 0
+											) }
+											onSelect={ ( media: {
+												id?: number;
+												url?: string;
+												sizes?: Record<
+													string,
+													{ url: string }
+												>;
+											} ) =>
+												setAttributes( {
+													// Prefer a resized copy: the player shows it at 72px.
+													thumbnail:
+														media.sizes?.thumbnail
+															?.url ??
+														media.url ??
+														'',
+													thumbnailId: media.id ?? 0,
+												} )
+											}
+											render={ ( {
+												open,
+											}: {
+												open: () => void;
+											} ) => (
+												<Button
+													variant="secondary"
+													onClick={ open }
+												>
+													{ thumbnail
+														? __(
+																'Replace cover image',
+																'imagina-player'
+														  )
+														: __(
+																'Choose from media library',
+																'imagina-player'
+														  ) }
+												</Button>
+											) }
+										/>
+									</MediaUploadCheck>
+									{ thumbnail && (
+										<Button
+											variant="tertiary"
+											isDestructive
+											onClick={ () =>
+												setAttributes( {
+													thumbnail: '',
+													thumbnailId: 0,
+												} )
+											}
+										>
+											{ __( 'Remove', 'imagina-player' ) }
+										</Button>
+									) }
+								</div>
+							</BaseControl>
+						</div>
+					) }
 
 					<BaseControl
 						__nextHasNoMarginBottom
@@ -510,7 +638,10 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					</BaseControl>
 				</PanelBody>
 
-				<PanelBody title={ __( 'Preset', 'imagina-player' ) }>
+				<PanelBody
+					title={ __( 'Appearance', 'imagina-player' ) }
+					initialOpen={ false }
+				>
 					<SelectControl
 						__nextHasNoMarginBottom
 						label={ __( 'Preset', 'imagina-player' ) }
@@ -547,27 +678,240 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							</ExternalLink>
 						</p>
 					) }
+
+					<TextControl
+						__nextHasNoMarginBottom
+						type="number"
+						min={ 0 }
+						max={ 40 }
+						label={ __( 'Rounded corners (px)', 'imagina-player' ) }
+						help={ __(
+							'Empty uses the preset. Rounds the picture, the bar and the floating card together.',
+							'imagina-player'
+						) }
+						value={ String( attributes.borderRadius ?? '' ) }
+						onChange={ ( value: string ) =>
+							setAttributes( { borderRadius: value } )
+						}
+					/>
+
+					{ isVideo && (
+						<>
+							<SelectControl
+								__nextHasNoMarginBottom
+								label={ __( 'Shape', 'imagina-player' ) }
+								help={ __(
+									'The player holds this shape before the video loads, so the page does not jump when it arrives.',
+									'imagina-player'
+								) }
+								value={ String(
+									attributes.aspectRatio ?? '16:9'
+								) }
+								options={ RATIOS }
+								onChange={ ( value: string ) =>
+									setAttributes( { aspectRatio: value } )
+								}
+							/>
+
+							<SelectControl
+								__nextHasNoMarginBottom
+								label={ __(
+									'Poster fills the box',
+									'imagina-player'
+								) }
+								help={ __(
+									'Crop to fill, or show the whole image and let the black show through.',
+									'imagina-player'
+								) }
+								value={
+									String(
+										attributes.videoPosterFit ?? INHERIT
+									) as ''
+								}
+								options={ [
+									{
+										value: INHERIT,
+										label: __(
+											'Use site setting',
+											'imagina-player'
+										),
+									},
+									{
+										value: 'cover',
+										label: __(
+											'Crop to fill',
+											'imagina-player'
+										),
+									},
+									{
+										value: 'contain',
+										label: __(
+											'Show all of it',
+											'imagina-player'
+										),
+									},
+								] }
+								onChange={ ( value: string ) =>
+									setAttributes( { videoPosterFit: value } )
+								}
+							/>
+						</>
+					) }
+
+					{ ! isVideo && (
+						<>
+							<RangeControl
+								__nextHasNoMarginBottom
+								label={ __(
+									'Waveform height',
+									'imagina-player'
+								) }
+								min={ 24 }
+								max={ 240 }
+								allowReset
+								resetFallbackValue={ undefined }
+								value={
+									Number( attributes.height ) || undefined
+								}
+								onChange={ ( value?: number ) =>
+									setAttributes( {
+										height: value
+											? String( value )
+											: INHERIT,
+									} )
+								}
+								help={ __(
+									'Unset uses the preset’s height.',
+									'imagina-player'
+								) }
+							/>
+						</>
+					) }
+
+					<p className="imgp-editor__note">
+						{ __(
+							'Colours left unset come from the preset, or from the site settings.',
+							'imagina-player'
+						) }
+					</p>
+
+					<Swatches
+						items={ (
+							[
+								[
+									'accent',
+									__( 'Accent', 'imagina-player' ),
+									'#1f2937',
+								],
+								[
+									'waveColor',
+									__( 'Waveform', 'imagina-player' ),
+									'#c9ced6',
+								],
+								[
+									'waveProgress',
+									__( 'Played portion', 'imagina-player' ),
+									'#1f2937',
+								],
+								[
+									'videoChromeColor',
+									__( 'Control bar', 'imagina-player' ),
+									'#000000',
+								],
+								[
+									'videoControlColor',
+									__( 'Buttons and times', 'imagina-player' ),
+									'#ffffff',
+								],
+								[
+									'videoProgressColor',
+									__( 'Played portion', 'imagina-player' ),
+									'#1f2937',
+								],
+								[
+									'videoCaptionColor',
+									__( 'Subtitles', 'imagina-player' ),
+									'#ffffff',
+								],
+								[
+									'controlColor',
+									__( 'Buttons', 'imagina-player' ),
+									'#374151',
+								],
+								[
+									'textColor',
+									__( 'Title', 'imagina-player' ),
+									'#111827',
+								],
+								[
+									'metaColor',
+									__( 'Artist', 'imagina-player' ),
+									'#6b7280',
+								],
+							] as const
+						 ).filter(
+							( [ attribute ] ) =>
+								/*
+								 * One list, filtered by the shared rule, so a
+								 * colour cannot appear on a block where it
+								 * paints nothing — and cannot be forgotten on
+								 * one where it does.
+								 */
+								colourApplies( attribute, isVideo ) &&
+								( isVideo || ! attribute.startsWith( 'video' ) )
+						) }
+						values={ attributes }
+						onChange={ ( attribute: string, value: string ) =>
+							setAttributes( { [ attribute ]: value } )
+						}
+					/>
 				</PanelBody>
 
 				<PanelBody
 					title={ __( 'Controls', 'imagina-player' ) }
 					initialOpen={ false }
 				>
-					{ visibilityToggles( data )
-						.filter( ( { key } ) => controlApplies( key, isVideo ) )
-						.map( ( { key, attribute } ) => (
-							<ToggleControl
-								__nextHasNoMarginBottom
-								key={ attribute }
-								label={ humanise( key ) }
-								checked={ inherited( attribute, key ) }
-								onChange={ ( value: boolean ) =>
-									setAttributes( {
-										[ attribute ]: value ? 'yes' : 'no',
-									} )
-								}
-							/>
-						) ) }
+					<p className="imgp-editor__note">
+						{ __(
+							'Which controls this player shows. Left on Site, each one follows the setting for the whole site.',
+							'imagina-player'
+						) }
+					</p>
+
+					{ isVideo ? (
+						<TristateList
+							items={ VIDEO_CONTROLS }
+							values={ attributes }
+							onChange={ ( attribute, value ) =>
+								setAttributes( { [ attribute ]: value } )
+							}
+						/>
+					) : (
+						<TristateList
+							items={ visibilityToggles( data )
+								.filter(
+									( { key } ) =>
+										controlApplies( key, isVideo ) &&
+										! BEHAVIOUR.includes( key )
+								)
+								.map(
+									( { key, attribute } ) =>
+										[ attribute, humanise( key ) ] as const
+								) }
+							values={ attributes }
+							site={ Object.fromEntries(
+								visibilityToggles( data ).map(
+									( { key, attribute } ) => [
+										attribute,
+										Boolean( data.presetShape[ key ] ),
+									]
+								)
+							) }
+							onChange={ ( attribute, value ) =>
+								setAttributes( { [ attribute ]: value } )
+							}
+						/>
+					) }
 				</PanelBody>
 
 				<PanelBody
@@ -675,135 +1019,63 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							}
 						/>
 					</BaseControl>
-				</PanelBody>
 
-				<PanelBody
-					title={ __( 'Colours', 'imagina-player' ) }
-					initialOpen={ false }
-				>
-					<p className="imgp-editor__hint">
-						{ __(
-							'Leave a colour unset to use the preset’s.',
-							'imagina-player'
-						) }
-					</p>
+					{ isVideo && (
+						<>
+							<TextControl
+								__nextHasNoMarginBottom
+								type="number"
+								min={ 0 }
+								step={ 100 }
+								label={ __(
+									'Hide the controls after (ms)',
+									'imagina-player'
+								) }
+								help={ __(
+									'While the video plays and nobody moves. Empty uses the site setting; zero keeps them up.',
+									'imagina-player'
+								) }
+								value={ String(
+									attributes.videoHideAfter ?? ''
+								) }
+								onChange={ ( value: string ) =>
+									setAttributes( { videoHideAfter: value } )
+								}
+							/>
+						</>
+					) }
 
-					{ (
-						[
-							[ 'accent', __( 'Accent', 'imagina-player' ) ],
-							[ 'waveColor', __( 'Waveform', 'imagina-player' ) ],
-							[
-								'waveProgress',
-								__( 'Played portion', 'imagina-player' ),
-							],
-							[ 'textColor', __( 'Title', 'imagina-player' ) ],
-							[ 'metaColor', __( 'Artist', 'imagina-player' ) ],
-							[
-								'controlColor',
-								__( 'Buttons', 'imagina-player' ),
-							],
-						] as const
-					 )
-						.filter( ( [ attribute ] ) =>
-							colourApplies( attribute, isVideo )
-						)
-						.map( ( [ attribute, label ] ) => {
-							const value = String(
-								attributes[ attribute ] ?? ''
-							);
-
-							return (
-								<BaseControl
-									__nextHasNoMarginBottom
-									key={ attribute }
-									id={ `imgp-colour-${ attribute }` }
-									label={ label }
-								>
-									<div className="imgp-editor__colour">
-										<input
-											type="color"
-											id={ `imgp-colour-${ attribute }` }
-											// A swatch cannot show "unset"; it falls back to a
-											// neutral while the text field carries the real state.
-											value={
-												HEX.test( value )
-													? value
-													: '#cccccc'
-											}
-											onChange={ ( event ) =>
-												setAttributes( {
-													[ attribute ]:
-														event.target.value,
-												} )
-											}
-										/>
-										<input
-											type="text"
-											className="imgp-editor__colour-text"
-											value={ value }
-											placeholder={ __(
-												'From preset',
-												'imagina-player'
-											) }
-											spellCheck={ false }
-											onChange={ ( event ) =>
-												setAttributes( {
-													[ attribute ]:
-														event.target.value,
-												} )
-											}
-										/>
-										{ value && (
-											<Button
-												variant="tertiary"
-												size="small"
-												onClick={ () =>
-													setAttributes( {
-														[ attribute ]: INHERIT,
-													} )
-												}
-											>
-												{ __(
-													'Reset',
-													'imagina-player'
-												) }
-											</Button>
-										) }
-									</div>
-								</BaseControl>
-							);
-						} ) }
-				</PanelBody>
-
-				{ ! isVideo && (
-					<PanelBody
-						title={ __( 'Size', 'imagina-player' ) }
-						initialOpen={ false }
-					>
-						<RangeControl
-							__nextHasNoMarginBottom
-							label={ __( 'Waveform height', 'imagina-player' ) }
-							min={ 24 }
-							max={ 240 }
-							allowReset
-							resetFallbackValue={ undefined }
-							value={ Number( attributes.height ) || undefined }
-							onChange={ ( value?: number ) =>
-								setAttributes( {
-									height: value ? String( value ) : INHERIT,
-								} )
-							}
-							help={ __(
-								'Unset uses the preset’s height.',
-								'imagina-player'
+					{ /* Sticking to the corner and picking up where the
+					     listener left off are behaviour, not controls, and
+					     were in the list of buttons. */ }
+					<TristateList
+						items={ visibilityToggles( data )
+							.filter(
+								( { key } ) =>
+									BEHAVIOUR.includes( key ) &&
+									controlApplies( key, isVideo )
+							)
+							.map(
+								( { key, attribute } ) =>
+									[ attribute, humanise( key ) ] as const
 							) }
-						/>
-					</PanelBody>
-				) }
+						values={ attributes }
+						onChange={ ( attribute, value ) =>
+							setAttributes( { [ attribute ]: value } )
+						}
+					/>
 
-				{ /* Not for a provider: YouTube and Vimeo draw their own subtitles
-				     inside their own frame and will not hand the text over, so
-				     a file added here would simply never appear. */ }
+					{ isVideo && (
+						<TristateList
+							items={ VIDEO_PLAYBACK }
+							values={ attributes }
+							onChange={ ( attribute, value ) =>
+								setAttributes( { [ attribute ]: value } )
+							}
+						/>
+					) }
+				</PanelBody>
+
 				{ isVideo && ! isProvider && (
 					<PanelBody
 						title={ __( 'Subtitles', 'imagina-player' ) }
@@ -946,454 +1218,6 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 						>
 							{ __( 'Add subtitles', 'imagina-player' ) }
 						</Button>
-					</PanelBody>
-				) }
-
-				{ isVideo && (
-					<PanelBody
-						title={ __( 'Chapters', 'imagina-player' ) }
-						initialOpen={ false }
-					>
-						<p className="imgp-editor__hint">
-							{ __(
-								'Marks on the progress bar, and a menu to jump between sections. Times can be written as 90, 1:30 or 0:01:30.',
-								'imagina-player'
-							) }
-						</p>
-
-						{ chapters.map( ( chapter, index ) => (
-							<div className="imgp-editor__row" key={ index }>
-								<TextControl
-									__nextHasNoMarginBottom
-									label={ __(
-										'Starts at',
-										'imagina-player'
-									) }
-									value={ String( chapter.start ?? '' ) }
-									placeholder="1:30"
-									onChange={ ( value: string ) =>
-										patchChapter( index, { start: value } )
-									}
-								/>
-								<TextControl
-									__nextHasNoMarginBottom
-									label={ __( 'Title', 'imagina-player' ) }
-									value={ String( chapter.title ?? '' ) }
-									onChange={ ( value: string ) =>
-										patchChapter( index, { title: value } )
-									}
-								/>
-								<Button
-									variant="tertiary"
-									isDestructive
-									onClick={ () =>
-										setAttributes( {
-											chapters: chapters.filter(
-												( _item, i ) => i !== index
-											),
-										} )
-									}
-								>
-									{ __( 'Remove', 'imagina-player' ) }
-								</Button>
-							</div>
-						) ) }
-
-						<Button
-							variant="secondary"
-							onClick={ () =>
-								setAttributes( {
-									chapters: [
-										...chapters,
-										{ start: '', title: '' },
-									],
-								} )
-							}
-						>
-							{ __( 'Add chapter', 'imagina-player' ) }
-						</Button>
-					</PanelBody>
-				) }
-
-				{ isVideo && (
-					<PanelBody title={ __( 'Video', 'imagina-player' ) }>
-						<TextControl
-							__nextHasNoMarginBottom
-							type="number"
-							min={ 0 }
-							max={ 40 }
-							label={ __(
-								'Rounded corners (px)',
-								'imagina-player'
-							) }
-							help={ __(
-								'Empty uses the preset. Rounds the picture, the bar and the floating card together.',
-								'imagina-player'
-							) }
-							value={ String( attributes.borderRadius ?? '' ) }
-							onChange={ ( value: string ) =>
-								setAttributes( { borderRadius: value } )
-							}
-						/>
-
-						<SelectControl
-							__nextHasNoMarginBottom
-							label={ __( 'Shape', 'imagina-player' ) }
-							help={ __(
-								'The player holds this shape before the video loads, so the page does not jump when it arrives.',
-								'imagina-player'
-							) }
-							value={ String( attributes.aspectRatio ?? '16:9' ) }
-							options={ RATIOS }
-							onChange={ ( value: string ) =>
-								setAttributes( { aspectRatio: value } )
-							}
-						/>
-
-						<BaseControl
-							__nextHasNoMarginBottom
-							id="imgp-poster"
-							label={ __( 'Poster', 'imagina-player' ) }
-							help={ __(
-								'Shown before play. Often the largest image on the page, so pick one that is already the right size.',
-								'imagina-player'
-							) }
-						>
-							<div className="imgp-editor__media-picker">
-								{ poster && (
-									<img
-										className="imgp-editor__thumb"
-										src={ poster }
-										alt=""
-									/>
-								) }
-								<MediaUploadCheck>
-									<MediaUpload
-										allowedTypes={ [ 'image' ] }
-										value={ Number(
-											attributes.posterId ?? 0
-										) }
-										onSelect={ ( media: {
-											id?: number;
-											url?: string;
-											sizes?: Record<
-												string,
-												{ url?: string }
-											>;
-										} ) =>
-											setAttributes( {
-												poster:
-													media.sizes?.large?.url ??
-													media.url ??
-													'',
-												posterId: media.id ?? 0,
-											} )
-										}
-										render={ ( {
-											open,
-										}: {
-											open: () => void;
-										} ) => (
-											<Button
-												variant="secondary"
-												onClick={ open }
-											>
-												{ poster
-													? __(
-															'Replace',
-															'imagina-player'
-													  )
-													: __(
-															'Choose from media library',
-															'imagina-player'
-													  ) }
-											</Button>
-										) }
-									/>
-								</MediaUploadCheck>
-								{ poster && (
-									<Button
-										variant="tertiary"
-										isDestructive
-										onClick={ () =>
-											setAttributes( {
-												poster: '',
-												posterId: 0,
-											} )
-										}
-									>
-										{ __( 'Remove', 'imagina-player' ) }
-									</Button>
-								) }
-							</div>
-						</BaseControl>
-
-						<SelectControl
-							__nextHasNoMarginBottom
-							label={ __(
-								'Poster fills the box',
-								'imagina-player'
-							) }
-							help={ __(
-								'Crop to fill, or show the whole image and let the black show through.',
-								'imagina-player'
-							) }
-							value={
-								String(
-									attributes.videoPosterFit ?? INHERIT
-								) as ''
-							}
-							options={ [
-								{
-									value: INHERIT,
-									label: __(
-										'Use site setting',
-										'imagina-player'
-									),
-								},
-								{
-									value: 'cover',
-									label: __(
-										'Crop to fill',
-										'imagina-player'
-									),
-								},
-								{
-									value: 'contain',
-									label: __(
-										'Show all of it',
-										'imagina-player'
-									),
-								},
-							] }
-							onChange={ ( value: string ) =>
-								setAttributes( { videoPosterFit: value } )
-							}
-						/>
-
-						{ /* Everything below overrides the site-wide Video
-						     settings for this one video. Until now they were
-						     only settable for the whole site, so two videos in
-						     one post could not behave differently. */ }
-						{ (
-							[
-								[
-									'videoBigPlay',
-									__(
-										'Play button over the picture',
-										'imagina-player'
-									),
-								],
-								[
-									'videoTitle',
-									__( 'Title on the bar', 'imagina-player' ),
-								],
-								[
-									'videoTime',
-									__(
-										'Elapsed and total time',
-										'imagina-player'
-									),
-								],
-								[
-									'videoSkip',
-									__(
-										'Skip back and forward',
-										'imagina-player'
-									),
-								],
-								[
-									'videoVolume',
-									__( 'Volume', 'imagina-player' ),
-								],
-								[
-									'videoSpeed',
-									__( 'Speed control', 'imagina-player' ),
-								],
-								[
-									'videoCaptions',
-									__( 'Subtitles button', 'imagina-player' ),
-								],
-								[
-									'videoChapters',
-									__( 'Chapters button', 'imagina-player' ),
-								],
-								[
-									'videoSearch',
-									__(
-										'Search what is said',
-										'imagina-player'
-									),
-								],
-								[
-									'videoPip',
-									__(
-										'Picture-in-picture button',
-										'imagina-player'
-									),
-								],
-								[
-									'videoFullscreen',
-									__( 'Fullscreen button', 'imagina-player' ),
-								],
-								[
-									'videoCaptionsOn',
-									__(
-										'Subtitles on from the start',
-										'imagina-player'
-									),
-								],
-								[
-									'videoFocusMode',
-									__(
-										'Stop when it leaves the screen',
-										'imagina-player'
-									),
-								],
-							] as const
-						 ).map( ( [ attribute, label ] ) => (
-							<SelectControl
-								__nextHasNoMarginBottom
-								key={ attribute }
-								label={ label }
-								value={ String(
-									attributes[ attribute ] ?? INHERIT
-								) }
-								options={ TRISTATE }
-								onChange={ ( value: string ) =>
-									setAttributes( { [ attribute ]: value } )
-								}
-							/>
-						) ) }
-
-						{ /* Not offered for a provider: the file is not on this
-						     site, so there is nothing here to withhold. */ }
-						{ ! isProvider && (
-							<SelectControl
-								__nextHasNoMarginBottom
-								label={ __(
-									'Block the browser download',
-									'imagina-player'
-								) }
-								help={ __(
-									'Also removes “Save video as” and casting the raw file. It has no effect on a player that deliberately offers a download.',
-									'imagina-player'
-								) }
-								value={ String(
-									attributes.videoBlockDownload ?? INHERIT
-								) }
-								options={ TRISTATE }
-								onChange={ ( value: string ) =>
-									setAttributes( {
-										videoBlockDownload: value,
-									} )
-								}
-							/>
-						) }
-
-						{ /* How the picture and its bar are painted. Until now the
-						     bar was near-black and the subtitles white, whatever
-						     the site looked like. */ }
-						<BaseControl
-							__nextHasNoMarginBottom
-							id="imgp-video-colours"
-							label={ __( 'Colours', 'imagina-player' ) }
-							help={ __(
-								'Leave any of them empty to use the site setting. The buttons follow the control bar and the played portion follows the accent unless you say otherwise.',
-								'imagina-player'
-							) }
-						>
-							<div className="imgp-editor__colour-pair">
-								{ (
-									[
-										[
-											'videoChromeColor',
-											__(
-												'Control bar',
-												'imagina-player'
-											),
-											'#000000',
-										],
-										[
-											'videoControlColor',
-											__(
-												'Buttons and times',
-												'imagina-player'
-											),
-											'#ffffff',
-										],
-										[
-											'videoProgressColor',
-											__(
-												'Played portion',
-												'imagina-player'
-											),
-											'#1f2937',
-										],
-										[
-											'videoCaptionColor',
-											__( 'Subtitles', 'imagina-player' ),
-											'#ffffff',
-										],
-									] as const
-								 ).map( ( [ attribute, label, fallback ] ) => (
-									<div
-										className="imgp-editor__colour"
-										key={ attribute }
-									>
-										<input
-											type="color"
-											aria-label={ label }
-											value={
-												/*
-												 * `auto` is a stored answer for
-												 * two of these, and a colour
-												 * input cannot show it — so the
-												 * swatch falls back to what
-												 * `auto` would pick anyway.
-												 */
-												( () => {
-													const stored = String(
-														attributes[
-															attribute
-														] ?? ''
-													);
-
-													return stored &&
-														'auto' !== stored
-														? stored
-														: fallback;
-												} )()
-											}
-											onChange={ ( event ) =>
-												setAttributes( {
-													[ attribute ]:
-														event.target.value,
-												} )
-											}
-										/>
-										<span>{ label }</span>
-										{ Boolean(
-											attributes[ attribute ]
-										) && (
-											<Button
-												variant="tertiary"
-												onClick={ () =>
-													setAttributes( {
-														[ attribute ]: '',
-													} )
-												}
-											>
-												{ __(
-													'Reset',
-													'imagina-player'
-												) }
-											</Button>
-										) }
-									</div>
-								) ) }
-							</div>
-						</BaseControl>
 
 						<SelectControl
 							__nextHasNoMarginBottom
@@ -1477,6 +1301,83 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							}
 						/>
 
+						<TristateList
+							items={ VIDEO_SUBTITLES }
+							values={ attributes }
+							onChange={ ( attribute, value ) =>
+								setAttributes( { [ attribute ]: value } )
+							}
+						/>
+					</PanelBody>
+				) }
+
+				{ isVideo && (
+					<PanelBody
+						title={ __(
+							'Chapters and previews',
+							'imagina-player'
+						) }
+						initialOpen={ false }
+					>
+						<p className="imgp-editor__hint">
+							{ __(
+								'Marks on the progress bar, and a menu to jump between sections. Times can be written as 90, 1:30 or 0:01:30.',
+								'imagina-player'
+							) }
+						</p>
+
+						{ chapters.map( ( chapter, index ) => (
+							<div className="imgp-editor__row" key={ index }>
+								<TextControl
+									__nextHasNoMarginBottom
+									label={ __(
+										'Starts at',
+										'imagina-player'
+									) }
+									value={ String( chapter.start ?? '' ) }
+									placeholder="1:30"
+									onChange={ ( value: string ) =>
+										patchChapter( index, { start: value } )
+									}
+								/>
+								<TextControl
+									__nextHasNoMarginBottom
+									label={ __( 'Title', 'imagina-player' ) }
+									value={ String( chapter.title ?? '' ) }
+									onChange={ ( value: string ) =>
+										patchChapter( index, { title: value } )
+									}
+								/>
+								<Button
+									variant="tertiary"
+									isDestructive
+									onClick={ () =>
+										setAttributes( {
+											chapters: chapters.filter(
+												( _item, i ) => i !== index
+											),
+										} )
+									}
+								>
+									{ __( 'Remove', 'imagina-player' ) }
+								</Button>
+							</div>
+						) ) }
+
+						<Button
+							variant="secondary"
+							onClick={ () =>
+								setAttributes( {
+									chapters: [
+										...chapters,
+										{ start: '', title: '' },
+									],
+								} )
+							}
+						>
+							{ __( 'Add chapter', 'imagina-player' ) }
+						</Button>
+
 						<BaseControl
 							__nextHasNoMarginBottom
 							id="imgp-storyboard"
@@ -1540,25 +1441,6 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								) }
 							</div>
 						</BaseControl>
-
-						<TextControl
-							__nextHasNoMarginBottom
-							type="number"
-							min={ 0 }
-							step={ 100 }
-							label={ __(
-								'Hide the controls after (ms)',
-								'imagina-player'
-							) }
-							help={ __(
-								'While the video plays and nobody moves. Empty uses the site setting; zero keeps them up.',
-								'imagina-player'
-							) }
-							value={ String( attributes.videoHideAfter ?? '' ) }
-							onChange={ ( value: string ) =>
-								setAttributes( { videoHideAfter: value } )
-							}
-						/>
 					</PanelBody>
 				) }
 
@@ -1740,6 +1622,38 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 						{ __( 'Add a call to action', 'imagina-player' ) }
 					</Button>
 				</PanelBody>
+
+				{ isVideo && ! isProvider && (
+					<PanelBody
+						title={ __( 'Advanced', 'imagina-player' ) }
+						initialOpen={ false }
+					>
+						{ /* Not offered for a provider: the file is not on this
+						     site, so there is nothing here to withhold. */ }
+						{ ! isProvider && (
+							<SelectControl
+								__nextHasNoMarginBottom
+								label={ __(
+									'Block the browser download',
+									'imagina-player'
+								) }
+								help={ __(
+									'Also removes “Save video as” and casting the raw file. It has no effect on a player that deliberately offers a download.',
+									'imagina-player'
+								) }
+								value={ String(
+									attributes.videoBlockDownload ?? INHERIT
+								) }
+								options={ TRISTATE }
+								onChange={ ( value: string ) =>
+									setAttributes( {
+										videoBlockDownload: value,
+									} )
+								}
+							/>
+						) }
+					</PanelBody>
+				) }
 			</InspectorControls>
 
 			<SourceWarning src={ src } isVideoBlock={ isVideoBlock } />

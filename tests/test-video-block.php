@@ -296,6 +296,112 @@ check( 'and a block that says nothing uses the site colour', str_contains( $inhe
  * colour, an audio setting a video block does not even show. So the one thing
  * a viewer watches move could not be coloured from the block at all.
  */
+echo PHP_EOL . '# Where a setting lives' . PHP_EOL;
+
+/*
+ * The inspector had grown by accretion. A panel called "Video" held a corner
+ * radius, a poster, thirteen tristate dropdowns, a second group called
+ * "Colours" and the subtitle sizes — while a separate "Colours" panel and a
+ * separate "Subtitles" panel sat above it. Nothing was missing. It was simply
+ * impossible to guess where anything was, which for a person using it is the
+ * same problem.
+ *
+ * So the shape is checked, not just the presence of each control: panels named
+ * for the question they answer, each setting in exactly one of them, and
+ * nothing left loose outside a panel where it would sit above the lot.
+ */
+$inspector = (string) file_get_contents( dirname( __DIR__ ) . '/assets/src/editor/edit.tsx' );
+
+preg_match_all( "/<PanelBody\s+title=\{ __\(\s*'([^']+)'/s", $inspector, $panel_matches );
+$panels = $panel_matches[1];
+
+check( 'the inspector has panels', array() !== $panels );
+
+$expected = array(
+	'Media',
+	'Appearance',
+	'Controls',
+	'Playback',
+	'Subtitles',
+	'Chapters and previews',
+	'Calls to action',
+	'Advanced',
+);
+
+check(
+	'each one is named for the question it answers',
+	$expected === $panels,
+	implode( ' | ', $panels )
+);
+
+/*
+ * Only the first is open. Eight expanded panels is the wall of settings that
+ * was reported; seven closed ones is a list you can read.
+ */
+$open = substr_count( $inspector, 'initialOpen={ false }' );
+
+check(
+	'and all but the first are closed when the block is selected',
+	count( $expected ) - 1 === $open,
+	$open . ' of ' . ( count( $expected ) - 1 ) . ' closed'
+);
+
+/*
+ * A setting in two panels is worse than a setting in the wrong one: the two
+ * copies disagree the moment one is edited.
+ */
+$listed = array();
+
+foreach ( array( 'VIDEO_CONTROLS', 'VIDEO_PLAYBACK', 'VIDEO_SUBTITLES' ) as $list ) {
+	if ( ! preg_match( '/const ' . $list . ' = \[(.*?)\] as const;/s', $inspector, $m ) ) {
+		check( $list . ' is defined', false );
+		continue;
+	}
+
+	preg_match_all( "/'(video[A-Za-z]+)'/", $m[1], $found );
+
+	foreach ( $found[1] as $attribute ) {
+		$listed[] = $attribute;
+	}
+}
+
+check(
+	'no video setting is offered in two places at once',
+	count( $listed ) === count( array_unique( $listed ) ),
+	implode( ', ', array_diff_assoc( $listed, array_unique( $listed ) ) )
+);
+
+/*
+ * And the split itself. Whether a control appears is one question; how the
+ * player behaves is another, and they were in the same list of thirteen.
+ */
+check(
+	'what the player shows is separated from how it behaves',
+	in_array( 'videoBigPlay', $listed, true )
+		&& in_array( 'videoFocusMode', $listed, true )
+		&& ! str_contains(
+			(string) ( preg_match( '/const VIDEO_CONTROLS = \[(.*?)\] as const;/s', $inspector, $m ) ? $m[1] : '' ),
+			'videoFocusMode'
+		)
+);
+
+/*
+ * Thirteen three-way dropdowns in a column is what made the panel unreadable:
+ * each row costs a click to find out what it says. The segmented control shows
+ * all three answers at once, and marks the rows this block has changed.
+ */
+check(
+	'settings that can inherit use the compact control, not a stack of dropdowns',
+	str_contains( $inspector, '<TristateList' )
+);
+
+$bundle_js = (string) @file_get_contents( dirname( __DIR__ ) . '/build/editor.js' );
+
+check(
+	'and it reaches the built bundle',
+	str_contains( $bundle_js, 'imgp-editor__tri' )
+);
+
 echo PHP_EOL . '# The controls on the bar' . PHP_EOL;
 
 $controls = $renderer->render(

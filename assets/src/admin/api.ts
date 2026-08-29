@@ -32,12 +32,14 @@ export function saveSettings(
 }
 
 export function renderPreview(
-	preset: Preset
+	preset: Preset,
+	medium: 'audio' | 'video' = 'audio',
+	video?: Record< string, unknown >
 ): Promise< { html: string; peaks: string } > {
 	return apiFetch( {
 		path: '/imagina-player/v1/preview',
 		method: 'POST',
-		data: { preset },
+		data: { preset, medium, video },
 	} ) as Promise< { html: string; peaks: string } >;
 }
 

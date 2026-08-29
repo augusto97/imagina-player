@@ -13,7 +13,22 @@ import { __ } from '@wordpress/i18n';
 import { boot, renderPreview } from './api';
 import type { Preset } from './types';
 
-export function PreviewFrame( { preset }: { preset: Preset } ) {
+export function PreviewFrame( {
+	preset,
+	medium = 'audio',
+	video,
+}: {
+	preset: Preset;
+	/*
+	 * Which player to draw. A preset carries the accent, the corner radius, the
+	 * button colour and a skin, and every one of those shows on a video — but
+	 * this only ever rendered audio, so the half of the plugin most people
+	 * install it for could not be seen without publishing a post first.
+	 */
+	medium?: 'audio' | 'video';
+	/** Unsaved video settings, so the Video section can preview a change. */
+	video?: Record< string, unknown >;
+} ) {
 	const [ doc, setDoc ] = useState( '' );
 	const [ failed, setFailed ] = useState( false );
 	const frame = useRef< HTMLIFrameElement | null >( null );
@@ -25,7 +40,7 @@ export function PreviewFrame( { preset }: { preset: Preset } ) {
 		// Debounced: dragging a colour picker would otherwise fire a request per
 		// pixel of travel.
 		const timer = window.setTimeout( () => {
-			renderPreview( preset )
+			renderPreview( preset, medium, video )
 				.then( ( result ) => {
 					if ( cancelled ) {
 						return;
@@ -60,9 +75,11 @@ export function PreviewFrame( { preset }: { preset: Preset } ) {
 			cancelled = true;
 			window.clearTimeout( timer );
 		};
-	}, [ preset ] );
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ preset, medium, JSON.stringify( video ?? null ) ] );
 
-	// Match the frame to its content so tall skins are not cropped.
+	// Match the frame to its content so tall skins — and a 16:9 picture — are
+	// not cropped.
 	const measure = (): void => {
 		const body = frame.current?.contentDocument?.body;
 

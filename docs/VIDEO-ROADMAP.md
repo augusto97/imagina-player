@@ -160,6 +160,28 @@ Done since this list was written:
 - The watermark class was `.imgp__mark`, which is already the chapter marker on
   the scrub bar. Caught before it shipped; every chapter tick would have become
   a full-size logo.
+- The close button on a call to action was nearly invisible on any real site.
+  The blanket theme defence strips every button's background; this one's was
+  restated for `:hover` and not for its resting state. The hostile-theme test
+  walks every element inside the player and compares it with and without a
+  theme, which reads as exhaustive — but no case it rendered had a layer on it,
+  so the panel, its button, its form and its close button were never in the
+  tree being walked. Adding those cases found this and three more: a theme's
+  paragraph rules nearly doubling the panel's height, the email gate's field
+  landing 43px outside the player, and the spam honeypot parked ten thousand
+  pixels to the left of the article (1.20.0).
+- The block's settings had grown by accretion into ten panels, two of them
+  called "Colours", with the subtitle sizes filed under "Video" and a "Video"
+  panel holding a corner radius, a poster, thirteen dropdowns and a second set
+  of colours. Nothing was missing; it was impossible to guess where anything
+  was, which for somebody using it is the same problem. Eight panels now, each
+  named for the question it answers, every setting in exactly one, and a
+  segmented control instead of a dropdown for anything that can inherit
+  (1.20.0).
+- The preset preview only ever drew audio, and the Video settings had no
+  preview at all — so a preset's accent on a play button over a picture, its
+  radius on the picture, and every video setting could only be seen by
+  publishing a post (1.20.0).
 - Rounding a video's corners drew a frame around it. `.imgp--rounded-box` is
   the audio player's card — a radius on a row of controls means the card those
   controls sit in, so the rule carries padding and a faint tint. The same class

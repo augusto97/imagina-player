@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.19.0
+Stable tag: 1.20.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,46 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.20.0 =
+* Fixed: the close button on a call to action was nearly invisible. The
+  stylesheet's own defence against themes strips every button's background, and
+  this one's had been restated for its hover state and not for the state it
+  spends its life in — so on any real site it was a white glyph with nothing
+  behind it, over whatever the video happened to be showing.
+* Fixed: a theme's `p { margin: 1.5em 0; line-height: 2; font-size: 18px }` —
+  one of the most ordinary things a theme says — reached the call to action's
+  copy and nearly doubled the panel's height beside audio.
+* Fixed: the email gate's field ignored a theme's padding in its width and
+  ended up 43 pixels outside the player.
+* Fixed: the spam honeypot sat at `left: -9999px`, which inside page content is
+  an element ten thousand pixels to the left of the article. It is clipped in
+  place now.
+* Changed: the block's settings are reorganised. There were ten panels for a
+  video, two of them called "Colours", with subtitle sizes filed under "Video"
+  and a "Video" panel holding a corner radius, a poster, thirteen dropdowns and
+  a second set of colours. There are now eight, each named for the question it
+  answers — Media, Appearance, Controls, Playback, Subtitles, Chapters and
+  previews, Calls to action, Advanced — with every setting in exactly one of
+  them and only the first open.
+* Changed: a setting that can inherit is a segmented control rather than a
+  dropdown. Thirteen three-way dropdowns in a column cost a click each to read;
+  the segments show all three answers at once, say what the site's own setting
+  is, and mark the rows this block has changed.
+* Changed: which controls a player shows and how it behaves are separate
+  questions and were in the same list. Sticking to the corner, remembering the
+  position and stopping when the video leaves the screen are in Playback;
+  subtitles-on-from-the-start is with the subtitles.
+* New: the preset preview can be looked at as a video. A preset's accent paints
+  the play button over a picture, its corner radius rounds it, its button
+  colour is on the bar — and the preview only ever drew audio.
+* New: the Video settings have a live preview of their own, showing the
+  settings as they stand on screen rather than as they were last saved.
+* Testing: the hostile-theme test walks every element inside the player and
+  compares it with and without a theme, which sounded exhaustive and was not —
+  no case it rendered had a call to action on it, so the panel, its button, its
+  form and its close button were never in the tree being walked. They are now,
+  and they are what found all four fixes above.
 
 = 1.19.0 =
 * Fixed: rounding a video's corners drew a frame around it. The rounded shell
