@@ -1,65 +1,73 @@
-# Imagina Player — 1.18.0
+# Imagina Player — 1.19.0
 
-Download **imagina-player-1.18.0.zip** and install it in WordPress under
+Download **imagina-player-1.19.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  328647c82c508eb8a0721de1beecb768d8bd1ea8a84fab395ceb42f746d1517c
+    SHA-256  75876b9a1bd0036f590b104abeff521857d601994d56af2c272b6f4a3eaa9ae0
 
-## What changed in 1.18.0
+## Rounded corners drew a frame
 
-**The plugin speaks Spanish.** 471 strings, a complete es_ES translation, and
-the compiled catalogue shipped in the archive — the admin screens, the block
-panels, the notices and the player's own labels.
+Turning on rounded corners for a video put a pale ring and a faint border
+around the picture.
 
-## Four ways it would not have
+The rounded shell is the audio player's card. Asking for a radius on a row of
+controls means asking for the card those controls sit in, so the rule carries
+padding and a tint along with the curve — which is right, and is what it was
+written for. The same class landed on a video, and there the padding became a
+ring and the tint became a border.
 
-Translations are the one feature that fails by doing nothing. Nothing throws;
-the interface simply carries on in English. Four separate breaks were on the
-path between a finished translation and a Spanish page, and none of them
-raises an error:
+A video already rounds the right thing: the picture itself. So the shell just
+had to stop drawing a card.
 
-**The plugin never called load_plugin_textdomain.** WordPress opens a plugin's
-own catalogue only when it is told where it is. The .mo would have shipped in
-every release and never been opened.
+## The playback controls have colours now
 
-**The release archive had no languages folder** in its list of contents, so
-even a correctly loaded text domain would have found nothing on an installed
-site.
+Two of them were literals in the stylesheet with no way to reach them.
 
-**Every bundle was handed the whole 45 KB catalogue**, and the front-end
-bundle — which contains no translated string of its own, since its handful
-come from PHP — was told to fetch one on every page view. Each catalogue now
-carries only the strings its own sources use, and the front end has no file.
+**The buttons and the clock on the bar** were white, whatever colour the bar
+behind them was set to. Pick a pale control bar and every button on it
+disappeared.
 
-**The caption search's three strings** were missing from the payload PHP sends
-the player, so that box would have stayed in English on a Spanish site.
+**The played part of the seek bar** took the waveform's progress colour — an
+audio setting the video block does not show, because a video has no waveform.
+The one moving coloured thing on the picture could not be changed at all.
+
+Both are settings now, site-wide and per block, and both default to
+**Automatic**: the buttons are worked out from the bar the way the accent's
+foreground already was, and the played line takes the accent. An existing site
+gets readable controls without touching anything.
+
+The audio player's small buttons — mute, skip, speed, download, and the rail
+the volume slider runs along — have a colour too, on the preset and on the
+block. That was a fixed slate grey, which all but disappears on a dark page.
+
+## Three more found on the way
+
+The volume rail on a video was drawn from the audio icon colour: a slate grey
+line on a near-black bar.
+
+The play button in the control row printed a white icon on the accent without
+checking, while the big play button over the picture worked the same thing out
+properly.
+
+The time chips kept a black pill on a pale control bar, so a correctly darkened
+clock was printed on black anyway.
 
 ## How it is checked
 
-The test does not stop at the files. It compares the template with the source,
-the translation with the template, the placeholders inside every translated
-string, and the compiled catalogue byte for byte against a reader written from
-the MO format rather than from the writer. Then it loads that catalogue into
-the harness and renders a real player, reading the Spanish back out of the
-markup.
+Neither report is a thing a string search settles, so both are measured in a
+browser.
 
-The harness's own translation stubs returned their input unchanged until now,
-which is why nothing in the suite could tell a loaded catalogue from an
-unloaded one.
+One test measures the rendered boxes: is the picture flush with the shell, is
+anything painted behind it, is the curve actually there — and, in the other
+direction, does the audio card keep the padding and the tint the rule exists
+for. A fix that flattened both would be no fix.
 
-## Also in this release
+The other measures real contrast on the control bar for a dark bar, a pale bar
+and a hand-picked one. It caught a bug in itself first: it read translucent
+colours as opaque, so a rail drawn at thirty per cent alpha came back as its
+base colour and reported 1.29:1 for a pair that is plainly legible. Every
+sample is composited over what is behind it now.
 
-**Corner radius per block**, not only on the preset.
+Both tests were checked by putting each bug back and watching them fail.
 
-**Caption search** — a box that finds the moment a word is said and jumps to
-it, reading the subtitles the video already carries. No index, no extra
-request. Accents and case fold, so *pagina* finds *página*, while ñ is left
-alone, because in Spanish it is a letter and *año* is not *ano*.
-
-## For translators
-
-No gettext and no msgfmt needed. Three scripts in bin/: make-pot.php extracts,
-merge-po.php brings a translation up to date without losing what is already
-there, make-mo.php compiles.
-
-1023 checks green.
+1062 checks green.
