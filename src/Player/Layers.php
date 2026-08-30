@@ -56,11 +56,35 @@ final class Layers {
 				continue;
 			}
 
+			$at = min( 100, max( 0, (int) ( $layer['at'] ?? 100 ) ) );
+
+			/*
+			 * When it goes away again.
+			 *
+			 * Both of the players this one is measured against have this and it
+			 * did not: Presto's overlays "appear at a specific time and
+			 * disappear at another", and Fluent's say how long they stay
+			 * visible. Without it every layer, once shown, was on the screen
+			 * for the rest of the video — which for a bar meant it covered the
+			 * end of a lesson, and for a mid-roll offer meant there was no way
+			 * to make it a moment rather than a permanent fixture.
+			 *
+			 * Zero means "stays", which is the old behaviour and still the
+			 * right answer for a call to action at the end.
+			 */
+			$until = min( 100, max( 0, (int) ( $layer['until'] ?? 0 ) ) );
+
 			$common = array(
 				'type'  => $type,
-				// Where in the track it appears, as a percentage. 100 means "at
-				// the end", which is the most common answer for a call to action.
-				'at'    => min( 100, max( 0, (int) ( $layer['at'] ?? 100 ) ) ),
+				/*
+				 * Where in the track it appears, as a percentage. A bar is a
+				 * standing offer, so zero — visible from the moment the page
+				 * loads — is its natural answer; a call to action interrupts,
+				 * so the end is.
+				 */
+				'at'    => $at,
+				// An end before the beginning is not an end.
+				'until' => $until > $at ? $until : 0,
 				'title' => sanitize_text_field( (string) ( $layer['title'] ?? '' ) ),
 				'text'  => sanitize_text_field( (string) ( $layer['text'] ?? '' ) ),
 				'skip'  => ! empty( $layer['skip'] ),

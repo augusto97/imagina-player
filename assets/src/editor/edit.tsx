@@ -1463,22 +1463,67 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								value={ String( layer.type ?? 'cta' ) }
 								options={ LAYER_TYPES }
 								onChange={ ( value: string ) =>
-									patchLayer( index, { type: value } )
+									/*
+									 * Changing the kind changes when it makes
+									 * sense to appear. A bar is a standing
+									 * offer and belongs from the start; the
+									 * other two interrupt, and belong at the
+									 * end. Leaving a bar on the old default
+									 * meant it only ever appeared once the
+									 * video had finished, which reads as the
+									 * feature not working.
+									 */
+									patchLayer( index, {
+										type: value,
+										at:
+											'bar' === value
+												? 0
+												: Number( layer.at ?? 100 ),
+									} )
 								}
 							/>
 							<RangeControl
 								__nextHasNoMarginBottom
 								label={ __( 'Appears at', 'imagina-player' ) }
-								help={ __(
-									'Percentage of the track. 100 means when it ends.',
-									'imagina-player'
-								) }
+								help={
+									0 === Number( layer.at ?? 100 )
+										? __(
+												'From the start, before anything is played.',
+												'imagina-player'
+										  )
+										: __(
+												'Percentage of the track. 100 means when it ends.',
+												'imagina-player'
+										  )
+								}
 								value={ Number( layer.at ?? 100 ) }
 								min={ 0 }
 								max={ 100 }
 								step={ 5 }
 								onChange={ ( value?: number ) =>
 									patchLayer( index, { at: value ?? 100 } )
+								}
+							/>
+							<RangeControl
+								__nextHasNoMarginBottom
+								label={ __( 'Goes away at', 'imagina-player' ) }
+								help={
+									0 === Number( layer.until ?? 0 )
+										? __(
+												'Zero: it stays once it has appeared.',
+												'imagina-player'
+										  )
+										: __(
+												'Percentage of the track. Rewinding past it brings it back.',
+												'imagina-player'
+										  )
+								}
+								value={ Number( layer.until ?? 0 ) }
+								min={ 0 }
+								max={ 100 }
+								step={ 5 }
+								onChange={ ( value?: number ) =>
+									patchLayer( index, { until: value ?? 0 } )
 								}
 							/>
 							<TextControl
@@ -1608,6 +1653,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 									{
 										type: 'cta',
 										at: 100,
+										until: 0,
 										title: '',
 										text: '',
 										button: '',

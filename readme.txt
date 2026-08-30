@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.20.0
+Stable tag: 1.21.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,48 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.21.0 =
+* Fixed: the action bar was invisible over a video. The overlay slot sat at
+  `z-index: 6` while the control bar sat at 8, and the slot is its own stacking
+  context — so nothing inside it could climb past the controls. A bar pinned to
+  the bottom of the picture, which is the edge the controls occupy, was drawn
+  underneath them: the headline came out behind the play button and the action
+  button on top of the volume slider.
+* Changed: the action bar now sits below the picture rather than on it, which
+  is where Presto's and Fluent's do, and cannot collide with the controls at
+  all. A call to action and an email gate still cover the picture, and now
+  cover the controls with it, which is the point of something that stops
+  playback.
+* Fixed: nothing could appear before the visitor pressed play. The script only
+  listened for `timeupdate`, which fires during playback — so "a bar that is
+  simply there", which is what an action bar is in both of those players, could
+  not be expressed. A layer set to the start is now up from the moment the page
+  loads.
+* Changed: adding an action bar sets it to appear at the start. Every new layer
+  defaulted to 100%, so a bar added and left alone appeared only once the video
+  had finished.
+* New: a layer can be given an end as well as a beginning, so an offer can be a
+  moment rather than a permanent fixture — Presto's overlays "appear at a
+  specific time and disappear at another" and Fluent's say how long they stay,
+  and this had no way to express either. Rewinding past it brings it back.
+* Fixed: dismissing a call to action never stuck. The "already seen" note was
+  filed under the player's DOM id, which is minted fresh on every render, so
+  nothing was ever recognised on the next visit and the browser's storage
+  filled with keys that could not match anything again.
+* Fixed: the call to action's button was not visible as a button. Measured, its
+  fill separated from the panel behind it at 1.43:1 with the factory accent —
+  the label read perfectly and the shape did not. It has an edge now, and the
+  site's accent is untouched.
+* Fixed: the end-of-video call to action appeared and vanished in the same
+  frame. "Rewind when it ends" is the default, so the player seeks back to zero
+  exactly when a layer at 100% becomes due.
+* Testing: a new browser test drives a player through a timeline it controls
+  and asks what is on screen at each moment, checks that a click on the control
+  row reaches the controls, and measures the button. It found a tenth problem
+  while being written: the end time was in the schema, sanitised, rendered and
+  read by the script, and did nothing, because the payload the page receives is
+  rebuilt key by key and nobody had added it there.
 
 = 1.20.0 =
 * Fixed: the close button on a call to action was nearly invisible. The

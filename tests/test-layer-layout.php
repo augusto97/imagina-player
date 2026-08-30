@@ -307,18 +307,26 @@ foreach ( $measured as $width => $report ) {
 			);
 		} elseif ( 'video-bar' === $case ) {
 			/*
-			 * The bar is the one layer that does not interrupt, so over a video
-			 * it is a strip along the bottom edge and covering the picture would
-			 * be the bug rather than the point.
+			 * The bar is the one layer that does not interrupt, so it is a
+			 * strip rather than a panel. It used to be pinned along the bottom
+			 * edge of the picture, which is the same edge the controls are on —
+			 * it was drawn underneath them, headline behind the play button and
+			 * button on top of the volume slider. It sits below the picture
+			 * now, as Presto's and Fluent's action bars do.
+			 *
+			 * The ceiling was 110 while the action button had no border. It has
+			 * a one-pixel edge now, without which it was not visible as a
+			 * button against the panel at all, and that edge is two pixels of
+			 * height on the row the button sets.
 			 */
 			check(
-				"{$case} is a strip along the bottom at {$width}px",
-				(int) $data['height'] <= 110,
+				"{$case} is a strip rather than a panel at {$width}px",
+				(int) $data['height'] <= 112,
 				$data['height'] . 'px tall'
 			);
 
 			check(
-				"{$case} stays inside the picture at {$width}px",
+				"{$case} stays within the player at {$width}px",
 				(int) $data['overhang'] <= 1,
 				$data['overhang'] . 'px past the edge'
 			);

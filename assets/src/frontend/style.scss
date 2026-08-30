@@ -1001,13 +1001,24 @@
 }
 
 /* --- Layer slot ---------------------------------------------------------
-   Empty until chapters, captions or a call to action mount here. It carries
-   a z-index now so that adding one later does not mean renumbering. */
+   Where a call to action and an email gate mount, over the picture.
+
+   Above the control bar, not below it. This sat at 6 while the chrome sat at
+   8, and because the wrapper is its own stacking context nothing inside it
+   could climb past — so a call to action that had just stopped the video had
+   the control bar drawn across its bottom edge, and an action bar pinned to
+   the same edge as the chrome disappeared behind it entirely: the headline
+   came out behind the play button and the button on top of the volume slider.
+
+   These two stop playback and cover the picture; covering the controls with
+   them is the point. The bar, which does not interrupt, is no longer in here
+   at all — it goes below the player, which is where Presto and Fluent both
+   put theirs. */
 
 .imgp__layers {
 	position: absolute;
 	inset: 0;
-	z-index: 6;
+	z-index: 14;
 	pointer-events: none;
 }
 
@@ -1021,6 +1032,15 @@
    flow and the panels stack beneath the controls. */
 .imgp--audio .imgp__layers {
 	position: static;
+	pointer-events: auto;
+}
+
+/* The standing offer. Below the picture on video and below the controls on
+   audio: the same place in both, and nowhere near anything it could cover. */
+.imgp__layers--under {
+	position: static;
+	inset: auto;
+	z-index: auto;
 	pointer-events: auto;
 }
 
@@ -1406,11 +1426,23 @@
 
 /* The bar is the one that does not interrupt: a strip along the bottom edge of
    the picture, alongside playback rather than instead of it. */
+
+/*
+ * The action bar.
+ *
+ * In the flow under the player rather than pinned over the bottom of the
+ * picture. Pinned, it landed on exactly the row the controls occupy — and one
+ * of the two had to lose. Both of the players this is measured against put
+ * their action bar below the video for the same reason.
+ */
 .imgp__layer--bar {
-	inset: auto 0 0;
-	z-index: 11;
+	position: relative;
+	inset: auto;
+	z-index: auto;
 	display: block;
+	margin-top: var(--imgp-gap);
 	padding: 0.6rem 2.6rem 0.6rem 0.9rem;
+	border-radius: var(--imgp-radius, 0);
 	background: var(--imgp-accent);
 	color: var(--imgp-on-accent, #fff);
 	text-align: left;
@@ -1587,7 +1619,16 @@
 	align-items: center;
 	justify-content: center;
 	padding: 0.6rem 1.15rem;
-	border: 0;
+
+	/*
+	 * An edge, because the panel behind it is near-black on purpose and so is
+	 * the factory accent. Measured, the button's own colour separated from the
+	 * panel at 1.43:1 — the label was perfectly readable and the button was not
+	 * visible as a thing to press at all, just words floating over the video.
+	 * A hairline in the label's own colour keeps whatever accent the site chose
+	 * and still draws the shape.
+	 */
+	border: 1px solid var(--imgp-on-accent, #fff);
 	border-radius: 0.4rem;
 	background: var(--imgp-accent);
 
@@ -1611,6 +1652,10 @@
 /* On the bar the background *is* the accent, so the button inverts: the
    foreground colour becomes the fill and the accent becomes the label. */
 .imgp__layer--bar .imgp__layer-button {
+
+	/* The bar is painted with the accent, so its button inverts and needs no
+	   edge — it is already the lightest thing on a coloured strip. */
+	border-color: transparent;
 	background: var(--imgp-on-accent, #fff);
 	color: var(--imgp-accent);
 }
@@ -2072,9 +2117,11 @@
 }
 
 /* The one button with padding of its own, restated so the blanket reset above
-   cannot flatten it. */
+   cannot flatten it — including its border, which on a near-black panel is
+   what makes it read as a button rather than as floating words. */
 .imgp .imgp__layer-button {
 	padding: 0.6rem 1.15rem !important;
+	border: 1px solid var(--imgp-on-accent, #fff) !important;
 	border-radius: 0.4rem !important;
 	background-color: var(--imgp-accent) !important;
 	color: var(--imgp-on-accent, #fff) !important;
@@ -2082,6 +2129,7 @@
 }
 
 .imgp .imgp__layer--bar .imgp__layer-button {
+	border-color: transparent !important;
 	background-color: var(--imgp-on-accent, #fff) !important;
 	color: var(--imgp-accent) !important;
 }

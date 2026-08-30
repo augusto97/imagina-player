@@ -15,6 +15,8 @@ export interface PlayerConfig {
 	sticky: boolean;
 	duration: number;
 	peaksKey: string;
+	/** A name for this player that is stable across page loads. */
+	layerKey?: string;
 	peaksToken: string;
 	canCompute: boolean;
 	/** Attachment ID when the file is served through a signed, expiring link. */

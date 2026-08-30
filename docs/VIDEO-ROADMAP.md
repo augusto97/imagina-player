@@ -160,6 +160,21 @@ Done since this list was written:
 - The watermark class was `.imgp__mark`, which is already the chapter marker on
   the scrub bar. Caught before it shipped; every chapter tick would have become
   a full-size logo.
+- The conversion layers barely worked, for five reasons at once. The overlay
+  slot sat at `z-index: 6` under a control bar at 8, and because the slot is its
+  own stacking context nothing inside it could climb past — so an action bar
+  pinned to the bottom of the picture, the same edge the controls are on, was
+  drawn underneath them. The script listened only for `timeupdate`, which fires
+  during playback, so nothing could be on screen before somebody pressed play
+  and "a bar that is simply there" was not expressible. A new layer defaulted to
+  appearing at 100%, so a bar added and left alone showed only once the video had
+  finished. The "already seen" note was filed under the player's DOM id, which is
+  minted fresh every render, so a dismissal never stuck and localStorage filled
+  with dead keys. And the button on a call to action separated from its panel at
+  1.43:1 with the factory accent — a readable label on an invisible shape.
+  Measured against Presto and Fluent, two things were missing outright: an end
+  time, which both have, and an action bar that sits below the player, which is
+  where both put theirs (1.21.0).
 - The close button on a call to action was nearly invisible on any real site.
   The blanket theme defence strips every button's background; this one's was
   restated for `:hover` and not for its resting state. The hostile-theme test

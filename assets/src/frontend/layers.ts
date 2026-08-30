@@ -17,6 +17,23 @@ const THANKS_MS = 1600;
 /** Layers a visitor has already dealt with, so they are not shown twice. */
 const SEEN_KEY = 'imagina-player-layers';
 
+/**
+ * Every moment the answer could change.
+ *
+ * `timeupdate` is the one that reports progress, and for a long time it was the
+ * only one bound — so a layer could not appear until playback had started, and
+ * "a bar that is simply there" was not expressible at all.
+ */
+const EVENTS = [
+	'loadedmetadata',
+	'durationchange',
+	'timeupdate',
+	'seeked',
+	'play',
+	'pause',
+	'ended',
+] as const;
+
 interface LayerHost {
 	root: HTMLElement;
 	/* Not an element: a call to action at 60% has to work on a YouTube video
@@ -29,6 +46,8 @@ interface LayerHost {
 interface LayerSpec {
 	type: 'cta' | 'bar' | 'email';
 	at: number;
+	/** Where it goes away again, as a percentage. Zero means it stays. */
+	until: number;
 	skip: boolean;
 	list: string;
 }
@@ -48,22 +67,56 @@ export class LayerStack {
 	constructor( host: LayerHost ) {
 		this.host = host;
 		this.specs = ( host.config.layers ?? [] ) as LayerSpec[];
-		this.elements = Array.from(
-			host.root.querySelectorAll< HTMLElement >( '.imgp__layer' )
-		);
+
+		/*
+		 * Matched by the index the server wrote on each element, not by the
+		 * order they appear in the document. A bar sits below the picture and
+		 * the rest sit over it, so the two orders are no longer the same — and
+		 * lining them up by document order does not fail loudly, it shows the
+		 * wrong layer at the wrong moment.
+		 */
+		this.elements = [];
+
+		host.root
+			.querySelectorAll< HTMLElement >( '.imgp__layer' )
+			.forEach( ( element ) => {
+				const index = Number( element.dataset.layerIndex ?? -1 );
+
+				if ( index >= 0 ) {
+					this.elements[ index ] = element;
+				}
+			} );
 
 		this.bindDismiss();
 		this.bindForms();
 
 		const watch = (): void => this.check();
 
-		this.host.media.addEventListener( 'timeupdate', watch );
-		this.host.media.addEventListener( 'ended', watch );
+		/*
+		 * Not `timeupdate` alone.
+		 *
+		 * That fires only while something is playing, so nothing could be on
+		 * screen before the visitor pressed play — which makes a standing offer
+		 * impossible to express. An action bar in both of the players this one
+		 * is measured against is simply there; here it was invisible until
+		 * playback started, and then it appeared on top of the controls.
+		 *
+		 * `durationchange` and `loadedmetadata` are when the length becomes
+		 * known, which is the first moment a percentage means anything.
+		 */
+		for ( const event of EVENTS ) {
+			this.host.media.addEventListener( event, watch );
+		}
 
 		this.cleanup.push( () => {
-			this.host.media.removeEventListener( 'timeupdate', watch );
-			this.host.media.removeEventListener( 'ended', watch );
+			for ( const event of EVENTS ) {
+				this.host.media.removeEventListener( event, watch );
+			}
 		} );
+
+		// And once now, for a bar that starts at zero on a player nobody has
+		// touched yet.
+		this.check();
 	}
 
 	destroy(): void {
@@ -84,26 +137,68 @@ export class LayerStack {
 	 */
 	private check(): void {
 		const duration = this.host.media.duration;
+		const known = Number.isFinite( duration ) && duration > 0;
 
-		if ( ! Number.isFinite( duration ) || duration <= 0 ) {
-			return;
-		}
+		/*
+		 * A percentage of an unknown length is not a number, but zero per cent
+		 * of anything is the beginning — so a layer set to appear at the start
+		 * is due before the file has said how long it is. That is the whole of
+		 * "a bar that is simply there".
+		 */
+		const percent = known
+			? ( this.host.media.currentTime / duration ) * 100
+			: 0;
 
-		const percent = ( this.host.media.currentTime / duration ) * 100;
 		const finished = this.host.media.ended;
 
 		this.specs.forEach( ( spec, index ) => {
-			if ( this.shown.has( index ) ) {
+			const element = this.elements[ index ];
+
+			if ( ! element || this.dismissed( index ) ) {
 				return;
 			}
 
-			const due = spec.at >= 100 ? finished : percent >= spec.at;
+			/*
+			 * A layer at the end waits for `ended` rather than for the clock: a
+			 * track almost never reports a current time exactly equal to its
+			 * duration.
+			 */
+			let due = spec.at >= 100 ? finished : percent >= spec.at;
 
-			if ( ! due || this.dismissed( index ) ) {
+			if ( spec.at > 0 && ! known ) {
+				due = false;
+			}
+
+			/*
+			 * And whether it is past. `until` is zero for anything meant to
+			 * stay — every call to action at the end, and a bar somebody wants
+			 * up for the rest of the video.
+			 */
+			const past = spec.until > 0 && known && percent >= spec.until;
+
+			if ( due && ! past ) {
+				if ( ! this.shown.has( index ) ) {
+					this.show( index, spec );
+				}
+
 				return;
 			}
 
-			this.show( index, spec );
+			/*
+			 * Outside its window. Hidden again rather than left up, and without
+			 * being remembered as dismissed — the visitor did not dismiss it,
+			 * its moment passed, and rewinding past it should bring it back.
+			 *
+			 * Only for a layer that was given an end. One without stays once it
+			 * has appeared, and that is not a detail: "rewind when it ends" is
+			 * the default, so the player seeks back to the beginning the moment
+			 * a call to action at 100% is due. Treating that as "no longer due"
+			 * made the thing appear and vanish in the same frame.
+			 */
+			if ( spec.until > 0 && this.shown.has( index ) ) {
+				this.shown.delete( index );
+				this.conceal( index );
+			}
 		} );
 	}
 
@@ -133,7 +228,21 @@ export class LayerStack {
 		}
 	}
 
+	/**
+	 * Taken away because the visitor asked, which is remembered.
+	 * @param index
+	 */
 	private hide( index: number ): void {
+		this.shown.delete( index );
+		this.remember( index );
+		this.conceal( index );
+	}
+
+	/**
+	 * Taken away because its moment has passed, which is not.
+	 * @param index
+	 */
+	private conceal( index: number ): void {
 		const element = this.elements[ index ];
 
 		if ( ! element ) {
@@ -141,9 +250,8 @@ export class LayerStack {
 		}
 
 		element.hidden = true;
-		this.remember( index );
 
-		if ( this.elements.every( ( layer ) => layer.hidden ) ) {
+		if ( this.elements.every( ( layer ) => ! layer || layer.hidden ) ) {
 			this.host.root.classList.remove( 'has-layer', 'has-modal-layer' );
 		}
 	}
@@ -363,7 +471,25 @@ export class LayerStack {
 		}
 	}
 
+	/**
+	 * A name for this layer that is the same on the next page load.
+	 *
+	 * It used to be the player's DOM id, and that is minted fresh on every
+	 * render — `imgp-1-4821` — so nothing was ever recognised as already seen.
+	 * The promise in the comment above ("showing the same gate to the same
+	 * person on every visit is how a conversion tool becomes a reason to
+	 * leave") was not kept once, and `localStorage` filled with keys that could
+	 * never match anything again.
+	 *
+	 * The source is what identifies the player across visits: the same video in
+	 * the same place is the same offer.
+	 * @param index
+	 */
 	private key( index: number ): string {
-		return this.host.config.id + ':' + index;
+		// Falls back to the DOM id only when the server had no source to name
+		// the player by, where forgetting is better than matching the wrong one.
+		const name = this.host.config.layerKey || this.host.config.id;
+
+		return name + ':' + index;
 	}
 }

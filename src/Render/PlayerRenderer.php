@@ -115,6 +115,15 @@ final class PlayerRenderer {
 			'sticky'      => (bool) $config['sticky'],
 			'duration'    => $track->duration,
 			'peaksKey'    => $track->peaks_key(),
+			/*
+			 * A name for this player that survives a page load, so a call to
+			 * action somebody has dismissed stays dismissed. The DOM id was
+			 * being used for that and it is minted fresh on every render, so
+			 * nothing was ever recognised — the promise not to show the same
+			 * gate twice was never kept once, and the browser's storage filled
+			 * with keys that could not match anything again.
+			 */
+			'layerKey'    => '' === $track->src ? '' : substr( md5( $track->src ), 0, 12 ),
 			'peaksToken'  => $peaks_payload['token'],
 			'canCompute'  => $peaks_payload['can_compute'],
 			// Non-zero when the file is served through a signed link, which can
@@ -125,12 +134,20 @@ final class PlayerRenderer {
 		// Only present when there is something to run, because its absence is
 		// what keeps the layer chunk from being downloaded at all.
 		if ( array() !== (array) $atts['layers'] ) {
+			/*
+			 * Rebuilt key by key rather than passed through, so a field that is
+			 * only for the server never reaches the page. The cost of that is
+			 * this list has to be kept in step with what the script reads: an
+			 * end time added to the schema and sanitised and rendered still did
+			 * nothing, because it stopped here.
+			 */
 			$client_config['layers'] = array_map(
 				static fn( array $layer ): array => array(
-					'type' => (string) $layer['type'],
-					'at'   => (int) $layer['at'],
-					'skip' => (bool) $layer['skip'],
-					'list' => (string) ( $layer['list'] ?? '' ),
+					'type'  => (string) $layer['type'],
+					'at'    => (int) $layer['at'],
+					'until' => (int) ( $layer['until'] ?? 0 ),
+					'skip'  => (bool) $layer['skip'],
+					'list'  => (string) ( $layer['list'] ?? '' ),
 				),
 				(array) $atts['layers']
 			);
@@ -278,7 +295,20 @@ final class PlayerRenderer {
 			'unstick'  => $config['sticky'] ? $this->part_unstick() : '',
 		);
 
-		$parts['layers'] = $this->part_layers( $track, $config, $atts, $id );
+		/*
+		 * Two groups, because they belong in two places.
+		 *
+		 * A call to action and an email gate cover the picture — they are
+		 * asking a question and they stop playback, so covering the controls is
+		 * the point. An action bar is a standing offer that does not interrupt,
+		 * and pinning it to the bottom of the picture put it exactly on top of
+		 * the control row: the headline landed behind the play button and the
+		 * button landed on the volume slider. Presto puts its action bar
+		 * underneath the video and Fluent's "sits below the player", for this
+		 * reason.
+		 */
+		$parts['layers'] = $this->part_layers( $track, $config, $atts, $id, array( 'cta', 'email' ) );
+		$parts['bars']   = $this->part_layers( $track, $config, $atts, $id, array( 'bar' ) );
 
 		if ( 'theater' === $layout ) {
 			$video_settings = $video_config;
@@ -365,11 +395,16 @@ final class PlayerRenderer {
 				);
 			}
 
-			// Video puts its layers inside the stage, over the picture. Audio has
-			// no picture, so they go on the player itself.
+			/*
+			 * Video puts the interrupting layers inside the stage, over the
+			 * picture; audio has no picture, so they go on the player itself.
+			 * The bar goes below the player either way.
+			 */
 			if ( 'theater' !== $layout ) {
 				echo $parts['layers']; // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
 			}
+
+			echo $parts['bars']; // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
 
 			echo $parts['unstick']; // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
 			?>
@@ -738,14 +773,27 @@ final class PlayerRenderer {
 	 *
 	 * @param array<string, mixed> $layer Sanitised layer.
 	 */
-	private function part_layer( array $layer, string $id ): string {
+	private function part_layer( array $layer, string $id, int $index = 0 ): string {
 		$type = (string) $layer['type'];
 
 		ob_start();
 		?>
 		<div
 			class="imgp__layer imgp__layer--<?php echo esc_attr( $type ); ?>"
-			data-layer="<?php echo esc_attr( (string) wp_json_encode( array( 'type' => $type, 'at' => $layer['at'] ) ) ); ?>"
+			<?php
+			/*
+			 * Its own place in the list, carried in the markup.
+			 *
+			 * The script used to line the elements up with the settings by
+			 * walking the document in order, which only holds while every layer
+			 * is rendered in one container. Bars now sit below the picture and
+			 * the rest over it, so document order and list order are no longer
+			 * the same thing — and a mismatch there does not fail, it shows the
+			 * wrong layer at the wrong moment.
+			 */
+			?>
+			data-layer-index="<?php echo esc_attr( (string) $index ); ?>"
+			data-layer="<?php echo esc_attr( (string) wp_json_encode( array( 'type' => $type, 'at' => $layer['at'], 'until' => $layer['until'] ?? 0 ) ) ); ?>"
 			role="<?php echo 'bar' === $type ? 'complementary' : 'dialog'; ?>"
 			<?php echo 'bar' === $type ? '' : 'aria-modal="false"'; ?>
 			aria-labelledby="<?php echo esc_attr( $id ); ?>-t"
@@ -958,11 +1006,18 @@ final class PlayerRenderer {
 		);
 	}
 
-	private function part_layers( Track $track, array $config, array $atts, string $id ): string {
+	/**
+	 * @param array<int, string> $only Layer types to render, or empty for all.
+	 */
+	private function part_layers( Track $track, array $config, array $atts, string $id, array $only = array() ): string {
 		$layers = array();
 
 		foreach ( (array) ( $atts['layers'] ?? array() ) as $index => $layer ) {
-			$layers[ 'layer-' . $index ] = $this->part_layer( (array) $layer, $id . '-l' . $index );
+			if ( array() !== $only && ! in_array( (string) ( ( (array) $layer )['type'] ?? '' ), $only, true ) ) {
+				continue;
+			}
+
+			$layers[ 'layer-' . $index ] = $this->part_layer( (array) $layer, $id . '-l' . $index, (int) $index );
 		}
 
 		/**
@@ -984,7 +1039,13 @@ final class PlayerRenderer {
 
 		$html = implode( '', array_map( 'strval', $layers ) );
 
-		return '<div class="imgp__layers">' . $html . '</div>';
+		$class = array( 'imgp__layers' );
+
+		if ( array( 'bar' ) === $only ) {
+			$class[] = 'imgp__layers--under';
+		}
+
+		return '<div class="' . esc_attr( implode( ' ', $class ) ) . '">' . $html . '</div>';
 	}
 
 	private function part_logo(): string {
