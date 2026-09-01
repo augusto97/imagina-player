@@ -1,72 +1,71 @@
-# Imagina Player — 1.30.0
+# Imagina Player — 1.31.0
 
-Download **imagina-player-1.30.0.zip** and install it in WordPress under
+Download **imagina-player-1.31.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  251ce3dad13335ea7cde43d763c5db640bf6180b74aa7477b68f1ea162e9418f
+    SHA-256  bca2ff179c7946f8548c51f70922450aaeba862653da1872532cdaea851b5ad1
 
-## The bars were real. The statistic was wrong.
+## You were right. 1.30.0 did nothing for you.
 
-A fifty-three minute lesson came back as four hundred bars of very nearly the
-same height, and the question asked was whether anything had actually been
-measured. It was a fair question, and the answer is in two halves.
+The new measure was real and the button that would have let you use it did not
+exist. Two reasons, and the second is the worse one.
 
-### They were real
+### The table had nowhere to write it
 
-There is now a test that writes audio whose loudness is known second by second,
-measures it in a real browser with the shipped code, and checks every bar
-against what was written underneath it. Twelve blocks, written and measured:
+1.30.0 marked each stored waveform with how it was measured, so an old one
+could be offered for redoing. The waveforms table has no such column, and the
+code that reads a row filled the field in from the current constant instead of
+from the row:
 
-    written  1.000  0.000  0.500  0.000  0.250  1.000  0.125  0.750  0.000 …
-    measured 1.000  0.000  0.500  0.000  0.250  1.000  0.125  0.750  0.000 …
+    'version' => self::FORMAT_VERSION,
 
-Exact, including three minutes of silence that read as zero and not as a low
-hum, and in the order they were recorded rather than shuffled by the slicing.
+Every stored waveform therefore claimed to have been measured whichever way was
+current. Nothing was ever out of date. The offer was unreachable from its first
+line — for your file in particular, which lives in that table because it is a
+URL rather than a library upload.
 
-### And the picture was still useless
+The column exists now, is written, and is read. Rows written before it report
+the older measure, which is what they are.
 
-Four hundred bars across fifty-three minutes is **eight seconds of audio in
-every bar**, and every bar was drawn as the loudest instant inside it. The
-loudest instant in eight seconds of anybody talking is a syllable at full
-volume. Every bar. All the way across.
+### And there was nowhere to ask anyway
 
-Here is that, measured. Eight stretches of speech-shaped audio, every one just
-as loud at its loudest, differing only in how much of the time there is any
-sound at all — which is the only thing that varies when a person talks, and the
-thing the ear hears as louder and quieter:
+The notice disappeared entirely the moment every track had a waveform. So
+measuring was something the editor did to you when it judged a file lacking,
+and never something you could request — which is no use at all when the file
+*has* a waveform and the waveform is the thing that looks wrong. You took the
+audio out and put it back trying to provoke the button. There was no button to
+provoke.
 
-    talking   5%   10%   20%   30%   50%   70%   90%  100%
-    before  1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00
-    after   0.22  0.32  0.45  0.55  0.71  0.84  0.95  1.00
+Now, in the block's sidebar:
 
-The top row is the comb. It is not a bug in the arithmetic; it is the wrong
-question asked four hundred times.
+* **"Volver a medir esta onda"** — always there, whenever a track has one.
+* a separate notice for waveforms measured the older way, with **"Volver a
+  medirla"**.
+* the original warning, unchanged, for a file with no waveform at all.
 
-A bar is now the **loudness across its stretch** — which counts the silence
-between the words as well as the words — instead of the loudest moment in it.
+## Why the tests said it worked
 
-## Two more things that came out of looking
+Because they never stored a waveform. The check called `is_current()` on an
+array built inside the test itself, and confirmed the controller mentions that
+function. Both passed while the feature did not exist.
 
-* The same measure now runs in all three places a waveform is made: the editor,
-  the visitor's browser, and the server's ffmpeg. One file draws one picture
-  wherever it happened to be measured.
-* The editor never scaled its result to fill the height, though the other two
-  always had — so the same file measured in two places came out at two
-  different heights.
+It could not have done better: the test harness answered every database read
+with null and threw every write away, so no test in this project could store
+something and read it back. That is the gap the bug lived in.
 
-## Your existing waveforms
+It stores now. The test writes a waveform, reads it back, sets the row to what
+it looks like after an upgrade, and asks the editor's own endpoint what it would
+put on screen. Putting either half of the bug back makes it fail — both were
+checked that way.
 
-They were measured the old way and are still drawn — an old picture beats no
-picture. Each stored waveform records the version it was measured under, so
-**the editor now offers to measure them again by itself**: open the post, and
-the notice appears with the button, the same one that worked in 1.29.0. Nothing
-has to be deleted by hand.
+1256 checks green.
 
-1249 checks green. Both changes were verified by putting the old measure back
-and watching the tests fail.
+## What to do
+
+Install, open the post, and the button is in the block's sidebar under the
+waveform. Press it once and your lesson gets measured with the new measure —
+the one that shows pauses and changes in delivery instead of a flat comb.
 
 ## Still worth doing on your server
 
-**Turn `popen` back off.** It was enabled during the earlier hunt on the theory
-that it was the cause; it was not, and the check confirms it is still listed in
-`disable_functions` regardless.
+**Turn `popen` back off.** It was never the cause of any of this.
