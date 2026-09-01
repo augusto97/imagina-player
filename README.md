@@ -1,79 +1,72 @@
-# Imagina Player — 1.29.0
+# Imagina Player — 1.30.0
 
-Download **imagina-player-1.29.0.zip** and install it in WordPress under
+Download **imagina-player-1.30.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  f69926252cbb7a4227cc2785300708f5e8c40e70f056ebacf7bcd5c1df3db052
+    SHA-256  251ce3dad13335ea7cde43d763c5db640bf6180b74aa7477b68f1ea162e9418f
 
-## Twelve slices of thirteen arrived, and all twelve were thrown away
+## The bars were real. The statistic was wrong.
 
-The message said the file could not be fetched. Twelve of its thirteen pieces
-had already arrived perfectly.
+A fifty-three minute lesson came back as four hundred bars of very nearly the
+same height, and the question asked was whether anything had actually been
+measured. It was a fair question, and the answer is in two halves.
 
-A fifty megabyte recording comes down in thirteen slices, and there was **no
-retry anywhere in the chain** — not in the browser, not on the server. One
-dropped connection out of thirteen requests to the same host discarded the
-whole download and reported it as a file that could not be reached. Twice, over
-the final twenty-four seconds of a fifty-three minute recording.
+### They were real
 
-Two changes, and either one alone would have fixed it:
+There is now a test that writes audio whose loudness is known second by second,
+measures it in a real browser with the shipped code, and checks every bar
+against what was written underneath it. Twelve blocks, written and measured:
 
-* A slice is now asked for up to **three times**, on both sides. A refusal is
-  not retried — a refusal is an answer, and asking a host that said 403 to say
-  it twice more is just rudeness.
-* And if a slice still never comes, **everything but the last scrap of a file
-  is a picture of that file**. At 95% or more, the waveform is drawn from what
-  arrived and the timeline is scaled so the track's length stays right. Below
-  that it is still a failure, because a confident picture of two-thirds of a
-  recording is worse than saying so.
+    written  1.000  0.000  0.500  0.000  0.250  1.000  0.125  0.750  0.000 …
+    measured 1.000  0.000  0.500  0.000  0.250  1.000  0.125  0.750  0.000 …
 
-## The reason was there the whole time
+Exact, including three minutes of silence that read as zero and not as a low
+hum, and in the order they were recorded rather than shuffled by the slicing.
 
-`upstream-unreachable` — "this site could not reach the file's own server" —
-covers a name that would not resolve, a certificate that would not verify, a
-timeout, and a connection reset at byte forty million. Four different problems
-with four different fixes. cURL names which one **every single time**, and that
-sentence was being read into a variable and dropped on the floor.
+### And the picture was still useless
 
-It travels back now, in a header and in the body, and is shown verbatim:
+Four hundred bars across fifty-three minutes is **eight seconds of audio in
+every bar**, and every bar was drawn as the loudest instant inside it. The
+loudest instant in eight seconds of anybody talking is a syllable at full
+volume. Every bar. All the way across.
 
-    this site could not reach the file's own server (slice 13 of 13)
-    — cURL error 56: Recv failure: Connection reset by peer
+Here is that, measured. Eight stretches of speech-shaped audio, every one just
+as loud at its loudest, differing only in how much of the time there is any
+sound at all — which is the only thing that varies when a person talks, and the
+thing the ear hears as louder and quieter:
 
-That is the line that should have appeared the first time, instead of the three
-explanations that got invented to fill the gap.
+    talking   5%   10%   20%   30%   50%   70%   90%  100%
+    before  1.00  1.00  1.00  1.00  1.00  1.00  1.00  1.00
+    after   0.22  0.32  0.45  0.55  0.71  0.84  0.95  1.00
 
-## The check was asking the easy question
+The top row is the comb. It is not a bug in the arithmetic; it is the wrong
+question asked four hundred times.
 
-It only ever requested `bytes=0-1023`, which is why it came back entirely
-green about a file whose measurement was failing on the thirteenth slice — and
-made the plugin look like it was contradicting itself.
+A bar is now the **loudness across its stretch** — which counts the silence
+between the words as well as the words — instead of the loudest moment in it.
 
-The first kilobyte of a file is the one request that is always cheap, always
-cached and always allowed. Proving it works proves very little. The check now
-asks for the **tail** as well: a range ending at the last byte, on a connection
-the host has already served a dozen times, which is where the interesting
-failures actually live.
+## Two more things that came out of looking
 
-## Proved, not asserted
+* The same measure now runs in all three places a waveform is made: the editor,
+  the visitor's browser, and the server's ffmpeg. One file draws one picture
+  wherever it happened to be measured.
+* The editor never scaled its result to fill the height, though the other two
+  always had — so the same file measured in two places came out at two
+  different heights.
 
-The reported failure is reproduced end to end in a real browser against a real
-ranged server:
+## Your existing waveforms
 
-* a slice that fails twice and then works — the measurement must survive it;
-* a slice that never comes — a waveform must still come out, with the full
-  track length;
-* a slice missing from the **middle** — this must still refuse, which is the
-  only thing that makes forgiving a missing tail defensible.
+They were measured the old way and are still drawn — an old picture beats no
+picture. Each stored waveform records the version it was measured under, so
+**the editor now offers to measure them again by itself**: open the post, and
+the notice appears with the button, the same one that worked in 1.29.0. Nothing
+has to be deleted by hand.
 
-Each of the three was verified by switching the fix back off and watching the
-test fail.
-
-1232 checks green.
+1249 checks green. Both changes were verified by putting the old measure back
+and watching the tests fail.
 
 ## Still worth doing on your server
 
-**Turn `popen` back off.** It was enabled during this hunt on the theory that
-it was the cause; it was not, and the check confirms it is still listed in
-`disable_functions` regardless. It runs `ffmpeg`, and there is no `ffmpeg` on
-that server to run.
+**Turn `popen` back off.** It was enabled during the earlier hunt on the theory
+that it was the cause; it was not, and the check confirms it is still listed in
+`disable_functions` regardless.
