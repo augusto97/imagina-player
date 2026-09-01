@@ -141,12 +141,18 @@ export function WaveformNotice( {
 						);
 					} catch ( viaProxy ) {
 						/*
-						 * Both ways failed. Which one to report is the direct
-						 * attempt: the proxy's failure is usually just the same
-						 * problem again, and the first message is the one that
-						 * says what is actually wrong with the file.
+						 * Both ways failed, and the one worth reporting is the
+						 * second.
+						 *
+						 * The direct attempt failing is expected for any file on
+						 * another domain — that is the whole reason the doorway
+						 * exists — so reporting it says "cross-origin refusal",
+						 * which is true and useless: it names the thing that was
+						 * supposed to be worked around rather than the reason
+						 * the workaround did not work.
 						 */
-						throw direct;
+						void direct;
+						throw viaProxy;
 					}
 				}
 
@@ -265,14 +271,74 @@ function reason( error: unknown ): string {
 	const message =
 		error instanceof Error ? error.message : String( error ?? '' );
 
+	/*
+	 * The doorway on this site tried and was refused by the file's own server.
+	 * The most common cause by a distance is hotlink protection or a signed-URL
+	 * rule on a bucket or CDN, and no setting here can change that — so the
+	 * message points at the place that can.
+	 */
+	if ( message.startsWith( 'proxy-upstream-' ) ) {
+		const status = message.replace( 'proxy-upstream-', '' );
+
+		if ( 'unreachable' === status ) {
+			return __(
+				'this site could not reach the file’s own server',
+				'imagina-player'
+			);
+		}
+
+		return sprintf(
+			/* translators: %s: HTTP status the remote server returned. */
+			__(
+				'the server hosting the file answered %s to this site as well — check that domain’s hotlink protection or signed-link rules',
+				'imagina-player'
+			),
+			status
+		);
+	}
+
+	if ( 'proxy-not-media' === message ) {
+		return __(
+			'the address does not return an audio or video file',
+			'imagina-player'
+		);
+	}
+
+	if ( 'proxy-too-large' === message ) {
+		return __(
+			'the file is larger than this site will fetch on your behalf',
+			'imagina-player'
+		);
+	}
+
+	if ( 'proxy-bad-url' === message ) {
+		return __(
+			'that address was refused as unsafe to fetch',
+			'imagina-player'
+		);
+	}
+
 	if ( message.startsWith( 'fetch-failed' ) ) {
+		const status = message.replace( 'fetch-failed-', '' );
+
+		/*
+		 * 401 and 403 from this site's own doorway is the nonce, not the file:
+		 * the request reached WordPress and WordPress would not have it.
+		 */
+		if ( '401' === status || '403' === status ) {
+			return __(
+				'this site refused the request that fetches the file — reload the editor and try again',
+				'imagina-player'
+			);
+		}
+
 		return sprintf(
 			/* translators: %s: HTTP status code, or "?" when there was none. */
 			__(
 				'the server answered %s when asked for the file',
 				'imagina-player'
 			),
-			message.replace( 'fetch-failed-', '' ) || '?'
+			status || '?'
 		);
 	}
 

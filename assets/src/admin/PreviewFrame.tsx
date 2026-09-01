@@ -46,7 +46,8 @@ export function PreviewFrame( {
 						return;
 					}
 
-					const { frontendCss, frontendJs, frameCss } = boot();
+					const { frontendCss, frontendJs, frameCss, restUrl } =
+						boot();
 					const html = result.html.replace(
 						'data-imagina-player=',
 						`data-peaks="${ result.peaks }" data-imagina-player=`
@@ -59,7 +60,7 @@ export function PreviewFrame( {
 						<link rel="stylesheet" href="${ frontendCss }">
 						<style>body { padding: 24px 0; }</style>
 						</head><body>${ html }
-						<script>window.imaginaPlayer = { restUrl: "", lazyInit: false, maxComputeBytes: 0, i18n: {} };</script>
+						<script>window.imaginaPlayer = { restUrl: "${ restUrl }", lazyInit: false, maxComputeBytes: 0, i18n: {} };</script>
 						<script src="${ frontendJs }"></script>
 						</body></html>`
 					);

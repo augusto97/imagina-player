@@ -178,7 +178,30 @@ export async function measure(
 	} );
 
 	if ( ! response.ok ) {
-		throw new Error( 'fetch-failed-' + response.status );
+		/*
+		 * The doorway on this site says which step gave up, in a header,
+		 * because what it hands back otherwise is a status and no story: the
+		 * file's own server refusing us looks exactly like this site refusing
+		 * us, and the two have completely different answers.
+		 */
+		let said = response.headers.get( 'x-imagina-reason' );
+
+		if ( ! said ) {
+			/*
+			 * The same tag travels in the body, for the sites where something
+			 * in front of WordPress drops headers it does not recognise. Read
+			 * defensively: this is an error page, and on those sites it might
+			 * be the security plugin's error page rather than ours.
+			 */
+			const body = await response.text().catch( () => '' );
+			const match = body.slice( 0, 120 ).match( /^No: ([a-z0-9-]+)$/ );
+
+			said = match ? match[ 1 ] : null;
+		}
+
+		throw new Error(
+			said ? 'proxy-' + said : 'fetch-failed-' + response.status
+		);
 	}
 
 	const buffer = await read( response, onProgress );

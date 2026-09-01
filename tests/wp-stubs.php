@@ -345,6 +345,28 @@ function wp_remote_get( $url, $args = array() ) {
  */
 function wp_safe_remote_get( $url, $args = array() ) { return wp_remote_get( $url, $args ); }
 
+/*
+ * Enough of the HTTP client for the doorway that fetches a file from another
+ * domain. A test sets `$GLOBALS['stub_remote']` to what the far end should say
+ * — the point being the cases where it says no, since those are what the
+ * editor has to explain.
+ */
+function wp_safe_remote_head( $url, $args = array() ) {
+	return $GLOBALS['stub_remote'] ?? array( 'code' => 200, 'headers' => array( 'content-type' => 'audio/mpeg', 'content-length' => '1024' ) );
+}
+function wp_remote_retrieve_header( $response, $name ) {
+	if ( ! is_array( $response ) ) { return ''; }
+	$headers = array_change_key_case( (array) ( $response['headers'] ?? array() ) );
+	return (string) ( $headers[ strtolower( $name ) ] ?? '' );
+}
+function wp_http_validate_url( $url ) {
+	$parts = wp_parse_url( (string) $url );
+	if ( empty( $parts['scheme'] ) || ! in_array( $parts['scheme'], array( 'http', 'https' ), true ) ) { return false; }
+	if ( empty( $parts['host'] ) || 'localhost' === $parts['host'] || str_starts_with( (string) $parts['host'], '127.' ) ) { return false; }
+	return $url;
+}
+function wp_tempnam( $prefix = '' ) { return tempnam( sys_get_temp_dir(), $prefix ); }
+
 function wp_remote_retrieve_response_code( $response ) { return is_array( $response ) ? (int) ( $response['code'] ?? 0 ) : 0; }
 function wp_remote_retrieve_body( $response ) { return is_array( $response ) ? (string) ( $response['body'] ?? '' ) : ''; }
 

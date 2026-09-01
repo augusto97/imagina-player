@@ -82,7 +82,21 @@ export interface ComputeOptions {
 	timeoutMs: number;
 }
 
-export type ComputeFailure = 'unsupported' | 'too-large' | 'timeout' | 'failed';
+export type ComputeFailure =
+	| 'unsupported'
+	| 'too-large'
+	| 'timeout'
+	| 'failed'
+	/*
+	 * The file is there and the browser is not allowed to read it. Almost
+	 * always a file on another domain — a bucket or a CDN — that has not been
+	 * told this site may fetch it. Its own category because it used to be
+	 * reported as "too large", which sent people to the size settings for a
+	 * problem that has nothing to do with size.
+	 */
+	| 'unreachable'
+	/** Nobody asked: the caller set a budget of nothing. */
+	| 'not-attempted';
 
 export interface ComputeResult {
 	peaks: Float32Array;
@@ -173,7 +187,23 @@ export async function computePeaks(
 	try {
 		const size = await probeSize( url, controller.signal );
 
-		if ( size < 0 || size > options.maxBytes ) {
+		/*
+		 * A size of zero is the caller saying "do not download anything here",
+		 * which the block preview does: it has the server's stored peaks or it
+		 * has none, and either way an editor should not be made to download the
+		 * file to look at a block.
+		 */
+		if ( 0 === options.maxBytes ) {
+			return 'not-attempted';
+		}
+
+		// Nothing came back about the file at all: neither a HEAD nor a range
+		// request could reach it.
+		if ( size < 0 ) {
+			return 'unreachable';
+		}
+
+		if ( size > options.maxBytes ) {
 			return 'too-large';
 		}
 
@@ -183,7 +213,9 @@ export async function computePeaks(
 		} );
 
 		if ( ! response.ok ) {
-			return 'failed';
+			return 403 === response.status || 401 === response.status
+				? 'unreachable'
+				: 'failed';
 		}
 
 		const buffer = await response.arrayBuffer();

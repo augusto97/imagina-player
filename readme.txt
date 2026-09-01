@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.22.0
+Stable tag: 1.23.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,37 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.23.0 =
+* Fixed: the route that measures a file hosted on another domain had never
+  worked. It builds a URL by hand — what it produces has to be something an
+  audio decoder can be pointed at — and that URL carries a REST nonce taken
+  from `window.wpApiSettings`. The editor script never declared the dependency
+  that puts that object on the page, so where nothing else happened to enqueue
+  it the nonce was empty and WordPress refused the request. Nothing failed
+  loudly; the file simply never got a waveform.
+* Fixed: when that route did answer, it answered with a bare status. The file's
+  own server refusing this site looked exactly like this site refusing the
+  request, and those have completely different answers. It now says which
+  happened, and passes on the status the remote server gave — a 403 from a
+  bucket or a CDN is the whole answer, and it points at that service's hotlink
+  protection rather than at anything here.
+* Fixed: a file the browser is not allowed to read was reported as "too large
+  to analyse in the browser", which sends somebody to the size settings for a
+  permissions problem. The reasons are told apart now, and each has its own
+  message.
+* Fixed: both block previews built their runtime with an empty REST root, so
+  the player inside them asked for `/peaks` against the site root and collected
+  a 404 on every editor load — and the fallback that request was meant to be
+  could never work.
+* Fixed: a preview asks for no download at all, and that came out as "this file
+  is too large" in the console for every file, whatever its size.
+* Changed: the refusal reason travels in the body as well as a header, for
+  sites where something in front of WordPress strips headers it does not
+  recognise.
+* Testing: the new checks run the route rather than reading it — a remote 403,
+  an address that is not media, and an address on this machine — and confirm
+  each comes back named.
 
 = 1.22.0 =
 * Fixed: long recordings never got a waveform. The editor's measurement handed

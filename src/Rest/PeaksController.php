@@ -292,7 +292,7 @@ final class PeaksController {
 		// WordPress's own check: http and https only, no private or loopback
 		// addresses, no unusual ports.
 		if ( '' === $src || ! wp_http_validate_url( $src ) ) {
-			$this->refuse( 400 );
+			$this->refuse( 400, 'bad-url' );
 		}
 
 		$head = wp_safe_remote_head(
@@ -304,19 +304,31 @@ final class PeaksController {
 		);
 
 		if ( is_wp_error( $head ) ) {
-			$this->refuse( 502 );
+			$this->refuse( 502, 'upstream-unreachable' );
+		}
+
+		/*
+		 * The file's own server said no to us as well. Worth passing on
+		 * exactly: a bucket or a CDN that refuses this site is almost always
+		 * hotlink protection or a signed-URL rule, and that is a setting on
+		 * that service rather than anything here.
+		 */
+		$upstream = (int) wp_remote_retrieve_response_code( $head );
+
+		if ( $upstream >= 400 ) {
+			$this->refuse( 502, 'upstream-' . $upstream );
 		}
 
 		$length = (int) wp_remote_retrieve_header( $head, 'content-length' );
 
 		if ( $length > self::PROXY_MAX_BYTES ) {
-			$this->refuse( 413 );
+			$this->refuse( 413, 'too-large' );
 		}
 
 		$type = strtolower( (string) wp_remote_retrieve_header( $head, 'content-type' ) );
 
 		if ( ! $this->looks_like_media( $type ) ) {
-			$this->refuse( 415 );
+			$this->refuse( 415, 'not-media' );
 		}
 
 		$temp = wp_tempnam( 'imagina-peaks' );
@@ -340,7 +352,12 @@ final class PeaksController {
 		if ( is_wp_error( $body ) || 200 !== (int) wp_remote_retrieve_response_code( $body ) || $size > self::PROXY_MAX_BYTES ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- our own temp file.
 			@unlink( $temp ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best effort.
-			$this->refuse( is_wp_error( $body ) ? 502 : 413 );
+			$this->refuse(
+				is_wp_error( $body ) ? 502 : 413,
+				is_wp_error( $body )
+					? 'upstream-unreachable'
+					: 'upstream-' . (int) wp_remote_retrieve_response_code( $body )
+			);
 		}
 
 		nocache_headers();
@@ -385,10 +402,32 @@ final class PeaksController {
 	 * Say no without saying why: the reasons name what is reachable from this
 	 * server, and that is not the caller's business even when they are staff.
 	 */
-	private function refuse( int $status ): void {
+	/**
+	 * Turn the request away, saying which step gave up.
+	 *
+	 * The reason travels in a header rather than the body because the caller is
+	 * an audio decoder being pointed at a URL, not something that reads JSON —
+	 * and "the fetch failed" on its own sent somebody looking at their browser
+	 * when the answer was on the file's own server.
+	 *
+	 * @param int    $status Status for this request.
+	 * @param string $reason A short machine-readable tag.
+	 */
+	private function refuse( int $status, string $reason = '' ): void {
 		status_header( $status );
 		header( 'Content-Type: text/plain; charset=utf-8' );
-		echo 'No';
+
+		if ( '' !== $reason ) {
+			header( 'X-Imagina-Reason: ' . $reason );
+		}
+
+		/*
+		 * And in the body as well. Two reasons: a caching layer or a security
+		 * plugin that strips unknown headers would otherwise take the
+		 * explanation away, and a header cannot be seen from a command line,
+		 * which is where this is tested.
+		 */
+		echo 'No' . ( '' === $reason ? '' : ': ' . $reason ); // phpcs:ignore WordPress.Security.EscapeOutput -- one of our own tags.
 		exit;
 	}
 

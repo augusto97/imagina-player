@@ -19,6 +19,7 @@ interface EditorAssets {
 	frontendCss: string;
 	frontendJs: string;
 	frameCss: string;
+	restUrl: string;
 }
 
 interface PreviewProps {
@@ -106,7 +107,7 @@ export function Preview( {
 						<link rel="stylesheet" href="${ assets.frameCss }">
 						<link rel="stylesheet" href="${ assets.frontendCss }">
 						</head><body>${ markup }
-						<script>window.imaginaPlayer={restUrl:"",lazyInit:false,maxComputeBytes:0,i18n:{}};</script>
+						<script>window.imaginaPlayer={restUrl:"${ assets.restUrl }",lazyInit:false,maxComputeBytes:0,i18n:{}};</script>
 						<script src="${ assets.frontendJs }"></script>
 						</body></html>`
 					);

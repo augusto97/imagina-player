@@ -102,6 +102,7 @@ function editorData(): EditorData {
 			frontendCss: '',
 			frontendJs: '',
 			frameCss: '',
+			restUrl: '',
 		}
 	);
 }
@@ -1719,6 +1720,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					frontendCss: data.frontendCss,
 					frontendJs: data.frontendJs,
 					frameCss: data.frameCss,
+					restUrl: data.restUrl,
 				} }
 			/>
 		</div>

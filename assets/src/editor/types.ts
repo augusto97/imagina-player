@@ -9,6 +9,8 @@ export interface EditorData {
 	frontendCss: string;
 	frontendJs: string;
 	frameCss: string;
+	/** Where the player inside a preview asks for a stored waveform. */
+	restUrl: string;
 }
 
 declare global {

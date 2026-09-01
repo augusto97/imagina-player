@@ -51,10 +51,24 @@ final class Assets {
 
 		$editor = self::asset_meta( 'editor' );
 
+		/*
+		 * `wp-api-request` on top of what webpack worked out.
+		 *
+		 * It is what puts `window.wpApiSettings` on the page, and that is where
+		 * the REST nonce comes from. The editor builds one URL by hand rather
+		 * than through `apiFetch` — the doorway that fetches a file from another
+		 * domain, which has to be a URL the audio decoder can be pointed at —
+		 * and without the nonce WordPress refuses it.
+		 *
+		 * Nothing failed loudly. The file simply could not be measured, and the
+		 * one path that exists for exactly that case had never worked.
+		 */
+		$editor['dependencies'][] = 'wp-api-request';
+
 		wp_register_script(
 			self::EDITOR_HANDLE,
 			URL . 'build/editor.js',
-			$editor['dependencies'],
+			array_values( array_unique( $editor['dependencies'] ) ),
 			$editor['version'],
 			true
 		);
@@ -97,6 +111,15 @@ final class Assets {
 			// Not built by webpack, so it has no hash of its own; the plugin
 			// version is enough, since it only changes when the plugin does.
 			'frameCss'    => add_query_arg( array( 'ver' => VERSION ), URL . 'assets/preview-frame.css' ),
+			/*
+			 * The previews build their own runtime object by hand and had this
+			 * as an empty string, so the player inside them asked for
+			 * `/peaks` relative to the site root and got a 404 on every editor
+			 * load. Nothing broke — a stored waveform reaches the preview in the
+			 * markup — but it is a failed request in everyone's console, and the
+			 * fallback it was meant to be could never work.
+			 */
+			'restUrl'     => esc_url_raw( rest_url( Rest\PeaksController::REST_NAMESPACE ) ),
 		);
 	}
 

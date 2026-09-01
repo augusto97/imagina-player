@@ -526,12 +526,28 @@ export class Player {
 		);
 
 		if ( typeof computed === 'string' ) {
-			// Say why once, in the console: a silent flat waveform on a long
-			// recording is otherwise impossible to explain from the outside.
-			if ( 'too-large' === computed && window.console ) {
-				window.console.info(
-					'Imagina Player: this file is too large to analyse in the browser. Generate the waveform on the server (Settings → Imagina Player → Waveforms).'
-				);
+			/*
+			 * Say why once, in the console: a silent flat waveform is otherwise
+			 * impossible to explain from the outside.
+			 *
+			 * Each reason has a different answer, and they used to share one
+			 * message. A file on a bucket that refuses cross-origin reads was
+			 * reported as too large, which sends somebody to the size settings
+			 * to fix a permissions problem — and nothing they do there can help.
+			 */
+			const said: Partial< Record< string, string > > = {
+				'too-large':
+					'this file is too large to analyse in the browser. Generate the waveform on the server (Settings → Imagina Player → Waveforms), or from the block editor.',
+				unreachable:
+					'the browser was not allowed to read this file, so it cannot measure it. It is on another domain that does not permit cross-origin reads. Generate the waveform from the block editor instead — that route goes through this site.',
+				timeout:
+					'reading this file took too long, so no waveform was measured.',
+			};
+
+			const why = said[ computed ];
+
+			if ( why && window.console ) {
+				window.console.info( 'Imagina Player: ' + why );
 			}
 
 			return null;
