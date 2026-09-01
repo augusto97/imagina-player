@@ -1,74 +1,65 @@
-# Imagina Player — 1.21.0
+# Imagina Player — 1.22.0
 
-Download **imagina-player-1.21.0.zip** and install it in WordPress under
+Download **imagina-player-1.22.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  fd14a5351e4aedd14c16b2d0dda2222e1fdcc01a8c0ae8eb98d3a0b2713d5dff
+    SHA-256  9c16c4caa723483a20387433465e7cb102b42a2c70a8e500e6d32cd6cd943674
 
-## The calls to action barely worked, for five reasons at once
+## Long recordings could not be measured in the browser
 
-The action bar was being painted, in the right place, underneath the control
-bar.
+On a host with no ffmpeg the waveform is measured once, in the editor's own
+browser, and stored for everybody. It worked for a podcast episode and not for
+a lecture.
 
-**The stacking.** The overlay slot sits at `z-index: 6` and the control bar at
-8, and the slot is its own stacking context — so nothing inside it could climb
-past. A bar pinned to the bottom of the picture is pinned to the same edge the
-controls are on: the headline came out behind the play button and the action
-button on top of the volume slider. A call to action had the control bar drawn
-across its foot.
+The measurement handed the whole file to the browser's decoder and asked for an
+8 kHz context, on the reasoning that the context's rate is what comes back.
+That is true of the result and not of the work: a decoder expands the file at
+its *own* rate and resamples afterwards. Fifty-three minutes of 44.1 kHz stereo
+is about a gigabyte of float samples in flight before anything is handed back.
 
-**Nothing could appear before play.** The script listened only for
-`timeupdate`, which fires during playback. So a layer could not be on screen
-until somebody pressed play, and a bar that is simply *there* could not be
-expressed at all.
+Whether that gigabyte is fatal depends on the machine — which is why it was
+some files and not all of them, and why it could not be reproduced on the
+machine this was fixed on. So the change is not "the old way crashes" but "the
+new way never asks for it": the file is decoded a few megabytes at a time, each
+piece reduced to a handful of numbers and thrown away before the next is read.
+How long a recording is stops mattering.
 
-**The default was the end.** Every new layer appeared at 100%. Add an action
-bar, leave the slider alone, and it shows once the video has finished.
+A fifty-three minute file now measures in a couple of seconds.
 
-**Dismissing never stuck.** The "already seen" note was filed under the
-player's DOM id, which is minted fresh on every render — so nothing was ever
-recognised on a later visit, and the browser's storage filled with keys that
-could not match anything again.
+WAV windows are given a header of their own, since a WAV has no frames to
+resynchronise to. Everything else can be cut on a byte boundary, because MP3,
+AAC and Ogg all carry a sync word at the head of every frame and a decoder
+handed a slice starting mid-frame simply skips to the next one.
 
-**The button was not visible as a button.** Measured, its fill separated from
-the panel behind it at 1.43:1 with the factory accent. The label read
-perfectly; the shape did not. It has an edge now, and the site's accent is
-untouched.
+The pieces are laid back on a timeline by their decoded length rather than
+shared out evenly, so a variable bitrate file does not come back stretched.
 
-## What Presto and Fluent had that this did not
+## A failure that said nothing
 
-**An end as well as a beginning.** Presto's overlays "appear at a specific time
-and disappear at another"; Fluent's say how long they stay. This had no way to
-express either, so every layer was permanent once shown. A layer can now be
-given a window, and rewinding past it brings it back.
+"Some files could not be measured here. They may be too long for this browser,
+or served from somewhere it cannot read them."
 
-**An action bar below the player.** Presto puts its action bar underneath the
-video and Fluent's "sits below the player" — which is the collision above,
-solved by construction rather than by stacking. Ours sits there now. A call to
-action and an email gate still cover the picture, and now cover the controls
-with it, which is the point of something that stops playback.
+That covers four different problems with four different answers and names none
+of them. It now says which one happened: the server refused the file and with
+what status, the download was cut short, the browser could not decode it, or it
+was a cross-origin refusal.
 
-## And one more, found while writing the test
-
-The end time was in the schema, sanitised, rendered into the markup and read by
-the script — and did nothing, because the payload the page receives is rebuilt
-key by key and nobody had added it there. Nothing errored; the layer simply
-never went away.
-
-There is a guard for that now: every field the script decides with has to be in
-what the server sends, and nothing the server sends may go unread.
+The same is true of the bulk generator on the settings screen, which counted
+its failures and threw away every reason.
 
 ## How it is checked
 
-A new test drives a real player through a timeline it controls and asks what is
-on screen at each moment — before play, at a third, at the halfway mark, after
-a window closes, at the gate, and after the video rewinds itself. It checks
-that a click on the control row reaches the controls, that a call to action
-covers them, and it measures the button.
+A new test builds a real fifty-three minute file, measures it in a real
+browser, and checks the shape of the result rather than only its size — a row
+of identical bars is the same picture as no waveform at all, and would pass
+every other check.
 
-Two of its own checks were wrong first and were fixed before being trusted: one
-hit-tested a control bar that had faded out and taken its pointer-events with
-it, so it passed with the bug put back; the other read a border colour without
-checking the border had any width.
+It also checks the property the change is actually about: no single decode
+covers more than a couple of minutes of audio, whatever the length of the file.
+Putting the old path back fails that immediately.
 
-1107 checks green.
+And the same audio measured both ways — whole, and in pieces — has to give the
+same picture, across six windows and their seams, or the fast path is quietly
+drawing something else.
+
+1117 checks green.
