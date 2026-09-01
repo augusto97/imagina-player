@@ -148,6 +148,8 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 
 			let done = 0;
 
+			let firstFailure = '';
+
 			for ( let i = 0; i < pending.length; i++ ) {
 				setStatus(
 					sprintf(
@@ -171,18 +173,38 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 					}
 
 					done++;
-				} catch {
-					// One unreadable file should not stop the rest.
+				} catch ( failure ) {
+					// One unreadable file should not stop the rest, but the
+					// reason is kept: a count of failures with no cause is a
+					// dead end for whoever has to fix it.
+					if ( ! firstFailure ) {
+						firstFailure =
+							failure instanceof Error
+								? failure.message
+								: String( failure ?? '' );
+					}
 				}
 			}
 
 			setStatus(
-				sprintf(
-					/* translators: 1: number generated, 2: total */
-					__( '%1$d of %2$d generated.', 'imagina-player' ),
-					done,
-					pending.length
-				)
+				done === pending.length
+					? sprintf(
+							/* translators: 1: number generated, 2: total */
+							__( '%1$d of %2$d generated.', 'imagina-player' ),
+							done,
+							pending.length
+					  )
+					: sprintf(
+							/* translators: 1: number generated, 2: total, 3: why the first failure happened */
+							__(
+								'%1$d of %2$d generated. The rest failed — the first: %3$s',
+								'imagina-player'
+							),
+							done,
+							pending.length,
+							firstFailure ||
+								__( 'no reason given', 'imagina-player' )
+					  )
 			);
 		} catch {
 			setStatus(

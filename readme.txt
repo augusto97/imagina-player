@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.21.0
+Stable tag: 1.22.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,26 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.22.0 =
+* Fixed: long recordings never got a waveform. The editor's measurement handed
+  the whole file to the browser's decoder at once, and a decoder expands a file
+  at its own sample rate before resampling — so an hour of 44.1 kHz stereo is
+  about a gigabyte of samples in flight, whatever rate was asked for. Files are
+  now decoded a few megabytes at a time, each piece reduced and thrown away
+  before the next is read, so how long a recording is stops mattering. A
+  fifty-three minute file measures in a couple of seconds.
+* Fixed: a failure said only "some files could not be measured here", which is
+  not something anybody can act on. It now says which of the things that can go
+  wrong actually did — the server refused the file, the download was cut short,
+  the browser could not decode it, or it was a cross-origin refusal.
+* Fixed: the download held the file twice at the moment it was largest, by
+  collecting it in pieces and then copying them into one buffer.
+* Testing: a new test builds a real fifty-three minute file, measures it in a
+  real browser, and checks the shape of the result rather than only its size —
+  and that no single decode covers more than a couple of minutes, which is the
+  property the change is actually about. The same audio measured both ways has
+  to give the same picture, so the pieces cannot quietly drift from the whole.
 
 = 1.21.0 =
 * Fixed: the action bar was invisible over a video. The overlay slot sat at

@@ -113,6 +113,7 @@ export function WaveformNotice( {
 
 		let done = 0;
 		const failed: string[] = [];
+		const reasons: string[] = [];
 
 		for ( let i = 0; i < missing.length; i++ ) {
 			const track = missing[ i ];
@@ -125,18 +126,28 @@ export function WaveformNotice( {
 
 				try {
 					result = await measure( track.src, BARS, report );
-				} catch {
+				} catch ( direct ) {
 					/*
 					 * Almost always CORS: the file is on another domain and
 					 * that domain has not said this one may read it. Nothing
 					 * about the file is wrong, so rather than give up, ask our
 					 * own server to fetch it and hand it over same-origin.
 					 */
-					result = await measure(
-						proxied( track.src ),
-						BARS,
-						report
-					);
+					try {
+						result = await measure(
+							proxied( track.src ),
+							BARS,
+							report
+						);
+					} catch ( viaProxy ) {
+						/*
+						 * Both ways failed. Which one to report is the direct
+						 * attempt: the proxy's failure is usually just the same
+						 * problem again, and the first message is the one that
+						 * says what is actually wrong with the file.
+						 */
+						throw direct;
+					}
 				}
 
 				await apiFetch( {
@@ -151,9 +162,12 @@ export function WaveformNotice( {
 				} );
 
 				done++;
-			} catch {
-				// One file that will not decode should not stop the others.
+			} catch ( error ) {
+				// One file that will not decode should not stop the others —
+				// but why it failed is kept, because "some files could not be
+				// measured" is not something anybody can act on.
 				failed.push( track.src );
+				reasons.push( reason( error ) );
 			}
 		}
 
@@ -164,9 +178,16 @@ export function WaveformNotice( {
 		setStatus(
 			0 === failed.length
 				? ''
-				: __(
-						'Some files could not be measured here. They may be too long for this browser, or served from somewhere it cannot read them.',
-						'imagina-player'
+				: sprintf(
+						/* translators: 1: how many files, 2: why the first one failed */
+						_n(
+							'%1$d file could not be measured here: %2$s',
+							'%1$d files could not be measured here. The first: %2$s',
+							failed.length,
+							'imagina-player'
+						),
+						failed.length,
+						reasons[ 0 ] ?? ''
 				  )
 		);
 
@@ -230,6 +251,63 @@ export function WaveformNotice( {
  *
  * @param src The remote address.
  */
+/**
+ * What went wrong, in words somebody can act on.
+ *
+ * The failures here have different answers — a file the browser cannot reach
+ * is a server setting, a file it cannot decode is a format problem, and a file
+ * that runs out of memory is neither — and they were all reported as "some
+ * files could not be measured", which tells you nothing at all.
+ *
+ * @param error Whatever was thrown.
+ */
+function reason( error: unknown ): string {
+	const message =
+		error instanceof Error ? error.message : String( error ?? '' );
+
+	if ( message.startsWith( 'fetch-failed' ) ) {
+		return sprintf(
+			/* translators: %s: HTTP status code, or "?" when there was none. */
+			__(
+				'the server answered %s when asked for the file',
+				'imagina-player'
+			),
+			message.replace( 'fetch-failed-', '' ) || '?'
+		);
+	}
+
+	if ( 'length-mismatch' === message ) {
+		return __(
+			'the download stopped early — the file may be behind something that cuts long transfers off',
+			'imagina-player'
+		);
+	}
+
+	if ( 'no-audio-context' === message ) {
+		return __( 'this browser cannot decode audio', 'imagina-player' );
+	}
+
+	if ( 'decode-failed' === message ) {
+		return __( 'nothing in the file decoded as audio', 'imagina-player' );
+	}
+
+	if ( error instanceof DOMException || /decode/i.test( message ) ) {
+		return __(
+			'the browser could not decode it — check that the file plays',
+			'imagina-player'
+		);
+	}
+
+	/*
+	 * A network error with no status is what a cross-origin refusal looks like
+	 * from here: the browser will not say more than "failed", on purpose.
+	 */
+	return __(
+		'the browser could not read it, which is usually a cross-origin refusal',
+		'imagina-player'
+	);
+}
+
 function proxied( src: string ): string {
 	const root = ( window.wpApiSettings?.root ?? '/wp-json/' ).replace(
 		/\/$/,
