@@ -16,7 +16,7 @@ msgstr ""
 "Language-Team: Español\n"
 
 #. translators: 1: how many files, 2: why the first one failed
-#: assets/src/editor/waveform-notice.tsx:191
+#: assets/src/editor/waveform-notice.tsx:245
 msgid "%1$d file could not be measured here: %2$s"
 msgid_plural "%1$d files could not be measured here. The first: %2$s"
 msgstr[0] "%1$d archivo no se pudo medir aquí: %2$s"
@@ -33,7 +33,7 @@ msgid "%1$d of %2$d generated. The rest failed — the first: %3$s"
 msgstr "%1$d de %2$d generadas. Las demás fallaron; la primera: %3$s"
 
 #. translators: 1: current file number, 2: total files, 3: what is happening
-#: assets/src/editor/waveform-notice.tsx:306
+#: assets/src/editor/waveform-notice.tsx:434
 msgid "%1$d of %2$d — %3$s"
 msgstr "%1$d de %2$d — %3$s"
 
@@ -50,7 +50,7 @@ msgstr[0] "%d comprobación falló. Los archivos protegidos aún no están a sal
 msgstr[1] "%d comprobaciones fallaron. Los archivos protegidos aún no están a salvo."
 
 #. translators: %d: number of files with no waveform.
-#: assets/src/editor/waveform-notice.tsx:212
+#: assets/src/editor/waveform-notice.tsx:293
 msgid "%d file here has no waveform, so it will show a plain progress bar on your site."
 msgid_plural "%d files here have no waveform, so they will show a plain progress bar on your site."
 msgstr[0] "%d archivo de aquí no tiene onda, así que en tu sitio saldrá una barra de progreso simple."
@@ -60,6 +60,13 @@ msgstr[1] "%d archivos de aquí no tienen onda, así que en tu sitio saldrá una
 #: assets/src/admin/LeadsPanel.tsx:133
 msgid "%d in total"
 msgstr "%d en total"
+
+#. translators: %d: number of files measured an older way.
+#: assets/src/editor/waveform-notice.tsx:332
+msgid "%d waveform here was measured an older way, which draws long recordings almost flat."
+msgid_plural "%d waveforms here were measured an older way, which draws long recordings almost flat."
+msgstr[0] "aquí hay %d onda medida con el método anterior, que dibuja las grabaciones largas casi planas."
+msgstr[1] "aquí hay %d ondas medidas con el método anterior, que dibuja las grabaciones largas casi planas."
 
 #: assets/src/admin/panels.tsx:556
 msgid "1 hour"
@@ -674,7 +681,7 @@ msgstr "Botón de pantalla completa"
 msgid "Gap between bars"
 msgstr "Separación entre barras"
 
-#: assets/src/editor/waveform-notice.tsx:227
+#: assets/src/editor/waveform-notice.tsx:310
 msgid "Generate it now"
 msgid_plural "Generate them now"
 msgstr[0] "Generarla ahora"
@@ -901,7 +908,19 @@ msgstr "Repetir"
 msgid "Marks on the progress bar, and a menu to jump between sections. Times can be written as 90, 1:30 or 0:01:30."
 msgstr "Marcas en la barra de progreso y un menú para saltar entre secciones. Los tiempos se pueden escribir como 90, 1:30 o 0:01:30."
 
-#: assets/src/editor/waveform-notice.tsx:235
+#: assets/src/editor/waveform-notice.tsx:349
+msgid "Measure it again"
+msgid_plural "Measure them again"
+msgstr[0] "Volver a medirla"
+msgstr[1] "Volver a medirlas"
+
+#: assets/src/editor/waveform-notice.tsx:368
+msgid "Measure this waveform again"
+msgid_plural "Measure these waveforms again"
+msgstr[0] "Volver a medir esta onda"
+msgstr[1] "Volver a medir estas ondas"
+
+#: assets/src/editor/waveform-notice.tsx:318
 msgid "Measured here, in this browser, and stored for every visitor. Nobody browsing your site downloads anything extra."
 msgstr "Se mide aquí, en este navegador, y se guarda para todos los visitantes. Nadie que navegue por tu sitio descarga nada extra."
 
@@ -974,12 +993,12 @@ msgstr "Nuevo preajuste"
 msgid "Next"
 msgstr "Siguiente"
 
-#: src/Rest/PeaksController.php:934
+#: src/Rest/PeaksController.php:951
 msgid "No track was named."
 msgstr "No se indicó ninguna pista."
 
-#: src/Rest/PeaksController.php:948
-#: src/Rest/PeaksController.php:1008
+#: src/Rest/PeaksController.php:965
+#: src/Rest/PeaksController.php:1025
 msgid "No waveform data was supplied."
 msgstr "No se envió ningún dato de onda."
 
@@ -1396,7 +1415,7 @@ msgstr "Servir con un enlace firmado"
 msgid "Served with %d."
 msgstr "Servido con %d."
 
-#: src/Rest/PeaksController.php:1128
+#: src/Rest/PeaksController.php:1145
 msgid "Server-side waveform generation is unavailable on this host."
 msgstr "La generación de ondas en el servidor no está disponible en este alojamiento."
 
@@ -1633,7 +1652,7 @@ msgstr "Texto"
 msgid "Thank you."
 msgstr "Gracias."
 
-#: src/Rest/PeaksController.php:1120
+#: src/Rest/PeaksController.php:1137
 #: src/Rest/StreamController.php:60
 msgid "That attachment does not exist."
 msgstr "Ese adjunto no existe."
@@ -1654,7 +1673,7 @@ msgstr "Eso no parece una dirección de correo."
 msgid "That file is not protected."
 msgstr "Ese archivo no está protegido."
 
-#: src/Rest/PeaksController.php:926
+#: src/Rest/PeaksController.php:943
 msgid "That is not a media file."
 msgstr "Eso no es un archivo de medios."
 
@@ -1809,12 +1828,12 @@ msgstr "La bóveda no se puede curiosear"
 msgid "The vault directory returned a page listing its contents. Turn directory indexes off for the uploads directory."
 msgstr "El directorio de la bóveda devolvió una página con el listado de su contenido. Desactiva los índices de directorio para el directorio de subidas."
 
-#: src/Rest/PeaksController.php:1154
+#: src/Rest/PeaksController.php:1171
 msgid "The waveform could not be generated for this file."
 msgstr "No se pudo generar la onda de este archivo."
 
-#: src/Rest/PeaksController.php:963
-#: src/Rest/PeaksController.php:1023
+#: src/Rest/PeaksController.php:980
+#: src/Rest/PeaksController.php:1040
 msgid "The waveform data is malformed."
 msgstr "Los datos de la onda están mal formados."
 
@@ -1839,7 +1858,7 @@ msgstr "Esta dirección no es algo que el reproductor pueda reproducir. Admite a
 msgid "This address is not something the player can show. It handles YouTube and Vimeo links, MP4 and WebM files, and HLS streams (.m3u8)."
 msgstr "Esta dirección no es algo que el reproductor pueda mostrar. Admite enlaces de YouTube y Vimeo, archivos MP4 y WebM, y emisiones HLS (.m3u8)."
 
-#: assets/src/editor/waveform-notice.tsx:243
+#: assets/src/editor/waveform-notice.tsx:265
 msgid "This browser cannot measure audio."
 msgstr "Este navegador no puede medir audio."
 
@@ -1876,7 +1895,7 @@ msgstr "Esto evita que se copie, se comparta o se enlace la URL del archivo, y p
 msgid "This video is hosted by %s."
 msgstr "Este vídeo está alojado en %s."
 
-#: src/Rest/PeaksController.php:984
+#: src/Rest/PeaksController.php:1001
 msgid "This waveform grant is missing or expired."
 msgstr "Este permiso de onda falta o ha caducado."
 
@@ -2104,7 +2123,7 @@ msgid "Without this, an email gate has to be answered to carry on."
 msgstr "Sin esto, hay que responder a la puerta de correo para seguir."
 
 #: assets/src/admin/panels.tsx:490
-#: assets/src/editor/waveform-notice.tsx:225
+#: assets/src/editor/waveform-notice.tsx:273
 msgid "Working…"
 msgstr "Trabajando…"
 
@@ -2142,7 +2161,7 @@ msgstr "copia"
 
 #. translators: %d: percentage downloaded.
 #: assets/src/admin/panels.tsx:204
-#: assets/src/editor/waveform-notice.tsx:296
+#: assets/src/editor/waveform-notice.tsx:424
 msgid "downloading %d%%"
 msgstr "descargando %d%%"
 
@@ -2160,7 +2179,7 @@ msgstr "Se encontró ffmpeg en este servidor, así que las ondas se generan aqu�
 
 #. translators: 1: current file number, 2: total, 3: file name, 4: what is happening
 #: assets/src/admin/panels.tsx:201
-#: assets/src/editor/waveform-notice.tsx:293
+#: assets/src/editor/waveform-notice.tsx:421
 msgid "measuring"
 msgstr "midiendo"
 

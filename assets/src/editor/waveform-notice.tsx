@@ -28,7 +28,10 @@ interface Track {
 	/** Zero for a track pasted from a streaming provider. */
 	id: number;
 	src: string;
+	/** Whether a waveform is stored at all. */
 	hasPeaks: boolean;
+	/** Whether it was measured the way this version measures. */
+	current: boolean;
 }
 
 interface Props {
@@ -49,6 +52,8 @@ export function WaveformNotice( {
 	onMeasured,
 }: Props ) {
 	const [ missing, setMissing ] = useState< Track[] >( [] );
+	const [ old, setOld ] = useState< Track[] >( [] );
+	const [ done, setDone ] = useState< Track[] >( [] );
 	const [ status, setStatus ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
 
@@ -64,6 +69,8 @@ export function WaveformNotice( {
 	useEffect( () => {
 		if ( disabled || '|' === signature ) {
 			setMissing( [] );
+			setOld( [] );
+			setDone( [] );
 
 			return;
 		}
@@ -91,11 +98,30 @@ export function WaveformNotice( {
 				const { tracks } = result as { tracks: Track[] };
 
 				setMissing( tracks.filter( ( track ) => ! track.hasPeaks ) );
+
+				/*
+				 * A waveform that exists but was measured an older way. It is
+				 * drawn, and it can be better, so this is an offer rather than
+				 * a warning.
+				 */
+				setOld(
+					tracks.filter(
+						( track ) => track.hasPeaks && ! track.current
+					)
+				);
+
+				setDone(
+					tracks.filter(
+						( track ) => track.hasPeaks && track.current
+					)
+				);
 			} )
 			.catch( () => {
 				// Asking failed. Saying nothing is better than crying wolf.
 				if ( ! cancelled ) {
 					setMissing( [] );
+					setOld( [] );
+					setDone( [] );
 				}
 			} );
 
@@ -105,22 +131,35 @@ export function WaveformNotice( {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ signature, disabled ] );
 
-	if ( disabled || 0 === missing.length ) {
+	const tracks = missing.length + old.length + done.length;
+
+	if ( disabled || 0 === tracks ) {
 		return null;
 	}
 
-	const run = async (): Promise< void > => {
+	/**
+	 * Measure a list of tracks and store what comes back.
+	 *
+	 * Takes the list rather than reading one: the same work is offered three
+	 * ways now — files with no waveform, files whose waveform was measured an
+	 * older way, and a plain "do it again" for the rest, which is what somebody
+	 * goes looking for when a picture looks wrong and nothing on screen admits
+	 * that measuring is a thing that can be asked for.
+	 *
+	 * @param list Which tracks to measure.
+	 */
+	const run = async ( list: Track[] ): Promise< void > => {
 		setBusy( true );
 
-		let done = 0;
+		let stored = 0;
 		const failed: string[] = [];
 		const reasons: string[] = [];
 
-		for ( let i = 0; i < missing.length; i++ ) {
-			const track = missing[ i ];
+		for ( let i = 0; i < list.length; i++ ) {
+			const track = list[ i ];
 
 			const report = ( progress: MeasureProgress ): void =>
-				setStatus( label( progress, i + 1, missing.length ) );
+				setStatus( label( progress, i + 1, list.length ) );
 
 			try {
 				let result;
@@ -168,7 +207,7 @@ export function WaveformNotice( {
 					},
 				} );
 
-				done++;
+				stored++;
 			} catch ( error ) {
 				// One file that will not decode should not stop the others —
 				// but why it failed is kept, because "some files could not be
@@ -179,9 +218,24 @@ export function WaveformNotice( {
 		}
 
 		setBusy( false );
-		setMissing( ( current ) =>
-			current.filter( ( track ) => failed.includes( track.src ) )
-		);
+
+		/*
+		 * Whatever was measured moves out of the two lists that offer work and
+		 * into the one that does not, so the notice reflects what just happened
+		 * without asking the server all over again.
+		 */
+		const kept = ( current: Track[] ): Track[] =>
+			current.filter( ( track ) => failed.includes( track.src ) );
+
+		const moved = ( current: Track[] ): Track[] =>
+			current.filter( ( track ) => ! failed.includes( track.src ) );
+
+		setDone( ( current ) => [
+			...current.filter( ( track ) => ! list.includes( track ) ),
+			...moved( list ),
+		] );
+		setMissing( kept );
+		setOld( kept );
 		setStatus(
 			0 === failed.length
 				? ''
@@ -198,58 +252,132 @@ export function WaveformNotice( {
 				  )
 		);
 
-		if ( done > 0 ) {
+		if ( stored > 0 ) {
 			onMeasured();
 		}
 	};
 
-	return (
-		<Notice status="warning" isDismissible={ false }>
-			<p>
-				{ sprintf(
-					/* translators: %d: number of files with no waveform. */
-					_n(
-						'%d file here has no waveform, so it will show a plain progress bar on your site.',
-						'%d files here have no waveform, so they will show a plain progress bar on your site.',
-						missing.length,
-						'imagina-player'
-					),
-					missing.length
-				) }
-			</p>
-
-			{ canMeasure() ? (
-				<p>
-					<Button variant="primary" onClick={ run } disabled={ busy }>
-						{ busy
-							? status || __( 'Working…', 'imagina-player' )
-							: _n(
-									'Generate it now',
-									'Generate them now',
-									missing.length,
-									'imagina-player'
-							  ) }
-					</Button>{ ' ' }
-					<span className="imgp-editor__hint">
-						{ __(
-							'Measured here, in this browser, and stored for every visitor. Nobody browsing your site downloads anything extra.',
-							'imagina-player'
-						) }
-					</span>
-				</p>
-			) : (
+	if ( ! canMeasure() ) {
+		return missing.length > 0 ? (
+			<Notice status="warning" isDismissible={ false }>
 				<p>
 					{ __(
 						'This browser cannot measure audio.',
 						'imagina-player'
 					) }
 				</p>
+			</Notice>
+		) : null;
+	}
+
+	const working = busy ? status || __( 'Working…', 'imagina-player' ) : '';
+
+	/*
+	 * Three offers, and the third is the one that was missing.
+	 *
+	 * Before this the whole component disappeared the moment every track had a
+	 * waveform, so a picture that looked wrong had nowhere to be questioned
+	 * from: measuring was something the editor did to you when it felt a file
+	 * was lacking, and never something you could ask for. Which is exactly what
+	 * was reported — somebody went looking for the button, took the audio out
+	 * and put it back to try to provoke it, and there was nothing.
+	 */
+	return (
+		<>
+			{ missing.length > 0 && (
+				<Notice status="warning" isDismissible={ false }>
+					<p>
+						{ sprintf(
+							/* translators: %d: number of files with no waveform. */
+							_n(
+								'%d file here has no waveform, so it will show a plain progress bar on your site.',
+								'%d files here have no waveform, so they will show a plain progress bar on your site.',
+								missing.length,
+								'imagina-player'
+							),
+							missing.length
+						) }
+					</p>
+
+					<p>
+						<Button
+							variant="primary"
+							onClick={ () => run( missing ) }
+							disabled={ busy }
+						>
+							{ working ||
+								_n(
+									'Generate it now',
+									'Generate them now',
+									missing.length,
+									'imagina-player'
+								) }
+						</Button>{ ' ' }
+						<span className="imgp-editor__hint">
+							{ __(
+								'Measured here, in this browser, and stored for every visitor. Nobody browsing your site downloads anything extra.',
+								'imagina-player'
+							) }
+						</span>
+					</p>
+				</Notice>
+			) }
+
+			{ old.length > 0 && (
+				<Notice status="info" isDismissible={ false }>
+					<p>
+						{ sprintf(
+							/* translators: %d: number of files measured an older way. */
+							_n(
+								'%d waveform here was measured an older way, which draws long recordings almost flat.',
+								'%d waveforms here were measured an older way, which draws long recordings almost flat.',
+								old.length,
+								'imagina-player'
+							),
+							old.length
+						) }
+					</p>
+
+					<p>
+						<Button
+							variant="primary"
+							onClick={ () => run( old ) }
+							disabled={ busy }
+						>
+							{ working ||
+								_n(
+									'Measure it again',
+									'Measure them again',
+									old.length,
+									'imagina-player'
+								) }
+						</Button>
+					</p>
+				</Notice>
+			) }
+
+			{ done.length > 0 && (
+				<p className="imgp-editor__hint">
+					<Button
+						variant="link"
+						onClick={ () => run( done ) }
+						disabled={ busy }
+					>
+						{ working ||
+							_n(
+								'Measure this waveform again',
+								'Measure these waveforms again',
+								done.length,
+								'imagina-player'
+							) }
+					</Button>
+				</p>
 			) }
 
 			{ ! busy && '' !== status && (
 				<p className="imgp-editor__hint">{ status }</p>
 			) }
-		</Notice>
+		</>
 	);
 }
 

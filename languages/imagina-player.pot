@@ -11,7 +11,7 @@ msgstr ""
 "X-Domain: imagina-player\n"
 
 #. translators: 1: how many files, 2: why the first one failed
-#: assets/src/editor/waveform-notice.tsx:191
+#: assets/src/editor/waveform-notice.tsx:245
 msgid "%1$d file could not be measured here: %2$s"
 msgid_plural "%1$d files could not be measured here. The first: %2$s"
 msgstr[0] ""
@@ -28,7 +28,7 @@ msgid "%1$d of %2$d generated. The rest failed — the first: %3$s"
 msgstr ""
 
 #. translators: 1: current file number, 2: total files, 3: what is happening
-#: assets/src/editor/waveform-notice.tsx:306
+#: assets/src/editor/waveform-notice.tsx:434
 msgid "%1$d of %2$d — %3$s"
 msgstr ""
 
@@ -45,7 +45,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of files with no waveform.
-#: assets/src/editor/waveform-notice.tsx:212
+#: assets/src/editor/waveform-notice.tsx:293
 msgid "%d file here has no waveform, so it will show a plain progress bar on your site."
 msgid_plural "%d files here have no waveform, so they will show a plain progress bar on your site."
 msgstr[0] ""
@@ -55,6 +55,13 @@ msgstr[1] ""
 #: assets/src/admin/LeadsPanel.tsx:133
 msgid "%d in total"
 msgstr ""
+
+#. translators: %d: number of files measured an older way.
+#: assets/src/editor/waveform-notice.tsx:332
+msgid "%d waveform here was measured an older way, which draws long recordings almost flat."
+msgid_plural "%d waveforms here were measured an older way, which draws long recordings almost flat."
+msgstr[0] ""
+msgstr[1] ""
 
 #: assets/src/admin/panels.tsx:556
 msgid "1 hour"
@@ -669,7 +676,7 @@ msgstr ""
 msgid "Gap between bars"
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:227
+#: assets/src/editor/waveform-notice.tsx:310
 msgid "Generate it now"
 msgid_plural "Generate them now"
 msgstr[0] ""
@@ -896,7 +903,19 @@ msgstr ""
 msgid "Marks on the progress bar, and a menu to jump between sections. Times can be written as 90, 1:30 or 0:01:30."
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:235
+#: assets/src/editor/waveform-notice.tsx:349
+msgid "Measure it again"
+msgid_plural "Measure them again"
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/src/editor/waveform-notice.tsx:368
+msgid "Measure this waveform again"
+msgid_plural "Measure these waveforms again"
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/src/editor/waveform-notice.tsx:318
 msgid "Measured here, in this browser, and stored for every visitor. Nobody browsing your site downloads anything extra."
 msgstr ""
 
@@ -969,12 +988,12 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: src/Rest/PeaksController.php:934
+#: src/Rest/PeaksController.php:951
 msgid "No track was named."
 msgstr ""
 
-#: src/Rest/PeaksController.php:948
-#: src/Rest/PeaksController.php:1008
+#: src/Rest/PeaksController.php:965
+#: src/Rest/PeaksController.php:1025
 msgid "No waveform data was supplied."
 msgstr ""
 
@@ -1391,7 +1410,7 @@ msgstr ""
 msgid "Served with %d."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1128
+#: src/Rest/PeaksController.php:1145
 msgid "Server-side waveform generation is unavailable on this host."
 msgstr ""
 
@@ -1628,7 +1647,7 @@ msgstr ""
 msgid "Thank you."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1120
+#: src/Rest/PeaksController.php:1137
 #: src/Rest/StreamController.php:60
 msgid "That attachment does not exist."
 msgstr ""
@@ -1649,7 +1668,7 @@ msgstr ""
 msgid "That file is not protected."
 msgstr ""
 
-#: src/Rest/PeaksController.php:926
+#: src/Rest/PeaksController.php:943
 msgid "That is not a media file."
 msgstr ""
 
@@ -1804,12 +1823,12 @@ msgstr ""
 msgid "The vault directory returned a page listing its contents. Turn directory indexes off for the uploads directory."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1154
+#: src/Rest/PeaksController.php:1171
 msgid "The waveform could not be generated for this file."
 msgstr ""
 
-#: src/Rest/PeaksController.php:963
-#: src/Rest/PeaksController.php:1023
+#: src/Rest/PeaksController.php:980
+#: src/Rest/PeaksController.php:1040
 msgid "The waveform data is malformed."
 msgstr ""
 
@@ -1834,7 +1853,7 @@ msgstr ""
 msgid "This address is not something the player can show. It handles YouTube and Vimeo links, MP4 and WebM files, and HLS streams (.m3u8)."
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:243
+#: assets/src/editor/waveform-notice.tsx:265
 msgid "This browser cannot measure audio."
 msgstr ""
 
@@ -1871,7 +1890,7 @@ msgstr ""
 msgid "This video is hosted by %s."
 msgstr ""
 
-#: src/Rest/PeaksController.php:984
+#: src/Rest/PeaksController.php:1001
 msgid "This waveform grant is missing or expired."
 msgstr ""
 
@@ -2099,7 +2118,7 @@ msgid "Without this, an email gate has to be answered to carry on."
 msgstr ""
 
 #: assets/src/admin/panels.tsx:490
-#: assets/src/editor/waveform-notice.tsx:225
+#: assets/src/editor/waveform-notice.tsx:273
 msgid "Working…"
 msgstr ""
 
@@ -2137,7 +2156,7 @@ msgstr ""
 
 #. translators: %d: percentage downloaded.
 #: assets/src/admin/panels.tsx:204
-#: assets/src/editor/waveform-notice.tsx:296
+#: assets/src/editor/waveform-notice.tsx:424
 msgid "downloading %d%%"
 msgstr ""
 
@@ -2155,7 +2174,7 @@ msgstr ""
 
 #. translators: 1: current file number, 2: total, 3: file name, 4: what is happening
 #: assets/src/admin/panels.tsx:201
-#: assets/src/editor/waveform-notice.tsx:293
+#: assets/src/editor/waveform-notice.tsx:421
 msgid "measuring"
 msgstr ""
 

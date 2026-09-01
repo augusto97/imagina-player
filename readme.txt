@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.30.0
+Stable tag: 1.31.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,29 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.31.0 =
+* Fixed: 1.30.0 said the editor would offer to measure an old waveform again.
+  It could not. The waveforms table had no column to record how a waveform was
+  measured, and the code that read a row filled that field in from the current
+  constant — so every stored waveform claimed to have been measured whichever
+  way was current, nothing was ever out of date, and the offer was unreachable.
+  The column exists now, is written, and is read. Rows that predate it report
+  the older measure, which is what they are.
+* Fixed: and there was nowhere to ask. The notice vanished the moment every
+  track had a waveform, so measuring was something the editor did to you when
+  it judged a file lacking and never something you could request — which is no
+  use at all when the file has a waveform and the waveform looks wrong. There
+  is now a "Measure this waveform again" button whenever a track has one, and a
+  separate notice for waveforms measured the older way.
+* Fixed: the record cache key is built in one place instead of three. Three
+  copies of a string that had to match, and nothing making them.
+* Testing: the check that was supposed to cover this asked a question about an
+  array built inside the test and never stored a waveform or read one back,
+  which is why it passed while the feature did not exist. The test harness can
+  now store and retrieve, and the test stores, reads back, and asks the editor's
+  own endpoint what it would show. Both halves of the bug were confirmed by
+  putting them back.
 
 = 1.30.0 =
 * Changed: a bar is now the loudness of its stretch of audio, not the loudest

@@ -472,35 +472,170 @@ echo PHP_EOL . '# A waveform measured the old way offers to be measured again' .
  */
 require_once __DIR__ . '/bootstrap.php';
 
+use ImaginaPlayer\Peaks\PeaksRepository;
+use ImaginaPlayer\Rest\PeaksController;
+
+/*
+ * Stored and read back, not asked about an array built here.
+ *
+ * The first version of this test called `is_current()` on a hand-made array and
+ * checked that the controller mentions it. Both passed, and the feature did not
+ * exist: the table had no column to keep a version in, and the reader filled the
+ * field in from the current constant — so every waveform ever stored claimed to
+ * have been measured whichever way was current, and nothing was ever stale.
+ *
+ * A test that never stores a waveform cannot see that. This one stores.
+ */
+$GLOBALS['stub_table_exists'] = 'wp_imagina_player_peaks';
+$GLOBALS['stub_table_rows']   = array();
+$GLOBALS['stub_meta']         = array();
+
+$repository = new PeaksRepository();
+$url        = 'https://media.example.com/lesson.mp3';
+$key        = 'url_' . md5( $url );
+
+$repository->save( $key, array( 0.1, 0.9, 0.4 ), 3180.0 );
+
 check(
-	'a waveform measured the old way is not counted as current',
-	! ImaginaPlayer\Peaks\PeaksRepository::is_current( array( 'version' => 1, 'peaks' => 'x' ) )
+	'a waveform stored now reads back as measured the way this version measures',
+	PeaksRepository::is_current( $repository->get( $key ) ),
+	'version ' . ( $repository->get( $key )['version'] ?? 'missing' )
+);
+
+/*
+ * And the same row as it looks after an upgrade: written by an older version,
+ * before there was a column to record how it was measured. The column defaults
+ * to 1 for exactly these rows, so this is what is really in the database on the
+ * site that reported the comb.
+ */
+$GLOBALS['stub_table_rows'][ $key ]['format_version'] = 1;
+
+check(
+	'a waveform measured the old way does not',
+	! PeaksRepository::is_current( $repository->get( $key ) ),
+	'version ' . ( $repository->get( $key )['version'] ?? 'missing' )
+);
+
+// A row from before the column existed at all reports the version it was.
+unset( $GLOBALS['stub_table_rows'][ $key ]['format_version'] );
+
+check(
+	'nor does one from before there was anywhere to write the version',
+	! PeaksRepository::is_current( $repository->get( $key ) )
+);
+
+echo PHP_EOL . '# And the editor offers it' . PHP_EOL;
+
+/*
+ * The whole point, end to end. This is the answer the editor asks for when it
+ * decides whether to show the notice with the button on it, and it was coming
+ * back "this one is fine" for a waveform measured the old way.
+ */
+$controller = new PeaksController();
+
+$answer = $controller->status(
+	new WP_REST_Request( array( 'urls' => $url ) )
+)->get_data();
+
+$track = ( $answer['tracks'] ?? array() )[0] ?? array();
+
+/*
+ * Two facts, not one. "It has a waveform" and "that waveform was measured the
+ * way this version measures" lead to two different offers, and squeezing them
+ * into a single flag made a track with an old waveform indistinguishable from
+ * one with none — which would have replaced the wrong message with a wrong one.
+ */
+check(
+	'a track with an old waveform still counts as having one',
+	true === ( $track['hasPeaks'] ?? null ),
+	'it is drawn, so saying it has none would be a lie'
 );
 
 check(
-	'one measured this way is',
-	ImaginaPlayer\Peaks\PeaksRepository::is_current(
-		array( 'version' => ImaginaPlayer\Peaks\PeaksRepository::FORMAT_VERSION, 'peaks' => 'x' )
-	)
+	'but not as one measured the current way',
+	false === ( $track['current'] ?? null ),
+	'current came back as ' . var_export( $track['current'] ?? null, true )
+);
+
+$repository->save( $key, array( 0.1, 0.9, 0.4 ), 3180.0 );
+
+$fresh = ( $controller->status(
+	new WP_REST_Request( array( 'urls' => $url ) )
+)->get_data()['tracks'] ?? array() )[0] ?? array();
+
+check(
+	'and once it has been measured again it is left alone',
+	true === ( $fresh['hasPeaks'] ?? null ) && true === ( $fresh['current'] ?? null ),
+	'otherwise the offer never goes away'
+);
+
+/*
+ * And a track with nothing stored is neither.
+ */
+$blank = ( $controller->status(
+	new WP_REST_Request( array( 'urls' => 'https://media.example.com/never-measured.mp3' ) )
+)->get_data()['tracks'] ?? array() )[0] ?? array();
+
+check(
+	'a track that was never measured has no waveform and is not current',
+	false === ( $blank['hasPeaks'] ?? null ) && false === ( $blank['current'] ?? null )
+);
+
+echo PHP_EOL . '# And there is a way to ask for it, always' . PHP_EOL;
+
+/*
+ * The complaint that found all of this: there was nowhere to press.
+ *
+ * The notice returned nothing at all the moment every track had a waveform, so
+ * measuring was something the editor did to you when it decided a file was
+ * lacking and never something that could be asked for. Somebody took the audio
+ * out and put it back trying to provoke the button, and there was no button to
+ * provoke.
+ *
+ * Read from the source, which is weaker than running it — but the failure was
+ * one line, an early return keyed on the wrong list, and this is the line.
+ */
+$notice = (string) file_get_contents( dirname( __DIR__ ) . '/assets/src/editor/waveform-notice.tsx' );
+
+check(
+	'the notice stays on screen when every waveform is present',
+	str_contains( $notice, 'const tracks = missing.length + old.length + done.length;' )
+		&& str_contains( $notice, 'if ( disabled || 0 === tracks ) {' ),
+	'it used to return null as soon as nothing was missing'
 );
 
 check(
-	'a record with no version at all counts as the oldest',
-	! ImaginaPlayer\Peaks\PeaksRepository::is_current( array( 'peaks' => 'x' ) )
+	'and offers to measure a waveform that is already there',
+	str_contains( $notice, 'Measure this waveform again' )
+		&& str_contains( $notice, 'run( done )' )
 );
 
 check(
-	'and no waveform is still no waveform',
-	! ImaginaPlayer\Peaks\PeaksRepository::is_current( null )
+	'and says so plainly for one measured the older way',
+	str_contains( $notice, 'was measured an older way' )
+		&& str_contains( $notice, 'run( old )' )
 );
 
+/*
+ * A library file keeps its waveform in post meta rather than the table, so it
+ * is a second path with the same question, and it had the same defect.
+ */
+$GLOBALS['stub_meta'] = array();
+
+$repository->save( 'att_7', array( 0.2, 0.6 ), 60.0 );
+
 check(
-	'the editor asks the version, rather than only whether a row exists',
-	str_contains(
-		(string) file_get_contents( dirname( __DIR__ ) . '/src/Rest/PeaksController.php' ),
-		'PeaksRepository::is_current( $this->repository->get('
-	),
-	'otherwise an old picture never gets the offer to be redone'
+	'a library file measured now is current too',
+	PeaksRepository::is_current( $repository->get( 'att_7' ) )
+);
+
+$stored = $GLOBALS['stub_meta'][7][ PeaksRepository::META_KEY ];
+unset( $stored['version'] );
+$GLOBALS['stub_meta'][7][ PeaksRepository::META_KEY ] = $stored;
+
+check(
+	'and one stored before the version was recorded is offered again',
+	! PeaksRepository::is_current( $repository->get( 'att_7' ) )
 );
 
 echo PHP_EOL;

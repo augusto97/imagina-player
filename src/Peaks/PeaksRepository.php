@@ -47,7 +47,11 @@ final class PeaksRepository {
 	 */
 	public const FORMAT_VERSION = 2;
 
-	public const DB_VERSION = 1;
+	/**
+	 * 2 added `format_version`, so that a stored waveform says how it was
+	 * measured instead of the reader assuming it was measured the current way.
+	 */
+	public const DB_VERSION = 2;
 
 	public const DB_VERSION_OPTION = 'imagina_player_peaks_db_version';
 
@@ -116,8 +120,15 @@ final class PeaksRepository {
 		$table   = self::table_name();
 		$collate = $wpdb->get_charset_collate();
 
+		/*
+		 * `format_version` defaults to 1 on purpose. Every row that already
+		 * exists was written before there was a column to write it in, and
+		 * every one of those was measured the old way — so the default is the
+		 * truth about them rather than a placeholder.
+		 */
 		$sql = "CREATE TABLE {$table} (
 			peaks_key varchar(64) NOT NULL,
+			format_version tinyint unsigned NOT NULL DEFAULT 1,
 			resolution smallint unsigned NOT NULL DEFAULT 0,
 			duration float NOT NULL DEFAULT 0,
 			peaks longtext NOT NULL,
@@ -151,7 +162,7 @@ final class PeaksRepository {
 
 		global $wpdb;
 
-		$cache_key = 'imagina_peaks_' . $key;
+		$cache_key = self::cache_key( $key );
 		$cached    = wp_cache_get( $cache_key, 'imagina_player' );
 
 		if ( is_array( $cached ) ) {
@@ -169,7 +180,7 @@ final class PeaksRepository {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated table, cached below.
 		$row = $wpdb->get_row(
 			$wpdb->prepare(
-				'SELECT resolution, duration, peaks FROM ' . self::table_name() . ' WHERE peaks_key = %s', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				'SELECT format_version, resolution, duration, peaks FROM ' . self::table_name() . ' WHERE peaks_key = %s', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 				$key
 			),
 			ARRAY_A
@@ -181,8 +192,22 @@ final class PeaksRepository {
 			return null;
 		}
 
+		/*
+		 * What the row says, not what this version happens to be.
+		 *
+		 * This used to read `self::FORMAT_VERSION` — the constant, ignoring the
+		 * row entirely — so every stored waveform claimed to have been measured
+		 * the current way whatever it had actually been measured with. The
+		 * moment the measure changed, that made the offer to measure a stale
+		 * waveform again impossible to reach: nothing was ever stale. The check
+		 * that was supposed to catch it asked `is_current()` about an array
+		 * built by hand in the test, and never once stored a waveform and read
+		 * it back.
+		 *
+		 * A row from before the column existed reports 1, which is what it is.
+		 */
 		$record = array(
-			'version'    => self::FORMAT_VERSION,
+			'version'    => max( 1, (int) ( $row['format_version'] ?? 1 ) ),
 			'resolution' => (int) $row['resolution'],
 			'duration'   => (float) $row['duration'],
 			'peaks'      => (string) $row['peaks'],
@@ -230,16 +255,17 @@ final class PeaksRepository {
 		$result = $wpdb->replace(
 			self::table_name(),
 			array(
-				'peaks_key'  => $key,
-				'resolution' => $record['resolution'],
-				'duration'   => $record['duration'],
-				'peaks'      => $record['peaks'],
-				'updated_at' => current_time( 'mysql', true ),
+				'peaks_key'      => $key,
+				'format_version' => $record['version'],
+				'resolution'     => $record['resolution'],
+				'duration'       => $record['duration'],
+				'peaks'          => $record['peaks'],
+				'updated_at'     => current_time( 'mysql', true ),
 			),
-			array( '%s', '%d', '%f', '%s', '%s' )
+			array( '%s', '%d', '%d', '%f', '%s', '%s' )
 		);
 
-		wp_cache_set( 'imagina_peaks_' . $key, $record, 'imagina_player', DAY_IN_SECONDS );
+		wp_cache_set( self::cache_key( $key ), $record, 'imagina_player', DAY_IN_SECONDS );
 
 		return false !== $result;
 	}
@@ -260,7 +286,24 @@ final class PeaksRepository {
 			$wpdb->delete( self::table_name(), array( 'peaks_key' => $key ), array( '%s' ) );
 		}
 
-		wp_cache_delete( 'imagina_peaks_' . $key, 'imagina_player' );
+		wp_cache_delete( self::cache_key( $key ), 'imagina_player' );
+	}
+
+	/**
+	 * Where a record is cached.
+	 *
+	 * One place, because three of them built this string by hand and nothing
+	 * made them agree — a read that looks under one key while a write goes to
+	 * another is a bug that shows up as data that will not go away.
+	 *
+	 * The format is part of it, so the records cached before this — each
+	 * carrying the version the reader made up rather than the one it was
+	 * actually measured at — are not found rather than believed.
+	 *
+	 * @param string $key Which waveform.
+	 */
+	private static function cache_key( string $key ): string {
+		return 'imagina_peaks_v' . self::FORMAT_VERSION . '_' . $key;
 	}
 
 	/**
@@ -419,7 +462,8 @@ final class PeaksRepository {
 		}
 
 		return array(
-			'version'    => (int) ( $record['version'] ?? self::FORMAT_VERSION ),
+			// Absent means it predates the field, which means the old measure.
+			'version'    => max( 1, (int) ( $record['version'] ?? 1 ) ),
 			'resolution' => (int) ( $record['resolution'] ?? 0 ),
 			'duration'   => (float) ( $record['duration'] ?? 0.0 ),
 			'peaks'      => $record['peaks'],

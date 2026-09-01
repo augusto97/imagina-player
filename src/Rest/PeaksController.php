@@ -866,6 +866,31 @@ final class PeaksController {
 	}
 
 	/**
+	 * What the editor needs to know about one track's waveform.
+	 *
+	 * Two separate facts, because they lead to two different offers and
+	 * squeezing them into one flag hid the second of them entirely. A track
+	 * with no waveform gets a warning; a track whose waveform was measured an
+	 * older way is fine as it stands and can be improved, which is a different
+	 * sentence and a different button.
+	 *
+	 * @param int    $id  Attachment id, or zero for a plain address.
+	 * @param string $src Where the audio is.
+	 * @param string $key Where its waveform would be stored.
+	 * @return array{id:int, src:string, hasPeaks:bool, current:bool}
+	 */
+	private function track_state( int $id, string $src, string $key ): array {
+		$stored = $this->repository->get( $key );
+
+		return array(
+			'id'       => $id,
+			'src'      => $src,
+			'hasPeaks' => null !== $stored,
+			'current'  => PeaksRepository::is_current( $stored ),
+		);
+	}
+
+	/**
 	 * Report which attachments have a stored waveform.
 	 *
 	 * @return WP_REST_Response
@@ -882,11 +907,7 @@ final class PeaksController {
 		);
 
 		foreach ( $ids as $id ) {
-			$out[] = array(
-				'id'       => $id,
-				'src'      => (string) ( wp_get_attachment_url( $id ) ?: '' ),
-				'hasPeaks' => PeaksRepository::is_current( $this->repository->get( 'att_' . $id ) ),
-			);
+			$out[] = $this->track_state( $id, (string) ( wp_get_attachment_url( $id ) ?: '' ), 'att_' . $id );
 		}
 
 		/*
@@ -906,11 +927,7 @@ final class PeaksController {
 		);
 
 		foreach ( $urls as $url ) {
-			$out[] = array(
-				'id'       => 0,
-				'src'      => $url,
-				'hasPeaks' => PeaksRepository::is_current( $this->repository->get( 'url_' . md5( $url ) ) ),
-			);
+			$out[] = $this->track_state( 0, $url, 'url_' . md5( $url ) );
 		}
 
 		return new WP_REST_Response( array( 'tracks' => $out ), 200 );

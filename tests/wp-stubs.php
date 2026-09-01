@@ -196,8 +196,32 @@ class Stub_WPDB {
 	public function get_charset_collate() { return 'DEFAULT CHARACTER SET utf8mb4'; }
 	public function prepare( $query, ...$args ) { return vsprintf( str_replace( array( '%s', '%d', '%f' ), array( "'%s'", '%d', '%f' ), $query ), $args ); }
 	public function get_var( $query ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['db_query']++; } return $GLOBALS['stub_table_exists'] ?? null; }
-	public function get_row( $query, $output = null ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['db_query']++; } return null; }
-	public function replace( $table, $data, $format = null ) { return 1; }
+	/**
+	 * Remembers what was written, and hands it back.
+	 *
+	 * It used to answer every read with null and throw every write away, which
+	 * meant no test could ever store something and read it back — and that is
+	 * exactly where the bug was: the reader was filling in a waveform's format
+	 * version from a constant instead of from the row, so every stored waveform
+	 * claimed to have been measured whichever way was current. A round trip
+	 * would have caught it in a line. Nothing could do a round trip.
+	 */
+	public function get_row( $query, $output = null ) {
+		if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['db_query']++; }
+
+		if ( preg_match( "/peaks_key = '([^']*)'/", (string) $query, $m ) ) {
+			return $GLOBALS['stub_table_rows'][ $m[1] ] ?? null;
+		}
+
+		return null;
+	}
+	public function replace( $table, $data, $format = null ) {
+		if ( isset( $data['peaks_key'] ) ) {
+			$GLOBALS['stub_table_rows'][ $data['peaks_key'] ] = $data;
+		}
+
+		return 1;
+	}
 	/**
 	 * Records rather than executes. Enough to assert that a write was attempted
 	 * and that its SQL was built through prepare().
@@ -208,7 +232,11 @@ class Stub_WPDB {
 	}
 	public function get_results( $query, $output = null ) { return $GLOBALS['stub_rows'] ?? array(); }
 	public function get_col( $query ) { return $GLOBALS['stub_cols'] ?? array(); }
-	public function delete( $table, $where, $format = null ) { return 1; }
+	public function delete( $table, $where, $format = null ) {
+		unset( $GLOBALS['stub_table_rows'][ $where['peaks_key'] ?? '' ] );
+
+		return 1;
+	}
 	public function esc_like( $text ) { return $text; }
 	// When $GLOBALS['stub_table_exists'] is set, SHOW TABLES reports the table.
 	public function show_tables_result() { return $GLOBALS['stub_table_exists'] ?? null; }
