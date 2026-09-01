@@ -1,63 +1,50 @@
-# Imagina Player — 1.33.0
+# Imagina Player — 1.34.0
 
-Download **imagina-player-1.33.0.zip** and install it in WordPress under
+Download **imagina-player-1.34.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  405b5e9bc43680220cc83ffb1536b7e299db8ca15fed009266b7ba9a1fec0008
+    SHA-256  72706344e8e9a7a4ee45d1c2c36217d6b07ee5644630cff6e847b2772917f040
 
-## The author's tools are now where the author's tools are
+## That button was not a missing translation
 
-"Measure this waveform again" was drawn **inside the block**, above the player.
+It was translated. It has been translated since 1.31.0. It was in the `.po`, it
+was in the JSON the editor loads, and it still came out in English.
 
-In the editor a block is a picture of the page, so anything drawn there reads as
-part of the page. Somebody looking over an author's shoulder cannot tell an
-editing control from content, and would reasonably assume that line was going to
-appear on the finished site — which meant explaining it every time.
+**Every string with a plural has been in English since the translation
+generator was written.**
 
-Both the waveform notice and the source warning are now in the block's sidebar:
-under **Medios** for the audio and video block, and in a **Ondas** panel for the
-playlist. The block shows the player and nothing else.
+A `.mo` file keys a plural entry as `msgid` + NUL + `msgid_plural`, and uses
+`\4` to separate a context from its msgid. The JSON that `wp.i18n` reads keys a
+plural by the msgid **alone**, with the forms in the value, and uses `\4` only
+for context. The generator ran the two formats together — it turned that NUL
+into a `\4` — and produced a key meaning "the singular, in the context of the
+plural". Nothing ever asks for that, so nothing ever found it.
 
-## And the red panel about ffmpeg is gone
+Singular strings were unaffected. That is why it lasted this long: nothing
+looked broken, because everything that was not counted was fine. It took one
+button sitting in the middle of an otherwise Spanish panel.
 
-You were right about it and it was worse than you said.
+Fixed, and all four affected strings now come back in Spanish.
 
-It appeared **on every visit to any site without ffmpeg**, whether or not one
-single file was missing a waveform. So on a site like yours — everything
-measured, everything working, browser measuring doing exactly what it is
-designed to do — the settings screen opened with a red alarm saying the server
-cannot do a thing nobody had asked it to do. To a client, that is "your site is
-broken".
+### The check that would not have caught it
 
-It now counts what is actually missing first:
+A test that reads the generated JSON and decides it looks correct is written by
+the same understanding that produced the file. It would have agreed with the
+bug, confidently, and told you the translations were fine.
 
-* **Nothing missing** → nothing is said. Because nothing is wrong.
-* **Something missing** → a plain note in neutral colours saying how many files
-  and which button to press, rather than a complaint about the server.
+So it does not read the file. It loads each catalogue into the **actual
+`@wordpress/i18n` library the browser runs** and asks it for the strings —
+singular and plural, one and several — and checks that what comes back is not
+the English it was given. Putting the old key format back fails it.
 
-The technical reason (`popen` is in `disable_functions`, so ffmpeg cannot run)
-moves to the help text under the **ffmpeg path** field — where somebody
-wondering why that field does nothing is already looking, and where it is an
-answer instead of an alarm.
+## And the link is a button
 
-What it still does is say so plainly when files genuinely have no waveform.
-Going silent in that case would be the same mistake in reverse.
+You were right that it disappeared. Blue underlined text in a column of form
+controls reads as a caption for the field below it, not as something you can
+press. It is a proper button now, in its own block with a rule above it, and a
+line underneath saying when you would actually want it:
 
-## How this is kept
+> **Volver a medir esta onda**
+> Solo hace falta si la forma se ve mal, o después de cambiar el número de barras.
 
-A new check reads which components are drawn inside the block and which are in
-the sidebar, and requires the author-only ones to be in the sidebar. It also
-requires the ffmpeg note to depend on a count, and to be a note rather than a
-warning.
-
-Both were confirmed by putting the old behaviour back and watching the test
-fail. The first attempt at the second one edited nothing — the condition had
-been reformatted across three lines and the patch silently missed — and a
-negative test that changes nothing proves nothing, so it was redone properly.
-
-1318 checks green.
-
-## Still worth doing on your server
-
-**Turn `popen` back off.** Now that the screen no longer nags about it, there
-is even less reason to leave it on.
+1325 checks green.
