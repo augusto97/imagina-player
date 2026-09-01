@@ -1,59 +1,63 @@
-# Imagina Player — 1.23.0
+# Imagina Player — 1.24.0
 
-Download **imagina-player-1.23.0.zip** and install it in WordPress under
+Download **imagina-player-1.24.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  d64d464672118929cf7da6dbec974da1f5a57dbcfa446877e67fe0bd21d47a7e
+    SHA-256  69794219a5b482d5bf6d41032c6e462adf16d908ffc95272a98a7cb8068ee7d2
 
-## The route for a file on another domain had never worked
+## The 502 was this site's own web server
 
-A browser cannot read a file from another domain unless that domain allows it,
-and media hosts mostly do not. So there is a route on the site that fetches the
-file and hands it over same-origin — the one path that exists for exactly this
-case.
+Two things pointed at it. Larger files work; and the failing one said only
+"the server answered 502" — while every refusal this plugin makes carries a
+reason with it. **A 502 with no reason is not ours.** It is the web server
+answering on PHP's behalf.
 
-It builds its URL by hand, because what it produces has to be something an
-audio decoder can be pointed at, and a hand-built REST URL needs the nonce that
-`apiFetch` would otherwise add for you. That nonce comes from
-`window.wpApiSettings`, which is put on the page by `wp-api-request` — which
-the editor script never declared as a dependency.
+The route that fetches a file from another domain pulled the whole thing down
+in one request: to a temporary file, then read back and served. Two full
+transfers of a fifty megabyte recording inside a single PHP request, with no
+time limit raised. Where a host allows thirty seconds, that does not finish:
+PHP is killed and nginx or Apache answers with its own 502.
 
-Where nothing else on the screen happened to enqueue it, the request was
-refused and the file simply never got a waveform. Nothing failed loudly.
+### Which explains the part that looked arbitrary
 
-## And the failure said the wrong thing, twice
+The files that work are the ones on the **same domain**. The browser fetches
+those directly, no PHP request is involved, and their size does not matter —
+which is why a bigger file can work while a smaller one fails.
 
-**"This file is too large to analyse in the browser."** The size check treated
-"I learned nothing about this file" the same as "this file is too big" — so a
-file the browser is not allowed to read sent people to the size settings, where
-nothing can help. The reasons are told apart now, and each has its own message.
+The files that fail are the ones on the **bucket**, where every byte goes
+through PHP. It was never about how big the file is. It is about which of the
+two paths it takes, and only then about size.
 
-**A bare status from the route.** The file's own server refusing this site
-looked exactly like this site refusing the request, and those have completely
-different answers. It now says which happened and passes on the status the
-remote server gave: a 403 from a bucket or a CDN is the whole answer, and it
-points at that service's hotlink protection or signed-link rules rather than at
-anything in this plugin.
+## Slices
 
-The reason travels in the response body as well as a header, for sites where
-something in front of WordPress strips headers it does not recognise.
+The route serves byte ranges now, and the browser asks for four megabytes at a
+time. No single request can outlast an execution limit.
 
-## A 404 on every editor load
+The size cap applies to what was asked for rather than to the whole file, so a
+recording too big to fetch in one go is still perfectly measurable a few
+megabytes at a time. And the route asks for more time where the host allows it,
+which costs nothing.
 
-Both block previews built their runtime with an empty REST root, so the player
-inside them asked for `/peaks` against the site root every time the editor
-opened. Harmless — a stored waveform reaches a preview in the markup — but it
-is a failed request in everyone's console, and the fallback it was meant to be
-could never work.
+**Only from this site.** A `Range` header makes a cross-origin request
+non-simple and the browser asks permission first — a media host that happily
+serves a plain `GET` to another domain will very often refuse that. Asking
+would have broken the files that work today in order to help the ones that do
+not. Same-origin has no preflight, and same-origin is exactly where this
+matters.
 
-A preview also asks for no download at all, and that came out as "this file is
-too large" for every file, whatever its size.
+## A note on popen
+
+Enabling it does nothing for any of this, and it is worth putting back as it
+was. It is used only to run ffmpeg, and the notice mentioning it belongs to
+that card.
 
 ## How it is checked
 
-The new tests run the route rather than reading it: a remote 403, an address
-that is not a media file, and an address on this machine, each in its own
-process because the handler ends by streaming and exiting. Each has to come
-back naming what happened.
+The browser test now runs against a server that honours byte ranges — PHP's
+built-in one does not — and checks that a file stitched back together from a
+dozen slices measures identically to the same file fetched in one go.
 
-1144 checks green.
+The failure mode of reassembly is an offset wrong by one, which still decodes
+and quietly draws something else. Putting that offset back fails the test.
+
+1156 checks green.
