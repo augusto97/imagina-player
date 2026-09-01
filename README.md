@@ -1,74 +1,63 @@
-# Imagina Player — 1.32.0
+# Imagina Player — 1.33.0
 
-Download **imagina-player-1.32.0.zip** and install it in WordPress under
+Download **imagina-player-1.33.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  47feff73a128e5466117bbbc175e36f37eae61aa3ff4466ba88d0541c4d1f47c
+    SHA-256  405b5e9bc43680220cc83ffb1536b7e299db8ca15fed009266b7ba9a1fec0008
 
-**Install this one.** 1.31.0 has a bug that stops waveforms being saved at all.
+## The author's tools are now where the author's tools are
 
-## Your console found a bug I shipped four hours ago
+"Measure this waveform again" was drawn **inside the block**, above the player.
 
-    GET /wp-json/imagina-player/v1/peaks?key=url_9b6d… 404 (Not Found)
+In the editor a block is a picture of the page, so anything drawn there reads as
+part of the page. Somebody looking over an author's shoulder cannot tell an
+editing control from content, and would reasonably assume that line was going to
+appear on the finished site — which meant explaining it every time.
 
-1.31.0 added a column to the waveforms table. **Nothing ever created it.**
+Both the waveform notice and the source warning are now in the block's sidebar:
+under **Medios** for the audio and video block, and in a **Ondas** panel for the
+playlist. The block shows the player and nothing else.
 
-There is a routine whose entire job is to catch up a site whose stored version
-is behind the code, and whose own comment explains why it exists — the
-activation hook does not fire for a plugin uploaded, copied into place or
-deployed over FTP, which is how this one reaches nearly every site that runs
-it. It did not touch the tables.
+## And the red panel about ffmpeg is gone
 
-So the code asked for a column that was not there. Every read failed. Every
-write failed.
+You were right about it and it was worse than you said.
 
-And it was invisible from the editor, which is the worst part: the editor draws
-the waveform it has just measured, so measuring looked perfect while nothing
-reached the database. The only symptom was the one you saw — a 404 on the front
-end, and then every visitor downloading fifty megabytes to work out the same
-picture again, on every page view. That is also why it took "un rato" to load.
+It appeared **on every visit to any site without ffmpeg**, whether or not one
+single file was missing a waveform. So on a site like yours — everything
+measured, everything working, browser measuring doing exactly what it is
+designed to do — the settings screen opened with a red alarm saying the server
+cannot do a thing nobody had asked it to do. To a client, that is "your site is
+broken".
 
-A failed write now rebuilds the table and tries once more, instead of reporting
-a success it did not have.
+It now counts what is actually missing first:
 
-### The check that should have caught it
+* **Nothing missing** → nothing is said. Because nothing is wrong.
+* **Something missing** → a plain note in neutral colours saying how many files
+  and which button to press, rather than a complaint about the server.
 
-It now reads the columns the code writes and reads **out of the code**, reads
-the columns the table declares **out of the schema**, and requires that they
-agree — and separately, that the upgrade routine applies the schema at all, and
-does it before marking the site up to date. Both halves of the bug were put
-back and both are caught.
+The technical reason ( is in , so ffmpeg cannot run)
+moves to the help text under the **ffmpeg path** field — where somebody
+wondering why that field does nothing is already looking, and where it is an
+answer instead of an alarm.
 
-## The horizontal scrollbar
+What it still does is say so plainly when files genuinely have no waveform.
+Going silent in that case would be the same mistake in reverse.
 
-The loading sheen slides a full width in each direction, inside a box that
-clipped nothing. So for the twenty seconds it ran, a whole page width hung off
-the side and the scrollbar appeared, grew and shrank in time with it.
+## How this is kept
 
-Measured across every skin at 320, 360, 414 and 768 pixels: **320px of overflow
-at 320px wide.** Now none. The test pins the animation at each end of its travel
-instead of trying to catch it mid-slide, so it cannot pass by luck.
+A new check reads which components are drawn inside the block and which are in
+the sidebar, and requires the author-only ones to be in the sidebar. It also
+requires the ffmpeg note to depend on a count, and to be a note rather than a
+warning.
 
-## And the answer to the thing that started all of this
+Both were confirmed by putting the old behaviour back and watching the test
+fail. The first attempt at the second one edited nothing — the condition had
+been reformatted across three lines and the patch silently missed — and a
+negative test that changes nothing proves nothing, so it was redone properly.
 
-    range-tail: FAILED error=cURL error 18: transfer closed with 4050 bytes remaining
-
-**There it is.** That is what was killing the measurement on slice 13 of 13 for
-three weeks, finally with a name: Publitio answers a range that ends at the last
-byte of the file, promises a length, and closes the connection four kilobytes
-short.
-
-Nothing to fix on your side. The retries and the missing-tail tolerance from
-1.29.0 are precisely what get past it — which is why your waveform works now.
-So the check reports that step as **coped** rather than FAILED, with the cURL
-error kept beside it. A red line next to a waveform that works is its own kind
-of wrong answer, and this thread is long enough. Any *other* failure of that
-step is still a failure.
-
-1305 checks green.
+1318 checks green.
 
 ## Still worth doing on your server
 
-**Turn `popen` back off.** Confirmed again by your own report: still listed in
-`disable_functions`, and `ffmpeg` reports `processes-disabled`. It was never
-the cause of anything here.
+**Turn `popen` back off.** Now that the screen no longer nags about it, there
+is even less reason to leave it on.
