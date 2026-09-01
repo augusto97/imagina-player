@@ -33,7 +33,7 @@ msgid "%1$d of %2$d generated. The rest failed — the first: %3$s"
 msgstr "%1$d de %2$d generadas. Las demás fallaron; la primera: %3$s"
 
 #. translators: 1: current file number, 2: total files, 3: what is happening
-#: assets/src/editor/waveform-notice.tsx:434
+#: assets/src/editor/waveform-notice.tsx:451
 msgid "%1$d of %2$d — %3$s"
 msgstr "%1$d de %2$d — %3$s"
 
@@ -921,7 +921,7 @@ msgid_plural "Measure them again"
 msgstr[0] "Volver a medirla"
 msgstr[1] "Volver a medirlas"
 
-#: assets/src/editor/waveform-notice.tsx:368
+#: assets/src/editor/waveform-notice.tsx:378
 msgid "Measure this waveform again"
 msgid_plural "Measure these waveforms again"
 msgstr[0] "Volver a medir esta onda"
@@ -1081,6 +1081,10 @@ msgstr "Sólo aparece en un vídeo que lleve subtítulos de verdad."
 #: src/Protection/Vault.php:124
 msgid "Only audio and video files can be protected."
 msgstr "Sólo se pueden proteger archivos de audio y vídeo."
+
+#: assets/src/editor/waveform-notice.tsx:387
+msgid "Only needed if the shape looks wrong, or after changing the number of bars."
+msgstr "Solo hace falta si la forma se ve mal, o después de cambiar el número de barras."
 
 #: assets/src/admin/panels.tsx:1667
 msgid "Only start a player when it scrolls near the viewport"
@@ -2174,7 +2178,7 @@ msgstr "copia"
 
 #. translators: %d: percentage downloaded.
 #: assets/src/admin/panels.tsx:250
-#: assets/src/editor/waveform-notice.tsx:424
+#: assets/src/editor/waveform-notice.tsx:441
 msgid "downloading %d%%"
 msgstr "descargando %d%%"
 
@@ -2192,7 +2196,7 @@ msgstr "Se encontró ffmpeg en este servidor, así que las ondas se generan aqu�
 
 #. translators: 1: current file number, 2: total, 3: file name, 4: what is happening
 #: assets/src/admin/panels.tsx:247
-#: assets/src/editor/waveform-notice.tsx:421
+#: assets/src/editor/waveform-notice.tsx:438
 msgid "measuring"
 msgstr "midiendo"
 

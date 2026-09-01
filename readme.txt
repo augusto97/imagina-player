@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.33.0
+Stable tag: 1.34.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,24 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.34.0 =
+* Fixed: every string with a plural stayed in English, in an otherwise fully
+  translated editor and settings screen, for as long as the translation
+  generator has existed. A .mo file keys a plural as `msgid` + NUL +
+  `msgid_plural`; the JSON that scripts read keys it by the msgid alone, with
+  the forms in the value. The generator ran the two formats together and
+  produced a key meaning "the singular, in the context of the plural", which
+  nothing ever asks for. Singulars were unaffected, which is why it survived
+  this long — it took a screenshot of one button in an otherwise Spanish panel.
+* Changed: the offer to measure an existing waveform again is a button rather
+  than a link. As a link it sat in a column of form controls looking like a
+  caption for the field below it, and was easy to miss.
+* Testing: the translation check no longer inspects the generated JSON — a test
+  that reads a file and decides it looks right is written by the same
+  understanding that produced the file. It now loads each catalogue into the
+  actual `@wordpress/i18n` library the browser runs and asks it for the
+  strings, singular and plural. Putting the old key format back fails it.
 
 = 1.33.0 =
 * Changed: the editor's waveform notice and source warning move into the block

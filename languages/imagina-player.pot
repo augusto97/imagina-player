@@ -2,7 +2,7 @@
 # This file is distributed under the same licence as the Imagina Player plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: Imagina Player 1.32.0\n"
+"Project-Id-Version: Imagina Player 1.33.0\n"
 "Report-Msgid-Bugs-To: https://github.com/augusto97/imagina-player\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -28,7 +28,7 @@ msgid "%1$d of %2$d generated. The rest failed — the first: %3$s"
 msgstr ""
 
 #. translators: 1: current file number, 2: total files, 3: what is happening
-#: assets/src/editor/waveform-notice.tsx:434
+#: assets/src/editor/waveform-notice.tsx:451
 msgid "%1$d of %2$d — %3$s"
 msgstr ""
 
@@ -916,7 +916,7 @@ msgid_plural "Measure them again"
 msgstr[0] ""
 msgstr[1] ""
 
-#: assets/src/editor/waveform-notice.tsx:368
+#: assets/src/editor/waveform-notice.tsx:378
 msgid "Measure this waveform again"
 msgid_plural "Measure these waveforms again"
 msgstr[0] ""
@@ -1075,6 +1075,10 @@ msgstr ""
 
 #: src/Protection/Vault.php:124
 msgid "Only audio and video files can be protected."
+msgstr ""
+
+#: assets/src/editor/waveform-notice.tsx:387
+msgid "Only needed if the shape looks wrong, or after changing the number of bars."
 msgstr ""
 
 #: assets/src/admin/panels.tsx:1667
@@ -2169,7 +2173,7 @@ msgstr ""
 
 #. translators: %d: percentage downloaded.
 #: assets/src/admin/panels.tsx:250
-#: assets/src/editor/waveform-notice.tsx:424
+#: assets/src/editor/waveform-notice.tsx:441
 msgid "downloading %d%%"
 msgstr ""
 
@@ -2187,7 +2191,7 @@ msgstr ""
 
 #. translators: 1: current file number, 2: total, 3: file name, 4: what is happening
 #: assets/src/admin/panels.tsx:247
-#: assets/src/editor/waveform-notice.tsx:421
+#: assets/src/editor/waveform-notice.tsx:438
 msgid "measuring"
 msgstr ""
 

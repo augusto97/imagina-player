@@ -234,7 +234,24 @@ foreach ( $bundles as $script => $prefixes ) {
 			continue;
 		}
 
-		$messages[ str_replace( "\0", "\4", $key ) ] = explode( "\0", $value );
+		/*
+		 * Keyed by the singular alone, which is not how a .mo file keys it.
+		 *
+		 * The two formats disagree and this line used to run them together. A
+		 * .mo entry is keyed `msgid \0 msgid_plural`, with `\4` separating a
+		 * context from its msgid; the JSON that `wp.i18n` reads is keyed by the
+		 * msgid alone, with `\4` for context and the plural forms living in the
+		 * value. Turning the `\0` into a `\4` produced a key that says
+		 * "singular in the context of plural", which nothing ever asks for.
+		 *
+		 * So every plural string in the editor and the settings screen stayed in
+		 * English, in an otherwise fully translated interface, for as long as
+		 * this file has existed. Singulars were fine, which is why it took a
+		 * screenshot of one button to notice.
+		 *
+		 * A context prefix is already `\4` and is left exactly as it is.
+		 */
+		$messages[ explode( "\0", $key )[0] ] = explode( "\0", $value );
 	}
 
 	$json = array(

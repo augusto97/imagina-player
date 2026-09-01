@@ -357,9 +357,19 @@ export function WaveformNotice( {
 			) }
 
 			{ done.length > 0 && (
-				<p className="imgp-editor__hint">
+				/*
+				 * A button, not a link.
+				 *
+				 * As a link it sat above the first field in the panel looking
+				 * like a caption, and was reported as easy to miss — which it
+				 * was: nothing about blue underlined text in a column of form
+				 * controls says "this does something". The other two offers in
+				 * this component are buttons; there was no reason this one was
+				 * not, beyond it being the quiet case.
+				 */
+				<div className="imgp-editor__remeasure">
 					<Button
-						variant="link"
+						variant="secondary"
 						onClick={ () => run( done ) }
 						disabled={ busy }
 					>
@@ -371,7 +381,14 @@ export function WaveformNotice( {
 								'imagina-player'
 							) }
 					</Button>
-				</p>
+
+					<p className="imgp-editor__hint">
+						{ __(
+							'Only needed if the shape looks wrong, or after changing the number of bars.',
+							'imagina-player'
+						) }
+					</p>
+				</div>
 			) }
 
 			{ ! busy && '' !== status && (

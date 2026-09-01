@@ -588,6 +588,151 @@ check(
 
 $GLOBALS['imgp_catalogue'] = array();
 
+echo PHP_EOL . '# The JSON the scripts read, asked in the library that reads it' . PHP_EOL;
+
+/*
+ * Not inspected — asked.
+ *
+ * A .mo file and the JSON `wp.i18n` reads key their entries differently, and
+ * the generator ran the two formats together: a .mo keys a plural as
+ * `msgid \0 msgid_plural`, while the JSON keys it by the msgid alone with the
+ * forms in the value. Converting that `\0` into the `\4` that separates a
+ * context produced a key meaning "the singular, in the context of the plural",
+ * which nothing ever asks for.
+ *
+ * So every plural string in the editor and the settings screen stayed in
+ * English inside an otherwise fully translated interface, for as long as the
+ * generator has existed. Singulars were unaffected, which is why it survived
+ * this long and took a screenshot of one button to find.
+ *
+ * A test that reads the JSON and checks it looks right would have been written
+ * by the same misunderstanding that produced the file. So this hands it to the
+ * actual library the browser runs and asks what it says.
+ */
+$root = dirname( __DIR__ );
+
+$editor_json = glob( $root . '/languages/imagina-player-es_ES-*.json' );
+
+check( 'the editor and settings bundles have a catalogue each', count( $editor_json ) >= 2, count( $editor_json ) . ' files' );
+
+$runner = sys_get_temp_dir() . '/imgp-i18n-' . getmypid() . '.cjs';
+
+file_put_contents(
+	$runner,
+	<<<'JS'
+const fs = require( 'fs' );
+const { createI18n } = require( process.argv[ 2 ] );
+
+const asked = JSON.parse( fs.readFileSync( process.argv[ 3 ], 'utf8' ) );
+const said = {};
+
+for ( const [ name, file ] of Object.entries( asked.files ) ) {
+	const data = JSON.parse( fs.readFileSync( file, 'utf8' ) );
+	const i18n = createI18n( data.locale_data.messages );
+
+	said[ name ] = {};
+
+	for ( const [ label, q ] of Object.entries( asked.questions ) ) {
+		said[ name ][ label ] = q.plural
+			? i18n._n( q.single, q.plural, q.count )
+			: i18n.__( q.single );
+	}
+}
+
+process.stdout.write( JSON.stringify( said ) );
+JS
+);
+
+$questions = array(
+	'a plain string'      => array( 'single' => 'Media' ),
+	'one of something'    => array(
+		'single' => 'Measure this waveform again',
+		'plural' => 'Measure these waveforms again',
+		'count'  => 1,
+	),
+	'several of them'     => array(
+		'single' => 'Measure this waveform again',
+		'plural' => 'Measure these waveforms again',
+		'count'  => 3,
+	),
+	'a counted sentence'  => array(
+		'single' => '%d file here has no waveform, so it will show a plain progress bar on your site.',
+		'plural' => '%d files here have no waveform, so they will show a plain progress bar on your site.',
+		'count'  => 2,
+	),
+);
+
+$ask = sys_get_temp_dir() . '/imgp-i18n-ask-' . getmypid() . '.json';
+
+file_put_contents(
+	$ask,
+	(string) json_encode( // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode -- no WordPress here.
+		array(
+			'files'     => array(
+				'editor' => $root . '/languages/imagina-player-es_ES-' . md5( 'build/editor.js' ) . '.json',
+				'admin'  => $root . '/languages/imagina-player-es_ES-' . md5( 'build/admin.js' ) . '.json',
+			),
+			'questions' => $questions,
+		)
+	)
+);
+
+exec(
+	sprintf(
+		'node %s %s %s 2>&1',
+		escapeshellarg( $runner ),
+		escapeshellarg( $root . '/node_modules/@wordpress/i18n/build/index.cjs' ),
+		escapeshellarg( $ask )
+	),
+	$output,
+	$code
+);
+
+@unlink( $runner ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best effort.
+@unlink( $ask ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best effort.
+
+$said = json_decode( implode( '', $output ), true );
+
+check( 'wp.i18n reads them', 0 === $code && is_array( $said ), implode( ' / ', array_slice( $output, 0, 2 ) ) );
+
+if ( is_array( $said ) ) {
+	$editor = (array) ( $said['editor'] ?? array() );
+
+	check(
+		'a plain string comes back in Spanish',
+		'Media' !== ( $editor['a plain string'] ?? 'Media' ),
+		(string) ( $editor['a plain string'] ?? 'nothing' )
+	);
+
+	/*
+	 * The one that was broken. Asked for one and for several, because a key
+	 * that is wrong fails both and a plural rule that is wrong fails only one.
+	 */
+	check(
+		'and so does a string with a plural, asked for one',
+		'Measure this waveform again' !== ( $editor['one of something'] ?? '' ),
+		(string) ( $editor['one of something'] ?? 'nothing' )
+	);
+
+	check(
+		'and asked for several',
+		'Measure these waveforms again' !== ( $editor['several of them'] ?? '' ),
+		(string) ( $editor['several of them'] ?? 'nothing' )
+	);
+
+	check(
+		'with the right form for each',
+		( $editor['one of something'] ?? '' ) !== ( $editor['several of them'] ?? '' ),
+		'one and several came back identical'
+	);
+
+	check(
+		'and a counted sentence too',
+		! str_contains( (string) ( $editor['a counted sentence'] ?? '' ), 'no waveform, so' ),
+		(string) ( $editor['a counted sentence'] ?? 'nothing' )
+	);
+}
+
 echo PHP_EOL;
 echo 0 === $failures ? "All translation checks passed." . PHP_EOL : "{$failures} failed." . PHP_EOL;
 

@@ -38,6 +38,19 @@
 	font-style: italic;
 }
 
+/* The quiet offer to measure a waveform that is already there. Its own block
+   with a rule above it, so that in a column of form controls it reads as a
+   thing you can do rather than a caption belonging to the field below. */
+.imgp-editor__remeasure {
+	margin: 0 0 16px;
+	padding: 12px 0 0;
+	border-top: 1px solid #e0e0e0;
+
+	.imgp-editor__hint {
+		margin: 8px 0 0;
+	}
+}
+
 .imgp-editor__colour {
 	display: flex;
 	align-items: center;
