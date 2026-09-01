@@ -569,6 +569,41 @@
 	font-size: 13px;
 }
 
+
+/* What could not be measured, and why each one could not. A list, because a
+   count and one message is not something anybody can act on. */
+.imgpa-failures {
+	margin: 16px 20px 20px;
+	padding: 14px 16px;
+	border-radius: 8px;
+	background: var(--ip-sunken, #f6f7f9);
+	font-size: 13px;
+
+	p {
+		margin: 0 0 8px;
+	}
+
+	ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	li {
+		padding: 8px 0;
+		border-top: 1px solid var(--ip-line, #e3e6ea);
+
+		/* An address is one long unbroken word and would otherwise push the
+		   panel wider than the screen. */
+		overflow-wrap: anywhere;
+		color: var(--ip-muted);
+	}
+
+	li strong {
+		color: inherit;
+	}
+}
+
 /* --- Notices ------------------------------------------------------------ */
 
 .imgpa-notice {

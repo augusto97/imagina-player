@@ -18,8 +18,9 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { reason } from '../shared/failure';
-import { canMeasure, measure } from '../shared/measure';
+import { canMeasure } from '../shared/measure';
 import type { MeasureProgress } from '../shared/measure';
+import { measureTrack } from '../shared/measure-track';
 
 /** Bars to measure. Matches the shipped default resolution. */
 const BARS = 400;
@@ -162,39 +163,7 @@ export function WaveformNotice( {
 				setStatus( label( progress, i + 1, list.length ) );
 
 			try {
-				let result;
-
-				try {
-					result = await measure( track.src, BARS, report );
-				} catch ( direct ) {
-					/*
-					 * Almost always CORS: the file is on another domain and
-					 * that domain has not said this one may read it. Nothing
-					 * about the file is wrong, so rather than give up, ask our
-					 * own server to fetch it and hand it over same-origin.
-					 */
-					try {
-						result = await measure(
-							proxied( track.src ),
-							BARS,
-							report
-						);
-					} catch ( viaProxy ) {
-						/*
-						 * Both ways failed, and the one worth reporting is the
-						 * second.
-						 *
-						 * The direct attempt failing is expected for any file on
-						 * another domain — that is the whole reason the doorway
-						 * exists — so reporting it says "cross-origin refusal",
-						 * which is true and useless: it names the thing that was
-						 * supposed to be worked around rather than the reason
-						 * the workaround did not work.
-						 */
-						void direct;
-						throw viaProxy;
-					}
-				}
+				const result = await measureTrack( track.src, BARS, report );
 
 				await apiFetch( {
 					path: '/imagina-player/v1/peaks/store',
@@ -399,26 +368,6 @@ export function WaveformNotice( {
 }
 
 /**
- * The same file, fetched through this site rather than directly.
- *
- * @param src The remote address.
- */
-function proxied( src: string ): string {
-	const root = ( window.wpApiSettings?.root ?? '/wp-json/' ).replace(
-		/\/$/,
-		'/'
-	);
-
-	return (
-		root +
-		'imagina-player/v1/peaks/proxy?src=' +
-		encodeURIComponent( src ) +
-		'&_wpnonce=' +
-		encodeURIComponent( window.wpApiSettings?.nonce ?? '' )
-	);
-}
-
-/**
  * What is happening, said in the button.
  *
  * A ninety-megabyte download in silence reads as a hang, so the percentage is
@@ -453,11 +402,4 @@ function label(
 		total,
 		what
 	);
-}
-
-declare global {
-	interface Window {
-		/** Printed by WordPress on any screen that loads the REST client. */
-		wpApiSettings?: { root?: string; nonce?: string };
-	}
 }

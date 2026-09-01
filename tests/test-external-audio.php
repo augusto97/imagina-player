@@ -84,10 +84,23 @@ $list   = (string) file_get_contents( $plugin . 'assets/src/editor/playlist.tsx'
 check( 'the notice takes addresses', str_contains( $notice, 'urls' ) );
 check( 'the block passes its own when there is no attachment', str_contains( $edit, 'urls={' ) );
 check( 'and the playlist passes its external items', str_contains( $list, 'urls={' ) );
+/*
+ * The fallback moved out of this component and into a shared one, because the
+ * settings screen needed it too and did not have it — so "Generate missing
+ * waveforms" could only ever measure files on this domain. Checked where it
+ * lives now, and that this component uses it.
+ */
 check(
 	'the measuring falls back to the proxy',
-	str_contains( $notice, 'proxied( track.src )' ),
+	str_contains(
+		(string) file_get_contents( $plugin . 'assets/src/shared/measure-track.ts' ),
+		'measure( proxied( src ),'
+	),
 	'a direct fetch fails on any host that does not send CORS headers, which is most of them'
+);
+check(
+	'and the notice measures through it',
+	str_contains( $notice, 'measureTrack( track.src' )
 );
 check(
 	'and the store call names the address',

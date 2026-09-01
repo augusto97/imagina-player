@@ -204,14 +204,27 @@ export function exportUrl(
  * @param peaks
  * @param duration
  */
+/**
+ * Store a measured waveform.
+ *
+ * The address goes too, because a track played from one has no attachment to
+ * key against — and this used to send only the id, so a waveform measured for
+ * an address was stored under attachment zero, which is nothing at all.
+ *
+ * @param attachmentId The upload it belongs to, or zero.
+ * @param peaks        The measured values.
+ * @param duration     How long the track is.
+ * @param src          Where it plays from, when it is not an upload.
+ */
 export function storeWaveform(
 	attachmentId: number,
 	peaks: number[],
-	duration: number
+	duration: number,
+	src = ''
 ): Promise< unknown > {
 	return apiFetch( {
 		path: '/imagina-player/v1/peaks/store',
 		method: 'POST',
-		data: { attachmentId, peaks, duration },
+		data: { attachmentId, peaks, duration, src },
 	} );
 }

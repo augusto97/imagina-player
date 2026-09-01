@@ -60,10 +60,32 @@ check(
 
 $notice = (string) file_get_contents( $root . '/assets/src/editor/waveform-notice.tsx' );
 
+/*
+ * Measuring a file that may be on another domain — try it directly, fall back
+ * to this site's doorway — is one job with one implementation now. It used to
+ * live inside the editor's notice, so the settings screen's "Generate missing
+ * waveforms" could only ever measure files on this domain: every track played
+ * from a media host failed at the first fetch. One copy, and both use it.
+ */
+$doorway = (string) file_get_contents( $root . '/assets/src/shared/measure-track.ts' );
+$panels  = (string) file_get_contents( $root . '/assets/src/admin/panels.tsx' );
+
 check(
-	'the editor still reads the nonce from there',
-	str_contains( $notice, 'wpApiSettings?.nonce' )
+	'the nonce is still read where the doorway URL is built',
+	str_contains( $doorway, 'wpApiSettings?.nonce' )
 );
+
+foreach ( array(
+	'the editor'            => $notice,
+	'the settings screen'   => $panels,
+) as $who => $source ) {
+	check(
+		"{$who} measures through the shared doorway rather than its own idea of one",
+		str_contains( $source, "from '../shared/measure-track'" )
+			&& str_contains( $source, 'measureTrack(' ),
+		'a second copy is a second thing to forget to fix'
+	);
+}
 
 echo PHP_EOL . '# The doorway says which step gave up' . PHP_EOL;
 
@@ -145,7 +167,7 @@ check(
  */
 check(
 	'a failure through the doorway is reported over the direct attempt',
-	str_contains( $notice, 'throw viaProxy;' ),
+	str_contains( $doorway, 'throw viaProxy;' ),
 	'reporting the direct one names the thing that was meant to be worked around'
 );
 

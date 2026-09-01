@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.34.0
+Stable tag: 1.35.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,28 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.35.0 =
+* Fixed: "Generate missing waveforms" skipped most of what needed generating.
+  It asked the media library for attachments with no stored waveform, which
+  excluded two whole groups: a file measured by an older version has one, so it
+  was skipped — and those are precisely the ones worth doing again — and a
+  track played from an address rather than an upload has no row in the library
+  at all. On a site whose audio lives on a media host it found nothing and
+  reported success, which reads as "all done" when nothing was done. It now
+  includes files measured an older way, and finds tracks played from addresses
+  inside the posts that play them, playlists and nested blocks included.
+* Fixed: and it could not have measured them anyway. Measuring a file that may
+  be on another domain — try it directly, fall back to this site's own doorway
+  — lived inside the editor's notice, so the settings screen fetched every file
+  directly and failed on any host that does not allow another domain to read
+  its files, which is most of them. One implementation now, used by both.
+* Fixed: a waveform measured for an address from that screen was stored against
+  attachment zero, which is nothing at all. The address goes with it now.
+* Changed: the report lists every file that failed with its own reason, in the
+  same words the editor uses. It used to be a count and the first failure's raw
+  tag, which says neither which files were left nor what to do about them —
+  and eleven failures rarely share one cause.
 
 = 1.34.0 =
 * Fixed: every string with a plural stayed in English, in an otherwise fully

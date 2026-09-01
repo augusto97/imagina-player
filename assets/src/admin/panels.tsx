@@ -1,7 +1,9 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 
-import { canMeasure, measure } from '../shared/measure';
+import { reason } from '../shared/failure';
+import { canMeasure } from '../shared/measure';
+import { measureTrack } from '../shared/measure-track';
 import {
 	generateWaveform,
 	diagnoseFile,
@@ -201,6 +203,11 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 	const [ status, setStatus ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
 
+	/** What failed and why, listed rather than counted. */
+	const [ report, setReport ] = useState<
+		Array< { title: string; why: string } >
+	>( [] );
+
 	const peaks = settings.peaks;
 	const set = ( patch: Partial< SettingsPayload[ 'peaks' ] > ): void =>
 		onChange( { peaks: { ...peaks, ...patch } } );
@@ -232,7 +239,14 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 			throw new Error( 'no-url' );
 		}
 
-		const result = await measure(
+		/*
+		 * Through this site's doorway when the file is on another domain, which
+		 * this did not do — so a library of tracks played from a media host
+		 * failed at the first fetch, every one of them, with a message about
+		 * cross-origin refusals. The editor's notice had known how to do this
+		 * for some time; there is one copy of it now and both use it.
+		 */
+		const result = await measureTrack(
 			item.url,
 			peaks.resolution,
 			( progress ) => {
@@ -258,11 +272,12 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 			}
 		);
 
-		await storeWaveform( item.id, result.peaks, result.duration );
+		await storeWaveform( item.id, result.peaks, result.duration, item.url );
 	};
 
 	const generateAll = async (): Promise< void > => {
 		setBusy( true );
+		setReport( [] );
 		setStatus(
 			__( 'Looking for files without a waveform…', 'imagina-player' )
 		);
@@ -284,7 +299,17 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 
 			let done = 0;
 
-			let firstFailure = '';
+			/*
+			 * Every failure, with its own reason, rather than a count and the
+			 * first message.
+			 *
+			 * "Nine of twenty generated. The rest failed — the first: ..." is
+			 * not something anybody can act on: it does not say which eleven,
+			 * and the eleven rarely failed for the same reason. One might be
+			 * behind hotlink protection, one might not be audio, one might be a
+			 * file the host truncates.
+			 */
+			const failures: Array< { title: string; why: string } > = [];
 
 			for ( let i = 0; i < waiting.length; i++ ) {
 				setStatus(
@@ -313,36 +338,25 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 					// One unreadable file should not stop the rest, but the
 					// reason is kept: a count of failures with no cause is a
 					// dead end for whoever has to fix it.
-					if ( ! firstFailure ) {
-						firstFailure =
-							failure instanceof Error
-								? failure.message
-								: String( failure ?? '' );
-					}
+					failures.push( {
+						title: waiting[ i ].title || waiting[ i ].url,
+						// The same sentence the editor shows, rather than the
+						// raw tag the measuring code throws.
+						why: reason( failure ),
+					} );
 				}
 			}
 
 			setPending( Math.max( 0, waiting.length - done ) );
+			setReport( failures );
 
 			setStatus(
-				done === waiting.length
-					? sprintf(
-							/* translators: 1: number generated, 2: total */
-							__( '%1$d of %2$d generated.', 'imagina-player' ),
-							done,
-							waiting.length
-					  )
-					: sprintf(
-							/* translators: 1: number generated, 2: total, 3: why the first failure happened */
-							__(
-								'%1$d of %2$d generated. The rest failed — the first: %3$s',
-								'imagina-player'
-							),
-							done,
-							waiting.length,
-							firstFailure ||
-								__( 'no reason given', 'imagina-player' )
-					  )
+				sprintf(
+					/* translators: 1: number generated, 2: total */
+					__( '%1$d of %2$d generated.', 'imagina-player' ),
+					done,
+					waiting.length
+				)
 			);
 		} catch {
 			setStatus(
@@ -600,6 +614,45 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 						{ status }
 					</span>
 				</div>
+
+				{ /*
+				     Which ones failed, and why each one did.
+				
+				     The line above used to be the whole report: a count, and
+				     the first failure's message. That says neither which files
+				     were left nor what to do about them, and eleven failures
+				     rarely share one cause — one file behind hotlink
+				     protection, one that is not audio, one on a host that cuts
+				     transfers short are three different jobs.
+				*/ }
+				{ report.length > 0 && (
+					<div className="imgpa-failures">
+						<p>
+							<strong>
+								{ sprintf(
+									/* translators: %d: how many files could not be measured. */
+									_n(
+										'%d file could not be measured:',
+										'%d files could not be measured:',
+										report.length,
+										'imagina-player'
+									),
+									report.length
+								) }
+							</strong>
+						</p>
+
+						<ul>
+							{ report.map( ( failure ) => (
+								<li key={ failure.title }>
+									<strong>{ failure.title }</strong>
+									<br />
+									{ failure.why }
+								</li>
+							) ) }
+						</ul>
+					</div>
+				) }
 			</Card>
 		</>
 	);

@@ -320,9 +320,84 @@ function get_posts( $args = array() ) {
 		}
 	}
 
+	/*
+	 * Posts with content, for the search that finds tracks played from an
+	 * address. Those live nowhere but inside the posts that play them, so a
+	 * stub with no posts in it cannot exercise the code that goes looking.
+	 */
+	if ( '' === $key ) {
+		$found = array_keys( (array) ( $GLOBALS['stub_posts'] ?? array() ) );
+	}
+
 	$limit = (int) ( $args['posts_per_page'] ?? -1 );
 
 	return $limit > 0 ? array_slice( $found, 0, $limit ) : $found;
+}
+
+/**
+ * Enough of WP_Query for the attachment sweep the waveform tools do.
+ *
+ * Ids out of `$GLOBALS['stub_attachments']`, and nothing else — the filtering
+ * that matters moved out of the query and into the loop, which is the part
+ * worth testing.
+ */
+class WP_Query {
+	/** @var list<int> */
+	public array $posts = array();
+
+	public int $found_posts = 0;
+
+	public function __construct( $args = array() ) {
+		$this->posts = array_keys( (array) ( $GLOBALS['stub_attachments'] ?? array() ) );
+
+		$limit = (int) ( $args['posts_per_page'] ?? -1 );
+
+		if ( $limit > 0 ) {
+			$this->posts = array_slice( $this->posts, 0, $limit );
+		}
+
+		$this->found_posts = count( $this->posts );
+	}
+}
+
+function get_post_field( $field, $id ) {
+	return (string) ( $GLOBALS['stub_posts'][ (int) $id ][ $field ] ?? '' );
+}
+
+function has_blocks( $content ) {
+	return str_contains( (string) $content, '<!-- wp:' );
+}
+
+/**
+ * Enough of the block parser for the attributes this plugin reads.
+ *
+ * Only the shape the real one produces — blockName, attrs, innerBlocks — and
+ * only for self-closing and paired block comments, which is what a player and
+ * the containers it sits in are written as.
+ *
+ * @param string $content Post content.
+ */
+function parse_blocks( $content ) {
+	$blocks = array();
+
+	preg_match_all(
+		'/<!--\s+wp:([a-z0-9-]+\/[a-z0-9-]+)\s*(\{.*?\})?\s*(\/)?-->/s',
+		(string) $content,
+		$matches,
+		PREG_SET_ORDER
+	);
+
+	foreach ( $matches as $match ) {
+		$blocks[] = array(
+			'blockName'   => $match[1],
+			'attrs'       => isset( $match[2] ) && '' !== $match[2]
+				? (array) json_decode( $match[2], true )
+				: array(),
+			'innerBlocks' => array(),
+		);
+	}
+
+	return $blocks;
 }
 
 /**

@@ -1103,9 +1103,135 @@ final class PeaksController {
 	 * depends on WP-Cron firing, so the admin needs a way to see what is missing
 	 * and to push it through on demand.
 	 */
+	/**
+	 * Tracks played from an address rather than from the media library.
+	 *
+	 * There is no row anywhere listing these — a waveform is stored under a
+	 * hash of the address, and a hash cannot be turned back into one — so the
+	 * only place they exist is inside the posts that play them. Which is where
+	 * this looks.
+	 *
+	 * Block attributes rather than a search of the rendered page: the address
+	 * has to be exactly the string the block holds, because that is what the
+	 * renderer will hash when it goes looking for the waveform. Anything picked
+	 * out of rendered HTML has been through escaping and would key differently.
+	 *
+	 * @param int $limit How many to return at most.
+	 * @return list<array{id:int, title:string, url:string, bytes:int}>
+	 */
+	private function tracks_in_posts( int $limit ): array {
+		$posts = get_posts(
+			array(
+				'post_type'      => 'any',
+				'post_status'    => array( 'publish', 'draft', 'pending', 'private', 'future' ),
+				'posts_per_page' => 200,
+				'orderby'        => 'ID',
+				'order'          => 'DESC',
+				's'              => 'imagina-player/',
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			)
+		);
+
+		$found = array();
+
+		foreach ( $posts as $post_id ) {
+			$content = (string) get_post_field( 'post_content', (int) $post_id );
+
+			if ( ! function_exists( 'parse_blocks' ) || ! has_blocks( $content ) ) {
+				continue;
+			}
+
+			foreach ( $this->tracks_in_blocks( parse_blocks( $content ) ) as $url => $title ) {
+				if ( isset( $found[ $url ] ) ) {
+					continue;
+				}
+
+				$found[ $url ] = array(
+					// Zero says "not an upload", which is what tells the
+					// browser side to store this against the address.
+					'id'    => 0,
+					'title' => '' !== $title ? $title : $url,
+					'url'   => $url,
+					// Unknown until it is fetched, and nothing here can ask a
+					// media host how big a file is without fetching it.
+					'bytes' => 0,
+				);
+
+				if ( count( $found ) >= $limit ) {
+					break 2;
+				}
+			}
+		}
+
+		return array_values( $found );
+	}
+
+	/**
+	 * Addresses and titles out of this plugin's blocks, however deeply nested.
+	 *
+	 * @param array<int, array<string, mixed>> $blocks Parsed blocks.
+	 * @return array<string, string> Address to title.
+	 */
+	private function tracks_in_blocks( array $blocks ): array {
+		$found = array();
+
+		foreach ( $blocks as $block ) {
+			$name = (string) ( $block['blockName'] ?? '' );
+
+			if ( str_starts_with( $name, 'imagina-player/' ) ) {
+				$atts = (array) ( $block['attrs'] ?? array() );
+
+				// A single track, when it is not an upload.
+				if ( empty( $atts['attachmentId'] ) ) {
+					$src = Attributes::sanitize_media_url( (string) ( $atts['src'] ?? '' ) );
+
+					if ( '' !== $src ) {
+						$found[ $src ] = (string) ( $atts['title'] ?? '' );
+					}
+				}
+
+				// And a playlist, which holds several.
+				foreach ( (array) ( $atts['tracks'] ?? array() ) as $track ) {
+					if ( ! is_array( $track ) || ! empty( $track['id'] ) ) {
+						continue;
+					}
+
+					$src = Attributes::sanitize_media_url( (string) ( $track['src'] ?? '' ) );
+
+					if ( '' !== $src ) {
+						$found[ $src ] = (string) ( $track['title'] ?? '' );
+					}
+				}
+			}
+
+			// A player inside a column, a group, a synced pattern.
+			if ( ! empty( $block['innerBlocks'] ) ) {
+				$found += $this->tracks_in_blocks( (array) $block['innerBlocks'] );
+			}
+		}
+
+		return $found;
+	}
+
 	public function list_pending( WP_REST_Request $request ): WP_REST_Response {
 		$limit = max( 1, min( 500, (int) $request->get_param( 'limit' ) ) );
 
+		/*
+		 * Every attachment, not only the ones with nothing stored.
+		 *
+		 * This used to ask for attachments where the waveform meta did not
+		 * exist, which quietly excluded two whole groups: a file measured by an
+		 * older version — the ones that most need doing again — and, because a
+		 * media library has no row for them at all, every track played from an
+		 * address rather than an upload. On a site whose audio all lives on a
+		 * media host, "Generate missing waveforms" had nothing to generate and
+		 * said so, which reads as "everything is fine".
+		 *
+		 * So the filter moves out of the query and into the loop, where it can
+		 * ask the question that matters: is what is stored the way this version
+		 * measures?
+		 */
 		$query = new \WP_Query(
 			array(
 				'post_type'      => 'attachment',
@@ -1115,34 +1241,46 @@ final class PeaksController {
 				'fields'         => 'ids',
 				'orderby'        => 'ID',
 				'order'          => 'DESC',
-				'no_found_rows'  => false,
-				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- admin-only tool.
-					array(
-						'key'     => PeaksRepository::META_KEY,
-						'compare' => 'NOT EXISTS',
-					),
-				),
+				'no_found_rows'  => true,
 			)
 		);
 
 		$pending = array();
 
 		foreach ( $query->posts as $attachment_id ) {
-			$file = get_attached_file( (int) $attachment_id );
+			$attachment_id = (int) $attachment_id;
+
+			if ( PeaksRepository::is_current( $this->repository->get( 'att_' . $attachment_id ) ) ) {
+				continue;
+			}
+
+			$file = get_attached_file( $attachment_id );
 
 			$pending[] = array(
-				'id'    => (int) $attachment_id,
+				'id'    => $attachment_id,
 				'title' => (string) get_the_title( $attachment_id ),
 				// So the browser can fetch it when the server cannot measure it.
-				'url'   => (string) ( wp_get_attachment_url( (int) $attachment_id ) ?: '' ),
+				'url'   => (string) ( wp_get_attachment_url( $attachment_id ) ?: '' ),
 				'bytes' => is_string( $file ) && is_readable( $file ) ? (int) filesize( $file ) : 0,
 			);
+		}
+
+		foreach ( $this->tracks_in_posts( $limit ) as $track ) {
+			if ( count( $pending ) >= $limit ) {
+				break;
+			}
+
+			if ( PeaksRepository::is_current( $this->repository->get( 'url_' . md5( $track['url'] ) ) ) ) {
+				continue;
+			}
+
+			$pending[] = $track;
 		}
 
 		return new WP_REST_Response(
 			array(
 				'pending'   => $pending,
-				'total'     => (int) $query->found_posts,
+				'total'     => count( $pending ),
 				'available' => PeaksGenerator::is_available(),
 			),
 			200
