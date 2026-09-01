@@ -205,15 +205,27 @@ echo PHP_EOL . '# The doorway, actually run' . PHP_EOL;
  * proves the refusal was reached with the right reason — which is where the
  * mistakes are — rather than that the header left the building.
  */
-function run_proxy( string $url, array $remote, string $range = '', ?array $head = null ): array {
+function run_proxy( string $url, array $remote, string $range = '', ?array $head = null, ?array $queue = null ): array {
+	/*
+	 * The count of downloads is printed on the way out rather than returned,
+	 * because the handler ends in `exit` — which is right for something that
+	 * streams a file, and means a shutdown function is the only place left to
+	 * say anything. It is what tells a retry that worked apart from a first
+	 * attempt that happened to succeed.
+	 */
 	$script = <<<'PHP'
 <?php
 require %s;
 $GLOBALS['stub_remote'] = %s;
 $head = %s;
 if ( null !== $head ) { $GLOBALS['stub_remote_head'] = $head; }
+$queue = %s;
+if ( null !== $queue ) { $GLOBALS['stub_remote_queue'] = $queue; }
 $range = %s;
 if ( '' !== $range ) { $_SERVER['HTTP_RANGE'] = $range; }
+register_shutdown_function( static function () {
+	echo "\n[gets: " . (int) ( $GLOBALS['stub_remote_gets'] ?? 0 ) . "]";
+} );
 $controller = new ImaginaPlayer\Rest\PeaksController();
 $controller->proxy( new WP_REST_Request( array( 'src' => %s ) ) );
 PHP;
@@ -227,6 +239,7 @@ PHP;
 			var_export( dirname( __DIR__ ) . '/tests/bootstrap.php', true ),
 			var_export( $remote, true ),
 			var_export( $head, true ),
+			var_export( $queue, true ),
 			var_export( $range, true ),
 			var_export( $url, true )
 		)
@@ -366,9 +379,29 @@ echo PHP_EOL . '# Asking this server what it sees' . PHP_EOL;
  * permitted to do — none of it is visible from a browser. So the server is
  * asked, and it answers with what it found rather than with a conclusion.
  */
+/*
+ * The answers the reported case actually gave, in the order the check asks:
+ * refused without a `Referer`, allowed with one, and happy to serve ranges.
+ * The length matters — the check works out the last slice from it, and the
+ * last slice is the one that was failing.
+ */
 $GLOBALS['stub_remote_steps'] = array(
-	array( 'code' => 403, 'headers' => array( 'content-type' => 'audio/mpeg' ), 'body' => '' ),
-	array( 'code' => 403, 'headers' => array(), 'body' => '' ),
+	array( 'code' => 403, 'headers' => array( 'content-type' => 'text/html' ), 'body' => '' ),
+	array(
+		'code'    => 200,
+		'headers' => array( 'content-type' => 'audio/mpeg', 'content-length' => '1024', 'accept-ranges' => 'bytes' ),
+		'body'    => '',
+	),
+	array(
+		'code'    => 206,
+		'headers' => array( 'content-type' => 'audio/mpeg', 'content-range' => 'bytes 0-1023/1024' ),
+		'body'    => '',
+	),
+	array(
+		'code'    => 206,
+		'headers' => array( 'content-type' => 'audio/mpeg', 'content-range' => 'bytes 0-1023/1024' ),
+		'body'    => '',
+	),
 );
 
 $controller_instance = new ImaginaPlayer\Rest\PeaksController();
@@ -414,6 +447,29 @@ check(
 	'and asks whether that host will serve part of a file',
 	isset( $steps['range'] ),
 	'fetching a large file in pieces depends entirely on the answer'
+);
+
+/*
+ * And the last part, not only the first.
+ *
+ * The check used to ask for `bytes=0-1023` and stop, so it came back entirely
+ * green about a file whose measurement was failing on the thirteenth of
+ * thirteen slices — which read as the plugin contradicting itself, and sent
+ * the search somewhere else again. The first kilobyte of a file is the one
+ * request that is always cheap, always cached and always allowed; proving it
+ * works proves very little.
+ */
+check(
+	'and for the last part as well, which is where the failures were',
+	isset( $steps['range-tail'] ),
+	'a check that only ever asks for the first kilobyte is green about a file that cannot be fetched'
+);
+
+check(
+	'asking for a range that ends at the last byte the host reported',
+	isset( $steps['range-tail'] )
+		&& str_ends_with( (string) ( $steps['range-tail']['contentRange'] ?? '' ), '/1024' ),
+	(string) ( $steps['range-tail']['contentRange'] ?? 'nothing' )
 );
 
 /*
@@ -626,6 +682,111 @@ check(
 	'a slice that comes back as a web page is still refused',
 	str_contains( $html_slice['output'], 'not-media' ),
 	substr( $html_slice['output'], 0, 120 )
+);
+
+echo PHP_EOL . '# One dropped request out of thirteen' . PHP_EOL;
+
+/*
+ * The failure that prompted this. A fifty megabyte recording comes down in
+ * thirteen slices, and the thirteenth did not come back: no status, no
+ * refusal, just a request that failed. There was no retry anywhere in the
+ * chain, so twelve slices that had arrived perfectly were thrown away.
+ *
+ * A far end that fumbles one request in a dozen is completely ordinary. Every
+ * other client on the web asks again.
+ */
+$flaky = run_proxy(
+	'https://media.example.com/lesson.mp3',
+	array(),
+	'bytes=50331648-50783775',
+	null,
+	array(
+		array( 'error' => 'cURL error 56: Recv failure: Connection reset by peer' ),
+		array( 'error' => 'cURL error 56: Recv failure: Connection reset by peer' ),
+		array(
+			'code'    => 206,
+			'headers' => array( 'content-type' => 'audio/mpeg', 'content-range' => 'bytes 50331648-50783775/50783776' ),
+			'body'    => 'ID3 the last piece',
+		),
+	)
+);
+
+check(
+	'a slice that failed twice and then worked is served, not refused',
+	! str_contains( $flaky['output'], 'No:' ),
+	substr( $flaky['output'], 0, 120 )
+);
+
+check(
+	'and it really was asked for three times',
+	str_contains( $flaky['output'], '[gets: 3]' ),
+	substr( $flaky['output'], -20 )
+);
+
+/*
+ * And it does give up. Asking for ever would turn a host that is genuinely
+ * down into a request that never returns, which on a page is worse than a
+ * refusal.
+ */
+$never = run_proxy(
+	'https://media.example.com/lesson.mp3',
+	array( 'error' => 'cURL error 28: Operation timed out after 120000 milliseconds' ),
+	'bytes=50331648-50783775'
+);
+
+check(
+	'a slice that never comes back is refused in the end',
+	str_contains( $never['output'], 'No: upstream-unreachable' ),
+	substr( $never['output'], 0, 120 )
+);
+
+check(
+	'after a bounded number of tries, not for ever',
+	str_contains( $never['output'], '[gets: 3]' ),
+	substr( $never['output'], -20 )
+);
+
+echo PHP_EOL . '# What the far end actually said' . PHP_EOL;
+
+/*
+ * `upstream-unreachable` on its own is nearly useless: a name that would not
+ * resolve, a certificate that would not verify, a connection reset at byte
+ * forty million and a timeout are four different problems with four different
+ * fixes, and the HTTP client names which one every time.
+ *
+ * That sentence was read into a variable and dropped, and what reached the
+ * person was "this site could not reach the server". Three explanations in a
+ * row then got invented to fill the gap, one of which cost somebody a server
+ * setting their host had warned them not to change.
+ */
+check(
+	'the reason the request failed is passed on rather than binned',
+	str_contains( $never['output'], 'cURL error 28' ),
+	substr( $never['output'], 0, 160 )
+);
+
+check(
+	'and the tag is still there beside it, for the message to be chosen from',
+	str_contains( $never['output'], 'No: upstream-unreachable' )
+		&& str_contains( $never['output'], 'Why: ' ),
+	substr( $never['output'], 0, 160 )
+);
+
+/*
+ * A refusal is an answer. Asking a host that said 403 to say it twice more is
+ * pointless at best, and at worst it is three times the load on a service that
+ * is already rate-limiting this site.
+ */
+$refused_once = run_proxy(
+	'https://media.example.com/lesson.mp3',
+	array( 'code' => 403, 'headers' => array( 'content-type' => 'audio/mpeg' ) ),
+	'bytes=0-1023'
+);
+
+check(
+	'a refusal is not retried, because it is an answer',
+	str_contains( $refused_once['output'], '[gets: 1]' ),
+	substr( $refused_once['output'], -20 )
 );
 
 echo PHP_EOL . '# The preview stops asking the wrong address' . PHP_EOL;

@@ -351,7 +351,29 @@ function wp_remote_get( $url, $args = array() ) {
  * the way the real client does.
  */
 function wp_safe_remote_get( $url, $args = array() ) {
-	$response = $GLOBALS['stub_remote'] ?? null;
+	$GLOBALS['stub_remote_gets'] = ( $GLOBALS['stub_remote_gets'] ?? 0 ) + 1;
+
+	/*
+	 * A different answer each time, for the cases where that is the point.
+	 *
+	 * The doorway asks again when a request does not come back, because a host
+	 * that drops one request in a dozen is ordinary and there was no retry
+	 * anywhere. A stub that can only give one answer cannot tell a retry that
+	 * works from no retry at all: both look like whatever the single answer
+	 * was. So a list is served one entry per call, and the last entry repeats
+	 * once the list runs out.
+	 */
+	$queue = $GLOBALS['stub_remote_queue'] ?? null;
+
+	if ( is_array( $queue ) && array() !== $queue ) {
+		$response = 1 === count( $queue ) ? $queue[0] : array_shift( $GLOBALS['stub_remote_queue'] );
+	} else {
+		$response = $GLOBALS['stub_remote'] ?? null;
+	}
+
+	if ( is_array( $response ) && isset( $response['error'] ) ) {
+		$response = new WP_Error( 'http_request_failed', (string) $response['error'] );
+	}
 
 	if ( null === $response ) {
 		return wp_remote_get( $url, $args );

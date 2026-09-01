@@ -2,7 +2,7 @@
 # This file is distributed under the same licence as the Imagina Player plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: Imagina Player 1.27.0\n"
+"Project-Id-Version: Imagina Player 1.29.0\n"
 "Report-Msgid-Bugs-To: https://github.com/augusto97/imagina-player\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -969,12 +969,12 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: src/Rest/PeaksController.php:833
+#: src/Rest/PeaksController.php:934
 msgid "No track was named."
 msgstr ""
 
-#: src/Rest/PeaksController.php:847
-#: src/Rest/PeaksController.php:907
+#: src/Rest/PeaksController.php:948
+#: src/Rest/PeaksController.php:1008
 msgid "No waveform data was supplied."
 msgstr ""
 
@@ -1391,7 +1391,7 @@ msgstr ""
 msgid "Served with %d."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1027
+#: src/Rest/PeaksController.php:1128
 msgid "Server-side waveform generation is unavailable on this host."
 msgstr ""
 
@@ -1628,7 +1628,7 @@ msgstr ""
 msgid "Thank you."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1019
+#: src/Rest/PeaksController.php:1120
 #: src/Rest/StreamController.php:60
 msgid "That attachment does not exist."
 msgstr ""
@@ -1649,7 +1649,7 @@ msgstr ""
 msgid "That file is not protected."
 msgstr ""
 
-#: src/Rest/PeaksController.php:825
+#: src/Rest/PeaksController.php:926
 msgid "That is not a media file."
 msgstr ""
 
@@ -1804,12 +1804,12 @@ msgstr ""
 msgid "The vault directory returned a page listing its contents. Turn directory indexes off for the uploads directory."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1053
+#: src/Rest/PeaksController.php:1154
 msgid "The waveform could not be generated for this file."
 msgstr ""
 
-#: src/Rest/PeaksController.php:862
-#: src/Rest/PeaksController.php:922
+#: src/Rest/PeaksController.php:963
+#: src/Rest/PeaksController.php:1023
 msgid "The waveform data is malformed."
 msgstr ""
 
@@ -1871,7 +1871,7 @@ msgstr ""
 msgid "This video is hosted by %s."
 msgstr ""
 
-#: src/Rest/PeaksController.php:883
+#: src/Rest/PeaksController.php:984
 msgid "This waveform grant is missing or expired."
 msgstr ""
 
@@ -2159,7 +2159,7 @@ msgstr ""
 msgid "measuring"
 msgstr ""
 
-#: assets/src/shared/failure.ts:208
+#: assets/src/shared/failure.ts:218
 msgid "measuring was stopped before it finished"
 msgstr ""
 
@@ -2168,7 +2168,7 @@ msgstr ""
 msgid "no reason given"
 msgstr ""
 
-#: assets/src/shared/failure.ts:191
+#: assets/src/shared/failure.ts:201
 msgid "nothing in the file decoded as audio"
 msgstr ""
 
@@ -2177,67 +2177,67 @@ msgid "seconds"
 msgstr ""
 
 #. translators: %s: the HTTP status returned.
-#: assets/src/shared/failure.ts:162
+#: assets/src/shared/failure.ts:172
 msgid "something between the browser and WordPress answered %s — this plugin did not, because every refusal it makes says why. Settings → Imagina Player → Waveforms has a check that asks the server directly and reports what it finds."
 msgstr ""
 
-#: assets/src/shared/failure.ts:106
+#: assets/src/shared/failure.ts:116
 msgid "that address was refused as unsafe to fetch"
 msgstr ""
 
 #. translators: %s: HTTP status the remote server returned.
-#: assets/src/shared/failure.ts:79
+#: assets/src/shared/failure.ts:89
 msgid "the address does not return an audio or video file"
 msgstr ""
 
-#: assets/src/shared/failure.ts:196
+#: assets/src/shared/failure.ts:206
 msgid "the browser could not decode it — check that the file plays"
 msgstr ""
 
-#: assets/src/shared/failure.ts:229
+#: assets/src/shared/failure.ts:239
 msgid "the browser could not read it, which is usually a cross-origin refusal"
 msgstr ""
 
 #. translators: %s: HTTP status code, or "?" when there was none.
-#: assets/src/shared/failure.ts:181
+#: assets/src/shared/failure.ts:191
 msgid "the download stopped early — the file may be behind something that cuts long transfers off"
 msgstr ""
 
-#: assets/src/shared/failure.ts:86
+#: assets/src/shared/failure.ts:96
 msgid "the file is larger than this site will fetch on your behalf"
 msgstr ""
 
 #. translators: %s: HTTP status code, or "?" when there was none.
-#: assets/src/shared/failure.ts:172
+#: assets/src/shared/failure.ts:182
 msgid "the server answered %s when asked for the file"
 msgstr ""
 
 #. translators: %s: HTTP status the remote server returned.
-#: assets/src/shared/failure.ts:70
+#: assets/src/shared/failure.ts:80
 msgid "the server hosting the file answered %s to this site as well — check that domain’s hotlink protection or signed-link rules"
 msgstr ""
 
-#: assets/src/shared/failure.ts:215
+#: assets/src/shared/failure.ts:225
 msgid "the server sent nothing back for part of the file"
 msgstr ""
 
-#: assets/src/shared/failure.ts:187
+#: assets/src/shared/failure.ts:197
 msgid "this browser cannot decode audio"
 msgstr ""
 
-#: assets/src/shared/failure.ts:99
+#: assets/src/shared/failure.ts:109
 msgid "this site could not open a temporary file to download into — check the server’s free disk space and that the uploads folder is writable"
 msgstr ""
 
-#: assets/src/shared/failure.ts:62
+#: assets/src/shared/failure.ts:72
 msgid "this site could not reach the file’s own server"
 msgstr ""
 
-#: assets/src/shared/failure.ts:120
+#: assets/src/shared/failure.ts:130
 msgid "this site refused the request that fetches the file — reload the editor and try again"
 msgstr ""
 
-#: assets/src/shared/failure.ts:153
+#: assets/src/shared/failure.ts:163
 msgid "this site refused to fetch the file and the reason did not survive the trip — Settings → Imagina Player → Waveforms has a check that asks the server directly and reports it"
 msgstr ""
 

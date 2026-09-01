@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.28.0
+Stable tag: 1.29.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,33 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.29.0 =
+* Fixed: one dropped request threw away a download that was 99% finished. A
+  fifty megabyte recording comes down in thirteen pieces, and there was no
+  retry anywhere in the chain — so the thirteenth piece failing discarded the
+  twelve that had arrived perfectly, and reported it as though the file could
+  not be fetched at all. Pieces are now asked for up to three times. A refusal
+  is not retried, because a refusal is an answer.
+* Fixed: and if a piece never comes, everything but the last scrap of a file is
+  still a waveform. Where at least 95% arrived, the waveform is drawn from what
+  there is and the timeline is scaled so the track's length stays right. Below
+  that it is still reported as a failure, because a confident picture of
+  two-thirds of a recording is worse than saying so.
+* Fixed: the reason a request failed was being read into a variable and thrown
+  away. "This site could not reach the file's own server" covers a name that
+  would not resolve, a certificate that would not verify, a timeout, and a
+  connection reset at byte forty million — four different problems with four
+  different fixes, and the HTTP client names which one every time. It now says
+  which, in the client's own words, beside which piece it happened on.
+* Fixed: the file check only ever asked for the first kilobyte, so it came back
+  entirely green about a file whose measurement was failing on the last piece.
+  The first kilobyte is the one request that is always cheap, always cached and
+  always allowed. It now asks for the tail as well.
+* Testing: the reported failure is reproduced end to end — a piece that fails
+  twice and then works, a piece that never comes, and a piece missing from the
+  middle, which must still refuse. Each of the three was checked by turning the
+  fix back off.
 
 = 1.28.0 =
 * Fixed: a failure with a perfectly good explanation on it was reported as

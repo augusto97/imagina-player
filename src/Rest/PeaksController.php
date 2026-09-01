@@ -307,6 +307,15 @@ final class PeaksController {
 	private const PROXY_MAX_BYTES = 250 * MB_IN_BYTES;
 
 	/**
+	 * How many times one slice is asked for before giving up on it.
+	 *
+	 * Three, not one, because a large file is a dozen or more requests to the
+	 * same host in a row and a far end that drops one of them is unremarkable.
+	 * Only a transport failure is retried — a refusal is an answer.
+	 */
+	private const FETCH_ATTEMPTS = 3;
+
+	/**
 	 * Hand a remote media file to the editor's browser, same-origin.
 	 *
 	 * Never echoes anything from the remote server but its bytes: no headers
@@ -383,6 +392,38 @@ final class PeaksController {
 			$src,
 			array( 'headers' => $this->fetch_headers() + array( 'Range' => 'bytes=0-1023' ) )
 		);
+
+		/*
+		 * And the last piece, which is a different request from the first.
+		 *
+		 * The check used to ask for `bytes=0-1023` and stop there, so it came
+		 * back entirely green about a file whose measurement was failing on the
+		 * thirteenth of thirteen slices. The first kilobyte of a file is the
+		 * one request that is always cheap, always cached and always allowed;
+		 * proving it works proves very little.
+		 *
+		 * The tail is where the interesting failures live — a range that runs
+		 * to the last byte, on a connection the host has already served a dozen
+		 * times — so the check asks for exactly that, using the size the far
+		 * end just reported.
+		 */
+		$known = 0;
+
+		foreach ( $steps as $step ) {
+			if ( 'head-as-this-site' === ( $step['step'] ?? '' ) ) {
+				$known = (int) ( $step['length'] ?? 0 );
+			}
+		}
+
+		if ( $known > 0 ) {
+			$tail = max( 0, $known - 262144 );
+
+			$steps[] = $this->probe_step(
+				'range-tail',
+				$src,
+				array( 'headers' => $this->fetch_headers() + array( 'Range' => 'bytes=' . $tail . '-' . ( $known - 1 ) ) )
+			);
+		}
 
 		$steps[] = array(
 			'step'   => 'sent-as',
@@ -478,7 +519,7 @@ final class PeaksController {
 			);
 
 		if ( is_wp_error( $head ) ) {
-			$this->refuse( 502, 'upstream-unreachable' );
+			$this->refuse( 502, 'upstream-unreachable', $head->get_error_message() );
 		}
 
 		/*
@@ -558,7 +599,33 @@ final class PeaksController {
 			$get_args['headers']['Range'] = 'bytes=' . $range[0] . '-' . $range[1];
 		}
 
-		$body = wp_safe_remote_get( $src, $get_args );
+		/*
+		 * Asked for more than once before giving up.
+		 *
+		 * A fifty megabyte recording is thirteen requests to the same host in a
+		 * row, and there was no retry anywhere in the chain: one connection
+		 * reset — the thirteenth, in the case that prompted this — threw away
+		 * twelve slices that had arrived perfectly and failed the whole
+		 * measurement. A far end that drops one request in a dozen is
+		 * completely ordinary, and every other client on the web copes with it
+		 * by asking again.
+		 *
+		 * Only a transport failure is retried. A refusal is an answer, and
+		 * asking a host that said no to say it twice more is just rudeness.
+		 */
+		$body = null;
+
+		for ( $attempt = 1; $attempt <= self::FETCH_ATTEMPTS; $attempt++ ) {
+			$body = wp_safe_remote_get( $src, $get_args );
+
+			if ( ! is_wp_error( $body ) ) {
+				break;
+			}
+
+			if ( $attempt < self::FETCH_ATTEMPTS ) {
+				usleep( 300000 * $attempt );
+			}
+		}
 
 		$size = (int) ( @filesize( $temp ) ?: 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- missing file is handled below.
 
@@ -591,7 +658,10 @@ final class PeaksController {
 				is_wp_error( $body ) || $got >= 400 ? 502 : 413,
 				is_wp_error( $body )
 					? 'upstream-unreachable'
-					: ( $got >= 400 ? 'upstream-' . $got : 'too-large' )
+					: ( $got >= 400 ? 'upstream-' . $got : 'too-large' ),
+				is_wp_error( $body )
+					? $body->get_error_message()
+					: sprintf( 'asked for %s, got %d bytes with status %d', $range_header, $size, $got )
 			);
 		}
 
@@ -727,8 +797,9 @@ final class PeaksController {
 	 *
 	 * @param int    $status Status for this request.
 	 * @param string $reason A short machine-readable tag.
+	 * @param string $detail What the far end or the HTTP client actually said.
 	 */
-	private function refuse( int $status, string $reason = '' ): void {
+	private function refuse( int $status, string $reason = '', string $detail = '' ): void {
 		/*
 		 * Never a 5xx, whatever the reason.
 		 *
@@ -755,12 +826,42 @@ final class PeaksController {
 		}
 
 		/*
+		 * The sentence the HTTP client wrote, passed on rather than binned.
+		 *
+		 * `upstream-unreachable` is the tag for "the request did not come
+		 * back", and on its own it is nearly useless: a name resolution
+		 * failure, a certificate that did not verify, a connection reset at
+		 * byte forty million and a timeout are four completely different
+		 * problems with four different fixes, and cURL says which one it was
+		 * every time. That sentence was being read into a variable and dropped,
+		 * so what reached the person was "could not reach the server" — and
+		 * three explanations in a row got invented to fill the gap.
+		 *
+		 * Header only, on one line, and short: this is somebody else's text
+		 * arriving in ours, so it is stripped of anything that could end a
+		 * header early or start a new one.
+		 */
+		$said = trim( preg_replace( '/[^\x20-\x7e]+/', ' ', $detail ) ?? '' );
+
+		if ( '' !== $said ) {
+			header( 'X-Imagina-Detail: ' . substr( $said, 0, 200 ) );
+		}
+
+		/*
 		 * And in the body as well. Two reasons: a caching layer or a security
 		 * plugin that strips unknown headers would otherwise take the
 		 * explanation away, and a header cannot be seen from a command line,
 		 * which is where this is tested.
 		 */
 		echo 'No' . ( '' === $reason ? '' : ': ' . $reason ); // phpcs:ignore WordPress.Security.EscapeOutput -- one of our own tags.
+
+		if ( '' !== $said ) {
+			// Second line, for the same reason the tag is in the body at all:
+			// a layer in front of WordPress that strips headers it does not
+			// recognise would otherwise take the explanation with it.
+			echo "\nWhy: " . esc_html( substr( $said, 0, 200 ) );
+		}
+
 		exit;
 	}
 

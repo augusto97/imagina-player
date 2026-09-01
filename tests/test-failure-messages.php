@@ -143,7 +143,8 @@ check( 'it compiles on its own, outside React', true );
 $asked = array_merge(
 	$tags,
 	array( 'imgp-a-tag-nobody-has-written-yet' ),
-	array( 'slice-empty|slice 9 of 13', 'proxy-upstream-403|slice 2 of 13' )
+	array( 'slice-empty|slice 9 of 13', 'proxy-upstream-403|slice 2 of 13' ),
+	array( 'proxy-upstream-unreachable|slice 13 of 13|cURL error 56: Recv failure: Connection reset by peer' )
 );
 
 file_put_contents( $workdir . '/ask.json', (string) wp_json_encode_local( $asked ) );
@@ -254,6 +255,26 @@ foreach ( array( 'slice-empty' => 'slice 9 of 13', 'proxy-upstream-403' => 'slic
 		$with
 	);
 }
+
+echo PHP_EOL . '# And what the far end actually said' . PHP_EOL;
+
+/*
+ * The tag says which kind of failure it was; this says which one it actually
+ * was. "Could not reach the server" covers a name that would not resolve, a
+ * certificate that would not verify, a connection reset at byte forty million
+ * and a timeout — and the HTTP client names which every time. That sentence
+ * was being dropped, and the guesses that filled the gap cost somebody a
+ * server setting their host had warned them not to change.
+ */
+$full = $said['proxy-upstream-unreachable|slice 13 of 13|cURL error 56: Recv failure: Connection reset by peer'] ?? '';
+
+check( 'the words the client used survive to the screen', str_contains( $full, 'cURL error 56' ), $full );
+check( 'beside which piece it was', str_contains( $full, 'slice 13 of 13' ), $full );
+check(
+	'and the sentence it belongs to is still in front of them',
+	str_starts_with( $full, (string) ( $said['proxy-upstream-unreachable'] ?? "\0" ) ),
+	$full
+);
 
 echo PHP_EOL . '# Whatever is thrown, a sentence comes back' . PHP_EOL;
 

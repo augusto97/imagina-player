@@ -60,6 +60,30 @@ const WINDOW_BYTES = 4 * 1024 * 1024;
 /** Values kept per window, before everything is resampled to the bar count. */
 const PER_WINDOW = 64;
 
+/**
+ * How many times a piece that failed is asked for again.
+ *
+ * A fifty megabyte recording is thirteen requests in a row, and there was no
+ * retry anywhere: one dropped connection — the thirteenth, in the case that
+ * prompted this — threw away twelve pieces that had arrived perfectly. A far
+ * end that fumbles one request in a dozen is completely ordinary.
+ */
+const SLICE_ATTEMPTS = 3;
+
+/** How long to wait before asking again, multiplied by the attempt number. */
+const RETRY_PAUSE = 400;
+
+/**
+ * How much of a file is enough to draw a waveform from.
+ *
+ * Below this a missing piece is a real failure and is reported as one. At or
+ * above it, refusing to draw anything is the worse answer by a distance: the
+ * case this comes from had 99.1% of a fifty-three minute recording in hand —
+ * every slice but the last — and threw all of it away, twice, over the final
+ * twenty-four seconds.
+ */
+const ENOUGH = 0.95;
+
 export interface MeasureProgress {
 	stage: 'downloading' | 'decoding';
 	/** 0–1 while downloading, and unknown (-1) when the server sends no length. */
@@ -69,6 +93,15 @@ export interface MeasureProgress {
 export interface MeasureResult {
 	peaks: number[];
 	duration: number;
+}
+
+/** What came back, and whether all of it did. */
+interface Downloaded {
+	buffer: ArrayBuffer;
+	/** Bytes in hand. */
+	got: number;
+	/** Bytes the file has, where the server said so. Zero when it did not. */
+	total: number;
 }
 
 export interface MeasureOptions {
@@ -216,23 +249,24 @@ export async function measure(
 		throw await refusal( response, '' );
 	}
 
-	const buffer = await read( response, url, slice, onProgress, signal );
+	const downloaded = await read( response, url, slice, onProgress, signal );
+	const buffer = downloaded.buffer;
 
 	onProgress?.( { stage: 'decoding', ratio: 0 } );
 
-	if (
+	const measured =
 		buffer.byteLength <= ( options?.wholeFileLimit ?? WHOLE_FILE_LIMIT )
-	) {
-		return decodeWhole( buffer, bars );
-	}
+			? await decodeWhole( buffer, bars )
+			: await decodeInWindows(
+					buffer,
+					bars,
+					onProgress,
+					signal,
+					options?.windowBytes
+			  );
 
-	return decodeInWindows(
-		buffer,
-		bars,
-		onProgress,
-		signal,
-		options?.windowBytes
-	);
+	// A no-op unless a piece went missing and the rest was worth keeping.
+	return stretch( measured, downloaded, bars );
 }
 
 /**
@@ -425,6 +459,7 @@ function resample(
  */
 async function refusal( response: Response, where: string ): Promise< Error > {
 	let said = response.headers.get( 'x-imagina-reason' );
+	let body = '';
 
 	if ( ! said ) {
 		/*
@@ -433,15 +468,37 @@ async function refusal( response: Response, where: string ): Promise< Error > {
 		 * defensively: this is an error page, and on those sites it might be
 		 * the security plugin's error page rather than ours.
 		 */
-		const body = await response.text().catch( () => '' );
-		const match = body.slice( 0, 120 ).match( /^No: ([a-z0-9-]+)$/ );
+		body = await response.text().catch( () => '' );
+
+		const match = body.slice( 0, 120 ).match( /^No: ([a-z0-9-]+)$/m );
 
 		said = match ? match[ 1 ] : null;
 	}
 
 	const what = said ? 'proxy-' + said : 'fetch-failed-' + response.status;
 
-	return new Error( '' === where ? what : what + '|' + where );
+	/*
+	 * And whatever the far end actually said, when this site passed it on.
+	 *
+	 * `upstream-unreachable` covers a name that would not resolve, a
+	 * certificate that would not verify, a connection reset at byte forty
+	 * million and a timeout — four different problems with four different
+	 * fixes, and the HTTP client names which one every time. That sentence
+	 * used to be read into a variable on the server and dropped.
+	 */
+	let detail = response.headers.get( 'x-imagina-detail' ) ?? '';
+
+	if ( ! detail && body ) {
+		const why = body.match( /^Why: (.+)$/m );
+
+		detail = why ? why[ 1 ] : '';
+	}
+
+	return new Error(
+		[ what, where, detail.slice( 0, 200 ) ]
+			.join( '|' )
+			.replace( /\|+$/, '' )
+	);
 }
 
 /**
@@ -502,7 +559,7 @@ async function readInSlices(
 	slice: number,
 	onProgress?: ( progress: MeasureProgress ) => void,
 	signal?: AbortSignal
-): Promise< ArrayBuffer > {
+): Promise< Downloaded > {
 	const merged = new Uint8Array( total );
 	const head = new Uint8Array( await first.arrayBuffer() );
 
@@ -515,27 +572,74 @@ async function readInSlices(
 	while ( at < total ) {
 		const end = Math.min( total, at + slice ) - 1;
 
-		const next = await window.fetch( url, {
-			signal,
-			credentials: 'same-origin',
-			headers: { Range: `bytes=${ at }-${ end }` },
-		} );
+		/*
+		 * Named for where it happened. "Something failed" is not the same fact
+		 * as "the ninth of thirteen pieces failed", and the second says whether
+		 * the far end started refusing part-way through.
+		 */
+		const where = sliceName( at, slice, total );
 
-		if ( ! next.ok ) {
-			/*
-			 * Named for where it happened. "Something failed" is not the same
-			 * fact as "the ninth of thirteen pieces failed", and the second
-			 * says whether the far end started refusing part-way through.
-			 */
-			throw await refusal( next, sliceName( at, slice, total ) );
+		let bytes: Uint8Array | null = null;
+		let last: Error | null = null;
+
+		for ( let attempt = 1; attempt <= SLICE_ATTEMPTS; attempt++ ) {
+			if ( signal?.aborted ) {
+				throw new Error( 'aborted' );
+			}
+
+			try {
+				const next = await window.fetch( url, {
+					signal,
+					credentials: 'same-origin',
+					headers: { Range: `bytes=${ at }-${ end }` },
+				} );
+
+				if ( ! next.ok ) {
+					throw await refusal( next, where );
+				}
+
+				const got = new Uint8Array( await next.arrayBuffer() );
+
+				if ( 0 === got.length ) {
+					// A server that answers a range with nothing would
+					// otherwise spin here for ever.
+					throw new Error( 'slice-empty|' + where );
+				}
+
+				bytes = got;
+				break;
+			} catch ( error ) {
+				last =
+					error instanceof Error
+						? error
+						: new Error( String( error ) );
+
+				if ( attempt < SLICE_ATTEMPTS ) {
+					await pause( RETRY_PAUSE * attempt );
+				}
+			}
 		}
 
-		const bytes = new Uint8Array( await next.arrayBuffer() );
+		if ( ! bytes ) {
+			/*
+			 * Everything but the last scrap of the file is still a waveform.
+			 *
+			 * This is the failure that started all of it: twelve of thirteen
+			 * slices of a fifty-three minute recording in hand, and the whole
+			 * measurement thrown away because the thirteenth did not come. The
+			 * missing part is under five per cent, `stretch` puts the timeline
+			 * back where it belongs, and the alternative on offer was nothing
+			 * at all.
+			 */
+			if ( at / total >= ENOUGH ) {
+				return {
+					buffer: merged.buffer.slice( 0, at ),
+					got: at,
+					total,
+				};
+			}
 
-		if ( 0 === bytes.length ) {
-			// A server that answers a range with nothing would otherwise spin
-			// here for ever.
-			throw new Error( 'slice-empty|' + sliceName( at, slice, total ) );
+			throw last ?? new Error( 'slice-empty|' + where );
 		}
 
 		merged.set( bytes.subarray( 0, total - at ), at );
@@ -547,7 +651,69 @@ async function readInSlices(
 		} );
 	}
 
-	return merged.buffer;
+	return { buffer: merged.buffer, got: at, total };
+}
+
+/**
+ * A complete file, in the shape a short one also comes back in.
+ * @param buffer
+ */
+function whole( buffer: ArrayBuffer ): Downloaded {
+	return { buffer, got: buffer.byteLength, total: buffer.byteLength };
+}
+
+/**
+ * Wait, so that a far end which just refused is not asked again immediately.
+ * @param ms
+ */
+function pause( ms: number ): Promise< void > {
+	return new Promise( ( resolve ) => setTimeout( resolve, ms ) );
+}
+
+/**
+ * Put the timeline back after a short download.
+ *
+ * The peaks describe the part that arrived, and if that was 99% of the file
+ * then handing them back unchanged would say a fifty-three minute recording is
+ * fifty-two and a half — every chapter mark and every stored position off by
+ * half a minute. So the duration is scaled by the share that is missing, the
+ * bars are squeezed into the share that is real, and the remainder is held at
+ * the last value read rather than invented.
+ *
+ * Nothing to do when the whole file arrived, which is almost always.
+ *
+ * @param result     What was measured.
+ * @param downloaded How much of the file it was measured from.
+ * @param bars       How many values to hand back.
+ */
+function stretch(
+	result: MeasureResult,
+	downloaded: Downloaded,
+	bars: number
+): MeasureResult {
+	const { got, total } = downloaded;
+
+	if ( total <= 0 || got >= total || 0 === result.peaks.length ) {
+		return result;
+	}
+
+	const share = got / total;
+	const real = Math.max( 1, Math.round( bars * share ) );
+	const peaks: number[] = [];
+
+	for ( let i = 0; i < bars; i++ ) {
+		const from =
+			i < real
+				? Math.min(
+						result.peaks.length - 1,
+						Math.floor( ( i / real ) * result.peaks.length )
+				  )
+				: result.peaks.length - 1;
+
+		peaks.push( result.peaks[ from ] ?? 0 );
+	}
+
+	return { peaks, duration: result.duration / share };
 }
 
 interface WavShape {
@@ -661,7 +827,7 @@ async function read(
 	slice: number,
 	onProgress?: ( progress: MeasureProgress ) => void,
 	signal?: AbortSignal
-): Promise< ArrayBuffer > {
+): Promise< Downloaded > {
 	/*
 	 * A server that can serve slices, and a file worth slicing.
 	 *
@@ -687,7 +853,7 @@ async function read(
 		}
 
 		// It fitted in the first slice, so that first slice is the file.
-		return response.arrayBuffer();
+		return whole( await response.arrayBuffer() );
 	}
 
 	const total = Number( response.headers.get( 'content-length' ) ?? 0 );
@@ -695,7 +861,7 @@ async function read(
 	if ( ! response.body || ! total ) {
 		onProgress?.( { stage: 'downloading', ratio: -1 } );
 
-		return response.arrayBuffer();
+		return whole( await response.arrayBuffer() );
 	}
 
 	/*
@@ -728,5 +894,5 @@ async function read(
 		throw new Error( 'length-mismatch' );
 	}
 
-	return merged.buffer;
+	return whole( merged.buffer );
 }

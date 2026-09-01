@@ -32,14 +32,24 @@ export function reason( error: unknown ): string {
 	 * problem from a ninth piece refused, which is a far end that started
 	 * saying no once it had been asked a dozen times.
 	 */
-	const [ message, where ] = raw.split( '|' );
+	const [ message, where, detail ] = raw.split( '|' );
 
 	/*
 	 * Appended once, here, rather than in every branch below. It was in some of
 	 * them and not others, which is the sort of thing that looks fine until the
 	 * branch that matters is one of the others.
+	 *
+	 * The detail is whatever the far end or the HTTP client actually said, and
+	 * it goes last and verbatim. It is not translated and not tidied, because
+	 * it is evidence: "cURL error 56: Recv failure: Connection reset by peer"
+	 * is worth more to whoever has to fix this than any sentence written in
+	 * advance, and it is the thing that was being thrown away.
 	 */
-	return explain( message ) + ( where ? ' (' + where + ')' : '' );
+	return (
+		explain( message ) +
+		( where ? ' (' + where + ')' : '' ) +
+		( detail ? ' — ' + detail : '' )
+	);
 }
 
 /**

@@ -340,6 +340,160 @@ out.slices = await page.evaluate(async () => {
 	}
 });
 
+/*
+ * The failure that was reported, reproduced exactly: twelve slices of thirteen
+ * arrive and the last one does not.
+ *
+ * Two answers are wanted from this. A piece that fails once and works when
+ * asked again must not fail the measurement at all — there was no retry
+ * anywhere in the chain, so one dropped connection out of thirteen threw away
+ * a fifty megabyte download that was 99% done. And a piece that never comes
+ * must still leave a waveform, because everything but the last scrap of a file
+ * is a picture of that file, and the alternative on offer was nothing.
+ */
+out.flaky = await page.evaluate(async () => {
+	const mod = await import('./mod/measure.js');
+	const original = window.fetch;
+
+	const clean = await mod.measure('/short.wav', 200, undefined, undefined, {
+		sliceBytes: 256 * 1024,
+	});
+
+	/*
+	 * The third piece, refused twice and then served. A far end that fumbles
+	 * one request and answers the next is the ordinary case, not an exotic one.
+	 *
+	 * Named by the bytes it asks for rather than counted. Counting calls does
+	 * not work here for the reason this whole test exists: a retry is another
+	 * call, so "the third request" stops being the third piece the moment the
+	 * retry it is testing starts happening — which is how the first version of
+	 * this test refused once and reported that it had refused twice.
+	 */
+	const third = 'bytes=' + 2 * 256 * 1024 + '-';
+	let refusals = 0;
+
+	window.fetch = function (input, init) {
+		const range = init && init.headers && init.headers.Range;
+
+		if (range && range.startsWith(third) && refusals < 2) {
+			refusals++;
+			return Promise.reject(new TypeError('Failed to fetch'));
+		}
+
+		return original.apply(this, arguments);
+	};
+
+	try {
+		const survived = await mod.measure('/short.wav', 200, undefined, undefined, {
+			sliceBytes: 256 * 1024,
+		});
+
+		let worst = 0;
+
+		for (let i = 0; i < clean.peaks.length; i++) {
+			worst = Math.max(worst, Math.abs(clean.peaks[i] - survived.peaks[i]));
+		}
+
+		return {
+			ok: true,
+			refusals,
+			worst,
+			duration: survived.duration,
+			cleanDuration: clean.duration,
+		};
+	} catch (e) {
+		return { ok: false, refusals, message: (e && e.message) || String(e) };
+	} finally {
+		window.fetch = original;
+	}
+});
+
+out.tail = await page.evaluate(async () => {
+	const mod = await import('./mod/measure.js');
+	const original = window.fetch;
+
+	const clean = await mod.measure('/short.wav', 200, undefined, undefined, {
+		sliceBytes: 256 * 1024,
+	});
+
+	// Every request for the last piece refused, however many times it is asked.
+	let total = 0;
+
+	window.fetch = function (input, init) {
+		const range = init && init.headers && init.headers.Range;
+		const m = range && /^bytes=(\d+)-(\d+)$/.exec(range);
+
+		if (m) {
+			const end = Number(m[2]);
+
+			if (total && end >= total - 1) {
+				return Promise.reject(new TypeError('Failed to fetch'));
+			}
+		}
+
+		return original.apply(this, arguments).then((r) => {
+			const cr = r.headers.get('content-range');
+			if (cr) { total = Number(cr.split('/')[1]) || total; }
+			return r;
+		});
+	};
+
+	try {
+		const short = await mod.measure('/short.wav', 200, undefined, undefined, {
+			sliceBytes: 256 * 1024,
+		});
+
+		return {
+			ok: true,
+			bars: short.peaks.length,
+			duration: short.duration,
+			cleanDuration: clean.duration,
+			distinct: new Set(short.peaks.map((v) => v.toFixed(2))).size,
+		};
+	} catch (e) {
+		return { ok: false, message: (e && e.message) || String(e) };
+	} finally {
+		window.fetch = original;
+	}
+});
+
+/*
+ * And the other side of that. Tolerating a missing tail is only defensible
+ * because the tail is tiny; losing a third of a recording and drawing a
+ * confident picture of the rest would be worse than saying so. So a piece
+ * missing from the middle still has to fail.
+ */
+out.gap = await page.evaluate(async () => {
+	const mod = await import('./mod/measure.js');
+	const original = window.fetch;
+
+	// The second piece, so nearly all of the file is still to come. By name
+	// rather than by count, for the same reason as above.
+	const second = 'bytes=' + 256 * 1024 + '-';
+
+	window.fetch = function (input, init) {
+		const range = init && init.headers && init.headers.Range;
+
+		if (range && range.startsWith(second)) {
+			return Promise.reject(new TypeError('Failed to fetch'));
+		}
+
+		return original.apply(this, arguments);
+	};
+
+	try {
+		await mod.measure('/short.wav', 200, undefined, undefined, {
+			sliceBytes: 256 * 1024,
+		});
+
+		return { threw: false };
+	} catch (e) {
+		return { threw: true, message: (e && e.message) || String(e) };
+	} finally {
+		window.fetch = original;
+	}
+});
+
 console.log(JSON.stringify(out));
 await browser.close();
 JS;
@@ -493,6 +647,83 @@ check(
 	isset( $slices['duration'] )
 		&& abs( (float) $slices['duration'] - (float) $slices['plainDuration'] ) < 0.05,
 	( $slices['duration'] ?? '?' ) . ' vs ' . ( $slices['plainDuration'] ?? '?' )
+);
+
+echo PHP_EOL . '# A piece that fumbles once' . PHP_EOL;
+
+$flaky = (array) ( $report['flaky'] ?? array() );
+
+check(
+	'a slice refused twice and then served does not fail the measurement',
+	true === ( $flaky['ok'] ?? false ),
+	(string) ( $flaky['message'] ?? 'no result' )
+);
+
+check(
+	'and it really was refused, rather than the test asking nicely',
+	2 === (int) ( $flaky['refusals'] ?? 0 ),
+	( $flaky['refusals'] ?? 0 ) . ' refusals'
+);
+
+check(
+	'and what comes out is the same audio as when nothing was refused',
+	isset( $flaky['worst'] ) && (float) $flaky['worst'] < 0.0001,
+	'worst bar differs by ' . ( $flaky['worst'] ?? '?' )
+);
+
+echo PHP_EOL . '# A piece that never comes' . PHP_EOL;
+
+/*
+ * The reported failure, exactly: every slice but the last, and the last one
+ * refused however many times it is asked for. This used to throw away the
+ * entire download.
+ */
+$tail = (array) ( $report['tail'] ?? array() );
+
+check(
+	'the last slice going missing still leaves a waveform',
+	true === ( $tail['ok'] ?? false ),
+	(string) ( $tail['message'] ?? 'no result' )
+);
+
+check(
+	'with a full row of bars',
+	200 === (int) ( $tail['bars'] ?? 0 ),
+	(string) ( $tail['bars'] ?? 0 )
+);
+
+/*
+ * And the length is the file's, not the length of what arrived. Handing back
+ * the short one would put every chapter mark and every stored position out by
+ * the size of the missing piece.
+ */
+check(
+	'and the length is the whole file’s, not the part that arrived',
+	isset( $tail['duration'], $tail['cleanDuration'] )
+		&& abs( (float) $tail['duration'] - (float) $tail['cleanDuration'] ) < 1.0,
+	( $tail['duration'] ?? '?' ) . ' vs ' . ( $tail['cleanDuration'] ?? '?' ) . ' whole'
+);
+
+check(
+	'and it is a shape, not a flat line',
+	(int) ( $tail['distinct'] ?? 0 ) >= 20,
+	( $tail['distinct'] ?? 0 ) . ' distinct values'
+);
+
+echo PHP_EOL . '# A piece missing from the middle is still a failure' . PHP_EOL;
+
+/*
+ * The other half of the above, and the reason it is defensible. Forgiving a
+ * missing tail is only right because the tail is a rounding error; drawing a
+ * confident picture with a third of the recording absent would be worse than
+ * refusing.
+ */
+$gap = (array) ( $report['gap'] ?? array() );
+
+check(
+	'losing a slice near the start refuses rather than inventing the rest',
+	true === ( $gap['threw'] ?? false ),
+	'it returned a waveform anyway'
 );
 
 echo PHP_EOL;
