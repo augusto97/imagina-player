@@ -35,7 +35,7 @@ It now counts what is actually missing first:
 * **Something missing** → a plain note in neutral colours saying how many files
   and which button to press, rather than a complaint about the server.
 
-The technical reason ( is in , so ffmpeg cannot run)
+The technical reason (`popen` is in `disable_functions`, so ffmpeg cannot run)
 moves to the help text under the **ffmpeg path** field — where somebody
 wondering why that field does nothing is already looking, and where it is an
 answer instead of an alarm.
