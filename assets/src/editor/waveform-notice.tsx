@@ -332,6 +332,19 @@ function reason( error: unknown ): string {
 			);
 		}
 
+		/*
+		 * A gateway error with none of this plugin's own reasons attached is
+		 * the web server answering for PHP rather than PHP answering: the
+		 * request was cut off part-way through. Almost always an execution
+		 * limit, which is why it used to depend on the size of the file.
+		 */
+		if ( '502' === status || '504' === status ) {
+			return __(
+				'this site’s web server cut the request off part-way through — usually a time limit on how long a page may take. The file is fetched in pieces now, so try again; if it persists, ask your host about max_execution_time',
+				'imagina-player'
+			);
+		}
+
 		return sprintf(
 			/* translators: %s: HTTP status code, or "?" when there was none. */
 			__(

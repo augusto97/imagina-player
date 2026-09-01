@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.23.0
+Stable tag: 1.24.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,34 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.24.0 =
+* Fixed: measuring a file hosted on another domain failed with a bare 502 once
+  the file was big enough. The whole file came through this site in a single
+  request — fetched to a temporary file and then read back and served, two full
+  transfers inside one PHP request with no time limit raised — so where a host
+  allows thirty seconds a large file never finished, PHP was killed, and the
+  web server answered with its own 502. That 502 carries none of this plugin's
+  reasons, which is why it said so little. A smaller file finished in time,
+  which is why it looked arbitrary.
+* Changed: the file now comes through in slices. The route serves byte ranges
+  and the browser asks for a few megabytes at a time, so no single request can
+  outlast an execution limit. It also asks for more time where the host allows
+  it, which costs nothing and helps on a slow remote server.
+* Changed: a file too large to fetch whole is no longer refused outright — the
+  size limit now applies to what was actually asked for, so a very long
+  recording can be measured a few megabytes at a time.
+* Fixed: slices are only requested from this site. A `Range` header makes a
+  cross-origin request non-simple and the browser asks permission first, which
+  many media hosts refuse — asking would have broken the files that work in
+  order to help the ones that do not.
+* Fixed: a bare gateway error now says what it means, rather than repeating the
+  status.
+* Testing: the browser test now runs against a server that honours byte ranges
+  and checks that a file stitched back together from a dozen slices measures
+  identically to the same file fetched in one go — the failure mode of
+  reassembly is an offset wrong by one, which still decodes and draws something
+  else.
 
 = 1.23.0 =
 * Fixed: the route that measures a file hosted on another domain had never

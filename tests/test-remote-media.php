@@ -258,6 +258,84 @@ check(
 	substr( $bad['output'], 0, 160 )
 );
 
+echo PHP_EOL . '# A large file does not become one long request' . PHP_EOL;
+
+/*
+ * The report that closed this out: some files worked and others did not, on
+ * the same site, and the failing one said only "the server answered 502".
+ *
+ * That 502 is not from here — every refusal this endpoint makes carries a
+ * reason, and that one carried none. It is the web server's, because the whole
+ * file used to come through in a single call: fetched to a temporary file and
+ * then read back and echoed, two full transfers of the recording inside one
+ * PHP request with no time limit raised. Where `max_execution_time` is thirty
+ * seconds, a big enough file does not finish, PHP is killed, and the web
+ * server answers for it. A small file finished in time. That is the whole of
+ * why it looked arbitrary.
+ */
+check(
+	'the doorway serves a slice when one is asked for',
+	str_contains( $controller, "'Range' => 'bytes='" )
+		&& str_contains( $controller, 'Content-Range' ),
+	'without this a fifty megabyte file is one request that a host can kill'
+);
+
+check(
+	'and says so on every answer, so the browser knows it may ask',
+	str_contains( $controller, "header( 'Accept-Ranges: bytes' )" )
+);
+
+check(
+	'it only claims a partial answer when the far end really gave one',
+	str_contains( $controller, '206 === (int) wp_remote_retrieve_response_code( $body )' ),
+	'a server that ignores Range sends the whole file, and stitching those would repeat the beginning'
+);
+
+/*
+ * And the size limit has to be about what was asked for. A three hundred
+ * megabyte recording is refused as a whole and perfectly fine four megabytes
+ * at a time; checking the whole-file size first would refuse it either way.
+ */
+check(
+	'a file too big to fetch whole can still be fetched in slices',
+	str_contains( $controller, 'null === $range && $length > self::PROXY_MAX_BYTES' )
+);
+
+check(
+	'and it asks for more time as well, since that costs nothing where it is allowed',
+	str_contains( $controller, 'set_time_limit( 120 )' )
+);
+
+$measure = (string) file_get_contents( $root . '/assets/src/shared/measure.ts' );
+
+check(
+	'the browser asks for slices',
+	str_contains( $measure, 'readInSlices' )
+);
+
+/*
+ * But not across origins. A `Range` header makes a request non-simple and the
+ * browser asks permission first; a media host that happily serves a plain GET
+ * to another domain will often refuse that — so asking would break the files
+ * that work in order to help the ones that do not.
+ */
+check(
+	'but only from this site, where there is no permission to ask for',
+	str_contains( $measure, 'sameOrigin( url )' ),
+	'a Range header on a cross-origin request triggers a preflight'
+);
+
+$sliced = run_proxy(
+	'https://media.example.com/lesson.mp3',
+	array( 'code' => 200, 'headers' => array( 'content-type' => 'audio/mpeg', 'content-length' => (string) ( 400 * 1024 * 1024 ) ) )
+);
+
+check(
+	'a file larger than the whole-file limit is refused when asked for whole',
+	str_contains( $sliced['output'], 'too-large' ),
+	substr( $sliced['output'], 0, 120 )
+);
+
 echo PHP_EOL . '# The preview stops asking the wrong address' . PHP_EOL;
 
 /*

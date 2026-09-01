@@ -320,8 +320,16 @@ final class PeaksController {
 		}
 
 		$length = (int) wp_remote_retrieve_header( $head, 'content-length' );
+		$total  = $length;
 
-		if ( $length > self::PROXY_MAX_BYTES ) {
+		/*
+		 * Worked out before the size check, because the size that matters is
+		 * the size of what was asked for. A three hundred megabyte recording is
+		 * refused as a whole and perfectly reasonable four megabytes at a time.
+		 */
+		$range = $this->requested_range( $total );
+
+		if ( null === $range && $length > self::PROXY_MAX_BYTES ) {
 			$this->refuse( 413, 'too-large' );
 		}
 
@@ -331,21 +339,49 @@ final class PeaksController {
 			$this->refuse( 415, 'not-media' );
 		}
 
+		/*
+		 * A slice is what stops a large file being one long request.
+		 *
+		 * The whole file used to come down in a single call: fetched to a
+		 * temporary file, then read back and echoed — two full transfers of a
+		 * fifty megabyte recording inside one PHP request, with no time limit
+		 * raised. On a host where `max_execution_time` is thirty seconds, PHP
+		 * is killed part-way through and the web server answers with its own
+		 * 502, carrying none of the reasons this endpoint sends. Which is
+		 * exactly how it was reported: "the server answered 502" and nothing
+		 * more. A file small enough to finish in time worked; the same file on
+		 * the same site failed once it grew, so it looked arbitrary.
+		 */
+
+		/*
+		 * And more time even so, because a slow remote server can outlast the
+		 * limit on a slice as easily as on a file. Best effort: plenty of hosts
+		 * refuse this, which is why the slicing above is the actual fix rather
+		 * than the fallback.
+		 */
+		if ( function_exists( 'set_time_limit' ) ) {
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors -- refused on some hosts, and the request is still worth trying.
+			@set_time_limit( 120 );
+		}
+
 		$temp = wp_tempnam( 'imagina-peaks' );
 
 		if ( ! $temp ) {
-			$this->refuse( 500 );
+			$this->refuse( 500, 'no-temp-file' );
 		}
 
-		$body = wp_safe_remote_get(
-			$src,
-			array(
-				'timeout'     => 120,
-				'redirection' => 3,
-				'stream'      => true,
-				'filename'    => $temp,
-			)
+		$get_args = array(
+			'timeout'     => 120,
+			'redirection' => 3,
+			'stream'      => true,
+			'filename'    => $temp,
 		);
+
+		if ( null !== $range ) {
+			$get_args['headers'] = array( 'Range' => 'bytes=' . $range[0] . '-' . $range[1] );
+		}
+
+		$body = wp_safe_remote_get( $src, $get_args );
 
 		$size = (int) ( @filesize( $temp ) ?: 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- missing file is handled below.
 
@@ -361,7 +397,24 @@ final class PeaksController {
 		}
 
 		nocache_headers();
-		status_header( 200 );
+
+		/*
+		 * Only 206 when the far end actually gave us the slice. A server that
+		 * ignores `Range` answers 200 with the whole thing, and claiming
+		 * otherwise would have the browser stitch a file out of repeated copies
+		 * of the beginning.
+		 */
+		$partial = null !== $range && 206 === (int) wp_remote_retrieve_response_code( $body );
+
+		status_header( $partial ? 206 : 200 );
+
+		if ( $partial ) {
+			header( sprintf( 'Content-Range: bytes %d-%d/%s', $range[0], $range[0] + $size - 1, $total > 0 ? (string) $total : '*' ) );
+		}
+
+		// Said on every answer, so the browser knows it may ask for a slice
+		// next time rather than finding out by trying.
+		header( 'Accept-Ranges: bytes' );
 		header( 'Content-Type: ' . ( str_starts_with( $type, 'video/' ) ? 'video/mp4' : 'audio/mpeg' ) );
 		header( 'Content-Length: ' . $size );
 		header( 'X-Content-Type-Options: nosniff' );
@@ -389,6 +442,42 @@ final class PeaksController {
 	 * `octet-stream` is allowed because plenty of storage buckets serve every
 	 * file that way, and refusing it would refuse half the world's audio.
 	 */
+	/**
+	 * The byte range the browser asked for, or null for the whole file.
+	 *
+	 * Only the one shape that matters here — `bytes=start-end`, one range,
+	 * counted from the beginning. A suffix range (`bytes=-500`) and a list of
+	 * ranges are both legal HTTP and neither is something the measuring code
+	 * asks for, so they are treated as no range at all rather than answered
+	 * badly.
+	 *
+	 * @param int $total What the far end said the file weighs, or 0 if it did not say.
+	 * @return array{0: int, 1: int}|null
+	 */
+	private function requested_range( int $total ): ?array {
+		$header = isset( $_SERVER['HTTP_RANGE'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_RANGE'] ) ) : '';
+
+		if ( ! preg_match( '/^bytes=(\d+)-(\d*)$/', trim( $header ), $matches ) ) {
+			return null;
+		}
+
+		$start = (int) $matches[1];
+		$end   = '' === $matches[2] ? PHP_INT_MAX : (int) $matches[2];
+
+		if ( $total > 0 ) {
+			$end = min( $end, $total - 1 );
+		}
+
+		if ( $end < $start ) {
+			return null;
+		}
+
+		// A slice this side will not fetch in one go, whatever was asked for.
+		$end = min( $end, $start + self::PROXY_MAX_BYTES - 1 );
+
+		return array( $start, $end );
+	}
+
 	private function looks_like_media( string $type ): bool {
 		$type = trim( explode( ';', $type )[0] );
 

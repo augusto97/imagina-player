@@ -157,6 +157,58 @@ if ( ! is_readable( $workdir . '/mod/measure.js' ) ) {
 
 file_put_contents( $workdir . '/index.html', '<!doctype html><meta charset="utf-8"><title>measure</title>' );
 
+/*
+ * A router, because PHP's built-in server answers every request with the whole
+ * file however politely it was asked. Slicing is now how a large file comes
+ * through the doorway on a real site — one request per slice, so no single one
+ * can outlast a host's execution limit — and a test served by something that
+ * cannot slice would never exercise it.
+ */
+file_put_contents(
+	$workdir . '/router.php',
+	<<<'PHP'
+<?php
+$path = parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
+$file = __DIR__ . $path;
+
+if ( ! is_file( $file ) || false !== strpos( $path, '..' ) ) {
+	return false;
+}
+
+$size  = filesize( $file );
+$range = $_SERVER['HTTP_RANGE'] ?? '';
+
+$types = array( 'wav' => 'audio/wav', 'js' => 'text/javascript', 'html' => 'text/html' );
+$ext   = strtolower( pathinfo( $file, PATHINFO_EXTENSION ) );
+
+header( 'Accept-Ranges: bytes' );
+// A module served as text/plain is a module the browser refuses to import.
+header( 'Content-Type: ' . ( $types[ $ext ] ?? 'application/octet-stream' ) );
+
+if ( preg_match( '/^bytes=(\d+)-(\d*)$/', $range, $m ) ) {
+	$start = (int) $m[1];
+	$end   = '' === $m[2] ? $size - 1 : min( (int) $m[2], $size - 1 );
+	$length = $end - $start + 1;
+
+	http_response_code( 206 );
+	header( "Content-Range: bytes {$start}-{$end}/{$size}" );
+	header( 'Content-Length: ' . $length );
+
+	$handle = fopen( $file, 'rb' );
+	fseek( $handle, $start );
+	echo fread( $handle, $length );
+	fclose( $handle );
+
+	return true;
+}
+
+header( 'Content-Length: ' . $size );
+readfile( $file );
+
+return true;
+PHP
+);
+
 $script = <<<'JS'
 import pkg from 'PLAYWRIGHT';
 const { chromium } = pkg;
@@ -241,6 +293,53 @@ out.compare = await page.evaluate(async () => {
 	};
 });
 
+/*
+ * And the slices themselves. The file comes down in pieces and is put back
+ * together by hand, which is exactly the kind of code that is off by one and
+ * still looks like it worked — so the proof is that the picture matches the
+ * one taken from a single download of the same file.
+ */
+out.slices = await page.evaluate(async () => {
+	const mod = await import('./mod/measure.js');
+
+	const requests = [];
+	const original = window.fetch;
+
+	window.fetch = function (input, init) {
+		const range = init && init.headers && init.headers.Range;
+		if (range) { requests.push(range); }
+		return original.apply(this, arguments);
+	};
+
+	try {
+		// Small slices on purpose, so there are a dozen of them and the
+		// stitching is actually exercised.
+		const sliced = await mod.measure('/short.wav', 200, undefined, undefined, {
+			sliceBytes: 256 * 1024,
+		});
+
+		// The same audio again with nothing asked in slices, to compare with.
+		window.fetch = original;
+
+		const plain = await mod.measure('/short.wav', 200);
+		let worst = 0;
+
+		for (let i = 0; i < plain.peaks.length; i++) {
+			worst = Math.max(worst, Math.abs(plain.peaks[i] - sliced.peaks[i]));
+		}
+
+		return {
+			requests: requests.length,
+			first: requests[0] || '',
+			worst,
+			duration: sliced.duration,
+			plainDuration: plain.duration,
+		};
+	} finally {
+		window.fetch = original;
+	}
+});
+
 console.log(JSON.stringify(out));
 await browser.close();
 JS;
@@ -256,7 +355,7 @@ $script = str_replace(
 file_put_contents( $workdir . '/run.mjs', $script );
 
 $server = proc_open(
-	array( PHP_BINARY, '-S', "127.0.0.1:{$port}", '-t', $workdir ),
+	array( PHP_BINARY, '-S', "127.0.0.1:{$port}", '-t', $workdir, $workdir . '/router.php' ),
 	array( 1 => array( 'pipe', 'w' ), 2 => array( 'pipe', 'w' ) ),
 	$pipes,
 	$workdir
@@ -361,6 +460,39 @@ check(
 	isset( $compare['wholeDuration'] )
 		&& abs( (float) $compare['wholeDuration'] - (float) $compare['windowedDuration'] ) < 0.5,
 	( $compare['wholeDuration'] ?? '?' ) . ' vs ' . ( $compare['windowedDuration'] ?? '?' )
+);
+
+echo PHP_EOL . '# Put back together from slices' . PHP_EOL;
+
+$slices = (array) ( $report['slices'] ?? array() );
+
+check(
+	'a same-origin file is asked for in slices',
+	(int) ( $slices['requests'] ?? 0 ) > 1,
+	( $slices['requests'] ?? 0 ) . ' ranged requests'
+);
+
+check(
+	'starting at the beginning',
+	str_starts_with( (string) ( $slices['first'] ?? '' ), 'bytes=0-' ),
+	(string) ( $slices['first'] ?? '' )
+);
+
+/*
+ * Byte-for-byte, in the only way that matters here: a file reassembled with an
+ * offset wrong by one would still decode, and would draw a different picture.
+ */
+check(
+	'and what comes out is the same audio as a single download',
+	isset( $slices['worst'] ) && (float) $slices['worst'] < 0.0001,
+	'worst bar differs by ' . ( $slices['worst'] ?? '?' )
+);
+
+check(
+	'of the same length',
+	isset( $slices['duration'] )
+		&& abs( (float) $slices['duration'] - (float) $slices['plainDuration'] ) < 0.05,
+	( $slices['duration'] ?? '?' ) . ' vs ' . ( $slices['plainDuration'] ?? '?' )
 );
 
 echo PHP_EOL;

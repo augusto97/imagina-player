@@ -37,6 +37,15 @@
 const SAMPLE_RATE = 8000;
 
 /**
+ * How much to ask for at a time.
+ *
+ * Small enough that no single request can outlast a host's execution limit,
+ * large enough that an hour-long recording is a few dozen requests rather than
+ * a few hundred.
+ */
+const FIRST_SLICE = 4 * 1024 * 1024;
+
+/**
  * Above this, decode in windows.
  *
  * Below it the whole-file path is both simpler and slightly more accurate — it
@@ -74,6 +83,15 @@ export interface MeasureOptions {
 	wholeFileLimit?: number;
 	/** How much to hand the decoder at a time. */
 	windowBytes?: number;
+	/**
+	 * How much to ask the server for at a time.
+	 *
+	 * Same-origin only, and the reason it is adjustable is the same as for the
+	 * window size: a test needs several slices out of a file small enough to
+	 * measure twice, so that what is stitched back together can be compared
+	 * with the same file fetched in one go.
+	 */
+	sliceBytes?: number;
 }
 
 type AudioContextCtor = typeof AudioContext;
@@ -172,9 +190,26 @@ export async function measure(
 		throw new Error( 'no-audio-context' );
 	}
 
+	/*
+	 * Slices, but only from this site.
+	 *
+	 * A `Range` header makes a cross-origin request non-simple, and the browser
+	 * asks permission with an `OPTIONS` first. A media host that is perfectly
+	 * happy to serve a plain `GET` to another domain will very often refuse
+	 * that, so asking for a slice would break the files that work today in
+	 * order to help the ones that do not.
+	 *
+	 * Same-origin has no preflight, and same-origin is where this matters: the
+	 * doorway that fetches a remote file is on this site, and it is the request
+	 * a host kills for taking too long.
+	 */
+	const sliceable = sameOrigin( url );
+	const slice = options?.sliceBytes ?? FIRST_SLICE;
+
 	const response = await window.fetch( url, {
 		signal,
 		credentials: 'same-origin',
+		headers: sliceable ? { Range: 'bytes=0-' + ( slice - 1 ) } : undefined,
 	} );
 
 	if ( ! response.ok ) {
@@ -204,7 +239,7 @@ export async function measure(
 		);
 	}
 
-	const buffer = await read( response, onProgress );
+	const buffer = await read( response, url, slice, onProgress, signal );
 
 	onProgress?.( { stage: 'decoding', ratio: 0 } );
 
@@ -395,6 +430,92 @@ function resample(
 	return out;
 }
 
+/**
+ * Is this the site the page came from?
+ * @param url
+ */
+function sameOrigin( url: string ): boolean {
+	try {
+		return (
+			new URL( url, window.location.href ).origin ===
+			window.location.origin
+		);
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * How big the whole file is, from a `Content-Range` header.
+ * @param response
+ */
+function fullSize( response: Response ): number {
+	const header = response.headers.get( 'content-range' ) ?? '';
+	const total = header.split( '/' )[ 1 ] ?? '';
+
+	return '*' === total ? 0 : Number( total ) || 0;
+}
+
+/**
+ * Pull the rest of the file down a slice at a time.
+ *
+ * @param first      The first slice, already fetched.
+ * @param url        Where the rest is.
+ * @param total      How big the whole file is.
+ * @param slice      How much to ask for at a time.
+ * @param onProgress Called as each slice lands.
+ * @param signal     Lets the caller give up.
+ */
+async function readInSlices(
+	first: Response,
+	url: string,
+	total: number,
+	slice: number,
+	onProgress?: ( progress: MeasureProgress ) => void,
+	signal?: AbortSignal
+): Promise< ArrayBuffer > {
+	const merged = new Uint8Array( total );
+	const head = new Uint8Array( await first.arrayBuffer() );
+
+	merged.set( head, 0 );
+
+	let at = head.length;
+
+	onProgress?.( { stage: 'downloading', ratio: at / total } );
+
+	while ( at < total ) {
+		const end = Math.min( total, at + slice ) - 1;
+
+		const next = await window.fetch( url, {
+			signal,
+			credentials: 'same-origin',
+			headers: { Range: `bytes=${ at }-${ end }` },
+		} );
+
+		if ( ! next.ok ) {
+			throw new Error( 'slice-failed-' + next.status );
+		}
+
+		const bytes = new Uint8Array( await next.arrayBuffer() );
+
+		if ( 0 === bytes.length ) {
+			// A server that answers a range with nothing would otherwise spin
+			// here for ever.
+			throw new Error( 'slice-empty' );
+		}
+
+		merged.set( bytes.subarray( 0, total - at ), at );
+		at += bytes.length;
+
+		onProgress?.( {
+			stage: 'downloading',
+			ratio: Math.min( 1, at / total ),
+		} );
+	}
+
+	return merged.buffer;
+}
+
 interface WavShape {
 	dataStart: number;
 	dataEnd: number;
@@ -495,12 +616,46 @@ function withWavHeader( slice: ArrayBuffer, wav: WavShape ): ArrayBuffer {
  * difference between "working" and "frozen" is whether something moves.
  *
  * @param response
+ * @param url
+ * @param slice
  * @param onProgress
+ * @param signal
  */
 async function read(
 	response: Response,
-	onProgress?: ( progress: MeasureProgress ) => void
+	url: string,
+	slice: number,
+	onProgress?: ( progress: MeasureProgress ) => void,
+	signal?: AbortSignal
 ): Promise< ArrayBuffer > {
+	/*
+	 * A server that can serve slices, and a file worth slicing.
+	 *
+	 * The alternative is one request for the whole thing, and that is a request
+	 * a host can kill: fetching a fifty megabyte recording through this site's
+	 * own doorway means PHP holding a connection open for as long as the
+	 * download takes, and where `max_execution_time` is thirty seconds it does
+	 * not get to finish. What comes back is the web server's own 502, which is
+	 * how this was reported. Slices keep every request short.
+	 */
+	if ( 206 === response.status ) {
+		const total = fullSize( response );
+
+		if ( total > slice ) {
+			return readInSlices(
+				response,
+				url,
+				total,
+				slice,
+				onProgress,
+				signal
+			);
+		}
+
+		// It fitted in the first slice, so that first slice is the file.
+		return response.arrayBuffer();
+	}
+
 	const total = Number( response.headers.get( 'content-length' ) ?? 0 );
 
 	if ( ! response.body || ! total ) {
