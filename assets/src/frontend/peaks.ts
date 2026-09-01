@@ -234,20 +234,28 @@ export async function computePeaks(
 					channel.length,
 					Math.floor( ( i + 1 ) * bucket )
 				);
-				let peak = 0;
+				let energy = 0;
+				let counted = 0;
 
 				// Step through the bucket rather than reading every sample: at 44.1 kHz a
 				// three-minute track is eight million samples and the extra precision is
 				// invisible at one pixel per bar.
 				const step = Math.max( 1, Math.floor( ( end - start ) / 512 ) );
 
+				/*
+				 * Loudness across the bucket, not the loudest instant in it —
+				 * the same measure the editor and the server use, so a track
+				 * measured here and the same track measured there draw the same
+				 * picture. The loudest instant saturates on speech: every bar
+				 * of a lecture contains a syllable at full volume, so every bar
+				 * comes out the same height.
+				 */
 				for ( let j = start; j < end; j += step ) {
-					const value = Math.abs( channel[ j ] );
-
-					if ( value > peak ) {
-						peak = value;
-					}
+					energy += channel[ j ] * channel[ j ];
+					counted++;
 				}
+
+				const peak = Math.sqrt( energy / Math.max( 1, counted ) );
 
 				peaks[ i ] = peak;
 

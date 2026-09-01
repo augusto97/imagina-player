@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.29.0
+Stable tag: 1.30.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,28 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.30.0 =
+* Changed: a bar is now the loudness of its stretch of audio, not the loudest
+  instant in it. On anything long the old measure saturates: four hundred bars
+  across a fifty-three minute lesson is eight seconds of audio per bar, and the
+  loudest instant in eight seconds of anybody talking is a syllable at full
+  volume — every bar, all the way across. The numbers were right and the
+  picture was a comb, close enough to decoration that it was reasonable to ask
+  whether anything had been measured at all. Measured against a fixture that
+  talks for a twentieth of one minute and the whole of the next, the old
+  measure told those apart by 0.02 and this one by a factor of four.
+* Changed: the same measure now in all three places a waveform is produced —
+  the editor, the visitor's browser and the server's ffmpeg — so the same file
+  draws the same picture wherever it was measured. The editor also scales its
+  result to fill the height, which the other two always did and it never had.
+* Changed: a waveform measured the old way is still drawn, and the editor now
+  offers to measure it again, so nothing has to be deleted by hand first.
+* Testing: a new test writes audio whose loudness is known second by second,
+  measures it in a real browser with the shipped code, and checks every bar
+  against what was written underneath it — including that the silent minutes
+  read as zero and the blocks come back in the order they were recorded. Both
+  changes were verified by putting the old measure back and watching it fail.
 
 = 1.29.0 =
 * Fixed: one dropped request threw away a download that was 99% finished. A

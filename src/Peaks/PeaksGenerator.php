@@ -247,7 +247,14 @@ final class PeaksGenerator {
 	}
 
 	/**
-	 * Peak amplitude of one window of little-endian signed 16-bit samples.
+	 * Loudness of one window of little-endian signed 16-bit samples.
+	 *
+	 * Root mean square, not the loudest sample in the window — the same measure
+	 * the editor and the visitor's browser use, so a track measured here and
+	 * the same track measured there draw the same picture. The loudest sample
+	 * saturates on speech: every window of a lecture holds a syllable at full
+	 * volume, so every bar comes out the same height and an hour of teaching is
+	 * drawn as a comb.
 	 */
 	private static function window_peak( string $bytes ): float {
 		$samples = unpack( 'v*', $bytes );
@@ -256,7 +263,8 @@ final class PeaksGenerator {
 			return 0.0;
 		}
 
-		$max = 0;
+		$energy  = 0.0;
+		$counted = 0;
 
 		foreach ( $samples as $sample ) {
 			// `v` is unsigned; fold the top half back into negative territory.
@@ -264,14 +272,12 @@ final class PeaksGenerator {
 				$sample -= 65536;
 			}
 
-			$sample = abs( $sample );
-
-			if ( $sample > $max ) {
-				$max = $sample;
-			}
+			$level    = $sample / 32768;
+			$energy  += $level * $level;
+			$counted++;
 		}
 
-		return $max / 32768;
+		return sqrt( $energy / max( 1, $counted ) );
 	}
 
 	private static function can_run_processes(): bool {

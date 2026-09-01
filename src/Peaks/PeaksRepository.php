@@ -29,7 +29,23 @@ final class PeaksRepository {
 
 	public const META_KEY = '_imagina_player_peaks';
 
-	public const FORMAT_VERSION = 1;
+	/**
+	 * What a stored waveform was measured with.
+	 *
+	 * 1 — the loudest instant in each bar. Correct arithmetic, and the wrong
+	 *     statistic for anything long: every few seconds of somebody talking
+	 *     holds a syllable at full volume, so an hour of teaching came out as a
+	 *     comb of identical teeth. It looked made up, and somebody reasonably
+	 *     asked whether it was.
+	 * 2 — loudness across each bar, which is what the ear calls loud because it
+	 *     counts the silence between the words as well as the words.
+	 *
+	 * A waveform stored at an older version is still drawn — an old picture
+	 * beats no picture — but the editor counts it as one worth measuring again,
+	 * so the offer appears by itself rather than needing somebody to know that
+	 * it should be deleted first.
+	 */
+	public const FORMAT_VERSION = 2;
 
 	public const DB_VERSION = 1;
 
@@ -307,13 +323,22 @@ final class PeaksRepository {
 		for ( $i = 0; $i < $resolution; $i++ ) {
 			$start = (int) floor( $i * $bucket_size );
 			$end   = (int) min( $count, max( $start + 1, ceil( ( $i + 1 ) * $bucket_size ) ) );
-			$max   = 0.0;
+
+			/*
+			 * Combined by energy rather than by the loudest of them, to match
+			 * what a window already holds. Taking the largest would undo the
+			 * measurement wherever a bar spans more than one window: that bar
+			 * would come out as loud as its loudest part, which is the very
+			 * saturation the measure was changed to avoid.
+			 */
+			$energy = 0.0;
 
 			for ( $j = $start; $j < $end; $j++ ) {
-				$max = max( $max, (float) $peaks[ $j ] );
+				$level   = (float) $peaks[ $j ];
+				$energy += $level * $level;
 			}
 
-			$out[] = $max;
+			$out[] = sqrt( $energy / max( 1, $end - $start ) );
 		}
 
 		return $out;
@@ -340,6 +365,15 @@ final class PeaksRepository {
 			static fn( $peak ): float => abs( (float) $peak ) / $max,
 			$peaks
 		);
+	}
+
+	/**
+	 * Was this measured the way this version measures?
+	 *
+	 * @param array{version?:int}|null $record What was stored, if anything.
+	 */
+	public static function is_current( ?array $record ): bool {
+		return null !== $record && (int) ( $record['version'] ?? 1 ) >= self::FORMAT_VERSION;
 	}
 
 	public static function resolution(): int {

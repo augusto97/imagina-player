@@ -176,9 +176,27 @@ function release( context: BaseAudioContext ): void {
 }
 
 /**
- * Reduce one decoded window to a fixed number of peaks.
- * @param channel
- * @param into
+ * Reduce one decoded window to a fixed number of amplitudes.
+ *
+ * Loudness per bar, not the loudest instant in it — and on a long recording
+ * that difference is the whole picture.
+ *
+ * The loudest instant was the obvious choice and is wrong here. Four hundred
+ * bars across a fifty-three minute lesson is eight seconds of audio in every
+ * bar, and the loudest instant in eight seconds of anybody talking is a
+ * syllable at full volume. Every bar, all the way across. So a recording that
+ * really does range from a pause to a raised voice was drawn as a comb of
+ * identical teeth — measured correctly and reported uselessly, and close
+ * enough to a decorative pattern that somebody reasonably asked whether it had
+ * been made up.
+ *
+ * Root mean square is what the ear calls loud: it counts the silence between
+ * the words as well as the words. Measured against a fixture that talks for a
+ * twentieth of one minute and the whole of the next, the loudest instant tells
+ * those two apart by 0.02, and this tells them apart by a factor of four.
+ *
+ * @param channel The samples.
+ * @param into    How many values to produce.
  */
 function reduce( channel: Float32Array, into: number ): number[] {
 	const out: number[] = [];
@@ -187,17 +205,13 @@ function reduce( channel: Float32Array, into: number ): number[] {
 	for ( let slot = 0; slot < into; slot++ ) {
 		const start = slot * per;
 		const end = Math.min( channel.length, start + per );
-		let peak = 0;
+		let energy = 0;
 
 		for ( let i = start; i < end; i++ ) {
-			const value = Math.abs( channel[ i ] );
-
-			if ( value > peak ) {
-				peak = value;
-			}
+			energy += channel[ i ] * channel[ i ];
 		}
 
-		out.push( peak );
+		out.push( Math.sqrt( energy / Math.max( 1, end - start ) ) );
 	}
 
 	return out;
@@ -266,7 +280,36 @@ export async function measure(
 			  );
 
 	// A no-op unless a piece went missing and the rest was worth keeping.
-	return stretch( measured, downloaded, bars );
+	const result = stretch( measured, downloaded, bars );
+
+	return { peaks: normalize( result.peaks ), duration: result.duration };
+}
+
+/**
+ * Scale a row so its loudest bar reaches the top.
+ *
+ * Loudness per bar is a smaller number than the loudest instant in it — for a
+ * sine wave by a factor of the square root of two, and for speech by rather
+ * more — so drawing it unscaled would put a perfectly correct waveform in the
+ * bottom third of the space and make every recording look quiet.
+ *
+ * The other two places a waveform is produced, the server's and the visitor's,
+ * have always done this. This one did not, so the same file measured in the
+ * editor and measured on a host with ffmpeg came out at two different heights.
+ *
+ * @param peaks The row to scale.
+ */
+function normalize( peaks: number[] ): number[] {
+	let loudest = 0;
+
+	for ( const peak of peaks ) {
+		if ( peak > loudest ) {
+			loudest = peak;
+		}
+	}
+
+	// Silence stays silence rather than becoming a division by zero.
+	return loudest > 0 ? peaks.map( ( peak ) => peak / loudest ) : peaks;
 }
 
 /**
@@ -407,7 +450,15 @@ function resample(
 	for ( let bar = 0; bar < bars; bar++ ) {
 		const from = bar * step;
 		const to = from + step;
-		let peak = 0;
+
+		/*
+		 * Combined by energy rather than by the loudest of them, to match what
+		 * each window already holds. Taking the largest here would undo the
+		 * reduction above wherever a bar spans two windows: that bar would come
+		 * out as loud as the louder window, which is a seam.
+		 */
+		let energy = 0;
+		let counted = 0;
 
 		for ( let s = 0; s < segments.length; s++ ) {
 			const segment = segments[ s ];
@@ -429,13 +480,14 @@ function resample(
 			);
 
 			for ( let i = first; i <= last; i++ ) {
-				if ( segment.peaks[ i ] > peak ) {
-					peak = segment.peaks[ i ];
-				}
+				const value = segment.peaks[ i ] ?? 0;
+
+				energy += value * value;
+				counted++;
 			}
 		}
 
-		out.push( peak );
+		out.push( Math.sqrt( energy / Math.max( 1, counted ) ) );
 	}
 
 	return out;

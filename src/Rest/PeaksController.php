@@ -885,7 +885,7 @@ final class PeaksController {
 			$out[] = array(
 				'id'       => $id,
 				'src'      => (string) ( wp_get_attachment_url( $id ) ?: '' ),
-				'hasPeaks' => null !== $this->repository->get( 'att_' . $id ),
+				'hasPeaks' => PeaksRepository::is_current( $this->repository->get( 'att_' . $id ) ),
 			);
 		}
 
@@ -909,7 +909,7 @@ final class PeaksController {
 			$out[] = array(
 				'id'       => 0,
 				'src'      => $url,
-				'hasPeaks' => null !== $this->repository->get( 'url_' . md5( $url ) ),
+				'hasPeaks' => PeaksRepository::is_current( $this->repository->get( 'url_' . md5( $url ) ) ),
 			);
 		}
 
