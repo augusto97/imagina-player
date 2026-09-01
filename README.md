@@ -1,60 +1,58 @@
-# Imagina Player — 1.25.0
+# Imagina Player — 1.26.0
 
-Download **imagina-player-1.25.0.zip** and install it in WordPress under
+Download **imagina-player-1.26.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  0f756cdf00e90788136c414777554fd447c8ec2613b2b07269c6ac514df74dfa
+    SHA-256  3c11b0a4c7ddc62798e80c8b4f7554f41e1f140534cfe2e1c3450a8000a92428
 
-## Stop guessing, ask the server
+## The file host refuses this server
 
-Two explanations in a row were wrong, and the second one led to a server
-setting being changed that never needed changing. Both were the same mistake:
-reading a status code in a browser and inventing a story that fits it.
+The check answered it:
 
-`max_execution_time` is 300, so the timeout story is dead. Every file comes
-from the same provider, so the same-domain-versus-bucket story is dead too.
+    head:  FAILED status=403 type=text/html bytes=0
+    range: FAILED status=403 type=text/html bytes=1410
 
-So this release does not contain another theory. It contains a way to find out.
+The media host gives **this site's server** a 403 and an HTML error page, for
+both a HEAD and a ranged GET — while the same file plays perfectly in the
+browser.
 
-## A check that reports facts
+That difference is hotlink protection. It allows a domain by `Referer`: a
+browser on the site sends one, the domain is on the allow-list, the file plays.
+A request made by the site's own server sent **none at all**, so it looked like
+nobody and was refused.
 
-**Settings → Imagina Player → Waveforms → Why a file will not measure.**
+Which is why "the domain is whitelisted" was true and did not help. The
+allow-list had nothing to match on.
 
-Paste the address of a track that has no waveform. The server goes for it and
-reports what it sees:
+The fetch now says which site it is made for, and identifies the plugin rather
+than pretending to be a browser.
 
-- the status the file's own host gives **this server** — which is a different
-  question from what it gives your browser;
-- whether that host will serve part of a file, which is what fetching a large
-  one in pieces depends on;
-- how long each step took;
-- and what PHP is actually permitted to do — the live `disable_functions`, the
-  running SAPI, the memory and time limits, and what it makes of ffmpeg.
+## Why this took three attempts
 
-The report is plain text in a box, selectable in one go, because its purpose is
-to be sent to somebody who can read it.
+The report also says `sapi: litespeed`, and that is the other half.
 
-**Reaching the check is itself a result.** It has the same shape as the route
-that fetches a remote file — a URL inside a query string, which is a shape
-firewalls and security plugins are suspicious of. If the check answers, the
-request reaches PHP. If the check itself returns a gateway error, something in
-front of WordPress is answering and no PHP setting will change that.
+A web server in front of PHP is entitled to treat a 5xx from its backend as the
+backend having failed, and to replace the entire response — reason header and
+body alike — with its own error page. LiteSpeed does.
 
-### On the ffmpeg notice
+So the refusal that said *"the host answered 403"* was correct, and never
+arrived. It reached the browser as a bare 502 with nothing attached, and there
+was nothing left to do with it but guess. Twice I guessed wrong, and one of
+those guesses led to a server setting being changed that never needed changing.
 
-It is not cached and never was — it reads `disable_functions` each time it is
-shown. If it still says popen is disabled, then the PHP that runs WordPress
-still has it disabled, whatever was edited. A `php.ini` changed for the command
-line does not affect the one serving pages. The check now prints both the
-setting and the SAPI, so this is answered with evidence rather than argument.
+**Refusals go out as 424 now**, which no gateway rewrites.
 
-## And the message that started it
+## The check now runs it both ways
 
-A gateway error carrying none of this plugin's own reasons did not come from
-this plugin — every refusal it makes says which step gave up. Something between
-the browser and WordPress answered instead, and which of those it is cannot be
-told apart from a browser.
+Anonymously, and saying which site is asking — and prints both lines. That pair
+*is* the diagnosis, rather than something to be inferred from a single status
+code. It also prints what it identified itself as, so the address can be
+allow-listed at the other end.
 
-That is all the message claims now, plus where to look.
+## Also settled by the report
 
-1168 checks green.
+`popen` really is disabled — it is in `disable_functions`, at the end of the
+list, alongside `proc_open` and `escapeshellcmd`. The notice was right, it was
+never cached, and enabling it changed nothing. It is safe to put back as it was.
+
+1175 checks green.
