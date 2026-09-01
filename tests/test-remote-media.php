@@ -275,7 +275,7 @@ echo PHP_EOL . '# A large file does not become one long request' . PHP_EOL;
  */
 check(
 	'the doorway serves a slice when one is asked for',
-	str_contains( $controller, "'Range' => 'bytes='" )
+	str_contains( $controller, "\$get_args['headers']['Range'] = 'bytes='" )
 		&& str_contains( $controller, 'Content-Range' ),
 	'without this a fifty megabyte file is one request that a host can kill'
 );
@@ -371,8 +371,26 @@ check(
 
 check(
 	'it reports the status the file’s own host gave this server',
-	isset( $steps['head'] ) && 403 === ( $steps['head']['status'] ?? 0 ),
+	isset( $steps['head-anonymous'] ) && 403 === ( $steps['head-anonymous']['status'] ?? 0 ),
 	'this is the fact that separates "the host refuses us" from every other cause'
+);
+
+/*
+ * And the same request again saying who is asking. A media host with hotlink
+ * protection allows a browser on the site — which sends a `Referer` — and
+ * refuses the site's own server, which sends none. Those two lines side by
+ * side are the difference between knowing that and guessing it.
+ */
+check(
+	'and again as this site, which is what tells hotlink protection apart',
+	isset( $steps['head-as-this-site'] ),
+	'without the pair, a 403 could be anything'
+);
+
+check(
+	'saying what it identified itself as',
+	isset( $steps['sent-as'] )
+		&& str_contains( (string) ( $steps['sent-as']['detail'] ?? '' ), 'Referer' )
 );
 
 check(
@@ -419,12 +437,63 @@ $broken_steps = array_column( (array) ( $broken->get_data()['steps'] ?? array() 
 
 check(
 	'and passes on what went wrong in words',
-	isset( $broken_steps['head']['error'] )
-		&& str_contains( (string) $broken_steps['head']['error'], 'resolve' ),
-	(string) ( $broken_steps['head']['error'] ?? 'nothing' )
+	isset( $broken_steps['head-anonymous']['error'] )
+		&& str_contains( (string) $broken_steps['head-anonymous']['error'], 'resolve' ),
+	(string) ( $broken_steps['head-anonymous']['error'] ?? 'nothing' )
 );
 
 $GLOBALS['stub_remote'] = null;
+
+echo PHP_EOL . '# A refusal has to survive the web server' . PHP_EOL;
+
+/*
+ * The reason this took three attempts to diagnose. A web server in front of
+ * PHP may treat a 5xx from its backend as the backend having failed and
+ * replace the whole response — header and body — with its own error page.
+ * LiteSpeed does. So every refusal that said exactly what had happened was
+ * arriving as a bare 502, and the only thing left to do with it was guess.
+ */
+check(
+	'no refusal is sent as a server error',
+	str_contains( $controller, 'if ( $status >= 500 ) {' )
+		&& str_contains( $controller, '$status = 424;' ),
+	'a 5xx from PHP is a response a gateway is entitled to throw away'
+);
+
+$swallowed = run_proxy(
+	'https://media.example.com/lesson.mp3',
+	array( 'code' => 403, 'headers' => array( 'content-type' => 'audio/mpeg' ) )
+);
+
+check(
+	'and the reason still arrives',
+	str_contains( $swallowed['output'], 'upstream-403' ),
+	substr( $swallowed['output'], 0, 120 )
+);
+
+echo PHP_EOL . '# Saying who is asking' . PHP_EOL;
+
+/*
+ * The finding. Publitio answers this site's server with 403 and an HTML error
+ * page while the same file plays perfectly in the browser — which is what
+ * hotlink protection does: it allows the domain by `Referer`, a browser sends
+ * one, and a server-side fetch sends none at all.
+ */
+check(
+	'the file is fetched saying which site is asking',
+	str_contains( $controller, "'Referer'    => home_url( '/' )" ),
+	'without it an allow-list the site owner already configured cannot match'
+);
+
+check(
+	'and identifying the plugin rather than pretending to be nothing',
+	str_contains( $controller, 'ImaginaPlayer/' )
+);
+
+check(
+	'both the head request and the download say it',
+	2 <= substr_count( $controller, '$this->fetch_headers()' )
+);
 
 echo PHP_EOL . '# The preview stops asking the wrong address' . PHP_EOL;
 

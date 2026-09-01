@@ -344,6 +344,13 @@ function reason( error: unknown ): string {
 		 * warned not to change. So this names what is known and points at the
 		 * one place that can see the rest.
 		 */
+		/*
+		 * A gateway error carries none of this plugin's reasons for a second
+		 * reason as well as the first: a web server may replace a 5xx from PHP
+		 * with its own page, header and body alike. Refusals are sent as 4xx
+		 * now so they survive that, which means a 5xx here really is somebody
+		 * else's.
+		 */
 		if ( '502' === status || '504' === status || '503' === status ) {
 			return sprintf(
 				/* translators: %s: the HTTP status returned. */

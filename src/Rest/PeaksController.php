@@ -359,14 +359,35 @@ final class PeaksController {
 			);
 		}
 
-		$steps[] = $this->probe_step( 'head', $src, array( 'method' => 'HEAD' ) );
+		/*
+		 * The same request twice, once anonymous and once saying who is asking.
+		 *
+		 * A media host with hotlink protection decides by `Referer`: a browser
+		 * on the site sends one and is allowed, a request from the site's own
+		 * server sends none and is refused. That is how a file can play
+		 * perfectly on the page and be impossible to measure — and the two
+		 * lines below are what tells that apart from every other reason for a
+		 * refusal, rather than leaving it to be guessed at.
+		 */
+		$steps[] = $this->probe_step( 'head-anonymous', $src, array( 'method' => 'HEAD' ) );
+		$steps[] = $this->probe_step(
+			'head-as-this-site',
+			$src,
+			array( 'method' => 'HEAD', 'headers' => $this->fetch_headers() )
+		);
 
 		// Does the far end serve byte ranges? Everything about fetching a large
 		// file one piece at a time depends on the answer.
 		$steps[] = $this->probe_step(
 			'range',
 			$src,
-			array( 'headers' => array( 'Range' => 'bytes=0-1023' ) )
+			array( 'headers' => $this->fetch_headers() + array( 'Range' => 'bytes=0-1023' ) )
+		);
+
+		$steps[] = array(
+			'step'   => 'sent-as',
+			'ok'     => true,
+			'detail' => 'Referer: ' . home_url( '/' ),
 		);
 
 		return new WP_REST_Response(
@@ -435,6 +456,7 @@ final class PeaksController {
 			array(
 				'timeout'     => 15,
 				'redirection' => 3,
+				'headers'     => $this->fetch_headers(),
 			)
 		);
 
@@ -510,10 +532,11 @@ final class PeaksController {
 			'redirection' => 3,
 			'stream'      => true,
 			'filename'    => $temp,
+			'headers'     => $this->fetch_headers(),
 		);
 
 		if ( null !== $range ) {
-			$get_args['headers'] = array( 'Range' => 'bytes=' . $range[0] . '-' . $range[1] );
+			$get_args['headers']['Range'] = 'bytes=' . $range[0] . '-' . $range[1];
 		}
 
 		$body = wp_safe_remote_get( $src, $get_args );
@@ -613,6 +636,33 @@ final class PeaksController {
 		return array( $start, $end );
 	}
 
+	/**
+	 * Headers that say who is asking, and on whose behalf.
+	 *
+	 * A media host with hotlink protection decides by `Referer`: a browser on
+	 * the site sends one, the domain is on the allowed list, and the file
+	 * plays. A request made by the site's own server sends none at all, so it
+	 * looks like nobody, and it is refused — which is why a file can play
+	 * perfectly on the page and be impossible to measure.
+	 *
+	 * This is not a disguise. The request really is made by that site, for a
+	 * file that site is displaying, at the request of somebody who can edit it;
+	 * saying so is the accurate thing to do, and it is what makes an allow-list
+	 * the site's owner has already configured actually work.
+	 *
+	 * @return array<string, string>
+	 */
+	private function fetch_headers(): array {
+		return array(
+			'Referer'    => home_url( '/' ),
+			'User-Agent' => sprintf(
+				'Mozilla/5.0 (compatible; ImaginaPlayer/%s; +%s)',
+				\ImaginaPlayer\VERSION,
+				home_url( '/' )
+			),
+		);
+	}
+
 	private function looks_like_media( string $type ): bool {
 		$type = trim( explode( ';', $type )[0] );
 
@@ -638,6 +688,24 @@ final class PeaksController {
 	 * @param string $reason A short machine-readable tag.
 	 */
 	private function refuse( int $status, string $reason = '' ): void {
+		/*
+		 * Never a 5xx, whatever the reason.
+		 *
+		 * A web server in front of PHP is entitled to treat a 5xx from its
+		 * backend as the backend having failed, and to replace the whole
+		 * response with its own error page. LiteSpeed does. So a refusal sent
+		 * as 502 arrived as a bare 502 with the reason header stripped and the
+		 * body swapped — which is exactly what was reported, and why two
+		 * explanations in a row were guesses: the message that said what had
+		 * actually happened was being thrown away in transit.
+		 *
+		 * 424 says the request failed because something it depended on failed,
+		 * which is the truth, and no gateway rewrites a 4xx.
+		 */
+		if ( $status >= 500 ) {
+			$status = 424;
+		}
+
 		status_header( $status );
 		header( 'Content-Type: text/plain; charset=utf-8' );
 

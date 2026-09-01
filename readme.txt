@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.25.0
+Stable tag: 1.26.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,23 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.26.0 =
+* Fixed: a file behind hotlink protection could not be measured. The site's own
+  server fetched it without saying who was asking — no `Referer` at all — so a
+  media host that allows the site's domain refused it, while the same file
+  played perfectly in the browser, which does send one. The fetch now
+  identifies the site it is made for and the plugin making it.
+* Fixed: refusals were being thrown away in transit. A web server in front of
+  PHP may treat a 5xx from its backend as the backend having failed and replace
+  the whole response — reason header and body alike — with its own error page.
+  LiteSpeed does. So every message that said exactly what had gone wrong
+  arrived as a bare 502. Refusals are sent as 424 now, which no gateway
+  rewrites.
+* New: the file check runs the same request twice, once anonymously and once
+  saying which site is asking, and reports both. That pair is what tells
+  hotlink protection apart from every other reason for a refusal — and it
+  reports what it identified itself as, so the address can be allow-listed.
 
 = 1.25.0 =
 * New: Settings → Imagina Player → Waveforms has a check that asks the server
