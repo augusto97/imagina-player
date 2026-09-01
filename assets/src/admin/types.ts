@@ -81,6 +81,8 @@ export interface SettingsPayload {
 		block_download: boolean;
 		/** Load YouTube from the domain that sets no cookie before playback. */
 		provider_privacy: boolean;
+		/** Hide the provider's own interface on a video hosted elsewhere. */
+		provider_bare: boolean;
 		/** The bar over the picture, and the subtitle text on it. */
 		chrome_color: string;
 		caption_color: string;

@@ -203,6 +203,24 @@ final class Settings {
 				 * play, and in the EU that needs a banner.
 				 */
 				'provider_privacy' => true,
+				/*
+				 * Hide the provider's own interface, so a video hosted on
+				 * YouTube looks like every other video on the site.
+				 *
+				 * YouTube's control bar is already off — the player draws its
+				 * own — but the title bar, the channel avatar, the "Watch on
+				 * YouTube" button and the grid of suggested videos at the end
+				 * are not controlled by any embed parameter, and each of them
+				 * takes somebody off the page they are on.
+				 *
+				 * Worth reading before turning this on: YouTube's own terms
+				 * for the embedded player ask that it is not obscured. Every
+				 * commercial player plugin does this and the setting exists
+				 * because people ask for it, but the decision is the site
+				 * owner's rather than one this makes for them silently — which
+				 * is why the settings screen says so beside the switch.
+				 */
+				'provider_bare'   => true,
 			),
 			/*
 			 * Where a track's name comes from when the block does not say.

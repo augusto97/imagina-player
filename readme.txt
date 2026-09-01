@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.35.0
+Stable tag: 1.36.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,28 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.36.0 =
+* Added: hide YouTube's own interface, so a video hosted there looks like every
+  other video on the site. Three mechanisms, because no single one is enough.
+  The frame receives no pointer events, so nothing of theirs appears on hover.
+  The frame is made three times the height of the box and centred, so their
+  bars — pinned to the player's edges, while the picture is fitted inside and
+  centred — fall outside the crop while the picture still covers the box
+  exactly, to the pixel, with none of it lost. And playback is stopped a
+  fraction before the end, because the grid of suggested videos is drawn over
+  the picture where no crop can reach it, and no parameter turns it off.
+  On by default, and switchable per video and site-wide.
+* Note: YouTube's terms for the embedded player ask that it is not obscured.
+  The setting says so where the choice is made, rather than leaving it to be
+  discovered.
+* Testing: the crop is measured in a real browser against a stand-in built to
+  the same geometry — bars at the player's edges, picture fitted and centred —
+  with the same page measured twice, once with the crop and once without, so
+  the "before" is a control rather than an assumption. It requires a hundred
+  pixels of clearance rather than merely "outside the box", which any overscan
+  satisfies. The stopping-before-the-end is driven through the real bundle with
+  a stand-in for YouTube's API. All three were confirmed by turning them off.
 
 = 1.35.0 =
 * Fixed: "Generate missing waveforms" skipped most of what needed generating.

@@ -103,6 +103,14 @@ export interface VideoConfig {
 	autoplay?: boolean;
 	muted?: boolean;
 	loop?: boolean;
+	/**
+	 * Hide the provider's own interface, so the video looks like any other.
+	 *
+	 * Their control bar is already off — this player draws its own — but the
+	 * title bar, the channel avatar, the "Watch on YouTube" button and the grid
+	 * of suggested videos at the end answer to no embed parameter.
+	 */
+	providerBare?: boolean;
 }
 
 /** One item of a playlist, as the server hands it over. */

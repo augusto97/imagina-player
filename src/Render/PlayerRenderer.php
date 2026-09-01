@@ -95,6 +95,14 @@ final class PlayerRenderer {
 			$track->is_video() ? 'imgp--video' : 'imgp--audio',
 			$track->is_video() ? 'imgp--cc-' . sanitize_html_class( (string) $video_config['caption_size'] ) : '',
 			$track->is_video() ? 'imgp--ccbg-' . sanitize_html_class( (string) $video_config['caption_bg'] ) : '',
+			/*
+			 * Printed by the server rather than added by the script, so the
+			 * crop is in place before the frame is: a frame that appears at
+			 * full height and is cropped a moment later shows the provider's
+			 * title bar for exactly that moment, which is the thing being
+			 * hidden.
+			 */
+			$track->is_provider() && ! empty( $video_config['provider_bare'] ) ? 'imgp--bare-provider' : '',
 			(int) $config['border_radius'] > 0 ? 'imgp--rounded-box' : '',
 			$config['rounded_bars'] ? 'imgp--rounded' : '',
 			$atts['className'],
@@ -208,6 +216,13 @@ final class PlayerRenderer {
 				$client_config['video']['autoplay'] = (bool) $atts['autoplay'];
 				$client_config['video']['muted']    = (bool) $atts['muted'];
 				$client_config['video']['loop']     = (bool) $atts['loop'];
+
+				/*
+				 * Whether to hide the provider's own interface. Only ever sent
+				 * for a provider video, because on a file served from here
+				 * there is no other interface to hide.
+				 */
+				$client_config['video']['providerBare'] = ! empty( $video_config['provider_bare'] );
 			}
 		}
 

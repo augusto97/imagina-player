@@ -912,6 +912,57 @@
 	display: block;
 }
 
+/* --- Hiding the provider's own interface --------------------------------
+
+   Two of the three parts are here; the third is in the script, because it is
+   about time rather than layout.
+
+   1. The frame never sees the mouse. Most of what YouTube draws — the title
+      bar, the channel avatar, the "Watch on YouTube" button — appears on
+      hover, and a frame that receives no pointer events is never hovered.
+      Nothing is lost by it: every control on screen is this player's own, and
+      they sit above the frame.
+
+   2. The frame is three times taller than the box, and centred, so that the
+      box shows only the middle third.
+
+      This works because of where the chrome lives. YouTube pins its bars to
+      the edges of the *player*, which fills the frame, while the video itself
+      is fitted inside and centred. Make the frame three times taller than the
+      box and a video fitted to the frame's width lands exactly on the middle
+      third — the visible part — with a whole box-height of empty player above
+      and below it. The bars are up there, out of sight, and not one pixel of
+      the picture is lost.
+
+   Note this cannot hide what a provider draws over the picture itself, which
+   is why stopping before the end is done in the script instead. */
+
+.imgp--bare-provider {
+
+	/*
+	 * How many times the height of the box the frame is made. One number, and
+	 * the offset that centres it is worked out from it — they have to agree,
+	 * and writing both by hand in two rules is three chances to disagree. Three
+	 * gives a whole box-height of clearance above and below the picture, which
+	 * is far more than any bar a provider draws.
+	 */
+	--imgp-overscan: 3;
+	--imgp-overscan-top: calc((1 - var(--imgp-overscan)) / 2 * 100%);
+}
+
+.imgp--bare-provider .imgp__embed {
+	overflow: hidden;
+}
+
+.imgp--bare-provider .imgp__embed iframe {
+	position: absolute;
+	top: var(--imgp-overscan-top);
+	left: 0;
+	width: 100%;
+	height: calc(var(--imgp-overscan) * 100%);
+	pointer-events: none;
+}
+
 /* Only ever seen with JavaScript off, where the still image is all there is
    and the offer has to be a plain link to where the video actually lives. */
 .imgp__embed-link {
@@ -2182,6 +2233,20 @@
 	border: 0 !important;
 	border-radius: 0 !important;
 	background-color: transparent !important;
+}
+
+/* Restated, because the block above defends against a theme that resizes
+   iframes and would otherwise undo the crop along with the theme's damage.
+
+   The same variables, not the same numbers written again: this rule wins on
+   `!important`, so a copy of the numbers here would be the only ones that
+   mattered and the ones above would be decoration — which is exactly what
+   happened, and was found by a test that changed the decoration and passed. */
+.imgp.imgp--bare-provider .imgp__embed iframe {
+	position: absolute !important;
+	top: var(--imgp-overscan-top) !important;
+	height: calc(var(--imgp-overscan) * 100%) !important;
+	pointer-events: none !important;
 }
 
 .imgp .imgp__media {

@@ -414,6 +414,23 @@ window.__measure = function () {
 							player.querySelector('.imgp__stage').getBoundingClientRect().height) * 100
 				  )
 				: null,
+			/*
+			 * Whether the frame covers the stage, which is the thing that
+			 * matters — an area ratio of exactly 100% was standing in for it
+			 * and stopped being true the moment the frame was deliberately
+			 * made taller than the stage to crop a provider's own interface
+			 * out of view. A frame a theme has shrunk fails this; a frame
+			 * three times too tall does not, and should not.
+			 */
+			frameCovers: (function () {
+				if (!frame || !player.querySelector('.imgp__stage')) { return null; }
+
+				var f = frame.getBoundingClientRect();
+				var s = player.querySelector('.imgp__stage').getBoundingClientRect();
+
+				return f.left <= s.left + 1 && f.right >= s.right - 1
+					&& f.top <= s.top + 1 && f.bottom >= s.bottom - 1;
+			})(),
 			covers: coversPicture(player),
 			overflow: overflow,
 			offender: offender,
@@ -497,9 +514,9 @@ foreach ( (array) $report as $case => $data ) {
 $yt = (array) ( $report['video-youtube'] ?? array() );
 
 check(
-	'the provider frame fills the picture rather than being sized by the theme',
-	100 === (int) ( $yt['frameFills'] ?? 0 ),
-	( $yt['frameFills'] ?? '?' ) . '% of the stage'
+	'the provider frame covers the picture rather than being sized by the theme',
+	true === ( $yt['frameCovers'] ?? null ),
+	( $yt['frameFills'] ?? '?' ) . '% of the stage by area'
 );
 
 check(

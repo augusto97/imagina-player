@@ -146,6 +146,14 @@ final class Attributes {
 				'type'    => 'tristate',
 				'default' => self::INHERIT,
 			),
+			/*
+			 * Hide the provider's own interface on a video hosted elsewhere,
+			 * so it looks like every other video on the site.
+			 */
+			'videoProviderBare'  => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
 			'videoFullscreen'    => array(
 				'type'    => 'tristate',
 				'default' => self::INHERIT,

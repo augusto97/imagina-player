@@ -78,6 +78,10 @@ const VIDEO_PLAYBACK = [
 		'videoFocusMode',
 		__( 'Stop when it leaves the screen', 'imagina-player' ),
 	],
+	[
+		'videoProviderBare',
+		__( 'Hide YouTube’s own interface', 'imagina-player' ),
+	],
 ] as const;
 
 /** Settings that belong with the subtitles rather than with the buttons. */

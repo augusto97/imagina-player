@@ -1573,6 +1573,21 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 							set( { provider_privacy: value } )
 						}
 					/>
+
+					<Toggle
+						label={ __(
+							'Hide YouTube’s own interface',
+							'imagina-player'
+						) }
+						help={ __(
+							'A video hosted on YouTube looks like every other video on your site: no title bar, no channel avatar, no “Watch on YouTube” button, and no grid of other videos at the end taking people off your page. Worth knowing: YouTube’s terms for the embedded player ask that it is not obscured, so this is your decision to make rather than one taken for you.',
+							'imagina-player'
+						) }
+						checked={ Boolean( video.provider_bare ) }
+						onChange={ ( value ) =>
+							set( { provider_bare: value } )
+						}
+					/>
 				</div>
 
 				<Notice tone="info">

@@ -309,6 +309,14 @@ function loadScript( src: string ): Promise< void > {
 	return pending;
 }
 
+/**
+ * How far before the end to stop, in seconds.
+ *
+ * Comfortably more than one turn of the clock below, because a tick that lands
+ * past the end has already let the provider draw what this is here to prevent.
+ */
+const END_GUARD = 0.2;
+
 class YouTubeMedia extends ProviderMedia {
 	capabilities: MediaCapabilities = {
 		// YouTube renders its own subtitles inside the frame, and refuses to
@@ -349,6 +357,20 @@ class YouTubeMedia extends ProviderMedia {
 					controls: 0,
 					disablekb: 1,
 					playsinline: 1,
+					/*
+					 * Annotations off, and no fullscreen button of theirs —
+					 * this player has its own, and the frame is cropped, so
+					 * theirs would be both duplicated and invisible.
+					 *
+					 * These two do still work. `modestbranding` above no
+					 * longer does anything at all: YouTube retired it, and it
+					 * is kept only because removing a parameter that is
+					 * ignored is churn. The logo it used to hide is dealt with
+					 * by the crop, along with everything else at the frame's
+					 * edges.
+					 */
+					iv_load_policy: 3,
+					fs: 0,
 					// Required by YouTube for a frame not on youtube.com.
 					origin: window.location.origin,
 					autoplay: this.config.autoplay ? 1 : 0,
@@ -400,11 +422,54 @@ class YouTubeMedia extends ProviderMedia {
 				return;
 			}
 
-			this.report(
-				this.player.getCurrentTime() || 0,
-				this.player.getDuration() || 0
-			);
+			const at = this.player.getCurrentTime() || 0;
+			const total = this.player.getDuration() || 0;
+
+			this.report( at, total );
+			this.stopBeforeTheEnd( at, total );
 		}, POLL_MS );
+	}
+
+	/**
+	 * End the video ourselves, a moment before the provider would.
+	 *
+	 * The third of the three ways the provider's interface is hidden, and the
+	 * one no amount of CSS could do. When a YouTube video reaches its end the
+	 * player covers the picture with a grid of other videos to watch — drawn
+	 * over the picture itself rather than at the frame's edges, so the crop
+	 * that hides the title bar cannot touch it, and every tile on it is a way
+	 * off the page.
+	 *
+	 * There is no parameter that turns it off. `rel=0` only limits it to the
+	 * same channel; it has not removed it since 2018.
+	 *
+	 * So playback is stopped a fraction before the end, which the grid waits
+	 * for, and this player raises `ended` itself. Every part of the page that
+	 * cares — the end-of-video call to action, the playlist moving on, the
+	 * poster coming back — is listening for that and cannot tell the
+	 * difference.
+	 *
+	 * A fifth of a second, because the clock is read four times a second: less
+	 * than that and a tick can land past the end, which is the thing being
+	 * avoided.
+	 *
+	 * @param at    Where playback is.
+	 * @param total How long the video is.
+	 */
+	private stopBeforeTheEnd( at: number, total: number ): void {
+		if ( ! this.config.providerBare || this.isEnded || ! this.player ) {
+			return;
+		}
+
+		// Nothing to be early for until the length is known, and a looping
+		// video is meant to reach the end and start again.
+		if ( total <= 0 || this.config.loop || at < total - END_GUARD ) {
+			return;
+		}
+
+		this.player.pauseVideo();
+		this.report( total, total );
+		this.finish();
 	}
 
 	protected command( name: string, value?: number | boolean ): void {

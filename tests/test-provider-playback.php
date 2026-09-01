@@ -242,7 +242,29 @@ setTimeout(function () {
 				out.callsAtEnd = window.__calls.slice();
 				out.boxKept = !!box && box.querySelector('iframe') !== null;
 
-				report(out);
+				/*
+				 * And now the end, which is where YouTube covers the picture
+				 * with a grid of other videos to watch. Playing again, then
+				 * putting the clock a tenth of a second short of the duration
+				 * — near enough that the next tick would otherwise arrive past
+				 * it.
+				 */
+				document.querySelector('.imgp__play').click();
+
+				window.setTimeout(function () {
+					window.__calls.length = 0;
+					window.__ytState.time = window.__ytState.duration - 0.1;
+
+					window.setTimeout(function () {
+						out.callsNearEnd = window.__calls.slice();
+						// What "ended" looks like from outside: no longer
+						// playing, and the playhead back at the start, which is
+						// what this player's default does at the end.
+						out.stillPlaying = root.classList.contains('is-playing');
+
+						report(out);
+					}, 700);
+				}, 300);
 			}, 300);
 		}, 600);
 	}, 700);
@@ -343,6 +365,44 @@ check(
 );
 
 check( 'and it is playing without anybody pressing anything', true === ( $r['autostarted'] ?? false ) );
+
+echo PHP_EOL . '# The end, which is where the provider takes the page back' . PHP_EOL;
+
+/*
+ * When a YouTube video reaches its end the player covers the picture with a
+ * grid of other videos to watch. It is drawn over the picture rather than at
+ * the frame's edges, so the crop that hides the title bar cannot touch it, and
+ * every tile on it is a way off the page. No parameter turns it off — `rel=0`
+ * has only limited it to the same channel since 2018.
+ *
+ * So playback is stopped a fraction before the end and this player raises
+ * `ended` itself.
+ */
+$near_end = (array) ( $r['callsNearEnd'] ?? array() );
+
+check(
+	'playback is stopped before the video can run out',
+	in_array( 'pause', $near_end, true ),
+	'calls near the end: ' . implode( ', ', $near_end )
+);
+
+/*
+ * And that it was a real ending rather than just a pause. There is no class
+ * that says so — what the rest of the player does at the end is stop playing
+ * and rewind — so those are what is checked. If `ended` were never raised the
+ * video would sit paused a fraction from the end for ever, with the end-of-
+ * video call to action never shown and a playlist never moving on.
+ */
+check(
+	'and it is no longer playing',
+	false === ( $r['stillPlaying'] ?? true )
+);
+
+check(
+	'and the playhead was rewound, which is what this player does at an end',
+	in_array( 'seek:0', $near_end, true ),
+	'calls near the end: ' . implode( ', ', $near_end )
+);
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
 exit( $failures ? 1 : 0 );

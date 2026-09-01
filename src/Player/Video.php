@@ -59,6 +59,7 @@ final class Video {
 		'show_volume'     => 'videoVolume',
 		'show_title'      => 'videoTitle',
 		'focus_mode'      => 'videoFocusMode',
+		'provider_bare'   => 'videoProviderBare',
 		'captions_on'     => 'videoCaptionsOn',
 		'caption_size'    => 'videoCaptionSize',
 		'caption_bg'      => 'videoCaptionBg',
