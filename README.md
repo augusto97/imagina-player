@@ -1,40 +1,71 @@
-# Imagina Player — 1.27.0
+# Imagina Player — 1.28.0
 
-Download **imagina-player-1.27.0.zip** and install it in WordPress under
+Download **imagina-player-1.28.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  eecce6042ae19a3db5a6a3b09056228917d14a64f48c2b4643c0604c7fcc9414
+    SHA-256  42e4beb70748526d91f7edca1f38b93d2b4d3a6c36161d84dad7d7419ae3ee50
 
-## 206 is a success, and it was being treated as a refusal
+## The message you have been shown three times was the wrong one
 
-The `Referer` fix in 1.26.0 worked. The check says so:
+> el navegador no lo pudo leer, que suele ser un rechazo por origen cruzado
 
-    head-as-this-site: ok status=200 length=50783776 acceptsRanges=bytes
-    range:             ok status=206 contentRange=bytes 0-1023/50783776
+That sentence is the **last line** of the code that turns a failure into words.
+It is what comes out when nothing else matched. It is not a diagnosis; it is a
+shrug with a plausible story attached.
 
-The server can fetch the file. What refused it was this plugin.
+And it is plausible — cross-origin refusals are real, and common, and exactly
+what a file on another domain does. Which is why it has cost an afternoon of
+looking at CORS headers, a look at whitelists that were already correct, and a
+PHP function enabled against a host's warning. None of those were the problem.
+Each time, the real failure had arrived carrying a status, a step and a reason,
+and all three were thrown away on the way out.
 
-A server answering a `Range` request correctly answers **206**. The test for
-whether the fetch had worked demanded exactly **200** — written before there
-were ranges, and left alone when they were added in 1.24.0.
+## What it will say now
 
-So from the moment large files started coming through in slices, every one of
-them was refused, and the message said the media host had refused with a 206.
-Which is a success code, and reads as nonsense because it is.
+Every failure the browser or this site can produce has words of its own, and a
+failure part-way through a large file says **which part**:
 
-## Why the suite stayed green through all of it
+    the server hosting the file answered 403 to this site as well — check
+    that domain's hotlink protection or signed-link rules (slice 9 of 13)
 
-There was no test that ran the route with a range on it. Adding ranges and
-breaking every ranged fetch looked like a passing suite, because nothing
-exercised the combination.
+Slice 9, not "the file". That distinction matters: a first slice refused is a
+host that will not serve this site at all, and a ninth slice refused is a host
+that started saying no once it had been asked a dozen times — a rate limit, and
+a completely different fix.
 
-Adding that test found a second gap. The route makes two requests — a HEAD
-first, then the download — and the HEAD check catches an outright refusal
-before the download starts. So the check *after* the download is only ever
-reached when the two answers differ, and the test harness could not make them
-differ. Replacing that check with `if (false)` passed the entire suite.
+Two failures had no words at all and were reported as the cross-origin line:
 
-They can now answer independently, and "a download refused after an allowed
-HEAD" is checked on its own.
+* this site being unable to open a temporary file to download into — a full
+  disk, or an uploads folder it cannot write to;
+* a refusal whose reason was stripped before it got back.
 
-1180 checks green.
+And a slice refused only ever read the reason on the **first** request. The
+rest reported a bare status, or nothing.
+
+## Why it kept happening
+
+The mapping lived inside a React component. Nothing could run it — you could
+read it and believe it was complete, which is what happened, three times.
+
+It is its own module now, and the suite reads every failure tag out of the two
+files that produce them — the browser-side measuring code and the server-side
+doorway — and asks the module what it would say about each one. That is how the
+two missing ones were found, rather than by waiting for somebody to hit them.
+
+Adding a `throw` with no words for it now fails the suite. Verified by adding
+one, on both sides.
+
+## Also
+
+Measuring a large file through this site now makes **one request per slice**
+instead of two. The extra request asked the media host what the file was before
+fetching a piece of it — which the piece itself already answers.
+
+1212 checks green.
+
+## Still worth doing on your server
+
+`popen` was enabled during this hunt, against the host's warning, on the theory
+that it was the problem. It was not, and the check confirms it is still listed
+in `disable_functions` regardless. It is used for one thing here — running
+`ffmpeg` — and there is no `ffmpeg` on that server to run. **Turn it back off.**
