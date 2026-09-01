@@ -130,6 +130,7 @@ window.__measure = function () {
 
 		report[section.getAttribute('data-skin')] = {
 			documentOverflow: Math.round(document.documentElement.scrollWidth - document.documentElement.clientWidth),
+			sheenOverflow: window.__sheenOverflow(),
 			overflow: worst,
 			culprit: culprit,
 			enhanced: !!(player && player.classList.contains('is-enhanced'))
@@ -137,6 +138,47 @@ window.__measure = function () {
 	});
 
 	return report;
+};
+
+/*
+ * The sheen that runs while a waveform is being worked out.
+ *
+ * An absolutely positioned overlay that slides from one side of the scrubber to
+ * the other. The box it slides inside clipped nothing, so for the twenty
+ * seconds it runs it hung off the edge of the page and the horizontal scrollbar
+ * appeared, grew and shrank in time with it.
+ *
+ * Pinned at each end of its travel rather than watched while it moves: an
+ * animation sampled at the wrong moment is exactly in place and shows nothing,
+ * and a test that depends on catching the right frame is a test that fails on a
+ * slow machine for no reason. Both ends, measured once each.
+ */
+window.__sheenOverflow = function () {
+	var players = document.querySelectorAll('.imgp');
+	var pin = document.createElement('style');
+
+	document.head.appendChild(pin);
+	players.forEach(function (el) { el.classList.add('is-analyzing'); });
+
+	var worst = 0;
+
+	[ '-100%', '0%', '100%' ].forEach(function (at) {
+		pin.textContent =
+			'.imgp.is-analyzing .imgp__scrubber::after{animation:none!important;' +
+			'opacity:1!important;transform:translateX(' + at + ')!important}';
+
+		// Read a layout property to force the style to be applied before measuring.
+		void document.documentElement.offsetWidth;
+
+		var over = document.documentElement.scrollWidth - document.documentElement.clientWidth;
+
+		if (over > worst) { worst = over; }
+	});
+
+	players.forEach(function (el) { el.classList.remove('is-analyzing'); });
+	pin.remove();
+
+	return Math.round(worst);
 };
 </script>
 </body></html>
@@ -178,6 +220,12 @@ foreach ( $widths as $width ) {
 			(int) $data['overflow'] <= 1 && (int) $data['documentOverflow'] <= 0,
 			$data['overflow'] . 'px over via ' . $data['culprit']
 				. ', page ' . $data['documentOverflow'] . 'px'
+		);
+
+		check(
+			"{$skin} still fits at {$width}px while its waveform is being worked out",
+			(int) $data['sheenOverflow'] <= 0,
+			$data['sheenOverflow'] . 'px of page sliding in and out under the loading sheen'
 		);
 	}
 }

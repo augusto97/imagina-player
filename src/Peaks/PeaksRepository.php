@@ -251,19 +251,41 @@ final class PeaksRepository {
 
 		global $wpdb;
 
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated table.
-		$result = $wpdb->replace(
-			self::table_name(),
-			array(
-				'peaks_key'      => $key,
-				'format_version' => $record['version'],
-				'resolution'     => $record['resolution'],
-				'duration'       => $record['duration'],
-				'peaks'          => $record['peaks'],
-				'updated_at'     => current_time( 'mysql', true ),
-			),
-			array( '%s', '%d', '%d', '%f', '%s', '%s' )
+		$row = array(
+			'peaks_key'      => $key,
+			'format_version' => $record['version'],
+			'resolution'     => $record['resolution'],
+			'duration'       => $record['duration'],
+			'peaks'          => $record['peaks'],
+			'updated_at'     => current_time( 'mysql', true ),
 		);
+
+		$types = array( '%s', '%d', '%d', '%f', '%s', '%s' );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated table.
+		$result = $wpdb->replace( self::table_name(), $row, $types );
+
+		/*
+		 * A write that failed is worth one look at the table before giving up.
+		 *
+		 * The failure this catches is a column the code knows about and the
+		 * table does not — which happened, because a column was added and
+		 * nothing ran the migration on a site updated by uploading the plugin.
+		 * Every write failed silently from then on: the editor drew the
+		 * waveform it had just measured and looked perfectly correct, while
+		 * nothing was ever stored and every visitor downloaded the whole file
+		 * to work it out again.
+		 *
+		 * Once, not in a loop — if the table cannot be brought up to date the
+		 * second attempt fails too and the caller is told, which is the honest
+		 * outcome.
+		 */
+		if ( false === $result ) {
+			self::install_table();
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated table.
+			$result = $wpdb->replace( self::table_name(), $row, $types );
+		}
 
 		wp_cache_set( self::cache_key( $key ), $record, 'imagina_player', DAY_IN_SECONDS );
 

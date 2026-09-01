@@ -473,6 +473,91 @@ check(
 );
 
 /*
+ * And a host that cuts that tail short is reported as something to know rather
+ * than something to fix. It is a real failure of that request, and measuring
+ * really does cope with it — the piece is asked for again, and a tail that
+ * never comes is left out of a waveform that is otherwise complete. Calling it
+ * FAILED beside a waveform that works sends somebody hunting a problem they
+ * have already got past, which is how the last three weeks went.
+ */
+$GLOBALS['stub_remote_steps'] = array(
+	array( 'code' => 403, 'headers' => array( 'content-type' => 'text/html' ), 'body' => '' ),
+	array(
+		'code'    => 200,
+		'headers' => array( 'content-type' => 'audio/mpeg', 'content-length' => '1024', 'accept-ranges' => 'bytes' ),
+		'body'    => '',
+	),
+	array(
+		'code'    => 206,
+		'headers' => array( 'content-type' => 'audio/mpeg', 'content-range' => 'bytes 0-1023/1024' ),
+		'body'    => '',
+	),
+	new WP_Error( 'http_request_failed', 'cURL error 18: transfer closed with 4050 bytes remaining to read' ),
+);
+
+$truncated = array_column(
+	(array) ( $controller_instance->diagnose(
+		new WP_REST_Request( array( 'src' => 'https://media.example.com/lesson.mp3' ) )
+	)->get_data()['steps'] ?? array() ),
+	null,
+	'step'
+);
+
+check(
+	'a host that cuts the tail short is not reported as a failure',
+	true === ( $truncated['range-tail']['ok'] ?? null ),
+	'the waveform works; a red line beside it is its own wrong answer'
+);
+
+check(
+	'and it says what happened and why it does not matter',
+	str_contains( (string) ( $truncated['range-tail']['handled'] ?? '' ), 'cuts the last few kilobytes short' ),
+	(string) ( $truncated['range-tail']['handled'] ?? 'nothing' )
+);
+
+check(
+	'while keeping what the client actually said',
+	str_contains( (string) ( $truncated['range-tail']['error'] ?? '' ), 'cURL error 18' ),
+	'the evidence is the point'
+);
+
+/*
+ * Any other failure of the same step is still a failure. "Coped" is for one
+ * specific thing that is genuinely coped with, not a way of turning the check
+ * green.
+ */
+$GLOBALS['stub_remote_steps'] = array(
+	array( 'code' => 403, 'headers' => array( 'content-type' => 'text/html' ), 'body' => '' ),
+	array(
+		'code'    => 200,
+		'headers' => array( 'content-type' => 'audio/mpeg', 'content-length' => '1024', 'accept-ranges' => 'bytes' ),
+		'body'    => '',
+	),
+	array(
+		'code'    => 206,
+		'headers' => array( 'content-type' => 'audio/mpeg', 'content-range' => 'bytes 0-1023/1024' ),
+		'body'    => '',
+	),
+	new WP_Error( 'http_request_failed', 'cURL error 28: Operation timed out' ),
+);
+
+$timed_out = array_column(
+	(array) ( $controller_instance->diagnose(
+		new WP_REST_Request( array( 'src' => 'https://media.example.com/lesson.mp3' ) )
+	)->get_data()['steps'] ?? array() ),
+	null,
+	'step'
+);
+
+check(
+	'a tail that times out is still reported as a failure',
+	false === ( $timed_out['range-tail']['ok'] ?? null ),
+	'that one is not coped with, and saying it is would be the same lie in reverse'
+);
+
+$GLOBALS['stub_remote_steps'] = array();
+
+/*
  * The environment, because a notice about `popen` that will not go away is
  * almost always a php.ini edited for one SAPI while WordPress runs under
  * another — and that is settled by evidence, not by argument.

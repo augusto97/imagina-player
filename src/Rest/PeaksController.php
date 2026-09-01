@@ -418,11 +418,32 @@ final class PeaksController {
 		if ( $known > 0 ) {
 			$tail = max( 0, $known - 262144 );
 
-			$steps[] = $this->probe_step(
+			$step = $this->probe_step(
 				'range-tail',
 				$src,
 				array( 'headers' => $this->fetch_headers() + array( 'Range' => 'bytes=' . $tail . '-' . ( $known - 1 ) ) )
 			);
+
+			/*
+			 * A truncated tail is a fact about that host, not a fault here.
+			 *
+			 * Some CDNs answer a range ending at the last byte, promise a
+			 * length, and then close the connection a few kilobytes short.
+			 * cURL calls that error 18. It is why measuring a long file used to
+			 * fail on its final piece, and it is now handled — the piece is
+			 * asked for again, and a tail that never arrives is left out of a
+			 * waveform that is otherwise complete.
+			 *
+			 * So it is reported as something to know rather than something to
+			 * fix. A red line beside a waveform that works is its own kind of
+			 * wrong answer.
+			 */
+			if ( false === ( $step['ok'] ?? false ) && str_contains( (string) ( $step['error'] ?? '' ), 'error 18' ) ) {
+				$step['ok']      = true;
+				$step['handled'] = 'this host cuts the last few kilobytes short; measuring retries and copes without them';
+			}
+
+			$steps[] = $step;
 		}
 
 		$steps[] = array(

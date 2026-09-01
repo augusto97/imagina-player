@@ -134,6 +134,26 @@ final class Plugin {
 			add_option( Settings::OPTION_KEY, Settings::defaults() );
 		}
 
+		/*
+		 * The tables as well, which is the entire reason this method exists and
+		 * was the one thing it did not do.
+		 *
+		 * A column was added to the waveforms table in 1.31.0 and nothing ever
+		 * ran the migration for a site updated by uploading the plugin — which
+		 * is how this one reaches nearly every site. So the code asked for a
+		 * column that was not there: every read failed, every write failed, and
+		 * a waveform measured in the editor was never stored. The editor looked
+		 * right because it draws what it just measured; the front end asked for
+		 * it, got a 404, and downloaded fifty megabytes to work it out again on
+		 * every single page view.
+		 *
+		 * Each of these checks a stored version and returns immediately when
+		 * there is nothing to do, so this costs an option read on the one
+		 * request after an update and nothing at all after that.
+		 */
+		PeaksRepository::install_table();
+		LeadRepository::install_table();
+
 		update_option( 'imagina_player_version', VERSION, false );
 	}
 

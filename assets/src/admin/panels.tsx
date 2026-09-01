@@ -87,7 +87,13 @@ function describe( report: Diagnosis, url: string ): string {
 	lines.push( '' );
 
 	for ( const step of report.steps ) {
-		const bits = [ step.ok ? 'ok' : 'FAILED' ];
+		/*
+		 * "coped" rather than "ok" or "FAILED": the request really did fail and
+		 * the measuring really does work anyway, and calling that either name
+		 * on its own is a wrong answer. A red line beside a waveform that works
+		 * sends somebody looking for a problem they have already got past.
+		 */
+		const bits = [ step.handled ? 'coped' : step.ok ? 'ok' : 'FAILED' ];
 
 		for ( const field of [
 			'status',
@@ -98,6 +104,7 @@ function describe( report: Diagnosis, url: string ): string {
 			'contentRange',
 			'bytes',
 			'error',
+			'handled',
 			'detail',
 		] as const ) {
 			const value = step[ field ];

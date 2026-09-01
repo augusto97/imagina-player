@@ -48,6 +48,14 @@ export interface DiagnosisStep {
 	ok: boolean;
 	detail?: string;
 	error?: string;
+	/**
+	 * Set when a step failed and it does not matter, saying why.
+	 *
+	 * Some hosts cut the last few kilobytes off a range that ends at the last
+	 * byte of a file. The request genuinely fails and measuring genuinely
+	 * copes, so neither "ok" nor "FAILED" is the truth about it.
+	 */
+	handled?: string;
 	seconds?: number;
 	status?: number;
 	type?: string;

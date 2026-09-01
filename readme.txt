@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.31.0
+Stable tag: 1.32.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,31 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.32.0 =
+* Fixed: 1.31.0 added a column to the waveforms table and nothing ever created
+  it. The routine that catches up a site whose stored version is behind the
+  code — which exists precisely because most sites update by uploading the
+  plugin rather than by activating it — did not touch the tables. So the code
+  asked for a column that was not there: every read failed, every write failed,
+  and it was invisible, because the editor draws the waveform it has just
+  measured and looked perfectly correct while nothing reached the database.
+  The visible symptom was on the front end, where every visitor downloaded the
+  whole file to work the same waveform out again on every page view.
+* Fixed: a write to the waveforms table that fails now rebuilds the table and
+  tries once more, rather than reporting success it did not have.
+* Fixed: the loading sheen slid a full width in each direction inside a box
+  that clipped nothing, so while a waveform was being worked out a whole page
+  width hung off the side and the horizontal scrollbar appeared, grew and shrank
+  in time with it. Measured at 320 to 768 pixels across every skin.
+* Changed: the file check reports a host that cuts the last few kilobytes off a
+  range as "coped" rather than "FAILED", with what the client said kept beside
+  it. The request does fail, measuring does cope, and a red line next to a
+  waveform that works sends people hunting a problem they are already past.
+* Testing: a new check reads the columns the code writes and reads out of the
+  code, reads the columns the table declares out of the schema, and requires
+  that they agree — and that the upgrade routine actually applies the schema.
+  Both halves of the bug were confirmed by putting them back.
 
 = 1.31.0 =
 * Fixed: 1.30.0 said the editor would offer to measure an old waveform again.

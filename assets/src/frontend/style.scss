@@ -392,6 +392,15 @@
 
 /* Runs only while a waveform is genuinely being built, and stops on its own
    even if the JavaScript that set this class never gets to clear it. */
+
+/* The sheen slides a full width in each direction, and nothing was clipping it:
+   for the twenty seconds it ran, a whole page width hung off the side and the
+   horizontal scrollbar appeared, grew and shrank in time with it. Scoped to the
+   state that overflows, so nothing about a player at rest changes. */
+.imgp.is-analyzing .imgp__scrubber {
+	overflow: hidden;
+}
+
 .imgp.is-analyzing .imgp__scrubber::after {
 	content: "";
 	position: absolute;
