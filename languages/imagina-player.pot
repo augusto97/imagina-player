@@ -11,7 +11,7 @@ msgstr ""
 "X-Domain: imagina-player\n"
 
 #. translators: 1: how many files, 2: why the first one failed
-#: assets/src/editor/waveform-notice.tsx:190
+#: assets/src/editor/waveform-notice.tsx:191
 msgid "%1$d file could not be measured here: %2$s"
 msgid_plural "%1$d files could not be measured here. The first: %2$s"
 msgstr[0] ""
@@ -28,7 +28,7 @@ msgid "%1$d of %2$d generated. The rest failed — the first: %3$s"
 msgstr ""
 
 #. translators: 1: current file number, 2: total files, 3: what is happening
-#: assets/src/editor/waveform-notice.tsx:452
+#: assets/src/editor/waveform-notice.tsx:306
 msgid "%1$d of %2$d — %3$s"
 msgstr ""
 
@@ -45,7 +45,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of files with no waveform.
-#: assets/src/editor/waveform-notice.tsx:211
+#: assets/src/editor/waveform-notice.tsx:212
 msgid "%d file here has no waveform, so it will show a plain progress bar on your site."
 msgid_plural "%d files here have no waveform, so they will show a plain progress bar on your site."
 msgstr[0] ""
@@ -669,7 +669,7 @@ msgstr ""
 msgid "Gap between bars"
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:226
+#: assets/src/editor/waveform-notice.tsx:227
 msgid "Generate it now"
 msgid_plural "Generate them now"
 msgstr[0] ""
@@ -896,7 +896,7 @@ msgstr ""
 msgid "Marks on the progress bar, and a menu to jump between sections. Times can be written as 90, 1:30 or 0:01:30."
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:234
+#: assets/src/editor/waveform-notice.tsx:235
 msgid "Measured here, in this browser, and stored for every visitor. Nobody browsing your site downloads anything extra."
 msgstr ""
 
@@ -969,12 +969,12 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: src/Rest/PeaksController.php:802
+#: src/Rest/PeaksController.php:833
 msgid "No track was named."
 msgstr ""
 
-#: src/Rest/PeaksController.php:816
-#: src/Rest/PeaksController.php:876
+#: src/Rest/PeaksController.php:847
+#: src/Rest/PeaksController.php:907
 msgid "No waveform data was supplied."
 msgstr ""
 
@@ -1391,7 +1391,7 @@ msgstr ""
 msgid "Served with %d."
 msgstr ""
 
-#: src/Rest/PeaksController.php:996
+#: src/Rest/PeaksController.php:1027
 msgid "Server-side waveform generation is unavailable on this host."
 msgstr ""
 
@@ -1628,7 +1628,7 @@ msgstr ""
 msgid "Thank you."
 msgstr ""
 
-#: src/Rest/PeaksController.php:988
+#: src/Rest/PeaksController.php:1019
 #: src/Rest/StreamController.php:60
 msgid "That attachment does not exist."
 msgstr ""
@@ -1649,7 +1649,7 @@ msgstr ""
 msgid "That file is not protected."
 msgstr ""
 
-#: src/Rest/PeaksController.php:794
+#: src/Rest/PeaksController.php:825
 msgid "That is not a media file."
 msgstr ""
 
@@ -1804,12 +1804,12 @@ msgstr ""
 msgid "The vault directory returned a page listing its contents. Turn directory indexes off for the uploads directory."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1022
+#: src/Rest/PeaksController.php:1053
 msgid "The waveform could not be generated for this file."
 msgstr ""
 
-#: src/Rest/PeaksController.php:831
-#: src/Rest/PeaksController.php:891
+#: src/Rest/PeaksController.php:862
+#: src/Rest/PeaksController.php:922
 msgid "The waveform data is malformed."
 msgstr ""
 
@@ -1834,7 +1834,7 @@ msgstr ""
 msgid "This address is not something the player can show. It handles YouTube and Vimeo links, MP4 and WebM files, and HLS streams (.m3u8)."
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:242
+#: assets/src/editor/waveform-notice.tsx:243
 msgid "This browser cannot measure audio."
 msgstr ""
 
@@ -1871,7 +1871,7 @@ msgstr ""
 msgid "This video is hosted by %s."
 msgstr ""
 
-#: src/Rest/PeaksController.php:852
+#: src/Rest/PeaksController.php:883
 msgid "This waveform grant is missing or expired."
 msgstr ""
 
@@ -2099,7 +2099,7 @@ msgid "Without this, an email gate has to be answered to carry on."
 msgstr ""
 
 #: assets/src/admin/panels.tsx:490
-#: assets/src/editor/waveform-notice.tsx:224
+#: assets/src/editor/waveform-notice.tsx:225
 msgid "Working…"
 msgstr ""
 
@@ -2137,7 +2137,7 @@ msgstr ""
 
 #. translators: %d: percentage downloaded.
 #: assets/src/admin/panels.tsx:204
-#: assets/src/editor/waveform-notice.tsx:442
+#: assets/src/editor/waveform-notice.tsx:296
 msgid "downloading %d%%"
 msgstr ""
 
@@ -2155,8 +2155,12 @@ msgstr ""
 
 #. translators: 1: current file number, 2: total, 3: file name, 4: what is happening
 #: assets/src/admin/panels.tsx:201
-#: assets/src/editor/waveform-notice.tsx:439
+#: assets/src/editor/waveform-notice.tsx:293
 msgid "measuring"
+msgstr ""
+
+#: assets/src/shared/failure.ts:208
+msgid "measuring was stopped before it finished"
 msgstr ""
 
 #. translators: 1: number generated, 2: total, 3: why the first failure happened
@@ -2164,7 +2168,7 @@ msgstr ""
 msgid "no reason given"
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:387
+#: assets/src/shared/failure.ts:191
 msgid "nothing in the file decoded as audio"
 msgstr ""
 
@@ -2173,56 +2177,68 @@ msgid "seconds"
 msgstr ""
 
 #. translators: %s: the HTTP status returned.
-#: assets/src/editor/waveform-notice.tsx:358
+#: assets/src/shared/failure.ts:162
 msgid "something between the browser and WordPress answered %s — this plugin did not, because every refusal it makes says why. Settings → Imagina Player → Waveforms has a check that asks the server directly and reports what it finds."
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:316
+#: assets/src/shared/failure.ts:106
 msgid "that address was refused as unsafe to fetch"
 msgstr ""
 
 #. translators: %s: HTTP status the remote server returned.
-#: assets/src/editor/waveform-notice.tsx:302
+#: assets/src/shared/failure.ts:79
 msgid "the address does not return an audio or video file"
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:392
+#: assets/src/shared/failure.ts:196
 msgid "the browser could not decode it — check that the file plays"
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:402
+#: assets/src/shared/failure.ts:229
 msgid "the browser could not read it, which is usually a cross-origin refusal"
 msgstr ""
 
 #. translators: %s: HTTP status code, or "?" when there was none.
-#: assets/src/editor/waveform-notice.tsx:377
+#: assets/src/shared/failure.ts:181
 msgid "the download stopped early — the file may be behind something that cuts long transfers off"
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:309
+#: assets/src/shared/failure.ts:86
 msgid "the file is larger than this site will fetch on your behalf"
 msgstr ""
 
 #. translators: %s: HTTP status code, or "?" when there was none.
-#: assets/src/editor/waveform-notice.tsx:368
+#: assets/src/shared/failure.ts:172
 msgid "the server answered %s when asked for the file"
 msgstr ""
 
 #. translators: %s: HTTP status the remote server returned.
-#: assets/src/editor/waveform-notice.tsx:293
+#: assets/src/shared/failure.ts:70
 msgid "the server hosting the file answered %s to this site as well — check that domain’s hotlink protection or signed-link rules"
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:383
+#: assets/src/shared/failure.ts:215
+msgid "the server sent nothing back for part of the file"
+msgstr ""
+
+#: assets/src/shared/failure.ts:187
 msgid "this browser cannot decode audio"
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:285
+#: assets/src/shared/failure.ts:99
+msgid "this site could not open a temporary file to download into — check the server’s free disk space and that the uploads folder is writable"
+msgstr ""
+
+#: assets/src/shared/failure.ts:62
 msgid "this site could not reach the file’s own server"
 msgstr ""
 
-#: assets/src/editor/waveform-notice.tsx:330
+#: assets/src/shared/failure.ts:120
 msgid "this site refused the request that fetches the file — reload the editor and try again"
+msgstr ""
+
+#: assets/src/shared/failure.ts:153
+msgid "this site refused to fetch the file and the reason did not survive the trip — Settings → Imagina Player → Waveforms has a check that asks the server directly and reports it"
 msgstr ""
 
 #: src/Render/PlayerRenderer.php:837

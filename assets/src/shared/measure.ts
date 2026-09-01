@@ -213,30 +213,7 @@ export async function measure(
 	} );
 
 	if ( ! response.ok ) {
-		/*
-		 * The doorway on this site says which step gave up, in a header,
-		 * because what it hands back otherwise is a status and no story: the
-		 * file's own server refusing us looks exactly like this site refusing
-		 * us, and the two have completely different answers.
-		 */
-		let said = response.headers.get( 'x-imagina-reason' );
-
-		if ( ! said ) {
-			/*
-			 * The same tag travels in the body, for the sites where something
-			 * in front of WordPress drops headers it does not recognise. Read
-			 * defensively: this is an error page, and on those sites it might
-			 * be the security plugin's error page rather than ours.
-			 */
-			const body = await response.text().catch( () => '' );
-			const match = body.slice( 0, 120 ).match( /^No: ([a-z0-9-]+)$/ );
-
-			said = match ? match[ 1 ] : null;
-		}
-
-		throw new Error(
-			said ? 'proxy-' + said : 'fetch-failed-' + response.status
-		);
+		throw await refusal( response, '' );
 	}
 
 	const buffer = await read( response, url, slice, onProgress, signal );
@@ -431,6 +408,58 @@ function resample(
 }
 
 /**
+ * Why a request was refused, as an error worth showing somebody.
+ *
+ * The doorway on this site says which step gave up, in a header, because what
+ * it hands back otherwise is a status and no story: the file's own server
+ * refusing us looks exactly like this site refusing us, and the two have
+ * completely different answers.
+ *
+ * Shared by every fetch here, which it was not. The first request read the
+ * reason and the ones that follow threw a bare `slice-failed-424` — a message
+ * with no case to match on, so it fell through to "the browser could not read
+ * it", which is the one thing that had not happened.
+ *
+ * @param response The refusal.
+ * @param where    Which part of the download this was, for the message.
+ */
+async function refusal( response: Response, where: string ): Promise< Error > {
+	let said = response.headers.get( 'x-imagina-reason' );
+
+	if ( ! said ) {
+		/*
+		 * The same tag travels in the body, for the sites where something in
+		 * front of WordPress drops headers it does not recognise. Read
+		 * defensively: this is an error page, and on those sites it might be
+		 * the security plugin's error page rather than ours.
+		 */
+		const body = await response.text().catch( () => '' );
+		const match = body.slice( 0, 120 ).match( /^No: ([a-z0-9-]+)$/ );
+
+		said = match ? match[ 1 ] : null;
+	}
+
+	const what = said ? 'proxy-' + said : 'fetch-failed-' + response.status;
+
+	return new Error( '' === where ? what : what + '|' + where );
+}
+
+/**
+ * Which piece of the download this is, in words.
+ * @param at
+ * @param slice
+ * @param total
+ */
+function sliceName( at: number, slice: number, total: number ): string {
+	return (
+		'slice ' +
+		( Math.floor( at / slice ) + 1 ) +
+		' of ' +
+		Math.ceil( total / slice )
+	);
+}
+
+/**
  * Is this the site the page came from?
  * @param url
  */
@@ -493,7 +522,12 @@ async function readInSlices(
 		} );
 
 		if ( ! next.ok ) {
-			throw new Error( 'slice-failed-' + next.status );
+			/*
+			 * Named for where it happened. "Something failed" is not the same
+			 * fact as "the ninth of thirteen pieces failed", and the second
+			 * says whether the far end started refusing part-way through.
+			 */
+			throw await refusal( next, sliceName( at, slice, total ) );
 		}
 
 		const bytes = new Uint8Array( await next.arrayBuffer() );
@@ -501,7 +535,7 @@ async function readInSlices(
 		if ( 0 === bytes.length ) {
 			// A server that answers a range with nothing would otherwise spin
 			// here for ever.
-			throw new Error( 'slice-empty' );
+			throw new Error( 'slice-empty|' + sliceName( at, slice, total ) );
 		}
 
 		merged.set( bytes.subarray( 0, total - at ), at );

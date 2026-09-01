@@ -111,20 +111,31 @@ echo PHP_EOL . '# Every reason has words of its own' . PHP_EOL;
 /*
  * The point of all of the above. Each tag the server can send has to turn into
  * a sentence, or it falls through to the catch-all and the work is wasted.
+ *
+ * The mapping is no longer in the notice component: it is its own module, so
+ * that it can be run and asked what it says rather than only read. That is
+ * test-failure-messages.php, which asks it about every tag either side can
+ * produce. What is left here is the wiring — that the notice uses the module at
+ * all, and that the module still answers the four reasons this file is about.
  */
-preg_match_all( "/'X-Imagina-Reason: ' \\. \\\$reason/", $controller, $sent );
+$mapping = (string) file_get_contents( $root . '/assets/src/shared/failure.ts' );
+
+check(
+	'the notice gets its words from the module that can be tested',
+	(bool) preg_match( "/import \\{ reason \\} from '\\.\\.\\/shared\\/failure'/", $notice )
+);
 
 foreach ( array( 'proxy-upstream-', 'proxy-not-media', 'proxy-too-large', 'proxy-bad-url' ) as $tag ) {
 	check(
 		"the editor has something to say about {$tag}",
-		str_contains( $notice, "'" . $tag . "'" ),
+		str_contains( $mapping, "'" . $tag . "'" ),
 		$tag
 	);
 }
 
 check(
 	'and it points at the domain hosting the file, which is the only place that can fix it',
-	str_contains( $notice, 'hotlink' )
+	str_contains( $mapping, 'hotlink' )
 );
 
 /*
@@ -591,6 +602,30 @@ check(
 	'a download refused after an allowed head request is still refused',
 	str_contains( $flipped['output'], 'upstream-403' ),
 	substr( $flipped['output'], 0, 120 )
+);
+
+/*
+ * And the checks have to survive the shortcut. A slice skips the head request —
+ * a dozen pieces used to mean two dozen requests to the file's host, and every
+ * extra one is another chance to be rate-limited into failing the whole
+ * measurement — so what the head request used to verify is verified against the
+ * download's own answer instead. If that were dropped rather than moved, this
+ * route would serve whatever a URL happened to return.
+ */
+$html_slice = run_proxy(
+	'https://media.example.com/lesson.mp3',
+	array(
+		'code'    => 206,
+		'headers' => array( 'content-type' => 'text/html', 'content-range' => 'bytes 0-1023/50000' ),
+		'body'    => str_repeat( 'x', 1024 ),
+	),
+	'bytes=0-1023'
+);
+
+check(
+	'a slice that comes back as a web page is still refused',
+	str_contains( $html_slice['output'], 'not-media' ),
+	substr( $html_slice['output'], 0, 120 )
 );
 
 echo PHP_EOL . '# The preview stops asking the wrong address' . PHP_EOL;

@@ -16,7 +16,7 @@ msgstr ""
 "Language-Team: Español\n"
 
 #. translators: 1: how many files, 2: why the first one failed
-#: assets/src/editor/waveform-notice.tsx:190
+#: assets/src/editor/waveform-notice.tsx:191
 msgid "%1$d file could not be measured here: %2$s"
 msgid_plural "%1$d files could not be measured here. The first: %2$s"
 msgstr[0] "%1$d archivo no se pudo medir aquí: %2$s"
@@ -33,7 +33,7 @@ msgid "%1$d of %2$d generated. The rest failed — the first: %3$s"
 msgstr "%1$d de %2$d generadas. Las demás fallaron; la primera: %3$s"
 
 #. translators: 1: current file number, 2: total files, 3: what is happening
-#: assets/src/editor/waveform-notice.tsx:452
+#: assets/src/editor/waveform-notice.tsx:306
 msgid "%1$d of %2$d — %3$s"
 msgstr "%1$d de %2$d — %3$s"
 
@@ -50,7 +50,7 @@ msgstr[0] "%d comprobación falló. Los archivos protegidos aún no están a sal
 msgstr[1] "%d comprobaciones fallaron. Los archivos protegidos aún no están a salvo."
 
 #. translators: %d: number of files with no waveform.
-#: assets/src/editor/waveform-notice.tsx:211
+#: assets/src/editor/waveform-notice.tsx:212
 msgid "%d file here has no waveform, so it will show a plain progress bar on your site."
 msgid_plural "%d files here have no waveform, so they will show a plain progress bar on your site."
 msgstr[0] "%d archivo de aquí no tiene onda, así que en tu sitio saldrá una barra de progreso simple."
@@ -674,7 +674,7 @@ msgstr "Botón de pantalla completa"
 msgid "Gap between bars"
 msgstr "Separación entre barras"
 
-#: assets/src/editor/waveform-notice.tsx:226
+#: assets/src/editor/waveform-notice.tsx:227
 msgid "Generate it now"
 msgid_plural "Generate them now"
 msgstr[0] "Generarla ahora"
@@ -901,7 +901,7 @@ msgstr "Repetir"
 msgid "Marks on the progress bar, and a menu to jump between sections. Times can be written as 90, 1:30 or 0:01:30."
 msgstr "Marcas en la barra de progreso y un menú para saltar entre secciones. Los tiempos se pueden escribir como 90, 1:30 o 0:01:30."
 
-#: assets/src/editor/waveform-notice.tsx:234
+#: assets/src/editor/waveform-notice.tsx:235
 msgid "Measured here, in this browser, and stored for every visitor. Nobody browsing your site downloads anything extra."
 msgstr "Se mide aquí, en este navegador, y se guarda para todos los visitantes. Nadie que navegue por tu sitio descarga nada extra."
 
@@ -974,12 +974,12 @@ msgstr "Nuevo preajuste"
 msgid "Next"
 msgstr "Siguiente"
 
-#: src/Rest/PeaksController.php:802
+#: src/Rest/PeaksController.php:833
 msgid "No track was named."
 msgstr "No se indicó ninguna pista."
 
-#: src/Rest/PeaksController.php:816
-#: src/Rest/PeaksController.php:876
+#: src/Rest/PeaksController.php:847
+#: src/Rest/PeaksController.php:907
 msgid "No waveform data was supplied."
 msgstr "No se envió ningún dato de onda."
 
@@ -1396,7 +1396,7 @@ msgstr "Servir con un enlace firmado"
 msgid "Served with %d."
 msgstr "Servido con %d."
 
-#: src/Rest/PeaksController.php:996
+#: src/Rest/PeaksController.php:1027
 msgid "Server-side waveform generation is unavailable on this host."
 msgstr "La generación de ondas en el servidor no está disponible en este alojamiento."
 
@@ -1633,7 +1633,7 @@ msgstr "Texto"
 msgid "Thank you."
 msgstr "Gracias."
 
-#: src/Rest/PeaksController.php:988
+#: src/Rest/PeaksController.php:1019
 #: src/Rest/StreamController.php:60
 msgid "That attachment does not exist."
 msgstr "Ese adjunto no existe."
@@ -1654,7 +1654,7 @@ msgstr "Eso no parece una dirección de correo."
 msgid "That file is not protected."
 msgstr "Ese archivo no está protegido."
 
-#: src/Rest/PeaksController.php:794
+#: src/Rest/PeaksController.php:825
 msgid "That is not a media file."
 msgstr "Eso no es un archivo de medios."
 
@@ -1809,12 +1809,12 @@ msgstr "La bóveda no se puede curiosear"
 msgid "The vault directory returned a page listing its contents. Turn directory indexes off for the uploads directory."
 msgstr "El directorio de la bóveda devolvió una página con el listado de su contenido. Desactiva los índices de directorio para el directorio de subidas."
 
-#: src/Rest/PeaksController.php:1022
+#: src/Rest/PeaksController.php:1053
 msgid "The waveform could not be generated for this file."
 msgstr "No se pudo generar la onda de este archivo."
 
-#: src/Rest/PeaksController.php:831
-#: src/Rest/PeaksController.php:891
+#: src/Rest/PeaksController.php:862
+#: src/Rest/PeaksController.php:922
 msgid "The waveform data is malformed."
 msgstr "Los datos de la onda están mal formados."
 
@@ -1839,7 +1839,7 @@ msgstr "Esta dirección no es algo que el reproductor pueda reproducir. Admite a
 msgid "This address is not something the player can show. It handles YouTube and Vimeo links, MP4 and WebM files, and HLS streams (.m3u8)."
 msgstr "Esta dirección no es algo que el reproductor pueda mostrar. Admite enlaces de YouTube y Vimeo, archivos MP4 y WebM, y emisiones HLS (.m3u8)."
 
-#: assets/src/editor/waveform-notice.tsx:242
+#: assets/src/editor/waveform-notice.tsx:243
 msgid "This browser cannot measure audio."
 msgstr "Este navegador no puede medir audio."
 
@@ -1876,7 +1876,7 @@ msgstr "Esto evita que se copie, se comparta o se enlace la URL del archivo, y p
 msgid "This video is hosted by %s."
 msgstr "Este vídeo está alojado en %s."
 
-#: src/Rest/PeaksController.php:852
+#: src/Rest/PeaksController.php:883
 msgid "This waveform grant is missing or expired."
 msgstr "Este permiso de onda falta o ha caducado."
 
@@ -2104,7 +2104,7 @@ msgid "Without this, an email gate has to be answered to carry on."
 msgstr "Sin esto, hay que responder a la puerta de correo para seguir."
 
 #: assets/src/admin/panels.tsx:490
-#: assets/src/editor/waveform-notice.tsx:224
+#: assets/src/editor/waveform-notice.tsx:225
 msgid "Working…"
 msgstr "Trabajando…"
 
@@ -2142,7 +2142,7 @@ msgstr "copia"
 
 #. translators: %d: percentage downloaded.
 #: assets/src/admin/panels.tsx:204
-#: assets/src/editor/waveform-notice.tsx:442
+#: assets/src/editor/waveform-notice.tsx:296
 msgid "downloading %d%%"
 msgstr "descargando %d%%"
 
@@ -2160,16 +2160,20 @@ msgstr "Se encontró ffmpeg en este servidor, así que las ondas se generan aqu�
 
 #. translators: 1: current file number, 2: total, 3: file name, 4: what is happening
 #: assets/src/admin/panels.tsx:201
-#: assets/src/editor/waveform-notice.tsx:439
+#: assets/src/editor/waveform-notice.tsx:293
 msgid "measuring"
 msgstr "midiendo"
+
+#: assets/src/shared/failure.ts:208
+msgid "measuring was stopped before it finished"
+msgstr "la medición se detuvo antes de terminar"
 
 #. translators: 1: number generated, 2: total, 3: why the first failure happened
 #: assets/src/admin/panels.tsx:292
 msgid "no reason given"
 msgstr "sin motivo indicado"
 
-#: assets/src/editor/waveform-notice.tsx:387
+#: assets/src/shared/failure.ts:191
 msgid "nothing in the file decoded as audio"
 msgstr "nada del archivo se descodificó como audio"
 
@@ -2178,57 +2182,69 @@ msgid "seconds"
 msgstr "segundos"
 
 #. translators: %s: the HTTP status returned.
-#: assets/src/editor/waveform-notice.tsx:358
+#: assets/src/shared/failure.ts:162
 msgid "something between the browser and WordPress answered %s — this plugin did not, because every refusal it makes says why. Settings → Imagina Player → Waveforms has a check that asks the server directly and reports what it finds."
 msgstr "algo entre el navegador y WordPress respondió %s; este plugin no fue, porque todos sus rechazos dicen el motivo. En Ajustes → Imagina Player → Ondas hay una comprobación que le pregunta al servidor directamente e informa de lo que encuentra."
 
-#: assets/src/editor/waveform-notice.tsx:316
+#: assets/src/shared/failure.ts:106
 msgid "that address was refused as unsafe to fetch"
 msgstr "esa dirección se rechazó por no ser segura de descargar"
 
 #. translators: %s: HTTP status the remote server returned.
-#: assets/src/editor/waveform-notice.tsx:302
+#: assets/src/shared/failure.ts:79
 msgid "the address does not return an audio or video file"
 msgstr "la dirección no devuelve un archivo de audio ni de vídeo"
 
-#: assets/src/editor/waveform-notice.tsx:392
+#: assets/src/shared/failure.ts:196
 msgid "the browser could not decode it — check that the file plays"
 msgstr "el navegador no lo pudo descodificar; comprueba que el archivo se reproduce"
 
-#: assets/src/editor/waveform-notice.tsx:402
+#: assets/src/shared/failure.ts:229
 msgid "the browser could not read it, which is usually a cross-origin refusal"
 msgstr "el navegador no lo pudo leer, que suele ser un rechazo por origen cruzado"
 
 #. translators: %s: HTTP status code, or "?" when there was none.
-#: assets/src/editor/waveform-notice.tsx:377
+#: assets/src/shared/failure.ts:181
 msgid "the download stopped early — the file may be behind something that cuts long transfers off"
 msgstr "la descarga se cortó antes de tiempo; puede que el archivo esté detrás de algo que corta las transferencias largas"
 
-#: assets/src/editor/waveform-notice.tsx:309
+#: assets/src/shared/failure.ts:86
 msgid "the file is larger than this site will fetch on your behalf"
 msgstr "el archivo es más grande de lo que este sitio descarga por ti"
 
 #. translators: %s: HTTP status code, or "?" when there was none.
-#: assets/src/editor/waveform-notice.tsx:368
+#: assets/src/shared/failure.ts:172
 msgid "the server answered %s when asked for the file"
 msgstr "el servidor respondió %s al pedirle el archivo"
 
 #. translators: %s: HTTP status the remote server returned.
-#: assets/src/editor/waveform-notice.tsx:293
+#: assets/src/shared/failure.ts:70
 msgid "the server hosting the file answered %s to this site as well — check that domain’s hotlink protection or signed-link rules"
 msgstr "el servidor donde está el archivo también le respondió %s a este sitio; revisa la protección contra enlazado o las reglas de enlaces firmados de ese dominio"
 
-#: assets/src/editor/waveform-notice.tsx:383
+#: assets/src/shared/failure.ts:215
+msgid "the server sent nothing back for part of the file"
+msgstr "el servidor no devolvió nada para una parte del archivo"
+
+#: assets/src/shared/failure.ts:187
 msgid "this browser cannot decode audio"
 msgstr "este navegador no puede descodificar audio"
 
-#: assets/src/editor/waveform-notice.tsx:285
+#: assets/src/shared/failure.ts:99
+msgid "this site could not open a temporary file to download into — check the server’s free disk space and that the uploads folder is writable"
+msgstr "este sitio no pudo crear el archivo temporal donde descargar; revisa el espacio libre en disco del servidor y que la carpeta de subidas tenga permiso de escritura"
+
+#: assets/src/shared/failure.ts:62
 msgid "this site could not reach the file’s own server"
 msgstr "este sitio no pudo llegar al servidor donde está el archivo"
 
-#: assets/src/editor/waveform-notice.tsx:330
+#: assets/src/shared/failure.ts:120
 msgid "this site refused the request that fetches the file — reload the editor and try again"
 msgstr "este sitio rechazó la petición que descarga el archivo; recarga el editor e inténtalo de nuevo"
+
+#: assets/src/shared/failure.ts:153
+msgid "this site refused to fetch the file and the reason did not survive the trip — Settings → Imagina Player → Waveforms has a check that asks the server directly and reports it"
+msgstr "este sitio rechazó descargar el archivo y el motivo se perdió por el camino; en Ajustes → Imagina Player → Ondas hay una comprobación que se lo pregunta al servidor directamente y lo informa"
 
 #: src/Render/PlayerRenderer.php:837
 msgid "you@example.com"

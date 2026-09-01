@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.27.0
+Stable tag: 1.28.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,32 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.28.0 =
+* Fixed: a failure with a perfectly good explanation on it was reported as
+  "the browser could not read it, which is usually a cross-origin refusal".
+  That sentence is the last line of the code that turns a failure into words,
+  reached when nothing else matched — and three separate failures reached it,
+  each one arriving with a status, a step and a reason attached that were all
+  thrown away on the way out. It is a convincing wrong answer, too: cross-origin
+  refusals are real and common, so it sends people to look at the one place the
+  problem is not.
+* Fixed: a refused piece of a large file now says which piece and why. Large
+  files come through in slices, and only the first slice ever read the reason
+  the server gave; the rest reported the bare status, or nothing.
+* Fixed: two failures had no words at all — this site being unable to open a
+  temporary file to download into (a full disk, or an uploads folder it cannot
+  write to), and a refusal whose reason was stripped before it got back. Both
+  used to arrive as the cross-origin sentence.
+* Changed: measuring a large file through this site now makes one request per
+  slice instead of two. The extra request asked the media host what the file
+  was before fetching a piece of it, which it can answer from the piece itself.
+* Testing: the words are no longer written inside a React component where
+  nothing could reach them. They are their own module, and the suite now reads
+  every failure tag out of the two files that produce them — the browser-side
+  measuring code and the server-side doorway — and asks the module what it would
+  say about each one. A new `throw` with no words for it fails the suite. Which
+  is the check that was missing all three times.
 
 = 1.27.0 =
 * Fixed: a successful ranged fetch was treated as a failure. A server answering

@@ -451,14 +451,31 @@ final class PeaksController {
 			$this->refuse( 400, 'bad-url' );
 		}
 
-		$head = wp_safe_remote_head(
-			$src,
-			array(
-				'timeout'     => 15,
-				'redirection' => 3,
-				'headers'     => $this->fetch_headers(),
-			)
-		);
+		/*
+		 * Asked for once, not once per slice.
+		 *
+		 * A large file arrives in a dozen or more pieces, and each piece used to
+		 * begin with its own HEAD — two requests to the file's host for every
+		 * four megabytes. That is a lot of asking for something already known,
+		 * and every extra request is another chance for a rate limit or a
+		 * flaky moment to refuse one piece and fail the whole measurement.
+		 *
+		 * For a slice, the download's own answer carries everything that has to
+		 * be checked: its status, its type and its length.
+		 */
+		$range_header = isset( $_SERVER['HTTP_RANGE'] ) ? sanitize_text_field( wp_unslash( (string) $_SERVER['HTTP_RANGE'] ) ) : '';
+		$slicing      = '' !== $range_header;
+
+		$head = $slicing
+			? null
+			: wp_safe_remote_head(
+				$src,
+				array(
+					'timeout'     => 15,
+					'redirection' => 3,
+					'headers'     => $this->fetch_headers(),
+				)
+			);
 
 		if ( is_wp_error( $head ) ) {
 			$this->refuse( 502, 'upstream-unreachable' );
@@ -470,13 +487,13 @@ final class PeaksController {
 		 * hotlink protection or a signed-URL rule, and that is a setting on
 		 * that service rather than anything here.
 		 */
-		$upstream = (int) wp_remote_retrieve_response_code( $head );
+		$upstream = null === $head ? 0 : (int) wp_remote_retrieve_response_code( $head );
 
 		if ( $upstream >= 400 ) {
 			$this->refuse( 502, 'upstream-' . $upstream );
 		}
 
-		$length = (int) wp_remote_retrieve_header( $head, 'content-length' );
+		$length = null === $head ? 0 : (int) wp_remote_retrieve_header( $head, 'content-length' );
 		$total  = $length;
 
 		/*
@@ -490,9 +507,11 @@ final class PeaksController {
 			$this->refuse( 413, 'too-large' );
 		}
 
-		$type = strtolower( (string) wp_remote_retrieve_header( $head, 'content-type' ) );
+		$type = null === $head ? '' : strtolower( (string) wp_remote_retrieve_header( $head, 'content-type' ) );
 
-		if ( ! $this->looks_like_media( $type ) ) {
+		// Checked against the download's own answer when there was no head
+		// request to check, which is the same guarantee a step later.
+		if ( null !== $head && ! $this->looks_like_media( $type ) ) {
 			$this->refuse( 415, 'not-media' );
 		}
 
@@ -544,6 +563,18 @@ final class PeaksController {
 		$size = (int) ( @filesize( $temp ) ?: 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- missing file is handled below.
 
 		$got = is_wp_error( $body ) ? 0 : (int) wp_remote_retrieve_response_code( $body );
+
+		if ( ! is_wp_error( $body ) && null === $head ) {
+			// The checks the head request would have made, made here instead.
+			$type = strtolower( (string) wp_remote_retrieve_header( $body, 'content-type' ) );
+
+			if ( ! $this->looks_like_media( $type ) ) {
+				$this->refuse( 415, 'not-media' );
+			}
+
+			$range_of = explode( '/', (string) wp_remote_retrieve_header( $body, 'content-range' ) );
+			$total    = (int) ( $range_of[1] ?? 0 );
+		}
 
 		/*
 		 * 200 or 206. A server answering a `Range` request correctly answers
