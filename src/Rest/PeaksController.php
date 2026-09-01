@@ -183,6 +183,33 @@ final class PeaksController {
 		 * the same way, the size is capped, and the answer is only ever bytes
 		 * with a media content type.
 		 */
+		/*
+		 * Why a file could not be measured, answered by this server rather than
+		 * guessed at from the outside.
+		 *
+		 * Everything the browser can see is that a request failed. Whether the
+		 * far end refused us, whether something in front of WordPress refused
+		 * the request before PHP ever saw it, whether PHP is allowed to run
+		 * other programs — all of that is knowable here and nowhere else, and
+		 * without it the conversation is somebody reading a status code to
+		 * somebody else who is inventing reasons for it.
+		 */
+		register_rest_route(
+			self::REST_NAMESPACE,
+			'/peaks/diagnose',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'diagnose' ),
+				'permission_callback' => static fn(): bool => current_user_can( 'upload_files' ),
+				'args'                => array(
+					'src' => array(
+						'type'     => 'string',
+						'required' => true,
+					),
+				),
+			)
+		);
+
 		register_rest_route(
 			self::REST_NAMESPACE,
 			'/peaks/proxy',
@@ -286,6 +313,114 @@ final class PeaksController {
 	 * are passed through, and the content type is one we chose from a short
 	 * list rather than one it told us.
 	 */
+	/**
+	 * Walk the steps the doorway takes, reporting what each one did.
+	 *
+	 * Deliberately returns JSON with a 200 whatever it finds: the point is to
+	 * be readable, and an endpoint that fails when the thing it is describing
+	 * fails is another mystery rather than an answer.
+	 *
+	 * Reaching this at all is itself a result. It has the same shape as the
+	 * doorway — a URL inside a query string — which is a shape security layers
+	 * and firewalls are suspicious of. If the browser gets a report back, the
+	 * request reaches PHP; if it gets a gateway error, something in front of
+	 * WordPress is answering, and no amount of PHP configuration will change
+	 * that.
+	 */
+	public function diagnose( WP_REST_Request $request ): WP_REST_Response {
+		$src   = Attributes::sanitize_media_url( (string) $request->get_param( 'src' ) );
+		$steps = array();
+
+		$disabled = array_map( 'trim', explode( ',', (string) ini_get( 'disable_functions' ) ) );
+
+		$environment = array(
+			'php'               => PHP_VERSION,
+			'sapi'              => PHP_SAPI,
+			'maxExecutionTime'  => (string) ini_get( 'max_execution_time' ),
+			'memoryLimit'       => (string) ini_get( 'memory_limit' ),
+			// The question the ffmpeg notice answers, with the evidence beside
+			// it: a php.ini edited for the wrong SAPI is the usual reason that
+			// notice does not go away.
+			'popenDisabled'     => in_array( 'popen', $disabled, true ) || ! function_exists( 'popen' ),
+			'disableFunctions'  => (string) ini_get( 'disable_functions' ),
+			'ffmpeg'            => PeaksGenerator::diagnosis(),
+		);
+
+		$steps[] = array(
+			'step'   => 'url',
+			'ok'     => '' !== $src && (bool) wp_http_validate_url( $src ),
+			'detail' => '' === $src ? 'empty after sanitising' : $src,
+		);
+
+		if ( '' === $src || ! wp_http_validate_url( $src ) ) {
+			return new WP_REST_Response(
+				array( 'environment' => $environment, 'steps' => $steps ),
+				200
+			);
+		}
+
+		$steps[] = $this->probe_step( 'head', $src, array( 'method' => 'HEAD' ) );
+
+		// Does the far end serve byte ranges? Everything about fetching a large
+		// file one piece at a time depends on the answer.
+		$steps[] = $this->probe_step(
+			'range',
+			$src,
+			array( 'headers' => array( 'Range' => 'bytes=0-1023' ) )
+		);
+
+		return new WP_REST_Response(
+			array( 'environment' => $environment, 'steps' => $steps ),
+			200
+		);
+	}
+
+	/**
+	 * One request to the far end, described.
+	 *
+	 * @param string               $name What this step is called.
+	 * @param string               $src  Where to ask.
+	 * @param array<string, mixed> $args Extra arguments for the HTTP client.
+	 * @return array<string, mixed>
+	 */
+	private function probe_step( string $name, string $src, array $args ): array {
+		$started = microtime( true );
+
+		$response = wp_safe_remote_request(
+			$src,
+			$args + array(
+				'method'      => 'GET',
+				'timeout'     => 30,
+				'redirection' => 3,
+			)
+		);
+
+		$seconds = round( microtime( true ) - $started, 2 );
+
+		if ( is_wp_error( $response ) ) {
+			return array(
+				'step'    => $name,
+				'ok'      => false,
+				'seconds' => $seconds,
+				'error'   => $response->get_error_message(),
+			);
+		}
+
+		$code = (int) wp_remote_retrieve_response_code( $response );
+
+		return array(
+			'step'        => $name,
+			'ok'          => $code >= 200 && $code < 300,
+			'seconds'     => $seconds,
+			'status'      => $code,
+			'type'        => (string) wp_remote_retrieve_header( $response, 'content-type' ),
+			'length'      => (string) wp_remote_retrieve_header( $response, 'content-length' ),
+			'acceptsRanges' => (string) wp_remote_retrieve_header( $response, 'accept-ranges' ),
+			'contentRange'  => (string) wp_remote_retrieve_header( $response, 'content-range' ),
+			'bytes'       => strlen( (string) wp_remote_retrieve_body( $response ) ),
+		);
+	}
+
 	public function proxy( WP_REST_Request $request ): void {
 		$src = Attributes::sanitize_media_url( (string) $request->get_param( 'src' ) );
 

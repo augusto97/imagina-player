@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.24.0
+Stable tag: 1.25.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,21 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.25.0 =
+* New: Settings → Imagina Player → Waveforms has a check that asks the server
+  what happens when it goes for a file, and reports what it finds: the status
+  the file's own host gives this server, whether that host will serve part of a
+  file, how long each step took, and what PHP is actually permitted to do —
+  including the live value of `disable_functions` and which SAPI is running,
+  which is what settles an ffmpeg notice that will not go away. The report is
+  plain text, selectable in one go, meant to be sent to whoever is helping.
+* Changed: a gateway error no longer claims to know its cause. Every refusal
+  this plugin makes says which step gave up, so an error carrying no reason did
+  not come from this plugin — something between the browser and WordPress
+  answered instead, and which of those it is cannot be told from the browser.
+  The message says that and points at the check, rather than naming a setting
+  it cannot see.
 
 = 1.24.0 =
 * Fixed: measuring a file hosted on another domain failed with a bare 502 once

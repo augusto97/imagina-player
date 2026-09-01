@@ -333,15 +333,25 @@ function reason( error: unknown ): string {
 		}
 
 		/*
-		 * A gateway error with none of this plugin's own reasons attached is
-		 * the web server answering for PHP rather than PHP answering: the
-		 * request was cut off part-way through. Almost always an execution
-		 * limit, which is why it used to depend on the size of the file.
+		 * A gateway error with none of this plugin's own reasons attached did
+		 * not come from this plugin: every refusal it makes says which step
+		 * gave up. Something between the browser and PHP answered instead — a
+		 * firewall, a security plugin, a proxy, or the web server after PHP
+		 * stopped.
+		 *
+		 * Which of those it is cannot be told apart from here, and guessing has
+		 * already cost somebody an afternoon and a server setting they were
+		 * warned not to change. So this names what is known and points at the
+		 * one place that can see the rest.
 		 */
-		if ( '502' === status || '504' === status ) {
-			return __(
-				'this site’s web server cut the request off part-way through — usually a time limit on how long a page may take. The file is fetched in pieces now, so try again; if it persists, ask your host about max_execution_time',
-				'imagina-player'
+		if ( '502' === status || '504' === status || '503' === status ) {
+			return sprintf(
+				/* translators: %s: the HTTP status returned. */
+				__(
+					'something between the browser and WordPress answered %s — this plugin did not, because every refusal it makes says why. Settings → Imagina Player → Waveforms has a check that asks the server directly and reports what it finds.',
+					'imagina-player'
+				),
+				status
 			);
 		}
 

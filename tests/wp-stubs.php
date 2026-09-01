@@ -367,6 +367,22 @@ function wp_http_validate_url( $url ) {
 }
 function wp_tempnam( $prefix = '' ) { return tempnam( sys_get_temp_dir(), $prefix ); }
 
+/*
+ * One request, answered from whatever a test put in `$GLOBALS['stub_remote']`.
+ * The diagnostic walks several of these and reports each, so a test can hand it
+ * a different answer per step by making that a list.
+ */
+function wp_safe_remote_request( $url, $args = array() ) {
+	$queue = $GLOBALS['stub_remote_steps'] ?? null;
+
+	if ( is_array( $queue ) && array() !== $queue ) {
+		$next = array_shift( $GLOBALS['stub_remote_steps'] );
+		return $next;
+	}
+
+	return $GLOBALS['stub_remote'] ?? array( 'code' => 200, 'headers' => array( 'content-type' => 'audio/mpeg' ), 'body' => '' );
+}
+
 function wp_remote_retrieve_response_code( $response ) { return is_array( $response ) ? (int) ( $response['code'] ?? 0 ) : 0; }
 function wp_remote_retrieve_body( $response ) { return is_array( $response ) ? (string) ( $response['body'] ?? '' ) : ''; }
 

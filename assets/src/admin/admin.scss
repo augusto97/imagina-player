@@ -965,3 +965,19 @@
 	overflow: hidden;
 	background: #fff;
 }
+
+/* The file check's report. A plain box of text, selectable in one go, because
+   its whole purpose is to be sent to somebody else. */
+.imgpa-report {
+	width: 100%;
+	margin-top: 8px;
+	padding: 10px 12px;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	background: #f6f7f7;
+	color: #1e1e1e;
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 12px;
+	line-height: 1.6;
+	resize: vertical;
+}

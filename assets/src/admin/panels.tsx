@@ -4,11 +4,12 @@ import { __, sprintf } from '@wordpress/i18n';
 import { canMeasure, measure } from '../shared/measure';
 import {
 	generateWaveform,
+	diagnoseFile,
 	listPendingWaveforms,
 	runProtectionSelfCheck,
 	storeWaveform,
 } from './api';
-import type { SelfCheckResult } from './api';
+import type { Diagnosis, SelfCheckResult } from './api';
 import {
 	Card,
 	ColorInput,
@@ -65,7 +66,92 @@ function ffmpegProblem(
 	}
 }
 
+/**
+ * The report, as plain text somebody can paste into a message.
+ * @param report
+ * @param url
+ */
+function describe( report: Diagnosis, url: string ): string {
+	const lines: string[] = [ 'Imagina Player — file check', url, '' ];
+
+	for ( const [ key, value ] of Object.entries( report.environment ) ) {
+		lines.push(
+			key +
+				': ' +
+				( 'object' === typeof value
+					? JSON.stringify( value )
+					: String( value ) )
+		);
+	}
+
+	lines.push( '' );
+
+	for ( const step of report.steps ) {
+		const bits = [ step.ok ? 'ok' : 'FAILED' ];
+
+		for ( const field of [
+			'status',
+			'seconds',
+			'type',
+			'length',
+			'acceptsRanges',
+			'contentRange',
+			'bytes',
+			'error',
+			'detail',
+		] as const ) {
+			const value = step[ field ];
+
+			if ( undefined !== value && '' !== value ) {
+				bits.push( field + '=' + String( value ) );
+			}
+		}
+
+		lines.push( step.step + ': ' + bits.join( ' ' ) );
+	}
+
+	return lines.join( '\n' );
+}
+
 export function WaveformsPanel( { settings, onChange }: PanelProps ) {
+	const [ diagnoseUrl, setDiagnoseUrl ] = useState( '' );
+	const [ diagnosing, setDiagnosing ] = useState( false );
+	const [ diagnosisText, setDiagnosisText ] = useState( '' );
+
+	const runDiagnosis = async (): Promise< void > => {
+		setDiagnosing( true );
+		setDiagnosisText( '' );
+
+		try {
+			const report = await diagnoseFile( diagnoseUrl.trim() );
+
+			setDiagnosisText( describe( report, diagnoseUrl.trim() ) );
+		} catch ( failure ) {
+			/*
+			 * A failure here is a result too, and the most telling one: this
+			 * endpoint only reads and reports, so if it cannot answer then the
+			 * request is not reaching PHP at all.
+			 */
+			setDiagnosisText(
+				[
+					'Imagina Player — file check',
+					diagnoseUrl.trim(),
+					'',
+					'The check itself could not run: ' +
+						( failure instanceof Error
+							? failure.message
+							: String( failure ) ),
+					'',
+					'This endpoint only reads and reports, so a failure here means the',
+					'request did not reach WordPress — something in front of it (a',
+					'firewall, a security plugin, a CDN) is answering instead.',
+				].join( '\n' )
+			);
+		} finally {
+			setDiagnosing( false );
+		}
+	};
+
 	const [ status, setStatus ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
 
@@ -220,6 +306,60 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 
 	return (
 		<>
+			{ /*
+			     Facts from this server about one file, because everything the
+			     browser can see is that a request failed. Whether the file's
+			     own host refused us, whether something in front of WordPress
+			     refused the request before PHP saw it, what PHP is actually
+			     allowed to do — none of that is visible from outside, and
+			     without it the only thing left is guessing.
+			*/ }
+			<Card
+				title={ __( 'Why a file will not measure', 'imagina-player' ) }
+				description={ __(
+					'Paste the address of a track that has no waveform. This asks the server what happens when it goes for it, and reports what it finds.',
+					'imagina-player'
+				) }
+			>
+				<Field label={ __( 'File address', 'imagina-player' ) }>
+					<TextInput
+						value={ diagnoseUrl }
+						onChange={ setDiagnoseUrl }
+						placeholder="https://…/track.mp3"
+						mono
+					/>
+				</Field>
+
+				<button
+					type="button"
+					className="imgpa-btn imgpa-btn--primary"
+					onClick={ runDiagnosis }
+					disabled={ diagnosing || '' === diagnoseUrl.trim() }
+				>
+					{ diagnosing
+						? __( 'Checking…', 'imagina-player' )
+						: __( 'Check this file', 'imagina-player' ) }
+				</button>
+
+				{ '' !== diagnosisText && (
+					<>
+						<p className="imgpa-hint">
+							{ __(
+								'Select all of this and send it to whoever is helping you — it is the whole answer.',
+								'imagina-player'
+							) }
+						</p>
+						<textarea
+							className="imgpa-report"
+							readOnly
+							rows={ 14 }
+							value={ diagnosisText }
+							onFocus={ ( event ) => event.target.select() }
+						/>
+					</>
+				) }
+			</Card>
+
 			<Card
 				title={ __( 'Waveforms', 'imagina-player' ) }
 				description={ __(

@@ -43,6 +43,42 @@ export function renderPreview(
 	} ) as Promise< { html: string; peaks: string } >;
 }
 
+export interface DiagnosisStep {
+	step: string;
+	ok: boolean;
+	detail?: string;
+	error?: string;
+	seconds?: number;
+	status?: number;
+	type?: string;
+	length?: string;
+	acceptsRanges?: string;
+	contentRange?: string;
+	bytes?: number;
+}
+
+export interface Diagnosis {
+	environment: Record< string, unknown >;
+	steps: DiagnosisStep[];
+}
+
+/**
+ * Ask this server what happens when it goes for a file.
+ *
+ * Reaching it at all is part of the answer: it has the same shape as the route
+ * that fetches a remote file — a URL inside a query string — which is a shape
+ * security layers are suspicious of. A gateway error here means the request
+ * never reached PHP, and nothing in PHP's settings can change that.
+ * @param src
+ */
+export function diagnoseFile( src: string ): Promise< Diagnosis > {
+	return apiFetch( {
+		path:
+			'/imagina-player/v1/peaks/diagnose?src=' +
+			encodeURIComponent( src ),
+	} ) as Promise< Diagnosis >;
+}
+
 export interface PendingWaveforms {
 	pending: Array< {
 		id: number;

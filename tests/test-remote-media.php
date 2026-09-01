@@ -336,6 +336,96 @@ check(
 	substr( $sliced['output'], 0, 120 )
 );
 
+echo PHP_EOL . '# Asking this server what it sees' . PHP_EOL;
+
+/*
+ * Every diagnosis in this file so far was made from outside: a status code
+ * read in a browser, and a story told about it. Twice that story was wrong,
+ * and the second time it was wrong in a way that sent somebody to change a
+ * server setting that had nothing to do with anything.
+ *
+ * Whether the file's own host refuses this site, whether something in front of
+ * WordPress refuses the request before PHP sees it, what PHP is actually
+ * permitted to do — none of it is visible from a browser. So the server is
+ * asked, and it answers with what it found rather than with a conclusion.
+ */
+$GLOBALS['stub_remote_steps'] = array(
+	array( 'code' => 403, 'headers' => array( 'content-type' => 'audio/mpeg' ), 'body' => '' ),
+	array( 'code' => 403, 'headers' => array(), 'body' => '' ),
+);
+
+$controller_instance = new ImaginaPlayer\Rest\PeaksController();
+
+$report = $controller_instance->diagnose(
+	new WP_REST_Request( array( 'src' => 'https://media.example.com/lesson.mp3' ) )
+)->get_data();
+
+check( 'the check answers', is_array( $report ) && isset( $report['steps'] ) );
+
+$steps = array_column( (array) ( $report['steps'] ?? array() ), null, 'step' );
+
+check(
+	'it says whether the address is one this site will fetch at all',
+	isset( $steps['url'] ) && true === $steps['url']['ok']
+);
+
+check(
+	'it reports the status the file’s own host gave this server',
+	isset( $steps['head'] ) && 403 === ( $steps['head']['status'] ?? 0 ),
+	'this is the fact that separates "the host refuses us" from every other cause'
+);
+
+check(
+	'and asks whether that host will serve part of a file',
+	isset( $steps['range'] ),
+	'fetching a large file in pieces depends entirely on the answer'
+);
+
+/*
+ * The environment, because a notice about `popen` that will not go away is
+ * almost always a php.ini edited for one SAPI while WordPress runs under
+ * another — and that is settled by evidence, not by argument.
+ */
+$environment = (array) ( $report['environment'] ?? array() );
+
+foreach ( array( 'sapi', 'maxExecutionTime', 'memoryLimit', 'popenDisabled', 'disableFunctions' ) as $key ) {
+	check( "it reports {$key}", array_key_exists( $key, $environment ), $key );
+}
+
+check(
+	'and what it thinks of ffmpeg, beside the reason',
+	isset( $environment['ffmpeg']['state'] )
+);
+
+/*
+ * A success even when everything it describes failed. An endpoint that goes
+ * down with the thing it is diagnosing is one more mystery rather than an
+ * answer — and reaching it at all is itself the test of whether requests of
+ * this shape get through to PHP.
+ */
+$GLOBALS['stub_remote_steps'] = array();
+$GLOBALS['stub_remote'] = new WP_Error( 'http_request_failed', 'Could not resolve host' );
+
+$broken = $controller_instance->diagnose(
+	new WP_REST_Request( array( 'src' => 'https://nowhere.example/lesson.mp3' ) )
+);
+
+check(
+	'it still answers when the file cannot be reached at all',
+	200 === $broken->get_status()
+);
+
+$broken_steps = array_column( (array) ( $broken->get_data()['steps'] ?? array() ), null, 'step' );
+
+check(
+	'and passes on what went wrong in words',
+	isset( $broken_steps['head']['error'] )
+		&& str_contains( (string) $broken_steps['head']['error'], 'resolve' ),
+	(string) ( $broken_steps['head']['error'] ?? 'nothing' )
+);
+
+$GLOBALS['stub_remote'] = null;
+
 echo PHP_EOL . '# The preview stops asking the wrong address' . PHP_EOL;
 
 /*
