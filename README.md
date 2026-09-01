@@ -1,76 +1,89 @@
-# Imagina Player — 1.35.0
+# Imagina Player — 1.36.0
 
-Download **imagina-player-1.35.0.zip** and install it in WordPress under
+Download **imagina-player-1.36.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  3a3611dcdde4d4bb74b55ebd43a3520c7dcd81fe1827fd23edb0b6ca79563b66
+    SHA-256  d0bf5e5faf60f3ea80866ca848325a9318b03d64415ea28bc0bfaf346632739a
 
-## You asked two questions. Both answers were no.
+## A video on YouTube that does not look like YouTube
 
-**Does it generate all of them, with the method we built?** No. On your site it
-generated *nothing at all*, and said so as a success.
+`controls=0` was already on: it takes off the control bar and **nothing else**.
+The title, the channel avatar, the "Watch on YouTube" button and the grid of
+suggested videos at the end answer to no embed parameter, and every one of them
+is a way off the page the visitor is on.
 
-**Does it report which failed and why?** No. A count, and the first failure's
-raw internal tag.
+The page cannot reach into the frame to style them away — that is the
+same-origin policy, and there is no way round it. So each is dealt with where
+it actually is. Three mechanisms, because no single one covers all three.
 
-## Why it found nothing on your site
+### 1. The frame never sees the mouse
 
-It asked the media library for attachments with **no stored waveform**. That
-quietly excluded two whole groups:
+Most of what YouTube draws appears on hover. A frame that receives no pointer
+events is never hovered, so it never appears. Nothing is lost by it: every
+control on screen is this player's own, and they sit above the frame.
 
-* A file measured by an older version *has* a stored waveform, so it was
-  skipped — and those are precisely the ones worth doing again, now that a bar
-  means loudness rather than the loudest instant.
-* A track played from an address rather than an upload has **no row in the
-  media library at all**. Your entire library is Publitio addresses. So the
-  button looked, found nothing, and reported success.
+### 2. The frame is three times the height of the box, and centred
 
-It now includes anything not measured the way this version measures, and finds
-tracks played from addresses **inside the posts that play them** — which is the
-only place they exist, because a waveform is stored under a hash of the address
-and a hash does not run backwards. It reads block attributes rather than
-rendered HTML, so the address is the exact string the player will look under,
-and it follows playlists and blocks nested inside columns or groups.
+This is the part that does the real work, and it is worth knowing why it costs
+nothing.
 
-## And it could not have measured them anyway
+YouTube pins its bars to the edges of **the player**, which fills the frame,
+while the picture is fitted inside and centred. So make the frame three times
+taller than the visible box: a picture fitted to the frame's width lands
+exactly on the middle third — the part you can see — with a whole box-height of
+empty player above and below it. The bars are up there, out of sight.
 
-"Try the file directly, and fall back to this site's own doorway" lived inside
-the editor's notice. The settings screen fetched every file **directly** — so
-any host that does not let another domain read its files, which is most of them
-and is the entire reason the doorway exists, failed at the first request.
+Measured, on a 640×360 box: the picture covers the box **to the pixel**, and
+the bars clear it by 312. No cropping into the picture, nothing lost.
 
-One implementation now, used by both screens.
+### 3. Playback stops a fraction before the end
 
-A waveform measured for an address from that screen was also being stored
-against attachment zero, which is nothing at all. The address goes with it now.
+The end grid is drawn over the picture rather than at the frame's edges, so no
+crop can reach it, and `rel=0` has only limited it to the same channel since
+2018. So the video is paused a fifth of a second short of the end and the
+player raises "ended" itself. Everything listening for that — the end-of-video
+call to action, the playlist moving on, the poster coming back — cannot tell
+the difference.
 
-## The report
+On by default. Switchable per video in the block sidebar, and site-wide under
+Ajustes → Imagina Player → Vídeo.
 
-Before:
+## One thing to know before you use it
 
-    9 of 20 generated. The rest failed — the first: proxy-upstream-403|slice 13 of 13
+YouTube's terms for the embedded player ask that it is not obscured. Every
+commercial player plugin does this and the setting exists because people ask
+for it, but it is your call rather than one taken quietly for you — so the
+setting says so, right next to the switch.
 
-That says neither which eleven files were left nor what to do about any of
-them, and eleven failures rarely share one cause — one behind hotlink
-protection, one that is not audio, one on a host that truncates transfers are
-three different jobs.
+## What was tested, and what was not
 
-Now every file that failed is listed by name with its own reason, in the same
-words the editor uses:
+**This machine has no route to youtube.com.** So none of this was measured
+against YouTube, and the test says so in its own header rather than leaving it
+implied.
 
-> **No se pudieron medir 3 archivos:**
-> **1.1 EL CAMINO DEL AMOR** — el servidor donde está el archivo también le
-> respondió 403 a este sitio; revisa la protección contra enlazado… (slice 13 of 13)
-> **2.4 PERDONARTE** — la dirección no devuelve un archivo de audio o vídeo
+What it measures is the geometry the technique depends on, against a stand-in
+built to the same shape — bars at the player's edges, picture fitted inside and
+centred — in a real browser. The same page is measured twice, with the crop and
+without, so the "before" is a control rather than an assumption: without it,
+the bars really are over the picture.
 
-Both gaps in the list were confirmed by restoring them and watching the tests
-fail.
+It also demands a hundred pixels of clearance rather than merely "outside the
+box", because almost any overscan satisfies the loose version — the first
+attempt at this test passed with a crop that had 24 pixels to spare.
 
-1343 checks green.
+If YouTube moves its bars to sit against the picture instead of the frame, this
+test will still pass and the feature will still be wrong. That is the honest
+limit of it.
 
-## What to do
+## Two things found while testing
 
-Install, then **Ajustes → Imagina Player → Ondas → Generar las ondas que
-faltan**. This time it will actually find your Publitio tracks, measure them
-through the doorway with the retries, and tell you file by file if any of them
-could not be done.
+* The overscan was written as numbers in **two** rules, one of them
+  `!important` — so only that one ever mattered and the other was decoration. A
+  negative test proved it by changing the decoration and passing. One custom
+  property now, with the centring offset derived from it.
+* The hostile-theme test asserted the frame was exactly 100% of the stage by
+  area, standing in for "a theme cannot shrink it". It now checks the frame
+  *covers* the stage — the thing that was meant, and still true when the frame
+  is deliberately larger.
+
+1357 checks green.
