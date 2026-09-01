@@ -1,71 +1,74 @@
-# Imagina Player — 1.31.0
+# Imagina Player — 1.32.0
 
-Download **imagina-player-1.31.0.zip** and install it in WordPress under
+Download **imagina-player-1.32.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  bca2ff179c7946f8548c51f70922450aaeba862653da1872532cdaea851b5ad1
+    SHA-256  47feff73a128e5466117bbbc175e36f37eae61aa3ff4466ba88d0541c4d1f47c
 
-## You were right. 1.30.0 did nothing for you.
+**Install this one.** 1.31.0 has a bug that stops waveforms being saved at all.
 
-The new measure was real and the button that would have let you use it did not
-exist. Two reasons, and the second is the worse one.
+## Your console found a bug I shipped four hours ago
 
-### The table had nowhere to write it
+    GET /wp-json/imagina-player/v1/peaks?key=url_9b6d… 404 (Not Found)
 
-1.30.0 marked each stored waveform with how it was measured, so an old one
-could be offered for redoing. The waveforms table has no such column, and the
-code that reads a row filled the field in from the current constant instead of
-from the row:
+1.31.0 added a column to the waveforms table. **Nothing ever created it.**
 
-    'version' => self::FORMAT_VERSION,
+There is a routine whose entire job is to catch up a site whose stored version
+is behind the code, and whose own comment explains why it exists — the
+activation hook does not fire for a plugin uploaded, copied into place or
+deployed over FTP, which is how this one reaches nearly every site that runs
+it. It did not touch the tables.
 
-Every stored waveform therefore claimed to have been measured whichever way was
-current. Nothing was ever out of date. The offer was unreachable from its first
-line — for your file in particular, which lives in that table because it is a
-URL rather than a library upload.
+So the code asked for a column that was not there. Every read failed. Every
+write failed.
 
-The column exists now, is written, and is read. Rows written before it report
-the older measure, which is what they are.
+And it was invisible from the editor, which is the worst part: the editor draws
+the waveform it has just measured, so measuring looked perfect while nothing
+reached the database. The only symptom was the one you saw — a 404 on the front
+end, and then every visitor downloading fifty megabytes to work out the same
+picture again, on every page view. That is also why it took "un rato" to load.
 
-### And there was nowhere to ask anyway
+A failed write now rebuilds the table and tries once more, instead of reporting
+a success it did not have.
 
-The notice disappeared entirely the moment every track had a waveform. So
-measuring was something the editor did to you when it judged a file lacking,
-and never something you could request — which is no use at all when the file
-*has* a waveform and the waveform is the thing that looks wrong. You took the
-audio out and put it back trying to provoke the button. There was no button to
-provoke.
+### The check that should have caught it
 
-Now, in the block's sidebar:
+It now reads the columns the code writes and reads **out of the code**, reads
+the columns the table declares **out of the schema**, and requires that they
+agree — and separately, that the upgrade routine applies the schema at all, and
+does it before marking the site up to date. Both halves of the bug were put
+back and both are caught.
 
-* **"Volver a medir esta onda"** — always there, whenever a track has one.
-* a separate notice for waveforms measured the older way, with **"Volver a
-  medirla"**.
-* the original warning, unchanged, for a file with no waveform at all.
+## The horizontal scrollbar
 
-## Why the tests said it worked
+The loading sheen slides a full width in each direction, inside a box that
+clipped nothing. So for the twenty seconds it ran, a whole page width hung off
+the side and the scrollbar appeared, grew and shrank in time with it.
 
-Because they never stored a waveform. The check called `is_current()` on an
-array built inside the test itself, and confirmed the controller mentions that
-function. Both passed while the feature did not exist.
+Measured across every skin at 320, 360, 414 and 768 pixels: **320px of overflow
+at 320px wide.** Now none. The test pins the animation at each end of its travel
+instead of trying to catch it mid-slide, so it cannot pass by luck.
 
-It could not have done better: the test harness answered every database read
-with null and threw every write away, so no test in this project could store
-something and read it back. That is the gap the bug lived in.
+## And the answer to the thing that started all of this
 
-It stores now. The test writes a waveform, reads it back, sets the row to what
-it looks like after an upgrade, and asks the editor's own endpoint what it would
-put on screen. Putting either half of the bug back makes it fail — both were
-checked that way.
+    range-tail: FAILED error=cURL error 18: transfer closed with 4050 bytes remaining
 
-1256 checks green.
+**There it is.** That is what was killing the measurement on slice 13 of 13 for
+three weeks, finally with a name: Publitio answers a range that ends at the last
+byte of the file, promises a length, and closes the connection four kilobytes
+short.
 
-## What to do
+Nothing to fix on your side. The retries and the missing-tail tolerance from
+1.29.0 are precisely what get past it — which is why your waveform works now.
+So the check reports that step as **coped** rather than FAILED, with the cURL
+error kept beside it. A red line next to a waveform that works is its own kind
+of wrong answer, and this thread is long enough. Any *other* failure of that
+step is still a failure.
 
-Install, open the post, and the button is in the block's sidebar under the
-waveform. Press it once and your lesson gets measured with the new measure —
-the one that shows pauses and changes in delivery instead of a flat comb.
+1305 checks green.
 
 ## Still worth doing on your server
 
-**Turn `popen` back off.** It was never the cause of any of this.
+**Turn `popen` back off.** Confirmed again by your own report: still listed in
+`disable_functions`, and `ffmpeg` reports `processes-disabled`. It was never
+the cause of anything here.
