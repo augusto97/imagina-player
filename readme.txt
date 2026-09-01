@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.32.0
+Stable tag: 1.33.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,25 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.33.0 =
+* Changed: the editor's waveform notice and source warning move into the block
+  sidebar. They were drawn inside the block, above the player — and in the
+  editor a block is a picture of the page, so anything drawn there reads as
+  part of it. Somebody showing a client a post had to explain that "Measure
+  this waveform again" was not going to appear on the finished site.
+* Changed: the settings screen no longer warns about ffmpeg when nothing needs
+  it. It used to say so in alarm colours on every visit to any site without
+  ffmpeg, whether or not a single file was missing a waveform — telling people
+  their server cannot do something they are not asking it to do, which reads as
+  a fault. It now counts what is actually missing, says nothing when the answer
+  is none, and when there is something to do says which button to press rather
+  than what the server cannot do. The technical reason moves beside the ffmpeg
+  path setting, where somebody wondering about it is already looking.
+* Testing: a new check reads which components are drawn inside the block and
+  which are in the sidebar, and requires the author-only ones to be in the
+  sidebar; and requires the ffmpeg note to depend on a count and to be a note
+  rather than a warning. Both were confirmed by putting the old behaviour back.
 
 = 1.32.0 =
 * Fixed: 1.31.0 added a column to the waveforms table and nothing ever created

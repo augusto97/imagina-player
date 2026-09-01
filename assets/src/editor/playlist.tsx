@@ -179,15 +179,21 @@ export function PlaylistEdit( { attributes, setAttributes }: EditProps ) {
 						}
 					/>
 				</PanelBody>
-			</InspectorControls>
 
-			<WaveformNotice
-				attachmentIds={ items.map( ( item ) => item.id ?? 0 ) }
-				urls={ items
-					.filter( ( item ) => ! item.id )
-					.map( ( item ) => item.src ?? '' ) }
-				onMeasured={ () => setRefresh( ( n ) => n + 1 ) }
-			/>
+				<PanelBody title={ __( 'Waveforms', 'imagina-player' ) }>
+					{ /*
+					     In the sidebar, like every other editing tool. On the
+					     block it read as something the visitors would see.
+					*/ }
+					<WaveformNotice
+						attachmentIds={ items.map( ( item ) => item.id ?? 0 ) }
+						urls={ items
+							.filter( ( item ) => ! item.id )
+							.map( ( item ) => item.src ?? '' ) }
+						onMeasured={ () => setRefresh( ( n ) => n + 1 ) }
+					/>
+				</PanelBody>
+			</InspectorControls>
 
 			<ol className="imgp-playlist-editor__items" key={ refresh }>
 				{ items.map( ( item, index ) => (

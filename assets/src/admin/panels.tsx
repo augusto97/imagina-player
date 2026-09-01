@@ -1,5 +1,5 @@
-import { useState } from '@wordpress/element';
-import { __, sprintf } from '@wordpress/i18n';
+import { useEffect, useState } from '@wordpress/element';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
 import { canMeasure, measure } from '../shared/measure';
 import {
@@ -93,7 +93,13 @@ function describe( report: Diagnosis, url: string ): string {
 		 * on its own is a wrong answer. A red line beside a waveform that works
 		 * sends somebody looking for a problem they have already got past.
 		 */
-		const bits = [ step.handled ? 'coped' : step.ok ? 'ok' : 'FAILED' ];
+		let verdict = step.ok ? 'ok' : 'FAILED';
+
+		if ( step.handled ) {
+			verdict = 'coped';
+		}
+
+		const bits = [ verdict ];
 
 		for ( const field of [
 			'status',
@@ -121,6 +127,39 @@ function describe( report: Diagnosis, url: string ): string {
 }
 
 export function WaveformsPanel( { settings, onChange }: PanelProps ) {
+	/*
+	 * How many files have no waveform, asked once when the screen opens.
+	 *
+	 * It decides whether there is anything to say about ffmpeg at all. Without
+	 * it the screen warned about ffmpeg on every visit, in alarm colours, to
+	 * sites where every waveform was already measured and nothing was wrong —
+	 * telling somebody their server cannot do a thing they are not asking it to
+	 * do. Null while the answer has not come back, so nothing flashes up and
+	 * disappears.
+	 */
+	const [ pending, setPending ] = useState< number | null >( null );
+
+	useEffect( () => {
+		let cancelled = false;
+
+		listPendingWaveforms()
+			.then( ( result ) => {
+				if ( ! cancelled ) {
+					setPending( result.total ?? result.pending.length );
+				}
+			} )
+			.catch( () => {
+				// Asking failed. Say nothing rather than guess at a number.
+				if ( ! cancelled ) {
+					setPending( 0 );
+				}
+			} );
+
+		return () => {
+			cancelled = true;
+		};
+	}, [] );
+
 	const [ diagnoseUrl, setDiagnoseUrl ] = useState( '' );
 	const [ diagnosing, setDiagnosing ] = useState( false );
 	const [ diagnosisText, setDiagnosisText ] = useState( '' );
@@ -229,9 +268,13 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 		);
 
 		try {
-			const { pending } = await listPendingWaveforms();
+			const { pending: waiting } = await listPendingWaveforms();
 
-			if ( ! pending.length ) {
+			// However this run ends, the note above reflects what is left
+			// rather than what was there when the screen opened.
+			setPending( waiting.length );
+
+			if ( ! waiting.length ) {
 				setStatus(
 					__( 'Every file already has a waveform.', 'imagina-player' )
 				);
@@ -243,25 +286,25 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 
 			let firstFailure = '';
 
-			for ( let i = 0; i < pending.length; i++ ) {
+			for ( let i = 0; i < waiting.length; i++ ) {
 				setStatus(
 					sprintf(
 						/* translators: 1: current file number, 2: total, 3: file name */
 						__( 'Generating %1$d of %2$d: %3$s', 'imagina-player' ),
 						i + 1,
-						pending.length,
-						pending[ i ].title
+						waiting.length,
+						waiting[ i ].title
 					)
 				);
 
 				try {
 					if ( settings.system.ffmpeg ) {
-						await generateWaveform( pending[ i ].id );
+						await generateWaveform( waiting[ i ].id );
 					} else {
 						await measureHere(
-							pending[ i ],
+							waiting[ i ],
 							i + 1,
-							pending.length
+							waiting.length
 						);
 					}
 
@@ -279,13 +322,15 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 				}
 			}
 
+			setPending( Math.max( 0, waiting.length - done ) );
+
 			setStatus(
-				done === pending.length
+				done === waiting.length
 					? sprintf(
 							/* translators: 1: number generated, 2: total */
 							__( '%1$d of %2$d generated.', 'imagina-player' ),
 							done,
-							pending.length
+							waiting.length
 					  )
 					: sprintf(
 							/* translators: 1: number generated, 2: total, 3: why the first failure happened */
@@ -294,7 +339,7 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 								'imagina-player'
 							),
 							done,
-							pending.length,
+							waiting.length,
 							firstFailure ||
 								__( 'no reason given', 'imagina-player' )
 					  )
@@ -374,7 +419,7 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 					'imagina-player'
 				) }
 			>
-				{ settings.system.ffmpeg ? (
+				{ settings.system.ffmpeg && (
 					<Notice tone="good">
 						{ __(
 							'ffmpeg was found on this server, so waveforms are generated here.',
@@ -384,17 +429,47 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 							<code> { settings.system.ffmpegBinary }</code>
 						) }
 					</Notice>
-				) : (
-					<Notice tone="warn">
-						<strong>
-							{ ffmpegProblem( settings.system.ffmpegState ) }
-						</strong>{ ' ' }
-						{ __(
-							'Short files still get a waveform from the visitor’s own browser. Long ones do not — nobody browsing a page should download ninety megabytes to look at a picture — so without ffmpeg they show a plain progress bar. You can measure them here instead: “Generate missing waveforms” below downloads each file once, in this browser, and stores the result for everyone.',
-							'imagina-player'
-						) }
-					</Notice>
 				) }
+
+				{ /*
+				     Only when there is something to do about it.
+
+				     This was an alarm on every visit to any site without
+				     ffmpeg, whether or not anything was missing a waveform —
+				     red, bold, and about a server capability the site is not
+				     using. On a site where every track is already measured
+				     there is nothing wrong and nothing to act on, and a warning
+				     that cannot be acted on only makes people think their site
+				     is broken.
+
+				     So: nothing at all when every file has a waveform, and when
+				     some do not, a plain note about what to press rather than a
+				     complaint about the server. The technical reason moves to
+				     the ffmpeg field below, where somebody who wants it will
+				     look.
+				*/ }
+				{ ! settings.system.ffmpeg &&
+					null !== pending &&
+					pending > 0 && (
+						<Notice tone="info">
+							<strong>
+								{ sprintf(
+									/* translators: %d: how many files have no waveform. */
+									_n(
+										'%d file in your library has no waveform yet.',
+										'%d files in your library have no waveform yet.',
+										pending,
+										'imagina-player'
+									),
+									pending
+								) }
+							</strong>{ ' ' }
+							{ __(
+								'This server cannot measure them, so measure them here: “Generate missing waveforms” below downloads each file once, in this browser, and stores the result for every visitor.',
+								'imagina-player'
+							) }
+						</Notice>
+					) }
 
 				<Field
 					label={ __( 'Bars per waveform', 'imagina-player' ) }
@@ -413,10 +488,27 @@ export function WaveformsPanel( { settings, onChange }: PanelProps ) {
 
 				<Field
 					label={ __( 'ffmpeg path', 'imagina-player' ) }
-					help={ __(
-						'Leave empty to search the usual locations.',
-						'imagina-player'
-					) }
+					/*
+					 * Where the reason lives now.
+					 *
+					 * As a banner it was an alarm about something the site is
+					 * not using; as the help text under the field it is the
+					 * answer to the question somebody is asking at the moment
+					 * they ask it — "why is this field not doing anything?"
+					 */
+					help={
+						settings.system.ffmpeg
+							? __(
+									'Leave empty to search the usual locations.',
+									'imagina-player'
+							  )
+							: ffmpegProblem( settings.system.ffmpegState ) +
+							  ' ' +
+							  __(
+									'Waveforms are measured in the browser instead, which works for any length of file and costs your visitors nothing.',
+									'imagina-player'
+							  )
+					}
 				>
 					<TextInput
 						value={ peaks.ffmpeg_path }

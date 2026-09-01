@@ -326,7 +326,32 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 				*/ }
 
 				<PanelBody title={ __( 'Media', 'imagina-player' ) }>
+					{ /*
+					     In the sidebar, not on the block.
+
+					     These used to render inside the block itself, above the
+					     player, where every one of them reads as part of the
+					     page being built — somebody looking over the author's
+					     shoulder cannot tell an editing note from content, and
+					     assumed the visitors would see "Measure this waveform
+					     again" printed above the audio. Editing tools belong
+					     where the editing tools are.
+					*/ }
 					<SourceStatus src={ src } />
+					<SourceWarning src={ src } isVideoBlock={ isVideoBlock } />
+
+					<WaveformNotice
+						attachmentIds={ [
+							Number( attributes.attachmentId ?? 0 ),
+						] }
+						urls={
+							Number( attributes.attachmentId ?? 0 )
+								? []
+								: [ src ]
+						}
+						disabled={ isVideo }
+						onMeasured={ () => setRefresh( ( n ) => n + 1 ) }
+					/>
 
 					<TextControl
 						__nextHasNoMarginBottom
@@ -1702,15 +1727,6 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					</PanelBody>
 				) }
 			</InspectorControls>
-
-			<SourceWarning src={ src } isVideoBlock={ isVideoBlock } />
-
-			<WaveformNotice
-				attachmentIds={ [ Number( attributes.attachmentId ?? 0 ) ] }
-				urls={ Number( attributes.attachmentId ?? 0 ) ? [] : [ src ] }
-				disabled={ isVideo }
-				onMeasured={ () => setRefresh( ( n ) => n + 1 ) }
-			/>
 
 			<Preview
 				onResolved={ setResolved }
