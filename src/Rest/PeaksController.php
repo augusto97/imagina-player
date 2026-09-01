@@ -543,14 +543,24 @@ final class PeaksController {
 
 		$size = (int) ( @filesize( $temp ) ?: 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- missing file is handled below.
 
-		if ( is_wp_error( $body ) || 200 !== (int) wp_remote_retrieve_response_code( $body ) || $size > self::PROXY_MAX_BYTES ) {
+		$got = is_wp_error( $body ) ? 0 : (int) wp_remote_retrieve_response_code( $body );
+
+		/*
+		 * 200 or 206. A server answering a `Range` request correctly answers
+		 * 206, and this demanded exactly 200 — so the moment slices were added,
+		 * every successful ranged fetch was refused as a failure, and the
+		 * message told the site owner their media host had refused them with a
+		 * 206. Which is a success code. The Range header was added in one place
+		 * and the test for what counts as success was left alone in another.
+		 */
+		if ( is_wp_error( $body ) || ( 200 !== $got && 206 !== $got ) || $size > self::PROXY_MAX_BYTES ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- our own temp file.
 			@unlink( $temp ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best effort.
 			$this->refuse(
-				is_wp_error( $body ) ? 502 : 413,
+				is_wp_error( $body ) || $got >= 400 ? 502 : 413,
 				is_wp_error( $body )
 					? 'upstream-unreachable'
-					: 'upstream-' . (int) wp_remote_retrieve_response_code( $body )
+					: ( $got >= 400 ? 'upstream-' . $got : 'too-large' )
 			);
 		}
 

@@ -974,12 +974,12 @@ msgstr "Nuevo preajuste"
 msgid "Next"
 msgstr "Siguiente"
 
-#: src/Rest/PeaksController.php:792
+#: src/Rest/PeaksController.php:802
 msgid "No track was named."
 msgstr "No se indicó ninguna pista."
 
-#: src/Rest/PeaksController.php:806
-#: src/Rest/PeaksController.php:866
+#: src/Rest/PeaksController.php:816
+#: src/Rest/PeaksController.php:876
 msgid "No waveform data was supplied."
 msgstr "No se envió ningún dato de onda."
 
@@ -1396,7 +1396,7 @@ msgstr "Servir con un enlace firmado"
 msgid "Served with %d."
 msgstr "Servido con %d."
 
-#: src/Rest/PeaksController.php:986
+#: src/Rest/PeaksController.php:996
 msgid "Server-side waveform generation is unavailable on this host."
 msgstr "La generación de ondas en el servidor no está disponible en este alojamiento."
 
@@ -1633,7 +1633,7 @@ msgstr "Texto"
 msgid "Thank you."
 msgstr "Gracias."
 
-#: src/Rest/PeaksController.php:978
+#: src/Rest/PeaksController.php:988
 #: src/Rest/StreamController.php:60
 msgid "That attachment does not exist."
 msgstr "Ese adjunto no existe."
@@ -1654,7 +1654,7 @@ msgstr "Eso no parece una dirección de correo."
 msgid "That file is not protected."
 msgstr "Ese archivo no está protegido."
 
-#: src/Rest/PeaksController.php:784
+#: src/Rest/PeaksController.php:794
 msgid "That is not a media file."
 msgstr "Eso no es un archivo de medios."
 
@@ -1809,12 +1809,12 @@ msgstr "La bóveda no se puede curiosear"
 msgid "The vault directory returned a page listing its contents. Turn directory indexes off for the uploads directory."
 msgstr "El directorio de la bóveda devolvió una página con el listado de su contenido. Desactiva los índices de directorio para el directorio de subidas."
 
-#: src/Rest/PeaksController.php:1012
+#: src/Rest/PeaksController.php:1022
 msgid "The waveform could not be generated for this file."
 msgstr "No se pudo generar la onda de este archivo."
 
-#: src/Rest/PeaksController.php:821
-#: src/Rest/PeaksController.php:881
+#: src/Rest/PeaksController.php:831
+#: src/Rest/PeaksController.php:891
 msgid "The waveform data is malformed."
 msgstr "Los datos de la onda están mal formados."
 
@@ -1876,7 +1876,7 @@ msgstr "Esto evita que se copie, se comparta o se enlace la URL del archivo, y p
 msgid "This video is hosted by %s."
 msgstr "Este vídeo está alojado en %s."
 
-#: src/Rest/PeaksController.php:842
+#: src/Rest/PeaksController.php:852
 msgid "This waveform grant is missing or expired."
 msgstr "Este permiso de onda falta o ha caducado."
 

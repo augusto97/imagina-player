@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.26.0
+Stable tag: 1.27.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,17 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.27.0 =
+* Fixed: a successful ranged fetch was treated as a failure. A server answering
+  a `Range` request correctly answers 206, and the check for whether the fetch
+  had worked demanded exactly 200 — written before there were ranges and left
+  alone when they were added. So from the moment large files started coming
+  through in slices, every one of them was refused, and the site owner was told
+  their media host had refused them with a 206. Which is a success code.
+* Testing: the route is now exercised with a range on it, which is what would
+  have caught this — and with the two requests it makes answering differently,
+  which is the only way to reach the second of its two checks at all.
 
 = 1.26.0 =
 * Fixed: a file behind hotlink protection could not be measured. The site's own

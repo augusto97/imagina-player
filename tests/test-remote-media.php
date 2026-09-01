@@ -194,11 +194,15 @@ echo PHP_EOL . '# The doorway, actually run' . PHP_EOL;
  * proves the refusal was reached with the right reason — which is where the
  * mistakes are — rather than that the header left the building.
  */
-function run_proxy( string $url, array $remote ): array {
+function run_proxy( string $url, array $remote, string $range = '', ?array $head = null ): array {
 	$script = <<<'PHP'
 <?php
 require %s;
 $GLOBALS['stub_remote'] = %s;
+$head = %s;
+if ( null !== $head ) { $GLOBALS['stub_remote_head'] = $head; }
+$range = %s;
+if ( '' !== $range ) { $_SERVER['HTTP_RANGE'] = $range; }
 $controller = new ImaginaPlayer\Rest\PeaksController();
 $controller->proxy( new WP_REST_Request( array( 'src' => %s ) ) );
 PHP;
@@ -211,6 +215,8 @@ PHP;
 			$script,
 			var_export( dirname( __DIR__ ) . '/tests/bootstrap.php', true ),
 			var_export( $remote, true ),
+			var_export( $head, true ),
+			var_export( $range, true ),
 			var_export( $url, true )
 		)
 	);
@@ -493,6 +499,98 @@ check(
 check(
 	'both the head request and the download say it',
 	2 <= substr_count( $controller, '$this->fetch_headers()' )
+);
+
+echo PHP_EOL . '# A slice that worked is not a failure' . PHP_EOL;
+
+/*
+ * The bug this whole thread ended on, and the plainest one in it.
+ *
+ * A server answering a `Range` request correctly answers 206. The check for
+ * whether the fetch had worked demanded exactly 200 — written before there
+ * were ranges, and left alone when they were added. So the moment slicing
+ * started, every successful ranged fetch was refused, and the site owner was
+ * told their media host had refused them with a 206. Which is a success code.
+ *
+ * There was no test that ran the route with a range on it. There is now.
+ */
+$partial = run_proxy(
+	'https://media.example.com/lesson.mp3',
+	array(
+		'code'    => 206,
+		'headers' => array( 'content-type' => 'audio/mpeg', 'content-length' => '1024' ),
+		'body'    => str_repeat( 'x', 1024 ),
+	),
+	'bytes=0-1023'
+);
+
+check(
+	'a ranged fetch that succeeded is served, not refused',
+	! str_contains( $partial['output'], 'No:' ),
+	substr( $partial['output'], 0, 120 )
+);
+
+check(
+	'and no success code is ever reported as a refusal',
+	! preg_match( '/upstream-2\d\d/', $partial['output'] ),
+	'a 2xx is not a reason to give up'
+);
+
+/*
+ * The whole-file case still has to work, since a server that ignores a range
+ * answers 200 and that is fine too.
+ */
+$whole = run_proxy(
+	'https://media.example.com/lesson.mp3',
+	array(
+		'code'    => 200,
+		'headers' => array( 'content-type' => 'audio/mpeg', 'content-length' => '1024' ),
+		'body'    => str_repeat( 'x', 1024 ),
+	)
+);
+
+check(
+	'and a plain whole-file fetch still is too',
+	! str_contains( $whole['output'], 'No:' ),
+	substr( $whole['output'], 0, 120 )
+);
+
+/*
+ * While a real refusal still is one. Otherwise the fix above would be "accept
+ * everything", which passes the two checks above and breaks the diagnosis this
+ * release is built on.
+ */
+$refused_still = run_proxy(
+	'https://media.example.com/lesson.mp3',
+	array( 'code' => 403, 'headers' => array( 'content-type' => 'audio/mpeg' ) )
+);
+
+check(
+	'while a real refusal is still refused',
+	str_contains( $refused_still['output'], 'upstream-403' ),
+	substr( $refused_still['output'], 0, 120 )
+);
+
+/*
+ * And the second guard, on its own. The head request is checked first, so it
+ * catches an outright refusal before the download starts — which means the
+ * check after the download is only ever reached when the two answers differ,
+ * and a test that could not make them differ was not testing it at all.
+ *
+ * They do differ in the wild: a signed URL that expires between the two, or a
+ * host that answers HEAD cheaply and meters the download.
+ */
+$flipped = run_proxy(
+	'https://media.example.com/lesson.mp3',
+	array( 'code' => 403, 'headers' => array( 'content-type' => 'text/html' ), 'body' => 'no' ),
+	'',
+	array( 'code' => 200, 'headers' => array( 'content-type' => 'audio/mpeg', 'content-length' => '1024' ) )
+);
+
+check(
+	'a download refused after an allowed head request is still refused',
+	str_contains( $flipped['output'], 'upstream-403' ),
+	substr( $flipped['output'], 0, 120 )
 );
 
 echo PHP_EOL . '# The preview stops asking the wrong address' . PHP_EOL;

@@ -343,7 +343,26 @@ function wp_remote_get( $url, $args = array() ) {
  * it at a local server on purpose and the SSRF rules are exercised by
  * `wp_http_validate_url` in the protection tests instead.
  */
-function wp_safe_remote_get( $url, $args = array() ) { return wp_remote_get( $url, $args ); }
+/*
+ * The doorway fetches with `stream` and `filename`, so a stub that hands back a
+ * body and writes nothing leaves the code under test reading an empty file and
+ * concluding the fetch failed — which is a test that exercises the error path
+ * whatever the code does. This writes the body where the caller asked for it,
+ * the way the real client does.
+ */
+function wp_safe_remote_get( $url, $args = array() ) {
+	$response = $GLOBALS['stub_remote'] ?? null;
+
+	if ( null === $response ) {
+		return wp_remote_get( $url, $args );
+	}
+
+	if ( ! is_wp_error( $response ) && ! empty( $args['stream'] ) && ! empty( $args['filename'] ) ) {
+		file_put_contents( $args['filename'], (string) ( $response['body'] ?? '' ) );
+	}
+
+	return $response;
+}
 
 /*
  * Enough of the HTTP client for the doorway that fetches a file from another
@@ -352,7 +371,15 @@ function wp_safe_remote_get( $url, $args = array() ) { return wp_remote_get( $ur
  * editor has to explain.
  */
 function wp_safe_remote_head( $url, $args = array() ) {
-	return $GLOBALS['stub_remote'] ?? array( 'code' => 200, 'headers' => array( 'content-type' => 'audio/mpeg', 'content-length' => '1024' ) );
+	/*
+	 * Separately settable from the GET, because a server can answer the two
+	 * differently — a signed URL, or one that treats HEAD as cheap and the
+	 * download as metered — and the doorway checks both. A test that could
+	 * only set one answer left the second check unexercised.
+	 */
+	return $GLOBALS['stub_remote_head']
+		?? $GLOBALS['stub_remote']
+		?? array( 'code' => 200, 'headers' => array( 'content-type' => 'audio/mpeg', 'content-length' => '1024' ) );
 }
 function wp_remote_retrieve_header( $response, $name ) {
 	if ( ! is_array( $response ) ) { return ''; }
