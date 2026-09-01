@@ -1,58 +1,40 @@
-# Imagina Player — 1.26.0
+# Imagina Player — 1.27.0
 
-Download **imagina-player-1.26.0.zip** and install it in WordPress under
+Download **imagina-player-1.27.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  3c11b0a4c7ddc62798e80c8b4f7554f41e1f140534cfe2e1c3450a8000a92428
+    SHA-256  eecce6042ae19a3db5a6a3b09056228917d14a64f48c2b4643c0604c7fcc9414
 
-## The file host refuses this server
+## 206 is a success, and it was being treated as a refusal
 
-The check answered it:
+The `Referer` fix in 1.26.0 worked. The check says so:
 
-    head:  FAILED status=403 type=text/html bytes=0
-    range: FAILED status=403 type=text/html bytes=1410
+    head-as-this-site: ok status=200 length=50783776 acceptsRanges=bytes
+    range:             ok status=206 contentRange=bytes 0-1023/50783776
 
-The media host gives **this site's server** a 403 and an HTML error page, for
-both a HEAD and a ranged GET — while the same file plays perfectly in the
-browser.
+The server can fetch the file. What refused it was this plugin.
 
-That difference is hotlink protection. It allows a domain by `Referer`: a
-browser on the site sends one, the domain is on the allow-list, the file plays.
-A request made by the site's own server sent **none at all**, so it looked like
-nobody and was refused.
+A server answering a `Range` request correctly answers **206**. The test for
+whether the fetch had worked demanded exactly **200** — written before there
+were ranges, and left alone when they were added in 1.24.0.
 
-Which is why "the domain is whitelisted" was true and did not help. The
-allow-list had nothing to match on.
+So from the moment large files started coming through in slices, every one of
+them was refused, and the message said the media host had refused with a 206.
+Which is a success code, and reads as nonsense because it is.
 
-The fetch now says which site it is made for, and identifies the plugin rather
-than pretending to be a browser.
+## Why the suite stayed green through all of it
 
-## Why this took three attempts
+There was no test that ran the route with a range on it. Adding ranges and
+breaking every ranged fetch looked like a passing suite, because nothing
+exercised the combination.
 
-The report also says `sapi: litespeed`, and that is the other half.
+Adding that test found a second gap. The route makes two requests — a HEAD
+first, then the download — and the HEAD check catches an outright refusal
+before the download starts. So the check *after* the download is only ever
+reached when the two answers differ, and the test harness could not make them
+differ. Replacing that check with `if (false)` passed the entire suite.
 
-A web server in front of PHP is entitled to treat a 5xx from its backend as the
-backend having failed, and to replace the entire response — reason header and
-body alike — with its own error page. LiteSpeed does.
+They can now answer independently, and "a download refused after an allowed
+HEAD" is checked on its own.
 
-So the refusal that said *"the host answered 403"* was correct, and never
-arrived. It reached the browser as a bare 502 with nothing attached, and there
-was nothing left to do with it but guess. Twice I guessed wrong, and one of
-those guesses led to a server setting being changed that never needed changing.
-
-**Refusals go out as 424 now**, which no gateway rewrites.
-
-## The check now runs it both ways
-
-Anonymously, and saying which site is asking — and prints both lines. That pair
-*is* the diagnosis, rather than something to be inferred from a single status
-code. It also prints what it identified itself as, so the address can be
-allow-listed at the other end.
-
-## Also settled by the report
-
-`popen` really is disabled — it is in `disable_functions`, at the end of the
-list, alongside `proc_open` and `escapeshellcmd`. The notice was right, it was
-never cached, and enabling it changed nothing. It is safe to put back as it was.
-
-1175 checks green.
+1180 checks green.
