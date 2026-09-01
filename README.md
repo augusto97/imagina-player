@@ -1,65 +1,59 @@
-# Imagina Player — 1.22.0
+# Imagina Player — 1.23.0
 
-Download **imagina-player-1.22.0.zip** and install it in WordPress under
+Download **imagina-player-1.23.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  9c16c4caa723483a20387433465e7cb102b42a2c70a8e500e6d32cd6cd943674
+    SHA-256  d64d464672118929cf7da6dbec974da1f5a57dbcfa446877e67fe0bd21d47a7e
 
-## Long recordings could not be measured in the browser
+## The route for a file on another domain had never worked
 
-On a host with no ffmpeg the waveform is measured once, in the editor's own
-browser, and stored for everybody. It worked for a podcast episode and not for
-a lecture.
+A browser cannot read a file from another domain unless that domain allows it,
+and media hosts mostly do not. So there is a route on the site that fetches the
+file and hands it over same-origin — the one path that exists for exactly this
+case.
 
-The measurement handed the whole file to the browser's decoder and asked for an
-8 kHz context, on the reasoning that the context's rate is what comes back.
-That is true of the result and not of the work: a decoder expands the file at
-its *own* rate and resamples afterwards. Fifty-three minutes of 44.1 kHz stereo
-is about a gigabyte of float samples in flight before anything is handed back.
+It builds its URL by hand, because what it produces has to be something an
+audio decoder can be pointed at, and a hand-built REST URL needs the nonce that
+`apiFetch` would otherwise add for you. That nonce comes from
+`window.wpApiSettings`, which is put on the page by `wp-api-request` — which
+the editor script never declared as a dependency.
 
-Whether that gigabyte is fatal depends on the machine — which is why it was
-some files and not all of them, and why it could not be reproduced on the
-machine this was fixed on. So the change is not "the old way crashes" but "the
-new way never asks for it": the file is decoded a few megabytes at a time, each
-piece reduced to a handful of numbers and thrown away before the next is read.
-How long a recording is stops mattering.
+Where nothing else on the screen happened to enqueue it, the request was
+refused and the file simply never got a waveform. Nothing failed loudly.
 
-A fifty-three minute file now measures in a couple of seconds.
+## And the failure said the wrong thing, twice
 
-WAV windows are given a header of their own, since a WAV has no frames to
-resynchronise to. Everything else can be cut on a byte boundary, because MP3,
-AAC and Ogg all carry a sync word at the head of every frame and a decoder
-handed a slice starting mid-frame simply skips to the next one.
+**"This file is too large to analyse in the browser."** The size check treated
+"I learned nothing about this file" the same as "this file is too big" — so a
+file the browser is not allowed to read sent people to the size settings, where
+nothing can help. The reasons are told apart now, and each has its own message.
 
-The pieces are laid back on a timeline by their decoded length rather than
-shared out evenly, so a variable bitrate file does not come back stretched.
+**A bare status from the route.** The file's own server refusing this site
+looked exactly like this site refusing the request, and those have completely
+different answers. It now says which happened and passes on the status the
+remote server gave: a 403 from a bucket or a CDN is the whole answer, and it
+points at that service's hotlink protection or signed-link rules rather than at
+anything in this plugin.
 
-## A failure that said nothing
+The reason travels in the response body as well as a header, for sites where
+something in front of WordPress strips headers it does not recognise.
 
-"Some files could not be measured here. They may be too long for this browser,
-or served from somewhere it cannot read them."
+## A 404 on every editor load
 
-That covers four different problems with four different answers and names none
-of them. It now says which one happened: the server refused the file and with
-what status, the download was cut short, the browser could not decode it, or it
-was a cross-origin refusal.
+Both block previews built their runtime with an empty REST root, so the player
+inside them asked for `/peaks` against the site root every time the editor
+opened. Harmless — a stored waveform reaches a preview in the markup — but it
+is a failed request in everyone's console, and the fallback it was meant to be
+could never work.
 
-The same is true of the bulk generator on the settings screen, which counted
-its failures and threw away every reason.
+A preview also asks for no download at all, and that came out as "this file is
+too large" for every file, whatever its size.
 
 ## How it is checked
 
-A new test builds a real fifty-three minute file, measures it in a real
-browser, and checks the shape of the result rather than only its size — a row
-of identical bars is the same picture as no waveform at all, and would pass
-every other check.
+The new tests run the route rather than reading it: a remote 403, an address
+that is not a media file, and an address on this machine, each in its own
+process because the handler ends by streaming and exiting. Each has to come
+back naming what happened.
 
-It also checks the property the change is actually about: no single decode
-covers more than a couple of minutes of audio, whatever the length of the file.
-Putting the old path back fails that immediately.
-
-And the same audio measured both ways — whole, and in pieces — has to give the
-same picture, across six windows and their seams, or the fast path is quietly
-drawing something else.
-
-1117 checks green.
+1144 checks green.
