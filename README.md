@@ -1,50 +1,76 @@
-# Imagina Player — 1.34.0
+# Imagina Player — 1.35.0
 
-Download **imagina-player-1.34.0.zip** and install it in WordPress under
+Download **imagina-player-1.35.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  72706344e8e9a7a4ee45d1c2c36217d6b07ee5644630cff6e847b2772917f040
+    SHA-256  3a3611dcdde4d4bb74b55ebd43a3520c7dcd81fe1827fd23edb0b6ca79563b66
 
-## That button was not a missing translation
+## You asked two questions. Both answers were no.
 
-It was translated. It has been translated since 1.31.0. It was in the `.po`, it
-was in the JSON the editor loads, and it still came out in English.
+**Does it generate all of them, with the method we built?** No. On your site it
+generated *nothing at all*, and said so as a success.
 
-**Every string with a plural has been in English since the translation
-generator was written.**
+**Does it report which failed and why?** No. A count, and the first failure's
+raw internal tag.
 
-A `.mo` file keys a plural entry as `msgid` + NUL + `msgid_plural`, and uses
-`\4` to separate a context from its msgid. The JSON that `wp.i18n` reads keys a
-plural by the msgid **alone**, with the forms in the value, and uses `\4` only
-for context. The generator ran the two formats together — it turned that NUL
-into a `\4` — and produced a key meaning "the singular, in the context of the
-plural". Nothing ever asks for that, so nothing ever found it.
+## Why it found nothing on your site
 
-Singular strings were unaffected. That is why it lasted this long: nothing
-looked broken, because everything that was not counted was fine. It took one
-button sitting in the middle of an otherwise Spanish panel.
+It asked the media library for attachments with **no stored waveform**. That
+quietly excluded two whole groups:
 
-Fixed, and all four affected strings now come back in Spanish.
+* A file measured by an older version *has* a stored waveform, so it was
+  skipped — and those are precisely the ones worth doing again, now that a bar
+  means loudness rather than the loudest instant.
+* A track played from an address rather than an upload has **no row in the
+  media library at all**. Your entire library is Publitio addresses. So the
+  button looked, found nothing, and reported success.
 
-### The check that would not have caught it
+It now includes anything not measured the way this version measures, and finds
+tracks played from addresses **inside the posts that play them** — which is the
+only place they exist, because a waveform is stored under a hash of the address
+and a hash does not run backwards. It reads block attributes rather than
+rendered HTML, so the address is the exact string the player will look under,
+and it follows playlists and blocks nested inside columns or groups.
 
-A test that reads the generated JSON and decides it looks correct is written by
-the same understanding that produced the file. It would have agreed with the
-bug, confidently, and told you the translations were fine.
+## And it could not have measured them anyway
 
-So it does not read the file. It loads each catalogue into the **actual
-`@wordpress/i18n` library the browser runs** and asks it for the strings —
-singular and plural, one and several — and checks that what comes back is not
-the English it was given. Putting the old key format back fails it.
+"Try the file directly, and fall back to this site's own doorway" lived inside
+the editor's notice. The settings screen fetched every file **directly** — so
+any host that does not let another domain read its files, which is most of them
+and is the entire reason the doorway exists, failed at the first request.
 
-## And the link is a button
+One implementation now, used by both screens.
 
-You were right that it disappeared. Blue underlined text in a column of form
-controls reads as a caption for the field below it, not as something you can
-press. It is a proper button now, in its own block with a rule above it, and a
-line underneath saying when you would actually want it:
+A waveform measured for an address from that screen was also being stored
+against attachment zero, which is nothing at all. The address goes with it now.
 
-> **Volver a medir esta onda**
-> Solo hace falta si la forma se ve mal, o después de cambiar el número de barras.
+## The report
 
-1325 checks green.
+Before:
+
+    9 of 20 generated. The rest failed — the first: proxy-upstream-403|slice 13 of 13
+
+That says neither which eleven files were left nor what to do about any of
+them, and eleven failures rarely share one cause — one behind hotlink
+protection, one that is not audio, one on a host that truncates transfers are
+three different jobs.
+
+Now every file that failed is listed by name with its own reason, in the same
+words the editor uses:
+
+> **No se pudieron medir 3 archivos:**
+> **1.1 EL CAMINO DEL AMOR** — el servidor donde está el archivo también le
+> respondió 403 a este sitio; revisa la protección contra enlazado… (slice 13 of 13)
+> **2.4 PERDONARTE** — la dirección no devuelve un archivo de audio o vídeo
+
+Both gaps in the list were confirmed by restoring them and watching the tests
+fail.
+
+1343 checks green.
+
+## What to do
+
+Install, then **Ajustes → Imagina Player → Ondas → Generar las ondas que
+faltan**. This time it will actually find your Publitio tracks, measure them
+through the doorway with the retries, and tell you file by file if any of them
+could not be done.
