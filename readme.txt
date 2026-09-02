@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.37.0
+Stable tag: 1.38.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,33 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.38.0 =
+The plugin was installed on a real WordPress 6.8 — not a stub — and every
+claim of the 1.37.0 audit was exercised there: activation, the block editor's
+saved markup, the front end in a real browser, the waveform round trip, the
+protected vault through core's media endpoint and the signed stream, the
+upgrade path, the lead limits and uninstall. Two things did not hold up.
+
+* Fixed: a settings request that named one setting in a group turned off every
+  switch in that group it did not name. A request carrying only the ffmpeg path
+  switched off server generation and the browser fallback, and the front end
+  stopped measuring waveforms; one carrying only the YouTube interface switch
+  turned off privacy mode and every video control. The settings screen sends
+  whole groups, so it never showed there — anything else talking to the
+  endpoint saw it. A request now changes what it names and nothing else.
+* Fixed: uninstall moved every protected file back and left the vault
+  directory behind, empty but for its deny rules. It is removed once nothing
+  but those rules is left in it; a file of any other kind keeps it.
+
+Verified on that site, and left alone: a page without a player loads none of
+the plugin's assets on block and classic themes alike; a stored waveform is
+served from the site on the next view instead of being measured again; the
+media endpoint no longer names the vault directory to anyone; the vault's
+signed stream honours Range requests and refuses a tampered or missing token;
+the sixth lead from one address in a day is refused; a site updated by
+uploading the plugin gets the waveform table's missing column back on its next
+request; and uninstall leaves no option, table, transient or moved file behind.
 
 = 1.37.0 =
 An audit of the whole plugin — security, correctness, performance — with every

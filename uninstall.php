@@ -52,6 +52,77 @@ if ( class_exists( 'ImaginaPlayer\\Protection\\Vault' ) ) {
 	}
 }
 
+/*
+ * The vault directory itself, once nothing is left in it. Seen on a real
+ * site: every file had been moved back and an empty tree stayed behind, with
+ * the deny rules still in it — a folder nobody can open, for nothing. Only
+ * the guard files this plugin wrote and empty folders are removed; a file of
+ * any other kind, however it got there, stops the removal at that level.
+ */
+if ( class_exists( 'ImaginaPlayer\\Protection\\Vault' ) ) {
+	imagina_player_remove_empty_vault( ImaginaPlayer\Protection\Vault::base_dir() );
+}
+
+/**
+ * Remove a directory tree that holds nothing but guard files.
+ *
+ * @param string $dir Absolute path.
+ * @return bool Whether the directory is gone.
+ */
+function imagina_player_remove_empty_vault( string $dir ): bool {
+	if ( ! is_dir( $dir ) ) {
+		return true;
+	}
+
+	$entries = scandir( $dir );
+
+	if ( false === $entries ) {
+		return false;
+	}
+
+	$empty  = true;
+	$guards = array();
+
+	foreach ( $entries as $entry ) {
+		if ( '.' === $entry || '..' === $entry ) {
+			continue;
+		}
+
+		$path = $dir . DIRECTORY_SEPARATOR . $entry;
+
+		if ( is_dir( $path ) ) {
+			if ( ! imagina_player_remove_empty_vault( $path ) ) {
+				$empty = false;
+			}
+
+			continue;
+		}
+
+		if ( in_array( $entry, array( 'index.php', '.htaccess', 'web.config' ), true ) ) {
+			$guards[] = $path;
+
+			continue;
+		}
+
+		$empty = false;
+	}
+
+	/*
+	 * The guard files go last, and only when nothing else is left: they are
+	 * the rules that keep whatever is in here from being served, and a folder
+	 * that still holds a file keeps them.
+	 */
+	if ( ! $empty ) {
+		return false;
+	}
+
+	foreach ( $guards as $guard ) {
+		wp_delete_file( $guard );
+	}
+
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- own directory, uninstall.
+	return @rmdir( $dir );
+}
 delete_post_meta_by_key( '_imagina_protected' );
 
 // Options, including the ones earlier versions used.

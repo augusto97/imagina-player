@@ -303,6 +303,69 @@ check(
 	str_contains( $admin_bundle, 'imgpa-preview__medium' )
 );
 
+echo PHP_EOL . '# A request that names one setting in a group leaves the rest of the group alone' . PHP_EOL;
+
+/*
+ * Found on a real WordPress, not in a stub: a request carrying only
+ * `peaks.ffmpeg_path` switched off server generation and the browser fallback,
+ * and one carrying only `video.provider_bare` switched off privacy mode and
+ * every control. The settings screen sends whole groups, so it never saw it —
+ * anything else talking to the endpoint did.
+ */
+update_option( Settings::OPTION_KEY, Settings::defaults() );
+Settings::flush_cache();
+
+$controller->update_settings(
+	new WP_REST_Request(
+		array(
+			'video'      => array( 'provider_bare' => false ),
+			'peaks'      => array( 'ffmpeg_path' => '/usr/local/bin/ffmpeg' ),
+			'metadata'   => array( 'title_from' => 'file' ),
+			'advanced'   => array( 'custom_css' => '.x{}' ),
+			'branding'   => array( 'logo_height' => 30 ),
+			'protection' => array( 'ttl' => 2 * HOUR_IN_SECONDS ),
+		)
+	)
+);
+
+$all = Settings::all();
+
+check( 'the named video switch changed', false === $all['video']['provider_bare'] );
+check( 'the unnamed video switches kept their value', true === $all['video']['provider_privacy'] && true === $all['video']['show_pip'] && true === $all['video']['show_captions'] );
+check( 'the unnamed video numbers kept their value', 2600 === $all['video']['hide_after'] );
+check( 'the named waveform path changed', '/usr/local/bin/ffmpeg' === $all['peaks']['ffmpeg_path'], $all['peaks']['ffmpeg_path'] );
+check( 'the unnamed waveform switches kept their value', true === $all['peaks']['server_generation'] && true === $all['peaks']['client_fallback'] );
+check( 'the unnamed size limit kept its value', 25 * MB_IN_BYTES === $all['peaks']['max_client_bytes'], (string) $all['peaks']['max_client_bytes'] );
+check( 'the named metadata choice changed', 'file' === $all['metadata']['title_from'] );
+check( 'the unnamed metadata switches kept their value', true === $all['metadata']['use_cover'] && true === $all['metadata']['from_filename'] );
+check( 'the named stylesheet changed', '.x{}' === $all['advanced']['custom_css'] );
+check( 'the unnamed advanced switches kept their value', true === $all['advanced']['load_frontend_css'] && true === $all['advanced']['lazy_init'] );
+check( 'the named branding number changed', 30 === $all['branding']['logo_height'] );
+check( 'the unnamed branding colours kept their value', Settings::defaults()['branding']['accent'] === $all['branding']['accent'] );
+check( 'the named protection number changed', 2 * HOUR_IN_SECONDS === $all['protection']['ttl'] );
+check( 'the unnamed protection delivery kept its value', 'php' === $all['protection']['delivery'] && '/imagina-protected/' === $all['protection']['xaccel_prefix'] );
+
+// And a whole group, sent the way the settings screen sends it, still turns
+// things off: "not mentioned" is not the same as "sent as false".
+$controller->update_settings(
+	new WP_REST_Request(
+		array(
+			'peaks' => array(
+				'resolution'        => 400,
+				'server_generation' => false,
+				'client_fallback'   => false,
+				'ffmpeg_path'       => '',
+				'max_client_mb'     => 40,
+			),
+		)
+	)
+);
+
+$all = Settings::all();
+
+check( 'a switch sent as false is off', false === $all['peaks']['server_generation'] && false === $all['peaks']['client_fallback'] );
+check( 'a size sent in megabytes is stored in bytes', 40 * MB_IN_BYTES === $all['peaks']['max_client_bytes'], (string) $all['peaks']['max_client_bytes'] );
+
 echo PHP_EOL;
 if ( $failures > 0 ) {
 	echo "{$failures} check(s) failed." . PHP_EOL;

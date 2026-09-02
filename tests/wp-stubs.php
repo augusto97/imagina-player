@@ -203,6 +203,7 @@ function is_admin() { return false; }
  */
 class Stub_WPDB {
 	public $prefix = 'wp_';
+	public $options = 'wp_options';
 	public function get_charset_collate() { return 'DEFAULT CHARACTER SET utf8mb4'; }
 	public function prepare( $query, ...$args ) { return vsprintf( str_replace( array( '%s', '%d', '%f' ), array( "'%s'", '%d', '%f' ), $query ), $args ); }
 	public function get_var( $query ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['db_query']++; } return $GLOBALS['stub_table_exists'] ?? null; }
@@ -612,3 +613,36 @@ class WP_REST_Server {
 }
 
 function register_rest_route( ...$args ) { return true; }
+
+function wp_strip_all_tags( $text, $remove_breaks = false ) {
+	$text = preg_replace( "@<(script|style)[^>]*?>.*?</\\1>@si", "", (string) $text );
+	$text = strip_tags( $text );
+
+	return trim( $text );
+}
+
+if ( ! function_exists( 'delete_post_meta_by_key' ) ) {
+	function delete_post_meta_by_key( $key ) {
+		foreach ( (array) ( $GLOBALS['stub_meta'] ?? array() ) as $id => $meta ) {
+			unset( $GLOBALS['stub_meta'][ $id ][ $key ] );
+		}
+
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_clear_scheduled_hook' ) ) {
+	function wp_clear_scheduled_hook( $hook, $args = array() ) {
+		$GLOBALS['stub_cleared_hooks'][] = $hook;
+
+		return 0;
+	}
+}
+
+if ( ! function_exists( 'wp_delete_file' ) ) {
+	function wp_delete_file( $file ) {
+		if ( is_file( $file ) ) {
+			unlink( $file );
+		}
+	}
+}

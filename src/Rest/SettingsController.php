@@ -145,7 +145,7 @@ final class SettingsController {
 		}
 
 		if ( isset( $incoming['peaks'] ) && is_array( $incoming['peaks'] ) ) {
-			$peaks = $incoming['peaks'];
+			$peaks = self::with_current( $incoming['peaks'], self::peaks_as_sent( $settings['peaks'] ) );
 
 			$settings['peaks']['resolution']        = max( 32, min( 2000, (int) ( $peaks['resolution'] ?? 400 ) ) );
 			$settings['peaks']['server_generation'] = ! empty( $peaks['server_generation'] );
@@ -155,7 +155,7 @@ final class SettingsController {
 		}
 
 		if ( isset( $incoming['metadata'] ) && is_array( $incoming['metadata'] ) ) {
-			$metadata = $incoming['metadata'];
+			$metadata = self::with_current( $incoming['metadata'], $settings['metadata'] );
 
 			$settings['metadata']['title_from']    = in_array( $metadata['title_from'] ?? '', array( 'auto', 'tags', 'post', 'file', 'none' ), true )
 				? (string) $metadata['title_from']
@@ -168,7 +168,7 @@ final class SettingsController {
 		}
 
 		if ( isset( $incoming['video'] ) && is_array( $incoming['video'] ) ) {
-			$video = $incoming['video'];
+			$video = self::with_current( $incoming['video'], $settings['video'] );
 
 			$settings['video']['ratio']           = Attributes::sanitize_ratio( (string) ( $video['ratio'] ?? '16:9' ) );
 			// Zero is a real answer here — "never hide them" — so it is clamped
@@ -210,7 +210,7 @@ final class SettingsController {
 		}
 
 		if ( isset( $incoming['protection'] ) && is_array( $incoming['protection'] ) ) {
-			$protection = $incoming['protection'];
+			$protection = self::with_current( $incoming['protection'], $settings['protection'] );
 
 			$settings['protection']['enabled']       = ! empty( $protection['enabled'] );
 			$settings['protection']['require_login'] = ! empty( $protection['require_login'] );
@@ -228,16 +228,18 @@ final class SettingsController {
 		}
 
 		if ( isset( $incoming['advanced'] ) && is_array( $incoming['advanced'] ) ) {
-			$settings['advanced']['load_frontend_css'] = ! empty( $incoming['advanced']['load_frontend_css'] );
-			$settings['advanced']['lazy_init']         = ! empty( $incoming['advanced']['lazy_init'] );
+			$advanced = self::with_current( $incoming['advanced'], $settings['advanced'] );
+
+			$settings['advanced']['load_frontend_css'] = ! empty( $advanced['load_frontend_css'] );
+			$settings['advanced']['lazy_init']         = ! empty( $advanced['lazy_init'] );
 			// Stripped of tags, not of CSS: this is a stylesheet, and an admin who
 			// can reach this screen can already edit theme files.
-			$settings['advanced']['custom_css']        = wp_strip_all_tags( (string) ( $incoming['advanced']['custom_css'] ?? '' ) );
+			$settings['advanced']['custom_css']        = wp_strip_all_tags( (string) ( $advanced['custom_css'] ?? '' ) );
 		}
 
 		if ( isset( $incoming['branding'] ) && is_array( $incoming['branding'] ) ) {
-			$branding = $incoming['branding'];
 			$current  = $settings['branding'];
+			$branding = self::with_current( $incoming['branding'], $current );
 
 			foreach ( array( 'accent', 'wave_color', 'text_color', 'meta_color', 'control_color' ) as $key ) {
 				$settings['branding'][ $key ] = Settings::sanitize_color(
@@ -254,6 +256,39 @@ final class SettingsController {
 		Settings::update( $settings );
 
 		return new WP_REST_Response( $this->payload(), 200 );
+	}
+
+	/**
+	 * A group as the request sent it, laid over the group as it is stored.
+	 *
+	 * Every switch below is read as `! empty( $group['flag'] )`, which makes
+	 * "not mentioned" and "off" the same thing. The settings screen sends
+	 * every group whole, so it never noticed — but the endpoint is public to
+	 * anything holding an administrator's cookie, and a request that named
+	 * one switch in a group turned off every other switch in that group. A
+	 * request that mentions a key changes that key; a key it does not mention
+	 * keeps the value it had.
+	 *
+	 * @param array<string, mixed> $incoming What the request carried.
+	 * @param array<string, mixed> $current  The group as stored, in the shape
+	 *                                       the request would send it.
+	 * @return array<string, mixed>
+	 */
+	private static function with_current( array $incoming, array $current ): array {
+		return array_merge( $current, $incoming );
+	}
+
+	/**
+	 * The waveform group in the shape the interface sends it — megabytes, not
+	 * bytes — so a partial request can be laid over it.
+	 *
+	 * @param array<string, mixed> $stored The group as stored.
+	 * @return array<string, mixed>
+	 */
+	private static function peaks_as_sent( array $stored ): array {
+		$stored['max_client_mb'] = (int) round( (int) ( $stored['max_client_bytes'] ?? 0 ) / MB_IN_BYTES );
+
+		return $stored;
 	}
 
 	/**
