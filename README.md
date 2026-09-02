@@ -1,89 +1,94 @@
-# Imagina Player — 1.36.0
+# Imagina Player — 1.37.0
 
-Download **imagina-player-1.36.0.zip** and install it in WordPress under
+Download **imagina-player-1.37.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  d0bf5e5faf60f3ea80866ca848325a9318b03d64415ea28bc0bfaf346632739a
+    SHA-256  ffae6abeb6b296bc99cf3de1ec957aff631a6d3eeeff16a7bec072a047652315
 
-## A video on YouTube that does not look like YouTube
+**Install this one.** It closes a real exposure for anyone whose protected files
+sit on nginx, and it fixes two things that were silently not working.
 
-`controls=0` was already on: it takes off the control bar and **nothing else**.
-The title, the channel avatar, the "Watch on YouTube" button and the grid of
-suggested videos at the end answer to no embed parameter, and every one of them
-is a way off the page the visitor is on.
+## How the audit was done
 
-The page cannot reach into the frame to style them away — that is the
-same-origin policy, and there is no way round it. So each is dealt with where
-it actually is. Three mechanisms, because no single one covers all three.
+Four independent reviews ran in parallel — PHP security, front-end security,
+code correctness, performance — and returned about fifty findings between them.
+**Every one was checked against the code before anything was changed**, and
+several were rejected as wrong or already handled. Every fix that survived was
+then confirmed by putting the fault back and watching a test fail.
 
-### 1. The frame never sees the mouse
+## What was found
 
-Most of what YouTube draws appears on hover. A frame that receives no pointer
-events is never hovered, so it never appears. Nothing is lost by it: every
-control on screen is this player's own, and they sit above the frame.
+### Security
 
-### 2. The frame is three times the height of the box, and centred
+* **High, on nginx and any server that ignores `.htaccess`.** The protected
+  vault's unguessable directory name — the one thing standing between "needs a
+  server config line" and "wide open" — was written into attachment metadata,
+  and WordPress publishes that metadata verbatim on `/wp-json/wp/v2/media` to
+  anyone. It is no longer written, and stripped on read for files protected by
+  earlier versions.
+* One anonymous request could make a track's waveform endpoint answer 500 for
+  good: `"1e999"` is numeric, becomes infinity, and infinity cannot be JSON
+  encoded. Clamped where every path writes through.
+* The ffmpeg path setting accepted anything and was run through the shell in a
+  way that left room for arguments. An administrator could run an arbitrary
+  command. Absolute path, path characters only, executable file.
+* The fetch-on-behalf doorway had no size limit while downloading and left its
+  temporary file behind on five of its six exits.
+* Leads were rate-limited per email only; a script rotating addresses filled
+  the table without bound. A second limit per network.
+* The waveform endpoint answered for any attachment id, confirming existence
+  and length of private and protected media. It applies core's own visibility
+  rule now.
+* Plus nine smaller ones: admin-only tools that required only upload rights,
+  forced regeneration with no throttle, an unsanitised storyboard address, a
+  sibling-directory path check, an editor link to whatever was pasted,
+  unsandboxed preview frames, unescaped inline JSON, undeclared parameters.
 
-This is the part that does the real work, and it is worth knowing why it costs
-nothing.
+### Correctness — two of these you would have hit
 
-YouTube pins its bars to the edges of **the player**, which fills the frame,
-while the picture is fitted inside and centred. So make the frame three times
-taller than the visible box: a picture fitted to the frame's width lands
-exactly on the middle third — the part you can see — with a whole box-height of
-empty player above and below it. The bars are up there, out of sight.
+* **The Video and Track-details panels never saved.** The screen posted five
+  groups of settings and had seven; edits to those two were quietly written
+  back over by the server's unchanged copy. Every "Saved." on those panels was
+  false. And "Hide YouTube's own interface" was never persisted either.
+* **"Generate missing waveforms" found nothing on any real site.** 1.35.0
+  searched posts for `imagina-player/` — the REST namespace — and the blocks are
+  registered under `imagina/`. Its test had been written with the same wrong
+  name, so it proved the code against its own assumption. Both now come from
+  the class that registers the blocks.
+* A hide-controls delay of zero, documented everywhere as "never", hid them on
+  the first frame. A video skin in a preset used by an audio block drew the
+  wave skin with no waveform under it. Measuring a file again with the same
+  result was reported as a server error. Uninstall left captured email
+  addresses behind and left every protected file inside a directory that denies
+  access, with nothing left to serve it.
 
-Measured, on a 640×360 box: the picture covers the box **to the pixel**, and
-the bars clear it by 312. No cropping into the picture, nothing lost.
+### Performance
 
-### 3. Playback stops a fraction before the end
+* The stylesheet was declared as a block style, which a classic theme loads on
+  **every page of the site**, player or not. That is 30 KB of render-blocking
+  CSS on pages with nothing on them.
+* Three version markers, each stored without autoload, each read on every
+  request: three database queries per page view, site-wide, forever.
+* A player with no stored waveform spawned `ffmpeg -version` on every page
+  view. A playlist of N uploads cost 2N queries. Players removed from the page
+  were never released.
 
-The end grid is drawn over the picture rather than at the frame's edges, so no
-crop can reach it, and `rel=0` has only limited it to the same channel since
-2018. So the video is paused a fifth of a second short of the end and the
-player raises "ended" itself. Everything listening for that — the end-of-video
-call to action, the playlist moving on, the poster coming back — cannot tell
-the difference.
+## Deliberately not changed
 
-On by default. Switchable per video in the block sidebar, and site-wide under
-Ajustes → Imagina Player → Vídeo.
+* The doorway still accepts a response with no `Content-Type`, because storage
+  buckets send none and those are the files it exists for. The residual
+  exposure is behind an author's login, on public-looking names and three
+  ports, and is never rendered as anything but audio bytes.
+* A visitor can still be the first to store a waveform for a track. It is
+  cosmetic, clamped, and an editor can redo it.
+* The self-check's loopback request keeps TLS verification off, for hosts with
+  self-signed loopback certificates.
 
-## One thing to know before you use it
+## What could not be verified here
 
-YouTube's terms for the embedded player ask that it is not obscured. Every
-commercial player plugin does this and the setting exists because people ask
-for it, but it is your call rather than one taken quietly for you — so the
-setting says so, right next to the switch.
+This machine has no WordPress install and no route to YouTube. The `.htaccess`
+behaviour, the REST metadata exposure and the classic-theme stylesheet loading
+were verified by reading core's behaviour, not by running it. Your own site's
+**Comprobación de protección** answers the nginx question for your server.
 
-## What was tested, and what was not
-
-**This machine has no route to youtube.com.** So none of this was measured
-against YouTube, and the test says so in its own header rather than leaving it
-implied.
-
-What it measures is the geometry the technique depends on, against a stand-in
-built to the same shape — bars at the player's edges, picture fitted inside and
-centred — in a real browser. The same page is measured twice, with the crop and
-without, so the "before" is a control rather than an assumption: without it,
-the bars really are over the picture.
-
-It also demands a hundred pixels of clearance rather than merely "outside the
-box", because almost any overscan satisfies the loose version — the first
-attempt at this test passed with a crop that had 24 pixels to spare.
-
-If YouTube moves its bars to sit against the picture instead of the frame, this
-test will still pass and the feature will still be wrong. That is the honest
-limit of it.
-
-## Two things found while testing
-
-* The overscan was written as numbers in **two** rules, one of them
-  `!important` — so only that one ever mattered and the other was decoration. A
-  negative test proved it by changing the decoration and passing. One custom
-  property now, with the centring offset derived from it.
-* The hostile-theme test asserted the frame was exactly 100% of the stage by
-  area, standing in for "a theme cannot shrink it". It now checks the frame
-  *covers* the stage — the thing that was meant, and still true when the frame
-  is deliberately larger.
-
-1357 checks green.
+1371 checks green.
