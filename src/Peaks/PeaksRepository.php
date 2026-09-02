@@ -56,7 +56,6 @@ final class PeaksRepository {
 	public const DB_VERSION_OPTION = 'imagina_player_peaks_db_version';
 
 	public function hooks(): void {
-		add_action( 'plugins_loaded', array( $this, 'maybe_install_table' ) );
 		add_action( 'imagina_player_generate_peaks', array( $this, 'handle_scheduled_generation' ) );
 	}
 
@@ -80,13 +79,24 @@ final class PeaksRepository {
 	 * Queue background generation for an attachment, at most once per hour.
 	 */
 	public static function schedule_generation( int $attachment_id ): void {
-		if ( $attachment_id <= 0 || ! PeaksGenerator::is_available() ) {
+		if ( $attachment_id <= 0 ) {
 			return;
 		}
 
+		/*
+		 * The cheap check first. Asking whether ffmpeg is available can mean
+		 * spawning `ffmpeg -version` to find out, and this ran on every view of
+		 * a page whose player had no waveform — one process per page view,
+		 * indefinitely, on a host with no ffmpeg — before the transient that
+		 * would have said "already asked this hour" was even looked at.
+		 */
 		$flag = 'imagina_peaks_queued_' . $attachment_id;
 
 		if ( get_transient( $flag ) ) {
+			return;
+		}
+
+		if ( ! PeaksGenerator::is_available() ) {
 			return;
 		}
 
@@ -242,7 +252,17 @@ final class PeaksRepository {
 		$attachment_id = self::attachment_id_from_key( $key );
 
 		if ( $attachment_id > 0 ) {
-			return (bool) update_post_meta( $attachment_id, self::META_KEY, $record );
+			/*
+			 * `update_post_meta()` answers false when the value is already what
+			 * was stored — the same answer it gives for a failed write. Measuring
+			 * a file a second time produces the same numbers, so "Measure this
+			 * waveform again" answered 500 for a store that had nothing to do.
+			 */
+			if ( false !== update_post_meta( $attachment_id, self::META_KEY, $record ) ) {
+				return true;
+			}
+
+			return get_post_meta( $attachment_id, self::META_KEY, true ) === $record;
 		}
 
 		if ( ! self::table_exists() ) {

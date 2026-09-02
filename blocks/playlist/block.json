@@ -2,7 +2,7 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "imagina/playlist",
-	"version": "1.36.0",
+	"version": "1.37.0",
 	"title": "Imagina Playlist",
 	"category": "media",
 	"icon": "playlist-audio",
@@ -23,6 +23,5 @@
 	},
 	"editorScript": "imagina-player-editor",
 	"editorStyle": "imagina-player-editor",
-	"style": "imagina-player",
 	"viewScript": "imagina-player"
 }

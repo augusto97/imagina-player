@@ -133,6 +133,12 @@ export interface RuntimeData {
 	maxComputeBytes: number;
 	/** Where the built files live, so lazily-loaded chunks can be found. */
 	assetUrl?: string;
+	/**
+	 * A REST nonce, present only for a logged-in visitor. Without it a request
+	 * from a logged-in browser is treated as anonymous, so a protected stream
+	 * bound to that user could never be refreshed after it expired.
+	 */
+	nonce?: string;
 	i18n: Record< string, string >;
 }
 

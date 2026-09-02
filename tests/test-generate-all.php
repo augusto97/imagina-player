@@ -103,23 +103,41 @@ $lesson  = 'https://media.publit.io/file/lesson-one.mp3';
 $second  = 'https://media.publit.io/file/lesson-two.mp3';
 $already = 'https://media.publit.io/file/lesson-three.mp3';
 
+/*
+ * Written with the block names the registrar really uses, taken from the
+ * registrar. The first version of these fixtures used the name the scan was
+ * looking for — which was wrong — so scan and fixture agreed with each other
+ * and with no real post anywhere. A fixture that repeats the code's assumption
+ * tests the assumption against itself.
+ */
 $GLOBALS['stub_posts'] = array(
+	100 => array(
+		// A post with no player in it at all, which the search must skip.
+		'post_content' => '<!-- wp:paragraph --><p>Nothing here.</p><!-- /wp:paragraph -->',
+	),
 	101 => array(
-		'post_content' => '<!-- wp:imagina-player/audio {"src":"' . $lesson . '","title":"Lesson one"} /-->',
+		'post_content' => '<!-- wp:imagina/audio-player {"src":"' . $lesson . '","title":"Lesson one"} /-->',
 	),
 	102 => array(
-		'post_content' => '<!-- wp:imagina-player/playlist {"tracks":[{"src":"' . $second . '","title":"Lesson two"}]} /-->'
-			. "\n" . '<!-- wp:imagina-player/audio {"src":"' . $already . '"} /-->',
+		'post_content' => '<!-- wp:imagina/playlist {"items":[{"src":"' . $second . '","title":"Lesson two"}]} /-->'
+			. "\n" . '<!-- wp:imagina/audio-player {"src":"' . $already . '"} /-->',
 	),
 	103 => array(
 		// An upload, which is found through the media library instead.
-		'post_content' => '<!-- wp:imagina-player/audio {"attachmentId":11,"src":"https://example.com/wp-content/uploads/a.mp3"} /-->',
+		'post_content' => '<!-- wp:imagina/audio-player {"attachmentId":11,"src":"https://example.com/wp-content/uploads/a.mp3"} /-->',
 	),
 );
 
 $repository->save( 'url_' . md5( $already ), array( 0.4, 0.6 ), 120.0 );
 
 $pending = pending_now( $controller );
+
+check(
+	'the fixtures use the names the blocks are really registered under',
+	str_contains( (string) $GLOBALS['stub_posts'][101]['post_content'], 'wp:' . ImaginaPlayer\Blocks\BlockRegistrar::BLOCK_NAME )
+		&& str_contains( (string) $GLOBALS['stub_posts'][102]['post_content'], 'wp:' . ImaginaPlayer\Blocks\BlockRegistrar::PLAYLIST_BLOCK ),
+	'otherwise this test proves the code against its own assumption'
+);
 
 check(
 	'a track played from an address is found, in the post that plays it',

@@ -23,7 +23,7 @@ final class LeadRepository {
 
 	private const DB_VERSION_OPTION = 'imagina_player_leads_db';
 
-	private const DB_VERSION = 1;
+	public const DB_VERSION = 1;
 
 	public static function table_name(): string {
 		global $wpdb;

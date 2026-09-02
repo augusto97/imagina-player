@@ -1269,62 +1269,6 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 			</Card>
 
 			<Card
-				title={ __( 'Subtitles', 'imagina-player' ) }
-				description={ __(
-					'How captions look over the picture. They are added per video, in the block.',
-					'imagina-player'
-				) }
-			>
-				<Field label={ __( 'Size', 'imagina-player' ) }>
-					<Select
-						value={ video.caption_size }
-						onChange={ ( value ) => set( { caption_size: value } ) }
-						options={ [
-							{
-								value: 'small',
-								label: __( 'Small', 'imagina-player' ),
-							},
-							{
-								value: 'medium',
-								label: __( 'Medium', 'imagina-player' ),
-							},
-							{
-								value: 'large',
-								label: __( 'Large', 'imagina-player' ),
-							},
-						] }
-					/>
-				</Field>
-
-				<Field
-					label={ __( 'Behind the text', 'imagina-player' ) }
-					help={ __(
-						'A solid band is the most readable over any footage. A shadow is lighter but fails over busy, bright shots.',
-						'imagina-player'
-					) }
-				>
-					<Select
-						value={ video.caption_bg }
-						onChange={ ( value ) => set( { caption_bg: value } ) }
-						options={ [
-							{
-								value: 'solid',
-								label: __( 'Solid band', 'imagina-player' ),
-							},
-							{
-								value: 'shadow',
-								label: __( 'Shadow only', 'imagina-player' ),
-							},
-							{
-								value: 'none',
-								label: __( 'Nothing', 'imagina-player' ),
-							},
-						] }
-					/>
-				</Field>
-			</Card>
-
-			<Card
 				title={ __( 'Keeping the file', 'imagina-player' ) }
 				description={ __(
 					'What stops a visitor walking off with the video itself.',

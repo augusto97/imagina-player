@@ -77,7 +77,21 @@ export function LeadsPanel() {
 			return;
 		}
 
-		await deleteLead( id );
+		try {
+			await deleteLead( id );
+		} catch {
+			// The row stays, which is the truth: nothing was deleted. Saying
+			// so is better than a request that fails into silence.
+			// eslint-disable-next-line no-alert
+			window.alert(
+				__(
+					'That address could not be deleted. Try again.',
+					'imagina-player'
+				)
+			);
+
+			return;
+		}
 
 		setRows( ( current ) => current.filter( ( row ) => row.id !== id ) );
 		setTotal( ( current ) => Math.max( 0, current - 1 ) );

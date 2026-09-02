@@ -36,9 +36,15 @@ function create( root: HTMLElement ): void {
 	 * asynchronously; everything else stays synchronous, so a page of audio
 	 * players pays nothing for this.
 	 */
-	const config = JSON.parse( root.dataset.imaginaPlayer || '{}' ) as {
-		video?: VideoConfig;
-	};
+	let config: { video?: VideoConfig } = {};
+
+	try {
+		config = JSON.parse( root.dataset.imaginaPlayer || '{}' );
+	} catch {
+		// One player with a mangled attribute — a filter, a minifier — is one
+		// player that does not start, not a batch of them.
+		return;
+	}
 
 	if ( config.video?.provider ) {
 		void start( root, config.video );
@@ -185,6 +191,30 @@ function boot(): void {
 					}
 
 					scan( node );
+				}
+
+				/*
+				 * And the ones that left. Only additions were watched, so a
+				 * player removed by the same infinite scroll or AJAX filter
+				 * that added it kept its canvases, its decoded peaks and its
+				 * listeners for the life of the page, and stayed in the set
+				 * every play walks.
+				 */
+				for ( const node of Array.from( mutation.removedNodes ) ) {
+					if ( ! ( node instanceof HTMLElement ) ) {
+						continue;
+					}
+
+					const gone = node.matches( SELECTOR )
+						? [ node ]
+						: Array.from(
+								node.querySelectorAll< HTMLElement >( SELECTOR )
+						  );
+
+					for ( const root of gone ) {
+						players.get( root )?.destroy();
+						players.delete( root );
+					}
 				}
 			}
 		} ).observe( document.body, { childList: true, subtree: true } );

@@ -19,6 +19,9 @@ final class Integration {
 
 	public function hooks(): void {
 		add_filter( 'wp_get_attachment_url', array( $this, 'filter_attachment_url' ), 10, 2 );
+		// Keep the vault's location out of what core publishes on its own
+		// media endpoint. See Vault::strip_metadata().
+		add_filter( 'wp_get_attachment_metadata', array( Vault::class, 'strip_metadata' ), 10, 2 );
 		add_filter( 'attachment_fields_to_edit', array( $this, 'add_field' ), 10, 2 );
 		add_filter( 'attachment_fields_to_save', array( $this, 'save_field' ), 10, 2 );
 	}

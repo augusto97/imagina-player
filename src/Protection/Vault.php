@@ -118,6 +118,20 @@ final class Vault {
 			return true;
 		}
 
+		/*
+		 * The setting called "enabled" gated nothing — files could be moved
+		 * into the vault with it off, and the label on the switch was a lie
+		 * either way. It now decides whether new files may be protected.
+		 * Files already in the vault keep being served: switching it off must
+		 * not turn every protected lesson into a 404.
+		 */
+		if ( ! ProtectedMedia::is_enabled() ) {
+			return new WP_Error(
+				'imagina_player_protection_off',
+				__( 'Protection is switched off in Settings → Imagina Player. Turn it on to protect files.', 'imagina-player' )
+			);
+		}
+
 		if ( ! self::is_eligible( $attachment_id ) ) {
 			return new WP_Error(
 				'imagina_player_not_eligible',
@@ -237,12 +251,51 @@ final class Vault {
 	private static function repoint( int $attachment_id, string $relative ): void {
 		update_post_meta( $attachment_id, '_wp_attached_file', $relative );
 
+		/*
+		 * Not into the metadata's `file` key, which used to be written here.
+		 *
+		 * Core copies attachment metadata verbatim into `media_details` on
+		 * its own REST endpoint, and an attachment that belongs to a published
+		 * post — or to no post — is readable there by anyone. So the vault's
+		 * unguessable directory name, the thing that stands between "needs a
+		 * server config line" and "wide open" on nginx, was being published
+		 * at /wp-json/wp/v2/media for every protected file.
+		 *
+		 * Audio and video metadata carry no `file` key from core, and
+		 * `get_attached_file()` reads `_wp_attached_file` alone, so nothing
+		 * needs it. If a previous version wrote one, it is removed, and
+		 * `strip_metadata()` covers the read side for anything still stored.
+		 */
 		$meta = wp_get_attachment_metadata( $attachment_id );
 
-		if ( is_array( $meta ) ) {
-			$meta['file'] = $relative;
+		if ( is_array( $meta ) && isset( $meta['file'] ) ) {
+			unset( $meta['file'] );
 			wp_update_attachment_metadata( $attachment_id, $meta );
 		}
+	}
+
+	/**
+	 * Keep the vault's location out of what core hands to the public.
+	 *
+	 * Hooked on `wp_get_attachment_metadata`, which is what the media REST
+	 * endpoint reads. Sites that protected files with an earlier version have
+	 * the directory name stored in the `file` key; this makes sure it is not
+	 * read back out until the next protect/unprotect rewrites the record.
+	 *
+	 * @param array<string, mixed>|false $data          Stored metadata.
+	 * @param int                        $attachment_id The attachment.
+	 * @return array<string, mixed>|false
+	 */
+	public static function strip_metadata( $data, $attachment_id ) {
+		if ( ! is_array( $data ) || ! isset( $data['file'] ) ) {
+			return $data;
+		}
+
+		if ( str_contains( (string) $data['file'], self::directory_name() ) ) {
+			unset( $data['file'] );
+		}
+
+		return $data;
 	}
 
 	/**

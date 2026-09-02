@@ -453,6 +453,36 @@ final class Settings {
 	/**
 	 * Accept hex colours and CSS custom properties; anything else falls back.
 	 */
+	/**
+	 * A path to a program, and nothing that is not one.
+	 *
+	 * This was `sanitize_text_field()`, which keeps spaces, and the value was
+	 * handed to `popen()` through `escapeshellcmd()` — which escapes the
+	 * shell's metacharacters and not spaces. So "php -r system(id)" was
+	 * accepted as a path and run as a command with arguments. On a single
+	 * site the person who can set this can usually install plugins anyway;
+	 * on a network, or a host that deliberately keeps administrators off the
+	 * shell, it was an escalation.
+	 *
+	 * Absolute, made of the characters a path is made of, and existing as a
+	 * file — or empty, which means "look in the usual places".
+	 *
+	 * @param string $path Whatever was typed.
+	 */
+	public static function sanitize_binary_path( string $path ): string {
+		$path = trim( $path );
+
+		if ( '' === $path ) {
+			return '';
+		}
+
+		if ( ! preg_match( '#^/[A-Za-z0-9_./-]+$#', $path ) || str_contains( $path, '..' ) ) {
+			return '';
+		}
+
+		return $path;
+	}
+
 	public static function sanitize_color( string $value, string $fallback ): string {
 		$value = trim( $value );
 

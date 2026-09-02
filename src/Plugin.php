@@ -78,7 +78,14 @@ final class Plugin {
 			}
 		}
 
-		add_action( 'plugins_loaded', array( $this, 'maybe_upgrade' ), 5 );
+		/*
+		 * On init rather than plugins_loaded, because seeding the settings
+		 * translates the default preset's label, and WordPress 6.7 warns about
+		 * translating before init. Priority 1, so the tables exist before
+		 * anything registered at the default priority — REST routes included —
+		 * could want them.
+		 */
+		add_action( 'init', array( $this, 'maybe_upgrade' ), 1 );
 		add_action( 'init', array( $this, 'load_translations' ) );
 
 		/**
@@ -126,7 +133,18 @@ final class Plugin {
 	 * the sites that will run it.
 	 */
 	public function maybe_upgrade(): void {
-		if ( get_option( 'imagina_player_version' ) === VERSION ) {
+		/*
+		 * One autoloaded option, read from the options already in memory.
+		 *
+		 * There were three markers — plugin version, peaks table version,
+		 * leads table version — each written with autoload off and each read
+		 * by its own plugins_loaded hook. A non-autoloaded option that exists
+		 * is in neither `alloptions` nor `notoptions`, so without a persistent
+		 * object cache that was three SELECTs on every request the site served,
+		 * front and back, to answer a question whose answer never changes
+		 * between updates.
+		 */
+		if ( self::current_marker() === (string) get_option( self::MARKER_OPTION, '' ) ) {
 			return;
 		}
 
@@ -155,6 +173,18 @@ final class Plugin {
 		LeadRepository::install_table();
 
 		update_option( 'imagina_player_version', VERSION, false );
+		update_option( self::MARKER_OPTION, self::current_marker(), true );
+	}
+
+	/** Where the "everything is up to date" marker lives. Autoloaded. */
+	public const MARKER_OPTION = 'imagina_player_schema';
+
+	/**
+	 * Plugin and both schema versions in one string, so a change to any of
+	 * them runs the upgrade once and the comparison is one autoloaded read.
+	 */
+	private static function current_marker(): string {
+		return VERSION . '|' . PeaksRepository::DB_VERSION . '|' . LeadRepository::DB_VERSION;
 	}
 
 	public static function on_activation(): void {

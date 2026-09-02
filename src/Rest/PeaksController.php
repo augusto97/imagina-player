@@ -9,6 +9,7 @@ declare( strict_types = 1 );
 
 namespace ImaginaPlayer\Rest;
 
+use ImaginaPlayer\Blocks\BlockRegistrar;
 use ImaginaPlayer\Peaks\PeaksGenerator;
 use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Peaks\PeaksToken;
@@ -72,10 +73,16 @@ final class PeaksController {
 							'type'     => 'array',
 							'required' => true,
 							'items'    => array( 'type' => 'number' ),
+							// Core validates the schema before any callback
+							// runs, so an oversized array is refused before it
+							// costs anything.
+							'maxItems' => self::MAX_SUBMITTED_BARS,
 						),
 						'duration' => array(
 							'type'    => 'number',
 							'default' => 0,
+							'minimum' => 0,
+							'maximum' => DAY_IN_SECONDS,
 						),
 					),
 				),
@@ -88,7 +95,9 @@ final class PeaksController {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'list_pending' ),
-				'permission_callback' => static fn(): bool => current_user_can( 'upload_files' ),
+				'permission_callback' => static fn(): bool => current_user_can( 'manage_options' ),
+				// Settings-screen tools: they list every file on the site and
+				// describe the server, which is more than an author needs.
 				'args'                => array(
 					'limit' => array(
 						'type'    => 'integer',
@@ -135,10 +144,13 @@ final class PeaksController {
 						'type'     => 'array',
 						'required' => true,
 						'items'    => array( 'type' => 'number' ),
+						'maxItems' => self::MAX_SUBMITTED_BARS,
 					),
 					'duration'     => array(
 						'type'    => 'number',
 						'default' => 0,
+						'minimum' => 0,
+						'maximum' => DAY_IN_SECONDS,
 					),
 				),
 			)
@@ -200,7 +212,9 @@ final class PeaksController {
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'diagnose' ),
-				'permission_callback' => static fn(): bool => current_user_can( 'upload_files' ),
+				'permission_callback' => static fn(): bool => current_user_can( 'manage_options' ),
+				// Settings-screen tools: they list every file on the site and
+				// describe the server, which is more than an author needs.
 				'args'                => array(
 					'src' => array(
 						'type'     => 'string',
@@ -264,6 +278,18 @@ final class PeaksController {
 			return new WP_REST_Response( array( 'peaks' => null ), 400 );
 		}
 
+		/*
+		 * The same visibility core gives an attachment: readable when it hangs
+		 * off nothing or off a post the visitor may read. Without this the
+		 * route answered for any id — confirming that an attachment exists,
+		 * and how long it is, for private, draft and protected media alike.
+		 */
+		$attachment_id = PeaksRepository::attachment_id_from_key( $key );
+
+		if ( $attachment_id > 0 && ! $this->attachment_is_visible( $attachment_id ) ) {
+			return new WP_REST_Response( array( 'peaks' => null ), 404 );
+		}
+
 		$record = $this->repository->get( $key );
 
 		$response = new WP_REST_Response(
@@ -278,9 +304,39 @@ final class PeaksController {
 
 		if ( $record ) {
 			$response->header( 'Cache-Control', 'public, max-age=86400' );
+		} else {
+			/*
+			 * A miss must not be remembered. With no header at all a cache is
+			 * allowed to keep a 404 heuristically, and a CDN that did would go
+			 * on answering "no waveform" after one had been stored — sending
+			 * every visitor back to the slow path for as long as it held it.
+			 */
+			$response->header( 'Cache-Control', 'no-store' );
 		}
 
 		return $response;
+	}
+
+	/**
+	 * Whether the current visitor may know this attachment exists.
+	 *
+	 * Mirrors the rule core's own media endpoint applies: an attachment is
+	 * public when it belongs to no post, or to a post the visitor can read.
+	 *
+	 * @param int $attachment_id The attachment.
+	 */
+	private function attachment_is_visible( int $attachment_id ): bool {
+		if ( 'attachment' !== get_post_type( $attachment_id ) ) {
+			return false;
+		}
+
+		$parent = (int) get_post_field( 'post_parent', $attachment_id );
+
+		if ( $parent <= 0 ) {
+			return true;
+		}
+
+		return 'publish' === get_post_status( $parent ) || current_user_can( 'read_post', $parent );
 	}
 
 	/**
@@ -608,12 +664,40 @@ final class PeaksController {
 			$this->refuse( 500, 'no-temp-file' );
 		}
 
+		/*
+		 * Removed on the way out, whichever way out it is.
+		 *
+		 * There are half a dozen exits below — refusals that call exit(), and
+		 * the browser closing the connection part-way through the stream, which
+		 * ends the script wherever it happens to be — and the unlink at the end
+		 * of the happy path covered exactly one of them. Each of the others
+		 * left up to 250 MB in the temp directory, and an author who asked for
+		 * a large non-media file with a Range header could do that on purpose.
+		 */
+		register_shutdown_function(
+			static function () use ( $temp ): void {
+				if ( is_file( $temp ) ) {
+					// phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- our own temp file.
+					@unlink( $temp ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- best effort.
+				}
+			}
+		);
+
 		$get_args = array(
 			'timeout'     => 120,
 			'redirection' => 3,
 			'stream'      => true,
 			'filename'    => $temp,
 			'headers'     => $this->fetch_headers(),
+			/*
+			 * Enforced while downloading, not checked afterwards. The size was
+			 * compared against Content-Length before the fetch and against
+			 * the file after it — and a response with no Content-Length (a
+			 * live stream, a chunked answer, a host that ignores Range) has
+			 * neither, so it was written to disk for as long as the timeout
+			 * allowed.
+			 */
+			'limit_response_size' => self::PROXY_MAX_BYTES,
 		);
 
 		if ( null !== $range ) {
@@ -798,6 +882,14 @@ final class PeaksController {
 	private function looks_like_media( string $type ): bool {
 		$type = trim( explode( ';', $type )[0] );
 
+		/*
+		 * A missing type is accepted, and that is a trade-off worth naming.
+		 * Plenty of storage buckets send no Content-Type at all, and refusing
+		 * them would refuse the files this doorway exists for. The cost is that
+		 * an internal service which also says nothing would pass this check —
+		 * behind an author's login, on a public-looking name, on ports 80, 443
+		 * or 8080 only, and never rendered as anything but audio bytes.
+		 */
 		return str_starts_with( $type, 'audio/' )
 			|| str_starts_with( $type, 'video/' )
 			|| 'application/octet-stream' === $type
@@ -1127,7 +1219,16 @@ final class PeaksController {
 				'posts_per_page' => 200,
 				'orderby'        => 'ID',
 				'order'          => 'DESC',
-				's'              => 'imagina-player/',
+				/*
+				 * The block namespace, from the class that registers the
+				 * blocks. This was a string typed here — the wrong one, the
+				 * REST namespace rather than the block one — so the search
+				 * matched nothing on any real site, and the test that covered
+				 * it had been written with the same wrong string in its
+				 * fixtures. Two copies that had to agree, agreeing with each
+				 * other and with nothing else.
+				 */
+				's'              => BlockRegistrar::NAMESPACE_PREFIX,
 				'fields'         => 'ids',
 				'no_found_rows'  => true,
 			)
@@ -1179,11 +1280,11 @@ final class PeaksController {
 		foreach ( $blocks as $block ) {
 			$name = (string) ( $block['blockName'] ?? '' );
 
-			if ( str_starts_with( $name, 'imagina-player/' ) ) {
+			if ( str_starts_with( $name, BlockRegistrar::NAMESPACE_PREFIX ) ) {
 				$atts = (array) ( $block['attrs'] ?? array() );
 
 				// A single track, when it is not an upload.
-				if ( empty( $atts['attachmentId'] ) ) {
+				if ( BlockRegistrar::PLAYLIST_BLOCK !== $name && empty( $atts['attachmentId'] ) ) {
 					$src = Attributes::sanitize_media_url( (string) ( $atts['src'] ?? '' ) );
 
 					if ( '' !== $src ) {
@@ -1191,8 +1292,9 @@ final class PeaksController {
 					}
 				}
 
-				// And a playlist, which holds several.
-				foreach ( (array) ( $atts['tracks'] ?? array() ) as $track ) {
+				// And a playlist, which holds several — under the attribute the
+				// playlist block actually uses, read from its registration.
+				foreach ( (array) ( $atts[ BlockRegistrar::PLAYLIST_ITEMS ] ?? array() ) as $track ) {
 					if ( ! is_array( $track ) || ! empty( $track['id'] ) ) {
 						continue;
 					}
@@ -1306,11 +1408,31 @@ final class PeaksController {
 			);
 		}
 
+		/*
+		 * One run per file per minute, forced or not. `force` bypasses the
+		 * stored result, which is what it is for, but it also bypassed every
+		 * other guard — and each run is ffmpeg over a whole file for up to two
+		 * minutes, on demand, for anyone who may edit that attachment.
+		 */
+		$busy = 'imagina_peaks_running_' . $attachment_id;
+
+		if ( get_transient( $busy ) ) {
+			return new WP_Error(
+				'imagina_player_generating',
+				__( 'This file is already being measured. Try again in a minute.', 'imagina-player' ),
+				array( 'status' => 429 )
+			);
+		}
+
+		set_transient( $busy, 1, MINUTE_IN_SECONDS );
+
 		$peaks = PeaksGenerator::generate_for_attachment(
 			$attachment_id,
 			$this->repository,
 			(bool) $request->get_param( 'force' )
 		);
+
+		delete_transient( $busy );
 
 		if ( null === $peaks ) {
 			$record = $this->repository->get( 'att_' . $attachment_id );

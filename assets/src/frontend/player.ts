@@ -92,6 +92,9 @@ export class Player {
 
 	private readonly standIn: ProviderStandIn | null;
 
+	/** The window resize fallback, when there is no ResizeObserver. */
+	private onWindowResize: ( () => void ) | null = null;
+
 	/** Set once the video chunk has loaded; absent for audio, always. */
 	private video: { destroy: () => void } | null = null;
 
@@ -423,10 +426,13 @@ export class Player {
 
 			this.resizeObserver.observe( canvas );
 		} else {
-			window.addEventListener( 'resize', () => {
+			// Kept, so destroy() can take it off again.
+			this.onWindowResize = () => {
 				this.waveform?.resize();
 				this.render();
-			} );
+			};
+
+			window.addEventListener( 'resize', this.onWindowResize );
 		}
 	}
 
@@ -924,7 +930,14 @@ export class Player {
 				`${ this.runtime.restUrl }/stream-url?id=${ encodeURIComponent(
 					String( this.config.protectedId )
 				) }`,
-				{ credentials: 'same-origin' }
+				{
+					credentials: 'same-origin',
+					// As the visitor, when there is one: without the nonce a
+					// logged-in request is treated as anonymous.
+					headers: this.runtime.nonce
+						? { 'X-WP-Nonce': this.runtime.nonce }
+						: undefined,
+				}
 			);
 
 			if ( ! response.ok ) {
@@ -1062,6 +1075,14 @@ export class Player {
 		this.resizeObserver?.disconnect();
 		this.stickyObserver?.disconnect();
 		this.video?.destroy();
+		// A provider stand-in holds an iframe and a polling timer; neither
+		// went away with the player before this.
+		this.standIn?.destroy();
+
+		if ( this.onWindowResize ) {
+			window.removeEventListener( 'resize', this.onWindowResize );
+		}
+
 		instances.delete( this );
 	}
 }

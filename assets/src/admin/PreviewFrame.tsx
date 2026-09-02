@@ -108,6 +108,10 @@ export function PreviewFrame( {
 				className="imgpa-preview__frame"
 				style={ { height: `${ height }px` } }
 				srcDoc={ doc }
+				// Scripts, and nothing else: an opaque origin, so the preview
+				// cannot reach admin cookies or the parent document if the
+				// renderer ever lets something through unescaped.
+				sandbox="allow-scripts"
 				onLoad={ measure }
 			/>
 		</div>

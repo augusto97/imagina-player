@@ -98,7 +98,16 @@ export function parse( text: string, base: string ): Tile[] {
 		let url: string;
 
 		try {
-			url = new URL( name.trim(), base ).href;
+			const parsed = new URL( name.trim(), base );
+
+			// A tile is a picture on a web server — or on whatever the page
+			// itself came from — and not a data: URL or a scheme the browser
+			// would do something else with.
+			if ( ! webOrOwn( parsed.protocol ) ) {
+				continue;
+			}
+
+			url = parsed.href;
 		} catch {
 			continue;
 		}
@@ -118,11 +127,42 @@ export function parse( text: string, base: string ): Tile[] {
 }
 
 /**
+ * A scheme a storyboard or a tile may come from.
+ *
+ * The web, or whatever the page itself is on — which is what a relative
+ * address resolves to, and is `file:` for a page opened from disk. What is kept
+ * out is a scheme the page is not on: data:, javascript:, and their relatives.
+ * One rule for the storyboard and for its tiles, so they cannot disagree.
+ *
+ * @param protocol As `URL.protocol` reports it, colon included.
+ */
+function webOrOwn( protocol: string ): boolean {
+	return (
+		'http:' === protocol ||
+		'https:' === protocol ||
+		// Guarded, because the parser is also run outside a browser.
+		( 'undefined' !== typeof window && protocol === window.location.protocol )
+	);
+}
+
+/**
  * Fetch and parse a storyboard, once.
  *
  * @param src The address of the WebVTT file.
  */
 export async function load( src: string ): Promise< Storyboard | null > {
+	// The server refuses anything but http(s) already; this is the same rule
+	// stated where the fetch happens, so the two cannot drift apart silently.
+	// Resolved against the page first, because a relative address is a
+	// perfectly good same-origin one and not a scheme.
+	try {
+		if ( ! webOrOwn( new URL( src, window.location.href ).protocol ) ) {
+			return null;
+		}
+	} catch {
+		return null;
+	}
+
 	const response = await window.fetch( src, { credentials: 'same-origin' } );
 
 	if ( ! response.ok ) {

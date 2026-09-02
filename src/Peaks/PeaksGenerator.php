@@ -159,9 +159,12 @@ final class PeaksGenerator {
 			return null;
 		}
 
+		// The binary is quoted as one argument, like the file. It was passed
+		// through escapeshellcmd(), which leaves spaces alone and so leaves
+		// room for arguments.
 		$command = sprintf(
 			'%s -v quiet -nostdin -i %s -ac 1 -ar %d -f s16le -acodec pcm_s16le - 2>/dev/null',
-			escapeshellcmd( $binary ),
+			escapeshellarg( $binary ),
 			escapeshellarg( $file ),
 			self::SAMPLE_RATE
 		);
@@ -291,14 +294,15 @@ final class PeaksGenerator {
 	}
 
 	private static function probe( string $binary ): bool {
-		// A configured path must actually exist. A bare command name is left to
-		// PATH resolution, which popen() handles.
-		if ( str_contains( $binary, '/' ) && ! is_file( $binary ) ) {
+		// A configured path must be a file this process may run. A bare
+		// command name — one of this class's own candidates, never a typed
+		// value — is left to PATH resolution, which popen() handles.
+		if ( str_contains( $binary, '/' ) && ( ! is_file( $binary ) || ! is_executable( $binary ) ) ) {
 			return false;
 		}
 
 		// phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.PHP.DiscouragedPHPFunctions -- guarded by can_run_processes().
-		$handle = @popen( escapeshellcmd( $binary ) . ' -version 2>/dev/null', 'r' );
+		$handle = @popen( escapeshellarg( $binary ) . ' -version 2>/dev/null', 'r' );
 
 		if ( ! is_resource( $handle ) ) {
 			return false;

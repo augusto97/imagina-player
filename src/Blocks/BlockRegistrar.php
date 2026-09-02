@@ -32,6 +32,16 @@ final class BlockRegistrar {
 
 	public const PLAYLIST_BLOCK = 'imagina/playlist';
 
+	/**
+	 * What every block name above begins with, for code that looks for any of
+	 * them in post content. Named here so it cannot be typed differently
+	 * somewhere else — which it was.
+	 */
+	public const NAMESPACE_PREFIX = 'imagina/';
+
+	/** The attribute a playlist keeps its tracks in. */
+	public const PLAYLIST_ITEMS = 'items';
+
 	public function hooks(): void {
 		add_action( 'init', array( $this, 'register' ), 20 );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_editor_data' ) );

@@ -36,8 +36,13 @@ export function decodePeaks( encoded: string ): Float32Array {
 }
 
 /**
- * Resample to an arbitrary bar count, keeping each bucket's peak so quiet
- * passages next to loud ones stay visible.
+ * Resample to an arbitrary bar count.
+ *
+ * By loudness across the bucket, the same measure the server and the editor
+ * use. This kept each bucket's loudest value, which on a long recording
+ * saturates — every few seconds of speech holds a syllable at full volume —
+ * and quietly re-introduced, for any player narrower than the stored
+ * resolution, the flat comb that changing the measure had removed.
  * @param peaks
  * @param bars
  */
@@ -59,17 +64,13 @@ export function resample( peaks: Float32Array, bars: number ): Float32Array {
 			peaks.length,
 			Math.max( start + 1, Math.ceil( ( i + 1 ) * bucket ) )
 		);
-		let max = 0;
+		let energy = 0;
 
 		for ( let j = start; j < end; j++ ) {
-			const value = peaks[ j ];
-
-			if ( value > max ) {
-				max = value;
-			}
+			energy += peaks[ j ] * peaks[ j ];
 		}
 
-		out[ i ] = max;
+		out[ i ] = Math.sqrt( energy / Math.max( 1, end - start ) );
 	}
 
 	return out;
@@ -185,17 +186,19 @@ export async function computePeaks(
 	);
 
 	try {
-		const size = await probeSize( url, controller.signal );
-
 		/*
 		 * A size of zero is the caller saying "do not download anything here",
 		 * which the block preview does: it has the server's stored peaks or it
 		 * has none, and either way an editor should not be made to download the
-		 * file to look at a block.
+		 * file to look at a block. Asked before the HEAD, which used to go out
+		 * first — one request per player, per preview, for an answer that was
+		 * already known.
 		 */
 		if ( 0 === options.maxBytes ) {
 			return 'not-attempted';
 		}
+
+		const size = await probeSize( url, controller.signal );
 
 		// Nothing came back about the file at all: neither a HEAD nor a range
 		// request could reach it.

@@ -88,13 +88,19 @@ export function App() {
 		setError( '' );
 
 		try {
-			const saved = await saveSettings( {
-				presets: settings.presets,
-				peaks: settings.peaks,
-				protection: settings.protection,
-				advanced: settings.advanced,
-				branding: settings.branding,
-			} );
+			/*
+			 * Everything, not a list of groups.
+			 *
+			 * The list had five entries and the screen had seven groups. The
+			 * Video and Track-details panels changed state, enabled the
+			 * button, posted, were told "Saved.", and then had the server's
+			 * unchanged copy written back over them — every edit on those two
+			 * panels silently reverted, for as long as they have existed. The
+			 * server ignores keys it does not know, so there is no reason to
+			 * enumerate, and a list is a thing that goes stale the next time a
+			 * panel is added.
+			 */
+			const saved = await saveSettings( settings );
 
 			setSettings( saved );
 			setDirty( false );

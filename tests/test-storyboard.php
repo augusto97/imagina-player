@@ -78,7 +78,16 @@ if ( '' === $node ) {
 			. "00:20.000 --> 00:30.000\nsprite-0.jpg#xywh=320,0,160,90\n\n"
 			. "00:00:30.000 --> 00:00:40.000\nsprite-0.jpg\n\n"
 			. "00:00:40.000 --> 00:00:50.000\nsprite-1.jpg#xywh=0,0,0,0\n\n"
-			. "00:00:50.000 --> 00:01:00.000\n/wp-content/boards/sprite-1.jpg#xywh=0,90,160,90\n";
+			. "00:00:50.000 --> 00:01:00.000\n/wp-content/boards/sprite-1.jpg#xywh=0,90,160,90\n\n"
+			/*
+			 * Two tiles a storyboard has no business pointing at. The address
+			 * ends up in a CSS url() in every visitor's browser, and a
+			 * storyboard is set by whoever edits the post — so a data: tile is
+			 * a way to load an arbitrary picture, and javascript: is kept out
+			 * on principle even though CSS would not run it.
+			 */
+			. "00:01:00.000 --> 00:01:10.000\ndata:image/png;base64,iVBORw0KGgo=#xywh=0,0,160,90\n\n"
+			. "00:01:10.000 --> 00:01:20.000\njavascript:alert(1)#xywh=0,0,160,90\n";
 
 		$script = $root . '/build/.board-check.mjs';
 
@@ -100,8 +109,19 @@ if ( '' === $node ) {
 		} else {
 			$tiles = (array) $parsed['tiles'];
 
-			check( 'four usable cues out of six', 4 === (int) $parsed['count'], (string) $parsed['count'] );
+			check( 'four usable cues out of eight', 4 === (int) $parsed['count'], (string) $parsed['count'] );
 			check( 'a header and a NOTE block are not cues', 4 === (int) $parsed['count'] );
+
+			$schemes = array_map(
+				static fn( array $tile ): string => (string) parse_url( (string) ( $tile['url'] ?? '' ), PHP_URL_SCHEME ),
+				$tiles
+			);
+
+			check(
+				'a tile on a scheme the page is not on is dropped, not loaded',
+				! in_array( 'data', $schemes, true ) && ! in_array( 'javascript', $schemes, true ),
+				implode( ', ', $schemes )
+			);
 
 			check( 'the first tile starts at zero', 0.0 === (float) ( $tiles[0]['start'] ?? -1 ) );
 			check( 'and names its place in the sprite', 0 === (int) ( $tiles[0]['x'] ?? -1 ) && 160 === (int) ( $tiles[0]['w'] ?? 0 ) );

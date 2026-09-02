@@ -370,6 +370,9 @@ final class Attributes {
 		$out['className']   = trim( preg_replace( '/[^A-Za-z0-9 _-]/', '', (string) $out['className'] ) ?? '' );
 		$out['startTime']   = max( 0.0, (float) $out['startTime'] );
 		$out['poster']      = self::sanitize_media_url( (string) $out['poster'] );
+		// The one address that was not on this list. It reaches fetch() and a
+		// CSS url() in every visitor's browser, so it gets the same treatment.
+		$out['storyboard']  = self::sanitize_media_url( (string) $out['storyboard'] );
 		// An empty ratio means "whatever the site says", not "16:9 regardless":
 		// a site that works in vertical video should not have to set it on
 		// every block.

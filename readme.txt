@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.36.0
+Stable tag: 1.37.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,7 +15,7 @@ A fast, accessible waveform audio player for WordPress, built for the block edit
 Imagina Player renders an audio player with a real waveform, a Gutenberg block, and
 reusable presets so a whole site can be restyled from one screen.
 
-It is deliberately small. The front-end bundle is about 5 KB gzipped with no
+It is deliberately small. The front-end bundle is under 8 KB gzipped with no
 runtime dependencies — no jQuery, no player framework — and a page only loads it
 when it actually contains a player.
 
@@ -82,6 +82,81 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.37.0 =
+An audit of the whole plugin — security, correctness, performance — with every
+finding verified against the code before it was acted on, and every fix checked
+by putting the fault back.
+
+Security:
+* Fixed (high, on nginx and any server that ignores .htaccess): the protected
+  vault's unguessable directory name was written into attachment metadata,
+  which core publishes verbatim on its own media endpoint to anyone. It is no
+  longer written, and is stripped on read for files protected by earlier
+  versions.
+* Fixed: a duration of "1e999" is numeric, becomes INF, and INF cannot be JSON
+  encoded — so one anonymous request could make a track's waveform endpoint
+  answer 500 for good. Clamped where every path writes through. The same shape
+  in a captured lead's position.
+* Fixed: the ffmpeg path setting accepted anything, was quoted for the shell in
+  a way that leaves spaces alone, and was run — so an administrator could run
+  an arbitrary command. Absolute path, path characters only, executable file.
+* Fixed: the fetch-on-behalf doorway had no size limit while downloading and
+  left its temporary file behind on five of its six exits. Bounded, and removed
+  on every exit.
+* Fixed: the lead endpoint was limited per email address only; a script rotating
+  addresses filled the table without bound. A second limit per network.
+* Fixed: the waveform read endpoint answered for any attachment id, confirming
+  existence and length of private and protected media. It applies the same
+  visibility rule as core's media endpoint now.
+* Fixed: the settings-screen tools that list every file on the site and
+  describe the server required only the ability to upload; they require
+  administration now.
+* Fixed: the storyboard address was the one address never sanitised; a
+  subtitle path check accepted a sibling directory; the editor offered a link
+  to whatever was pasted, javascript: included; the preview frames ran with the
+  admin's origin; the inline runtime JSON did not escape HTML characters;
+  forced regeneration ran ffmpeg on demand with no limit; the leads and preview
+  routes read parameters they never declared.
+
+Correctness:
+* Fixed: the Video and Track-details panels never saved. The screen posted five
+  groups of settings and had seven; edits to those two were silently reverted
+  by the server's own copy. Everything is sent now.
+* Fixed: "Hide YouTube's own interface" was never persisted either.
+* Fixed: "Generate missing waveforms" searched posts for the wrong block name
+  and the wrong playlist attribute, so it found nothing on any real site. The
+  test fixtures had been written with the same wrong names. Both now come from
+  the class that registers the blocks.
+* Fixed: a hide-controls delay of zero, documented as "never", hid them on the
+  first frame.
+* Fixed: a preset with a video skin used by an audio block drew the wave skin
+  with no waveform under it.
+* Fixed: measuring a file again with the same result was reported as a server
+  error, because "unchanged" and "failed" share a return value in core.
+* Fixed: the visitor's browser resampled waveforms by the loudest value,
+  undoing on narrow players the loudness measure introduced in 1.30.0.
+* Fixed: uninstall left captured email addresses behind, and left every
+  protected file inside a directory that denies access with nothing to serve
+  it. Files are moved back first; everything is removed.
+* Fixed: the "enabled" switch for protection gated nothing.
+* Fixed: two subtitle cards bound to the same settings, one unable to show a
+  size the other allowed.
+
+Performance:
+* Fixed: the stylesheet was declared as a block style, which classic themes
+  load on every page of the site whether or not a player is on it.
+* Fixed: three version markers, each written without autoload and each read on
+  every request — three queries per page view, site-wide. One autoloaded
+  marker, read from memory.
+* Fixed: a player with no stored waveform probed for ffmpeg — a process spawn —
+  on every page view, before checking the transient that said it had already
+  asked this hour.
+* Fixed: a playlist of N uploads cost 2N queries; primed in one.
+* Fixed: players removed from the page were never released.
+* Fixed: a "no waveform" answer carried no cache header, so a CDN could keep it
+  after one was stored. The block preview sent a HEAD for files it had already
+  decided not to download.
 
 = 1.36.0 =
 * Added: hide YouTube's own interface, so a video hosted there looks like every

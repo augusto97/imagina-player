@@ -103,6 +103,8 @@ final class SettingsController {
 					'video'      => array(
 						'type' => 'object',
 					),
+					'title'      => array( 'type' => 'string', 'maxLength' => 200 ),
+					'artist'     => array( 'type' => 'string', 'maxLength' => 200 ),
 				),
 			)
 		);
@@ -148,7 +150,7 @@ final class SettingsController {
 			$settings['peaks']['resolution']        = max( 32, min( 2000, (int) ( $peaks['resolution'] ?? 400 ) ) );
 			$settings['peaks']['server_generation'] = ! empty( $peaks['server_generation'] );
 			$settings['peaks']['client_fallback']   = ! empty( $peaks['client_fallback'] );
-			$settings['peaks']['ffmpeg_path']       = sanitize_text_field( (string) ( $peaks['ffmpeg_path'] ?? '' ) );
+			$settings['peaks']['ffmpeg_path']       = Settings::sanitize_binary_path( (string) ( $peaks['ffmpeg_path'] ?? '' ) );
 			$settings['peaks']['max_client_bytes']  = max( 1, min( 200, (int) ( $peaks['max_client_mb'] ?? 25 ) ) ) * MB_IN_BYTES;
 		}
 
@@ -186,7 +188,7 @@ final class SettingsController {
 				: 'solid';
 			$settings['video']['provider_privacy'] = ! empty( $video['provider_privacy'] );
 
-			foreach ( array( 'show_captions', 'show_chapters', 'show_search', 'show_skip', 'show_time', 'show_volume', 'show_title', 'focus_mode', 'captions_on' ) as $flag ) {
+			foreach ( array( 'show_captions', 'show_chapters', 'show_search', 'show_skip', 'show_time', 'show_volume', 'show_title', 'focus_mode', 'captions_on', 'provider_bare' ) as $flag ) {
 				$settings['video'][ $flag ] = ! empty( $video[ $flag ] );
 			}
 

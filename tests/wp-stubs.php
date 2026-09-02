@@ -140,7 +140,17 @@ function wp_get_attachment_image_url( $id, $size = '' ) { return $GLOBALS['stub_
 function get_post_mime_type( $id ) { return $GLOBALS['stub_posts'][ $id ]['mime'] ?? ''; }
 function get_the_title( $id ) { return ''; }
 function get_post_meta( $id, $key, $single = false ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['get_post_meta']++; } return $GLOBALS['stub_meta'][ $id ][ $key ] ?? ''; }
-function update_post_meta( $id, $key, $value ) { $GLOBALS['stub_meta'][ $id ][ $key ] = $value; return true; }
+function update_post_meta( $id, $key, $value ) {
+	// False for an unchanged value, as core does — a stub that always said
+	// true hid a 500 on the second measurement of the same file.
+	if ( isset( $GLOBALS['stub_meta'][ $id ][ $key ] ) && $GLOBALS['stub_meta'][ $id ][ $key ] === $value ) {
+		return false;
+	}
+
+	$GLOBALS['stub_meta'][ $id ][ $key ] = $value;
+
+	return true;
+}
 function delete_post_meta( $id, $key ) { unset( $GLOBALS['stub_meta'][ $id ][ $key ] ); return true; }
 function get_post_type( $id ) { return $GLOBALS['stub_posts'][ $id ]['type'] ?? ''; }
 function get_attached_file( $id ) { return $GLOBALS['stub_posts'][ $id ]['file'] ?? false; }
@@ -326,7 +336,15 @@ function get_posts( $args = array() ) {
 	 * stub with no posts in it cannot exercise the code that goes looking.
 	 */
 	if ( '' === $key ) {
-		$found = array_keys( (array) ( $GLOBALS['stub_posts'] ?? array() ) );
+		$needle = (string) ( $args['s'] ?? '' );
+
+		foreach ( (array) ( $GLOBALS['stub_posts'] ?? array() ) as $id => $post ) {
+			// The search term is honoured, because a stub that returned every
+			// post let a search for the wrong word pass.
+			if ( '' === $needle || str_contains( (string) ( $post['post_content'] ?? '' ), $needle ) ) {
+				$found[] = (int) $id;
+			}
+		}
 	}
 
 	$limit = (int) ( $args['posts_per_page'] ?? -1 );
@@ -359,6 +377,8 @@ class WP_Query {
 		$this->found_posts = count( $this->posts );
 	}
 }
+
+function _prime_post_caches( $ids, $update_term_cache = true, $update_meta_cache = true ) { $GLOBALS['stub_primed'] = array_map( 'intval', (array) $ids ); }
 
 function get_post_field( $field, $id ) {
 	return (string) ( $GLOBALS['stub_posts'][ (int) $id ][ $field ] ?? '' );

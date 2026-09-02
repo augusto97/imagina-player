@@ -58,7 +58,17 @@ final class PlayerRenderer {
 		++self::$instance_count;
 		$id = 'imgp-' . self::$instance_count . '-' . wp_rand( 1000, 9999 );
 
-		$peaks_payload = $this->peaks_payload( $track, $config );
+		/*
+		 * A skin belongs to a medium. The saved one is used when it is one of
+		 * this medium's own and replaced by that medium's default when it is
+		 * not — an author who swaps an audio file for a video is otherwise left
+		 * with "card with cover" on a picture that has no cover.
+		 */
+		$skin = Skins::resolve( (string) $config['skin'], $track->is_video() );
+
+		// Given the resolved skin, so that whether a waveform is measured and
+		// whether one is drawn are decided from the same answer.
+		$peaks_payload = $this->peaks_payload( $track, $config, $skin );
 
 		// Resolved once: the site's video settings with this block's own
 		// answers over them. Every reader below takes it rather than going back
@@ -77,14 +87,6 @@ final class PlayerRenderer {
 				$config[ $key ] = (bool) $video_config[ $key ];
 			}
 		}
-
-		/*
-		 * A skin belongs to a medium. The saved one is used when it is one of
-		 * this medium's own and replaced by that medium's default when it is
-		 * not — an author who swaps an audio file for a video is otherwise left
-		 * with "card with cover" on a picture that has no cover.
-		 */
-		$skin = Skins::resolve( (string) $config['skin'], $track->is_video() );
 
 		$classes = array(
 			'imgp',
@@ -297,7 +299,7 @@ final class PlayerRenderer {
 			// A video always gets a scrubber. A skin that hides it was designed for
 			// a bar of audio controls, and a video without a seek bar is broken.
 			'scrubber' => $track->is_video() || Skins::has_scrubber( $skin )
-				? $this->part_scrubber( $track, $config )
+				? $this->part_scrubber( $track, $config, $skin )
 				: '',
 			'thumb'    => $config['show_thumbnail'] && '' !== $track->thumbnail ? $this->part_thumb( $track ) : '',
 			'play'     => $this->part_play(),
@@ -468,7 +470,8 @@ final class PlayerRenderer {
 			controls
 			<?php echo $atts['loop'] ? 'loop' : ''; ?>
 			<?php echo $atts['muted'] ? 'muted' : ''; ?>
-			<?php echo $atts['autoplay'] ? 'autoplay playsinline' : ''; ?>
+			<?php echo $atts['autoplay'] ? 'autoplay' : ''; ?>
+			<?php echo $atts['autoplay'] && ! $is_video ? 'playsinline' : ''; ?>
 			<?php echo '' !== $track->title ? 'title="' . esc_attr( $track->title ) . '"' : ''; ?>
 			<?php if ( $is_video ) : ?>
 				playsinline
@@ -575,11 +578,15 @@ final class PlayerRenderer {
 	 *
 	 * @param array<string, mixed> $config Effective settings.
 	 */
-	private function part_scrubber( Track $track, array $config ): string {
+	private function part_scrubber( Track $track, array $config, string $skin ): string {
 		// No waveform over a video: it would mean downloading and decoding the
 		// audio of a file the visitor may never play, to draw a picture nobody
 		// looks at while watching one.
-		$waveform = ! $track->is_video() && Skins::uses_waveform( (string) $config['skin'] );
+		// The resolved skin, not the preset's raw one: a preset whose skin is a
+		// video skin used by an audio block resolves to the wave skin above and
+		// draws its class, and asking the raw value here said "no waveform" —
+		// a wave-skinned player with no canvas and no peaks.
+		$waveform = ! $track->is_video() && Skins::uses_waveform( $skin );
 
 		ob_start();
 		?>
@@ -1204,10 +1211,11 @@ final class PlayerRenderer {
 		return (string) ob_get_clean();
 	}
 
-	private function peaks_payload( Track $track, array $config ): array {
+	private function peaks_payload( Track $track, array $config, string $skin ): array {
 		// A video never gets peaks — no waveform is drawn over it, so measuring
-		// one would be a download and a decode for nothing.
-		if ( $track->is_video() || ! Skins::uses_waveform( (string) $config['skin'] ) ) {
+		// one would be a download and a decode for nothing. The resolved skin,
+		// for the same reason as in part_scrubber().
+		if ( $track->is_video() || ! Skins::uses_waveform( $skin ) ) {
 			return array(
 				'peaks'       => '',
 				'token'       => '',

@@ -85,9 +85,15 @@ export function SourceWarning( { src, isVideoBlock }: Props ) {
 					'A page or a channel is not a video. For YouTube the address of a single video is the one with watch?v= in it, or a youtu.be link.',
 					'imagina-player'
 				) }{ ' ' }
-				<ExternalLink href={ src }>
-					{ __( 'Open what you pasted', 'imagina-player' ) }
-				</ExternalLink>
+				{ /^https?:\/\//i.test( src ) && (
+					// Only for an address a browser would fetch. This branch is
+					// reached precisely because the address was not one the
+					// player understands, which includes schemes nobody should
+					// be handed a link to.
+					<ExternalLink href={ src }>
+						{ __( 'Open what you pasted', 'imagina-player' ) }
+					</ExternalLink>
+				) }
 			</p>
 		</Notice>
 	);

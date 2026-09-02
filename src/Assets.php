@@ -175,12 +175,28 @@ final class Assets {
 
 		return array(
 			'restUrl'         => esc_url_raw( rest_url( Rest\PeaksController::REST_NAMESPACE ) ),
+			/*
+			 * So a request from a logged-in visitor is made as that visitor. A
+			 * cookie-authenticated REST call without this header is treated as
+			 * anonymous, which for protected media bound to a user meant the
+			 * refreshed link was minted for nobody and refused. Only logged-in
+			 * pages, since those are the ones the nonce is for and the ones a
+			 * page cache does not hold.
+			 */
+			'nonce'           => is_user_logged_in() ? wp_create_nonce( 'wp_rest' ) : '',
 			// The player loads its video chrome on demand. Webpack would work
 			// the location out from the script's own URL, but that throws
 			// outright when an optimisation plugin inlines the bundle — so the
 			// side that actually knows the answer gives it.
 			'assetUrl'        => esc_url_raw( URL . 'build/' ),
 			'lazyInit'        => ! empty( $advanced['lazy_init'] ),
+			/*
+			 * Only for a logged-in visitor. A nonce in HTML that a page cache
+			 * serves to everyone is a stale nonce, and an anonymous request is
+			 * treated as anonymous with or without one — so it is left out of
+			 * the pages that get cached, and put in for the visitors it is for.
+			 */
+			'nonce'           => is_user_logged_in() ? wp_create_nonce( 'wp_rest' ) : '',
 			'maxComputeBytes' => (int) ( $peaks['max_client_bytes'] ?? 25 * 1024 * 1024 ),
 			'i18n'            => array(
 				'play'   => __( 'Play', 'imagina-player' ),

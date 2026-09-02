@@ -172,7 +172,9 @@ final class Captions {
 		$real      = realpath( $candidate );
 		$root      = realpath( $basedir );
 
-		if ( false === $real || false === $root || ! str_starts_with( $real, $root ) ) {
+		// With the separator, so that `…/uploads-other/x.vtt` does not pass as
+		// being inside `…/uploads`.
+		if ( false === $real || false === $root || ! str_starts_with( $real, rtrim( $root, '/\\' ) . DIRECTORY_SEPARATOR ) ) {
 			return null;
 		}
 
@@ -218,15 +220,17 @@ final class Captions {
 	}
 
 	private static function stamp( float $seconds ): string {
-		$seconds = max( 0.0, $seconds );
-		$whole   = (int) floor( $seconds );
+		// Rounded to the millisecond first, so 1.9996 becomes 2.000 rather
+		// than 1.1000.
+		$millis = (int) round( max( 0.0, $seconds ) * 1000 );
+		$whole  = intdiv( $millis, 1000 );
 
 		return sprintf(
 			'%02d:%02d:%02d.%03d',
 			intdiv( $whole, 3600 ),
 			intdiv( $whole % 3600, 60 ),
 			$whole % 60,
-			(int) round( ( $seconds - $whole ) * 1000 )
+			$millis % 1000
 		);
 	}
 

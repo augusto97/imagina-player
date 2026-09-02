@@ -53,6 +53,9 @@ $controller = new PeaksController();
 
 echo PHP_EOL . '# A duration of infinity, from a visitor' . PHP_EOL;
 
+// A real attachment, now that the read endpoint checks it is one.
+$GLOBALS['stub_posts'][41] = array( 'type' => 'attachment' );
+
 // The grant every visitor to a page with this track on it is given.
 $token = PeaksToken::create( 'att_41', 400 );
 

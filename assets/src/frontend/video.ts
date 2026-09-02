@@ -222,6 +222,16 @@ export class VideoChrome {
 				return;
 			}
 
+			/*
+			 * Zero means the controls stay up for good — the setting's help
+			 * text, the block's help text and the default's comment all say
+			 * so, and this handed zero to setTimeout, which hid them on the
+			 * first frame instead.
+			 */
+			if ( this.config.hideAfter <= 0 ) {
+				return;
+			}
+
 			this.idleTimer = window.setTimeout( () => {
 				if (
 					this.root.contains( this.root.ownerDocument.activeElement )
@@ -244,7 +254,7 @@ export class VideoChrome {
 		}
 
 		this.on( this.root, 'pointerleave', () => {
-			if ( ! this.media.paused ) {
+			if ( ! this.media.paused && this.config.hideAfter > 0 ) {
 				this.root.classList.add( 'is-chrome-idle' );
 			}
 		} );

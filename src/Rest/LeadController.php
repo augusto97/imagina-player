@@ -64,7 +64,6 @@ final class LeadController {
 		// Activation creates the table, but a site that *updates* never runs
 		// activation again — so the version check runs on every load and does
 		// nothing at all once the numbers match.
-		add_action( 'plugins_loaded', array( LeadRepository::class, 'maybe_install' ) );
 	}
 
 	public function register_routes(): void {
@@ -98,6 +97,11 @@ final class LeadController {
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'listing' ),
 					'permission_callback' => $can_manage,
+					'args'                => array(
+						'page'    => array( 'type' => 'integer', 'minimum' => 1, 'default' => 1 ),
+						'perPage' => array( 'type' => 'integer', 'minimum' => 1, 'maximum' => 200, 'default' => 50 ),
+						'list'    => array( 'type' => 'string', 'maxLength' => 100 ),
+					),
 				),
 				array(
 					'methods'             => WP_REST_Server::DELETABLE,
@@ -120,6 +124,9 @@ final class LeadController {
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'export' ),
 				'permission_callback' => $can_manage,
+				'args'                => array(
+					'list' => array( 'type' => 'string', 'maxLength' => 100 ),
+				),
 			)
 		);
 	}
@@ -156,7 +163,10 @@ final class LeadController {
 		$saved = $this->leads->save(
 			array(
 				'email'      => $email,
-				'list'       => sanitize_text_field( (string) $request->get_param( 'list' ) ),
+				// A name for a list, not a sentence: letters, digits and the
+				// usual separators, short enough to be one. Anything else is a
+				// stranger's text arriving on the admin's screen.
+				'list'       => substr( preg_replace( '/[^A-Za-z0-9 _-]/', '', (string) $request->get_param( 'list' ) ) ?? '', 0, 50 ),
 				'source_id'  => (int) $request->get_param( 'source' ),
 				'source_url' => esc_url_raw( (string) $request->get_header( 'referer' ) ),
 				'position'   => (float) $request->get_param( 'at' ),

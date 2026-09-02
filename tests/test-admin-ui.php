@@ -483,7 +483,9 @@ $video_panel = $result['video'] ?? array();
 
 check(
 	'the Video section renders its cards',
-	count( array_intersect( array( 'The picture', 'Controls', 'Subtitles' ), $video_panel['cards'] ?? array() ) ) === 3,
+	// One subtitles card, the complete one. There were two bound to the same
+	// two settings, and the first could not show a size the second allowed.
+	count( array_intersect( array( 'The picture', 'Controls', 'Colours and subtitles' ), $video_panel['cards'] ?? array() ) ) === 3,
 	implode( ' / ', $video_panel['cards'] ?? array() )
 );
 check(

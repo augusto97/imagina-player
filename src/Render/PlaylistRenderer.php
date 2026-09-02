@@ -164,6 +164,24 @@ final class PlaylistRenderer {
 	public static function sanitize_items( array $items ): array {
 		$clean = array();
 
+		/*
+		 * Every attachment in one round trip, before the loop asks about them
+		 * one at a time. wp_get_attachment_url() loads the post and its meta on
+		 * first sight, which for a playlist of N uploads was 2N queries; primed,
+		 * it is two whatever N is.
+		 */
+		$ids = array();
+
+		foreach ( $items as $item ) {
+			if ( is_array( $item ) && (int) ( $item['id'] ?? 0 ) > 0 ) {
+				$ids[] = (int) $item['id'];
+			}
+		}
+
+		if ( array() !== $ids && function_exists( '_prime_post_caches' ) ) {
+			_prime_post_caches( array_values( array_unique( $ids ) ), false, true );
+		}
+
 		foreach ( $items as $item ) {
 			if ( ! is_array( $item ) ) {
 				continue;
