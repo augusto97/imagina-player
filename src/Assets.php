@@ -141,9 +141,19 @@ final class Assets {
 			wp_enqueue_style( self::FRONTEND_HANDLE );
 		}
 
+		/*
+		 * With the HTML-significant characters escaped as JSON escapes. Nothing
+		 * in this payload is written by a visitor today, but it is printed
+		 * inside a <script> element, and a translated string that happened to
+		 * contain "</script>" would end the element early. Cheap insurance
+		 * against a future field being less careful than the present ones.
+		 */
 		wp_add_inline_script(
 			self::FRONTEND_HANDLE,
-			'window.imaginaPlayer = ' . wp_json_encode( self::runtime_data() ) . ';',
+			'window.imaginaPlayer = ' . wp_json_encode(
+				self::runtime_data(),
+				JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+			) . ';',
 			'before'
 		);
 

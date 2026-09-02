@@ -80,6 +80,19 @@ final class LeadRepository {
 	 *
 	 * @param array{email: string, list: string, source_id: int, source_url: string, position: float} $lead Lead.
 	 */
+	/**
+	 * Seconds into a track that can be written to a FLOAT column.
+	 *
+	 * @param float $position Whatever arrived.
+	 */
+	public static function sane_position( float $position ): float {
+		if ( ! is_finite( $position ) || $position < 0.0 ) {
+			return 0.0;
+		}
+
+		return min( $position, (float) DAY_IN_SECONDS );
+	}
+
 	public function save( array $lead ): bool {
 		global $wpdb;
 
@@ -101,7 +114,9 @@ final class LeadRepository {
 				substr( (string) $lead['list'], 0, 100 ),
 				(int) $lead['source_id'],
 				substr( (string) $lead['source_url'], 0, 255 ),
-				(float) $lead['position'],
+				// A position of INF is a valid float in PHP and a rejected one
+				// in MySQL, which turns a form submission into a 500.
+				self::sane_position( (float) $lead['position'] ),
 				current_time( 'mysql', true )
 			)
 		);

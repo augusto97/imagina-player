@@ -182,6 +182,50 @@ $other = $controller->capture( request( array( 'email' => 'otra@example.test' ) 
 
 check( 'a different address is unaffected', ! is_wp_error( $other ), 'limiting by IP would lock out a whole office' );
 
+/*
+ * The second count. Limiting by address alone stops a person; it does not
+ * stop a script, which generates a fresh address per request and would fill
+ * the table at whatever rate it could post. So the same network is counted as
+ * well — generously, because a network is an office or a carrier, not a
+ * person.
+ */
+$_SERVER['REMOTE_ADDR'] = '203.0.113.7';
+$GLOBALS['stub_transients'] = array();
+
+$flooded = null;
+
+for ( $n = 0; $n < 80; $n++ ) {
+	$result = $controller->capture( request( array( 'email' => 'bot' . $n . '@example.test' ) ) );
+
+	if ( is_wp_error( $result ) ) {
+		$flooded = $result;
+		break;
+	}
+}
+
+check(
+	'a stream of fresh addresses from one network is eventually refused',
+	null !== $flooded,
+	'without this, rotating the address makes the endpoint an unbounded write'
+);
+
+check( 'with 429', 429 === ( $flooded?->get_error_data()['status'] ?? 0 ) );
+
+check(
+	'but not before a room full of people could have signed up',
+	$n >= 60,
+	'refused at attempt ' . $n
+);
+
+// A different network is not caught by the first one's count.
+$_SERVER['REMOTE_ADDR'] = '198.51.100.9';
+
+$elsewhere = $controller->capture( request( array( 'email' => 'nueva@example.test' ) ) );
+
+check( 'and another network is unaffected', ! is_wp_error( $elsewhere ) );
+
+unset( $_SERVER['REMOTE_ADDR'] );
+
 echo PHP_EOL . '# The export cannot attack the person who opens it' . PHP_EOL;
 
 $cases = array(

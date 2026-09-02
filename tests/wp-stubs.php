@@ -579,6 +579,9 @@ class WP_REST_Response {
 
 	public function get_data() { return $this->data; }
 	public function get_status(): int { return $this->status; }
+	/** @var array<string, string> */
+	public array $headers = array();
+	public function header( $key, $value ) { $this->headers[ $key ] = $value; }
 }
 
 class WP_REST_Server {

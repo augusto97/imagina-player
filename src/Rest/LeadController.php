@@ -20,6 +20,7 @@ declare( strict_types = 1 );
 namespace ImaginaPlayer\Rest;
 
 use ImaginaPlayer\Leads\LeadRepository;
+use ImaginaPlayer\Protection\ProtectedMedia;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -35,6 +36,21 @@ final class LeadController {
 	private const LIMIT = 5;
 
 	private const WINDOW = 10 * MINUTE_IN_SECONDS;
+
+	/**
+	 * Submissions allowed from one network in the same window, whatever the
+	 * addresses.
+	 *
+	 * The limit above is keyed on the email address, which is the right key for
+	 * the abuse a person commits — but a script does not reuse an address. It
+	 * generates one per request, and with nothing else counting, the table
+	 * fills at whatever rate the script can post. This is the second count.
+	 *
+	 * Generous, because a network is shared: an office, a campus, a mobile
+	 * carrier. Sixty in ten minutes is more sign-ups than a room full of people
+	 * produces and a small fraction of what a script would.
+	 */
+	private const NETWORK_LIMIT = 60;
 
 	private LeadRepository $leads;
 
@@ -129,7 +145,7 @@ final class LeadController {
 			);
 		}
 
-		if ( ! $this->within_limit( $email ) ) {
+		if ( ! $this->within_limit( $email ) || ! $this->network_within_limit() ) {
 			return new WP_Error(
 				'imagina_player_too_many',
 				__( 'Too many attempts. Try again in a few minutes.', 'imagina-player' ),
@@ -171,6 +187,35 @@ final class LeadController {
 		$count = (int) get_transient( $key );
 
 		if ( $count >= self::LIMIT ) {
+			return false;
+		}
+
+		set_transient( $key, $count + 1, self::WINDOW );
+
+		return true;
+	}
+
+	/**
+	 * The second count, keyed on the network rather than the address.
+	 *
+	 * The same coarse fingerprint the protected-media tokens use — a /24 or
+	 * the first four groups of a v6 address — so a person whose address moves
+	 * within their carrier is still one person, and so nothing that identifies
+	 * a visitor precisely is written anywhere.
+	 */
+	private function network_within_limit(): bool {
+		$network = ProtectedMedia::client_fingerprint();
+
+		// No address at all — a CLI, a misconfigured proxy. Nothing to key on,
+		// so nothing to count; the address limit above still applies.
+		if ( '' === $network ) {
+			return true;
+		}
+
+		$key   = 'imgp_lead_net_' . md5( $network );
+		$count = (int) get_transient( $key );
+
+		if ( $count >= self::NETWORK_LIMIT ) {
 			return false;
 		}
 

@@ -235,7 +235,7 @@ final class PeaksRepository {
 		$record = array(
 			'version'    => self::FORMAT_VERSION,
 			'resolution' => count( $peaks ),
-			'duration'   => max( 0.0, $duration ),
+			'duration'   => self::sane_duration( $duration ),
 			'peaks'      => $encoded,
 		);
 
@@ -326,6 +326,30 @@ final class PeaksRepository {
 	 */
 	private static function cache_key( string $key ): string {
 		return 'imagina_peaks_v' . self::FORMAT_VERSION . '_' . $key;
+	}
+
+	/**
+	 * A duration that can be stored, encoded and believed.
+	 *
+	 * `is_numeric( '1e999' )` is true and `(float) '1e999'` is INF, and INF
+	 * survives `max( 0.0, … )`. It does not survive `json_encode()`, which
+	 * returns false with "Inf and NaN cannot be JSON encoded" — so a visitor
+	 * holding an ordinary waveform grant could store INF against a track, and
+	 * from then on the endpoint handing that track's waveform to everyone else
+	 * answered 500. Write-once made it permanent.
+	 *
+	 * Clamped here, at the one place every path writes through, rather than in
+	 * each caller. The ceiling is a day: nothing this plays is longer, and a
+	 * number past it is a mistake whatever produced it.
+	 *
+	 * @param float $duration Whatever arrived.
+	 */
+	public static function sane_duration( float $duration ): float {
+		if ( ! is_finite( $duration ) || $duration < 0.0 ) {
+			return 0.0;
+		}
+
+		return min( $duration, (float) DAY_IN_SECONDS );
 	}
 
 	/**
