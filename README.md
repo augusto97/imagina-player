@@ -1,38 +1,43 @@
-# Imagina Player — 1.39.1
+# Imagina Player — 1.40.0
 
-Download **imagina-player-1.39.1.zip** and install it in WordPress under
+Download **imagina-player-1.40.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  d8e9dcc0beddc5b85e5f2f02661f2c15ab3638f32e53b6701bc2c68198fb93dd
+    SHA-256  4c80d87ee0b22a61942fd029228851cda76770fec97adc30b27b6d9db22905ee
 
 ## What this release is
 
-Reported: "in the WordPress editor the videos are not taking the right
-height — on the front end they do, in the editor they don't."
+Asked for: "I would like the URL to be taken dynamically from a custom
+field — ACF or JetEngine — so that I create a video URL field on a
+WooCommerce product and leave the product template built with that dynamic
+field."
 
-The block preview kept its starting height, 150 pixels, whatever it held.
-It runs in a sandboxed frame, on purpose, so that nothing the renderer
-prints can reach the editor — and the same wall kept the editor from
-measuring it. The measuring code read a document it could not reach,
-measured nothing, and never set a height. An audio player happens to fit in
-150 pixels, which is why this went unnoticed from the first version; a
-16:9 video shows its top fifth. The settings screen's live preview had the
-same code.
+**A block can now take its file from a custom field of the post it is shown
+on.** Open the block's sidebar, then **Dynamic source**, and type the field's
+key — `video_url`, say. Place that one block in the product template, and
+each product page shows the video named in that product's own field.
 
-**The frame now reports its own height** to the editor: on load, once the
-canvas has painted, and again whenever its content changes size — a poster
-loading, a waveform arriving, the window resizing. The editor accepts a
-report only from the frame it created, and only a sane number. It listens
-on the window that owns the frame, because on a block theme the block lives
-inside the editor's canvas frame and the report arrives there, one window
-down from where the editor's code runs.
+- The field may hold a YouTube or Vimeo link, an MP4 or an HLS address, or
+  the media library ID of an uploaded file. Every way ACF and JetEngine
+  store a file is understood: an address, an ID as a number or as text, or
+  an array carrying either.
+- Where a product's field is empty, visitors see nothing there — unless the
+  block is also given a file of its own, which is then the default for those
+  products.
+- In the editor, the preview shows the file of the post being edited. In the
+  site editor's template, which has no such field, it says which field it
+  will read instead of showing a blank.
+- The same works for the audio block, for any post type, and in the
+  shortcode as `[imagina_player field="video_url"]`.
 
-Nothing changes on the front end, which was already right.
+A key starting with an underscore is hidden meta and is never read, so naming
+a key can never print a token or a private address into a page.
 
 ## Verified
 
-In the real block editor on WordPress 6.8 with a block theme: a 16:9 video
-block is shown whole at the width of the canvas. A Chromium test holds a
-real sandboxed frame, proves its document is unreadable from outside,
-and checks that its report arrives, follows a change in size, is heard from
-inside a canvas frame, and is ignored when it comes from any other frame.
+On a real WordPress 6.8: three posts sharing one block, one with a YouTube
+address in the field, one with a media library ID, one with nothing. The
+first two play their own file; the third shows visitors nothing and shows an
+editor which field it would have read. The editor's preview endpoint shows
+the right file for the post being edited and refuses a post the author may
+not edit.
