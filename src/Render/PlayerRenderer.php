@@ -16,6 +16,7 @@ namespace ImaginaPlayer\Render;
 
 use ImaginaPlayer\Assets;
 use ImaginaPlayer\Media\Captions;
+use ImaginaPlayer\Media\DynamicSource;
 use ImaginaPlayer\Media\Track;
 use ImaginaPlayer\Rest\CaptionController;
 use ImaginaPlayer\Peaks\PeaksRepository;
@@ -43,14 +44,19 @@ final class PlayerRenderer {
 
 	/**
 	 * @param array<string, mixed> $raw_atts Unsanitised attributes.
+	 * @param int|null             $post_id  The post the player is shown on,
+	 *                                       for a block that takes its file
+	 *                                       from that post's custom field.
+	 *                                       Null means the post being
+	 *                                       rendered right now.
 	 */
-	public function render( array $raw_atts ): string {
-		$atts   = Attributes::sanitize( $raw_atts );
+	public function render( array $raw_atts, ?int $post_id = null ): string {
+		$atts   = self::resolve( $raw_atts, $post_id );
 		$config = Config::resolve( $atts );
 		$track  = Track::from_attributes( $atts );
 
 		if ( ! $track->is_playable() ) {
-			return $this->render_placeholder();
+			return $this->render_placeholder( DynamicSource::key( $atts ) );
 		}
 
 		Assets::enqueue_frontend();
@@ -1260,11 +1266,45 @@ final class PlayerRenderer {
 	}
 
 	/**
-	 * Editors need to see why nothing rendered; visitors should see nothing.
+	 * Sanitised attributes, with the file the post's custom field names in
+	 * place of the block's own when the block names such a field.
+	 *
+	 * @param array<string, mixed> $raw_atts Unsanitised attributes.
+	 * @return array<string, mixed>
 	 */
-	private function render_placeholder(): string {
+	public static function resolve( array $raw_atts, ?int $post_id = null ): array {
+		$atts = Attributes::sanitize( $raw_atts );
+
+		if ( '' === DynamicSource::key( $atts ) ) {
+			return $atts;
+		}
+
+		return DynamicSource::apply( $atts, $post_id ?? DynamicSource::current_post_id() );
+	}
+
+	/**
+	 * Editors need to see why nothing rendered; visitors should see nothing.
+	 *
+	 * @param string $field The custom field the block takes its file from,
+	 *                      when it does: a block in a template shows this in
+	 *                      the editor, where there is no post to read from.
+	 */
+	private function render_placeholder( string $field = '' ): string {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return '';
+		}
+
+		if ( '' !== $field ) {
+			return sprintf(
+				'<div class="imgp imgp--empty imgp--dynamic"><p>%s</p></div>',
+				esc_html(
+					sprintf(
+						/* translators: %s: the name of a custom field. */
+						__( 'Imagina Player: the file comes from the custom field “%s” of the post this block is shown on. This one has none, so visitors see nothing here.', 'imagina-player' ),
+						$field
+					)
+				)
+			);
 		}
 
 		return sprintf(

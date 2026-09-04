@@ -21,8 +21,10 @@ import {
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { useSelect } from '@wordpress/data';
 
 import { Swatches, TristateList } from './controls';
+import { DynamicSourcePanel } from './dynamic-source';
 import { Preview } from './preview';
 import {
 	colourApplies,
@@ -186,6 +188,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 	const blockProps = useBlockProps( { className: 'imgp-block-editor' } );
 
 	const src = String( attributes.src ?? '' );
+	const sourceField = String( attributes.sourceField ?? '' );
 	const preset = String( attributes.preset ?? 'default' );
 	const thumbnail = String( attributes.thumbnail ?? '' );
 	const downloadUrl = String( attributes.downloadUrl ?? '' );
@@ -273,9 +276,31 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 			),
 		} );
 
-	if ( ! src ) {
+	/*
+	 * The post being edited, for a block that takes its file from one of its
+	 * custom fields: the preview can then show that post's file. In the site
+	 * editor this is the template, which has no such field, and the preview
+	 * says so instead.
+	 */
+	const postId = useSelect( ( select ) => {
+		const editor = select( 'core/editor' ) as
+			| { getCurrentPostId?: () => number | null | undefined }
+			| undefined;
+
+		return Number( editor?.getCurrentPostId?.() ?? 0 ) || 0;
+	}, [] );
+
+	if ( ! src && ! sourceField ) {
 		return (
-			<div { ...blockProps }>
+			<>
+				<InspectorControls>
+					<DynamicSourcePanel
+						sourceField={ sourceField }
+						src={ src }
+						setAttributes={ setAttributes }
+					/>
+				</InspectorControls>
+				<div { ...blockProps }>
 				<MediaPlaceholder
 					icon={ isVideoBlock ? 'format-video' : 'format-audio' }
 					labels={ {
@@ -312,7 +337,8 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 						setAttributes( { src: url, attachmentId: 0 } )
 					}
 				/>
-			</div>
+				</div>
+			</>
 		);
 	}
 
@@ -720,6 +746,12 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 						</div>
 					</BaseControl>
 				</PanelBody>
+
+				<DynamicSourcePanel
+					sourceField={ sourceField }
+					src={ src }
+					setAttributes={ setAttributes }
+				/>
 
 				<PanelBody
 					title={ __( 'Appearance', 'imagina-player' ) }
@@ -1789,6 +1821,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 				onResolved={ setResolved }
 				refresh={ refresh }
 				attributes={ attributes }
+				postId={ postId }
 				assets={ {
 					frontendCss: data.frontendCss,
 					frontendJs: data.frontendJs,

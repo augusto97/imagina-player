@@ -86,6 +86,13 @@ final class Attributes {
 				'type'    => 'int',
 				'default' => 0,
 			),
+			// A custom field of the post the block is shown on, whose value
+			// is the file: for a template that shows many posts. See
+			// Media\DynamicSource.
+			'sourceField'  => array(
+				'type'    => 'string',
+				'default' => '',
+			),
 			'title'        => array(
 				'type'    => 'string',
 				'default' => '',
@@ -362,6 +369,7 @@ final class Attributes {
 		}
 
 		$out['src']         = self::sanitize_media_url( (string) $out['src'] );
+		$out['sourceField'] = \ImaginaPlayer\Media\DynamicSource::sanitize_key( (string) $out['sourceField'] );
 		$out['downloadUrl'] = self::sanitize_media_url( (string) $out['downloadUrl'] );
 		$out['thumbnail']   = self::sanitize_media_url( (string) $out['thumbnail'] );
 		$out['title']       = sanitize_text_field( (string) $out['title'] );

@@ -657,3 +657,13 @@ if ( ! function_exists( 'wp_delete_file' ) ) {
 		}
 	}
 }
+
+if ( ! function_exists( 'get_the_ID' ) ) {
+	function get_the_ID() { return (int) ( $GLOBALS['stub_current_post'] ?? 0 ); }
+}
+if ( ! function_exists( 'get_queried_object_id' ) ) {
+	function get_queried_object_id() { return (int) ( $GLOBALS['stub_queried_post'] ?? 0 ); }
+}
+if ( ! function_exists( 'is_protected_meta' ) ) {
+	function is_protected_meta( $key, $type = '' ) { return str_starts_with( (string) $key, '_' ); }
+}

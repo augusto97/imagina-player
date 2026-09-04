@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.39.1
+Stable tag: 1.40.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -38,10 +38,16 @@ in this player, with your own controls, your own colours and your own calls to
 action rather than the provider's chrome. Nothing is requested from them until a
 visitor presses play, so a video nobody watches costs the page nothing.
 
+**One block, every product's own file.** A block can take its file from a
+custom field of the post it is shown on — an ACF or JetEngine field, or plain
+post meta — so a product template built once shows each product's own video,
+and a custom post type's single view plays each entry's own recording.
+
 = Blocks and shortcodes =
 
 * Block: **Imagina Audio Player**
 * Shortcode: `[imagina_player src="https://example.com/track.mp3" artist="…" title="…"]`
+* Shortcode, reading the file from a custom field of the current post: `[imagina_player field="video_url"]`
 
 == Frequently Asked Questions ==
 
@@ -56,6 +62,20 @@ no cookie for a visitor who never watches.
 A video hosted by them is not a file on your site, so the download protection does
 not apply to it, and their own subtitles are drawn inside their frame rather than
 by this player.
+
+= Can the file come from a custom field, for a product template? =
+
+Yes. Give each product a custom field — with ACF, JetEngine or any other way of
+adding post meta — holding the video's address (a YouTube or Vimeo link, an MP4,
+an HLS stream) or the file's media library ID. Place one video block in the
+product template, open Dynamic source in its sidebar and type the field's key.
+Each product page then shows that product's own video; a product whose field
+is empty shows nothing there, unless the block is also given a file of its
+own, which is then the default. The same works for the audio block, for any
+post type, and in the shortcode as `field="…"`.
+
+The field is read from the post the block is shown on, at the moment it is
+shown. A key starting with an underscore is hidden meta and is never read.
 
 = Does it need ffmpeg? =
 
@@ -82,6 +102,26 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.40.0 =
+* Added: a block can take its file from a custom field of the post it is
+  shown on. Open Dynamic source in the block's sidebar and name the field —
+  one made with ACF or JetEngine, or plain post meta — whose value is the
+  file's address or its media library ID. One block in a WooCommerce product
+  template then shows each product's own video; a custom post type's single
+  view plays each entry's own recording. Where the field is empty, visitors
+  see nothing, unless the block is also given a file of its own, which is
+  then the default. The editor's preview shows the file of the post being
+  edited, and in a template, which has no such field, says which field it
+  will read. Also in the shortcode, as `field="video_url"`.
+* A field plugin's every way of storing a file is understood: an address, an
+  attachment ID as a number or as text, or an array carrying either. Hidden
+  meta — any key starting with an underscore — is never read, so naming a key
+  cannot print a token or a private address into a page.
+
+Verified on a real WordPress 6.8: three posts sharing one block, one with a
+YouTube address in the field, one with a media library ID, one with nothing —
+the first two play their own file and the third shows visitors nothing.
 
 = 1.39.1 =
 * Fixed: in the block editor, a video was cut off at the top fifth — the

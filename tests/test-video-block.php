@@ -335,6 +335,20 @@ check(
 );
 
 /*
+ * The one panel that is its own component, because it is also offered before
+ * a file is chosen: it sits right after Media, where the file itself is chosen,
+ * and it is named for its question too.
+ */
+$media_at      = strpos( $inspector, "title={ __( 'Media', 'imagina-player' ) }" );
+$dynamic_at    = strpos( $inspector, '<DynamicSourcePanel', $media_at ?: 0 );
+$appearance_at = strpos( $inspector, "title={ __( 'Appearance', 'imagina-player' ) }" );
+$dynamic       = (string) file_get_contents( dirname( __DIR__ ) . '/assets/src/editor/dynamic-source.tsx' );
+
+check( 'the dynamic source sits between Media and Appearance', false !== $dynamic_at && $media_at < $dynamic_at && $dynamic_at < $appearance_at );
+check( 'and is named for its question', str_contains( $dynamic, "title={ __( 'Dynamic source', 'imagina-player' ) }" ) );
+check( 'and is offered before a file is chosen, since a template has none to choose', 2 === substr_count( $inspector, '<DynamicSourcePanel' ) );
+
+/*
  * Only the first is open. Eight expanded panels is the wall of settings that
  * was reported; seven closed ones is a list you can read.
  */

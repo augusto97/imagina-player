@@ -36,7 +36,7 @@ function check( string $label, bool $ok, string $detail = '' ): void {
  * @param string $source The component file.
  */
 function on_the_block( string $source ): string {
-	$end = strpos( $source, '</InspectorControls>' );
+	$end = strrpos( $source, '</InspectorControls>' );
 
 	if ( false === $end ) {
 		return $source;
@@ -74,7 +74,7 @@ foreach ( array(
 
 		check(
 			"and puts it in the sidebar instead",
-			str_contains( substr( $source, 0, strpos( $source, '</InspectorControls>' ) ?: 0 ), '<' . $component )
+			str_contains( substr( $source, 0, strrpos( $source, '</InspectorControls>' ) ?: 0 ), '<' . $component )
 		);
 	}
 }

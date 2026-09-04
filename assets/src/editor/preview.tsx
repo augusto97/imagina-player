@@ -34,6 +34,8 @@ interface PreviewProps {
 	 * that needs to understand their shape.
 	 */
 	attributes: Record< string, unknown >;
+	/** The post being edited, for a block whose file is one of its fields. */
+	postId?: number;
 	assets: EditorAssets;
 	/**
 	 * What the server will show for fields the block leaves empty, so they can
@@ -57,6 +59,7 @@ interface PreviewProps {
 
 export function Preview( {
 	attributes,
+	postId = 0,
 	assets,
 	onResolved,
 	refresh = 0,
@@ -77,7 +80,7 @@ export function Preview( {
 			apiFetch( {
 				path: '/imagina-player/v1/preview',
 				method: 'POST',
-				data: { attributes },
+				data: { attributes, postId },
 			} )
 				.then( ( result ) => {
 					if ( cancelled ) {
@@ -134,6 +137,7 @@ export function Preview( {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		signature,
+		postId,
 		refresh,
 		assets.frontendCss,
 		assets.frontendJs,

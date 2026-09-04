@@ -113,6 +113,12 @@ final class SettingsController {
 					'attributes' => array(
 						'type' => 'object',
 					),
+					// The post the block is being edited in, for a block that
+					// takes its file from that post's custom field.
+					'postId'     => array(
+						'type'    => 'integer',
+						'minimum' => 0,
+					),
 					/*
 					 * Which medium the settings screen wants to look at. A
 					 * preset carries the accent, the corner radius, the button
@@ -365,10 +371,20 @@ final class SettingsController {
 		// see exactly what it will publish; the settings screen sends a candidate
 		// preset that is not saved anywhere yet.
 		if ( is_array( $attributes ) ) {
+			/*
+			 * Only a post the author may edit: the block reads a custom field
+			 * of it, and naming somebody else's post here must not read theirs.
+			 */
+			$post_id = (int) $request->get_param( 'postId' );
+
+			if ( $post_id > 0 && ! current_user_can( 'edit_post', $post_id ) ) {
+				$post_id = 0;
+			}
+
 			// A block previewing a real file gets that file's real waveform. It
 			// used to get the demo one, which told the author their waveform was
 			// working when it was not — they only found out on the front end.
-			return $this->preview_response( $attributes, null, false );
+			return $this->preview_response( $attributes, null, false, $post_id );
 		}
 
 		if ( 'video' === $request->get_param( 'medium' ) ) {
@@ -429,7 +445,7 @@ final class SettingsController {
 	 * @param array<string, mixed>      $attributes Player attributes.
 	 * @param array<string, mixed>|null $preset     Preset to force, or null to resolve normally.
 	 */
-	private function preview_response( array $attributes, ?array $preset, bool $demo = true ): WP_REST_Response {
+	private function preview_response( array $attributes, ?array $preset, bool $demo = true, int $post_id = 0 ): WP_REST_Response {
 		// A duration the player can lay a scrubber over. Without it the preview
 		// shows `--:--` and the elapsed badge has nowhere to sit. Only for the
 		// settings screen, whose "track" is a file that does not exist.
@@ -453,7 +469,7 @@ final class SettingsController {
 		}
 
 		$renderer = new PlayerRenderer();
-		$html     = $renderer->render( $attributes );
+		$html     = $renderer->render( $attributes, $post_id );
 
 		if ( null !== $override ) {
 			remove_filter( 'imagina_player_resolved_config', $override, 99 );
@@ -475,7 +491,7 @@ final class SettingsController {
 		// The real thing, or nothing. An empty string is what the editor needs
 		// in order to say "this track has no waveform yet" rather than draw one
 		// that does not exist.
-		$track  = Track::from_attributes( Attributes::sanitize( $attributes ) );
+		$track  = Track::from_attributes( PlayerRenderer::resolve( $attributes, $post_id ) );
 		$key    = $track->peaks_key();
 		$record = '' === $key ? null : ( new PeaksRepository() )->get( $key );
 

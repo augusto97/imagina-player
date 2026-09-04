@@ -28,6 +28,9 @@ final class PlayerShortcode {
 	 */
 	private const SRC_ALIASES = array( 'source', 'mp3', 'url' );
 
+	/** `field="video_url"` reads more naturally than `source_field`. */
+	private const FIELD_ALIAS = 'field';
+
 	public function hooks(): void {
 		add_shortcode( self::TAG, array( $this, 'render' ) );
 	}
@@ -48,6 +51,8 @@ final class PlayerShortcode {
 			$defaults[ $alias ] = null;
 		}
 
+		$defaults[ self::FIELD_ALIAS ] = null;
+
 		$atts = shortcode_atts( $defaults, array_change_key_case( $atts, CASE_LOWER ), self::TAG );
 
 		$mapped = array();
@@ -66,6 +71,10 @@ final class PlayerShortcode {
 			if ( empty( $mapped['src'] ) && ! empty( $atts[ $alias ] ) ) {
 				$mapped['src'] = $atts[ $alias ];
 			}
+		}
+
+		if ( empty( $mapped['sourceField'] ) && ! empty( $atts[ self::FIELD_ALIAS ] ) ) {
+			$mapped['sourceField'] = $atts[ self::FIELD_ALIAS ];
 		}
 
 		$renderer = new PlayerRenderer();
