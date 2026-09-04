@@ -15,6 +15,11 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
+import {
+	FRAME_HEIGHT_SCRIPT,
+	listenForFrameHeight,
+} from '../shared/frame-height';
+
 interface EditorAssets {
 	frontendCss: string;
 	frontendJs: string;
@@ -111,6 +116,7 @@ export function Preview( {
 						</head><body>${ markup }
 						<script>window.imaginaPlayer={restUrl:"${ assets.restUrl }",lazyInit:false,maxComputeBytes:0,i18n:{}};</script>
 						<script src="${ assets.frontendJs }"></script>
+						<script>${ FRAME_HEIGHT_SCRIPT }</script>
 						</body></html>`
 					);
 				} )
@@ -134,26 +140,21 @@ export function Preview( {
 		assets.frameCss,
 	] );
 
-	const measure = (): void => {
-		const frameDoc = frame.current?.contentDocument;
-
-		if ( ! frameDoc?.body ) {
-			return;
-		}
-
-		// A pixel short and the frame grows a scrollbar, which narrows the content
-		// and grows a second one across the bottom.
-		setHeight(
-			Math.max( 90, Math.ceil( frameDoc.body.scrollHeight ) + 2 )
-		);
-	};
-
-	// The canvas paints a frame or two after load, and the height changes with it.
-	const remeasure = (): void => {
-		measure();
-		window.setTimeout( measure, 120 );
-		window.setTimeout( measure, 500 );
-	};
+	/*
+	 * The frame is sandboxed, so its document cannot be read from here — the
+	 * measuring that used to happen here measured nothing, and every preview
+	 * stayed at its starting height. The frame reports its own height instead.
+	 * A pixel short and it grows a scrollbar, which narrows the content and
+	 * grows a second one across the bottom, hence the two.
+	 */
+	useEffect(
+		() =>
+			listenForFrameHeight(
+				() => frame.current,
+				( reported ) => setHeight( Math.max( 90, reported + 2 ) )
+			),
+		[]
+	);
 
 	if ( failed ) {
 		return (
@@ -176,7 +177,6 @@ export function Preview( {
 				// renderer ever lets something through unescaped.
 				sandbox="allow-scripts"
 				scrolling="no"
-				onLoad={ remeasure }
 			/>
 		</div>
 	);

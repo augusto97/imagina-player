@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.39.0
+Stable tag: 1.39.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,24 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.39.1 =
+* Fixed: in the block editor, a video was cut off at the top fifth — the
+  preview kept its starting height, 150 pixels, whatever it held. The
+  preview runs in a sandboxed frame, on purpose, and the same wall that
+  keeps it away from the editor kept the editor from measuring it: the
+  measuring code read a document it could not reach and measured nothing,
+  on every site, from the first version. An audio player happened to fit.
+  The frame now reports its own height to the editor, and again whenever
+  its content changes size, including from inside the editor's canvas frame
+  on a block theme. The settings screen's live preview had the same fault
+  and the same fix.
+
+Verified in the real block editor on WordPress 6.8: a 16:9 video block is
+shown whole at the width of the canvas, and a Chromium test holds a real
+sandboxed frame, proves its document is unreadable from outside, and checks
+that its report arrives, follows a change in size, is heard from inside a
+canvas frame, and is ignored when it comes from any other frame.
 
 = 1.39.0 =
 Reported: "the video's picture only works with YouTube — a Vimeo video does

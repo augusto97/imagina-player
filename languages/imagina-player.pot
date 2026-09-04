@@ -2,7 +2,7 @@
 # This file is distributed under the same licence as the Imagina Player plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: Imagina Player 1.39.0\n"
+"Project-Id-Version: Imagina Player 1.39.1\n"
 "Report-Msgid-Bugs-To: https://github.com/augusto97/imagina-player\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -878,7 +878,7 @@ msgstr ""
 msgid "List name"
 msgstr ""
 
-#: assets/src/admin/PreviewFrame.tsx:103
+#: assets/src/admin/PreviewFrame.tsx:110
 msgid "Live preview"
 msgstr ""
 
@@ -1203,8 +1203,8 @@ msgstr ""
 msgid "Played portion"
 msgstr ""
 
-#: assets/src/admin/PreviewFrame.tsx:107
-#: assets/src/editor/preview.tsx:170
+#: assets/src/admin/PreviewFrame.tsx:114
+#: assets/src/editor/preview.tsx:171
 msgid "Player preview"
 msgstr ""
 
@@ -1763,8 +1763,8 @@ msgstr ""
 msgid "The preset’s accent colour."
 msgstr ""
 
-#: assets/src/admin/PreviewFrame.tsx:95
-#: assets/src/editor/preview.tsx:161
+#: assets/src/admin/PreviewFrame.tsx:102
+#: assets/src/editor/preview.tsx:162
 msgid "The preview could not be loaded."
 msgstr ""
 

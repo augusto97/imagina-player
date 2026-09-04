@@ -883,7 +883,7 @@ msgstr "Lista"
 msgid "List name"
 msgstr "Nombre de la lista"
 
-#: assets/src/admin/PreviewFrame.tsx:103
+#: assets/src/admin/PreviewFrame.tsx:110
 msgid "Live preview"
 msgstr "Vista previa en vivo"
 
@@ -1208,8 +1208,8 @@ msgstr "Velocidad de reproducción"
 msgid "Played portion"
 msgstr "Parte reproducida"
 
-#: assets/src/admin/PreviewFrame.tsx:107
-#: assets/src/editor/preview.tsx:170
+#: assets/src/admin/PreviewFrame.tsx:114
+#: assets/src/editor/preview.tsx:171
 msgid "Player preview"
 msgstr "Vista previa del reproductor"
 
@@ -1768,8 +1768,8 @@ msgstr "El reproductor mantiene esta forma antes de que cargue el vídeo, para q
 msgid "The preset’s accent colour."
 msgstr "El color de acento del preajuste."
 
-#: assets/src/admin/PreviewFrame.tsx:95
-#: assets/src/editor/preview.tsx:161
+#: assets/src/admin/PreviewFrame.tsx:102
+#: assets/src/editor/preview.tsx:162
 msgid "The preview could not be loaded."
 msgstr "No se pudo cargar la vista previa."
 

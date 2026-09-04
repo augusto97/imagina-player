@@ -10,6 +10,10 @@
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
+import {
+	FRAME_HEIGHT_SCRIPT,
+	listenForFrameHeight,
+} from '../shared/frame-height';
 import { boot, renderPreview } from './api';
 import type { Preset } from './types';
 
@@ -62,6 +66,7 @@ export function PreviewFrame( {
 						</head><body>${ html }
 						<script>window.imaginaPlayer = { restUrl: "${ restUrl }", lazyInit: false, maxComputeBytes: 0, i18n: {} };</script>
 						<script src="${ frontendJs }"></script>
+						<script>${ FRAME_HEIGHT_SCRIPT }</script>
 						</body></html>`
 					);
 				} )
@@ -80,14 +85,16 @@ export function PreviewFrame( {
 	}, [ preset, medium, JSON.stringify( video ?? null ) ] );
 
 	// Match the frame to its content so tall skins — and a 16:9 picture — are
-	// not cropped.
-	const measure = (): void => {
-		const body = frame.current?.contentDocument?.body;
-
-		if ( body ) {
-			setHeight( Math.max( 140, body.scrollHeight ) );
-		}
-	};
+	// not cropped. The frame is sandboxed, so its document cannot be read from
+	// here; it reports its own height.
+	useEffect(
+		() =>
+			listenForFrameHeight(
+				() => frame.current,
+				( reported ) => setHeight( Math.max( 140, reported ) )
+			),
+		[]
+	);
 
 	if ( failed ) {
 		return (
@@ -112,7 +119,6 @@ export function PreviewFrame( {
 				// cannot reach admin cookies or the parent document if the
 				// renderer ever lets something through unescaped.
 				sandbox="allow-scripts"
-				onLoad={ measure }
 			/>
 		</div>
 	);
