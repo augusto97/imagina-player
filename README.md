@@ -1,55 +1,53 @@
-# Imagina Player — 1.38.0
+# Imagina Player — 1.39.0
 
-Download **imagina-player-1.38.0.zip** and install it in WordPress under
+Download **imagina-player-1.39.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  b874af9144368e3230601c3e3019370ad2e446ca091fdf2948f755207cde1be6
+    SHA-256  c335bd75b1530d4ee117b2fbb90016ce329350c7813b85f7f9e3ebaafef02df6
 
 ## What this release is
 
-The 1.37.0 audit was checked against the code. This one was checked against
-WordPress: the plugin was installed on a real WordPress 6.8 (on the SQLite
-adapter, since the environment has no MySQL), and every claim the audit made
-was exercised there — activation, the markup the block editor saves, the front
-end in a real Chromium, the waveform round trip, the protected vault through
-core's own media endpoint and through the signed stream, the upgrade path,
-the lead limits over HTTP, and uninstall.
+Reported: "the video's picture only works with YouTube — a Vimeo video does
+not bring one."
 
-Most of it held. Two things did not, and both are fixed with a test that
-fails on the previous code.
+On a real WordPress with Vimeo answering, the same lookup produced the
+picture: the request is the one WordPress itself makes for a pasted Vimeo
+link, and the rendered player carried the poster. What was missing was any
+account of what Vimeo had said, and a memory that kept a single failed attempt
+for an hour. A private video, a host that cannot reach Vimeo, and a plugin not
+trying all looked exactly the same: a black rectangle.
 
-**A settings request that named one setting switched off the rest of its
-group.** "Not mentioned" and "off" were the same thing to the endpoint. A
-request carrying only the ffmpeg path switched off server generation and the
-browser fallback, and the front end stopped measuring waveforms; one carrying
-only the YouTube interface switch turned off privacy mode and every video
-control. The settings screen sends whole groups, so it never showed there —
-anything else talking to the endpoint saw it. A request now changes what it
-names and nothing else.
+**The editor now says why.** Beside the poster field, in your language:
+"Vimeo answered 403: the video is private, or its owner has restricted where
+it may be embedded", or whatever the HTTP client on your server reported,
+word for word. Under it, **Ask Vimeo again**, which forgets the remembered
+answer and asks once more — for an author who has just made the video public.
 
-**Uninstall left the vault directory behind.** Every protected file was moved
-back, and the folder stayed, empty but for its deny rules. It is removed once
-nothing but those rules is left in it. A folder that still holds a file keeps
-its rules beside it, because removing them would expose whatever is there.
+**A failure to reach Vimeo is remembered for five minutes, not an hour.** A
+timeout during one preview, or Vimeo being down, used to cost the next hour.
+A refusal from Vimeo keeps the hour, with the button above for the case where
+it no longer applies. A miss remembered by an earlier version is asked again
+rather than trusted, so a site stuck on one before this release un-sticks
+itself on the next preview.
 
-## What was verified and left alone
+**The block preview no longer needs an administrator.** It asked for the
+right to manage options, so an author or editor whose role cannot got "The
+preview could not be loaded" on every block. It asks for the right to edit
+posts now.
 
-* A page without a player loads none of the plugin's assets, on a block theme
-  and on a classic one. A page with one loads the script and the stylesheet.
-* The browser fallback measures a track the site has no waveform for, stores
-  it, and the next page view is served from the site instead of measuring
-  again. The stored row carries the current format version.
-* The media endpoint no longer names the vault directory to anyone, signed in
-  or not. The original address answers 404 once a file is protected.
-* The vault's signed stream answers Range requests with 206 and the right
-  headers, and refuses a tampered or missing token with 403.
-* The sixth lead from one address in a day is refused with 429; an address
-  that is not an address is refused with 400.
-* A site updated by uploading the plugin, with the waveform table missing its
-  format column, gets the column back on its next request.
-* Uninstall leaves no option, table, transient or moved file behind.
+## What to do with the Vimeo video that brought no picture
 
-## Still true
+Open its block in the editor and read the notice. If it names a 403, the
+video is private or restricted to certain domains on Vimeo's side, and no
+setting here can change that: choose a poster in the field below it. If it
+says the site could not reach Vimeo, the words after the dash are what your
+server's HTTP client said, and that is what to hand to your host.
 
-If you enabled `popen` on your host during the waveform trouble, put it back
-the way it was. It was never the cause and it is not needed.
+## Verified
+
+In the real block editor on WordPress 6.8: a Vimeo block on a host that
+cannot reach Vimeo shows the notice with the client's own words beside the
+poster field, and a mocked Vimeo answer produces the picture in the rendered
+player. The lookup is covered by tests driven with the answers Vimeo actually
+gives — a picture, a 403, a 404, a timeout, an outage, an answer with no
+picture, and a picture on a host that is not Vimeo's.
