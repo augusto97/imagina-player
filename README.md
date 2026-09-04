@@ -1,53 +1,38 @@
-# Imagina Player — 1.39.0
+# Imagina Player — 1.39.1
 
-Download **imagina-player-1.39.0.zip** and install it in WordPress under
+Download **imagina-player-1.39.1.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  c335bd75b1530d4ee117b2fbb90016ce329350c7813b85f7f9e3ebaafef02df6
+    SHA-256  d8e9dcc0beddc5b85e5f2f02661f2c15ab3638f32e53b6701bc2c68198fb93dd
 
 ## What this release is
 
-Reported: "the video's picture only works with YouTube — a Vimeo video does
-not bring one."
+Reported: "in the WordPress editor the videos are not taking the right
+height — on the front end they do, in the editor they don't."
 
-On a real WordPress with Vimeo answering, the same lookup produced the
-picture: the request is the one WordPress itself makes for a pasted Vimeo
-link, and the rendered player carried the poster. What was missing was any
-account of what Vimeo had said, and a memory that kept a single failed attempt
-for an hour. A private video, a host that cannot reach Vimeo, and a plugin not
-trying all looked exactly the same: a black rectangle.
+The block preview kept its starting height, 150 pixels, whatever it held.
+It runs in a sandboxed frame, on purpose, so that nothing the renderer
+prints can reach the editor — and the same wall kept the editor from
+measuring it. The measuring code read a document it could not reach,
+measured nothing, and never set a height. An audio player happens to fit in
+150 pixels, which is why this went unnoticed from the first version; a
+16:9 video shows its top fifth. The settings screen's live preview had the
+same code.
 
-**The editor now says why.** Beside the poster field, in your language:
-"Vimeo answered 403: the video is private, or its owner has restricted where
-it may be embedded", or whatever the HTTP client on your server reported,
-word for word. Under it, **Ask Vimeo again**, which forgets the remembered
-answer and asks once more — for an author who has just made the video public.
+**The frame now reports its own height** to the editor: on load, once the
+canvas has painted, and again whenever its content changes size — a poster
+loading, a waveform arriving, the window resizing. The editor accepts a
+report only from the frame it created, and only a sane number. It listens
+on the window that owns the frame, because on a block theme the block lives
+inside the editor's canvas frame and the report arrives there, one window
+down from where the editor's code runs.
 
-**A failure to reach Vimeo is remembered for five minutes, not an hour.** A
-timeout during one preview, or Vimeo being down, used to cost the next hour.
-A refusal from Vimeo keeps the hour, with the button above for the case where
-it no longer applies. A miss remembered by an earlier version is asked again
-rather than trusted, so a site stuck on one before this release un-sticks
-itself on the next preview.
-
-**The block preview no longer needs an administrator.** It asked for the
-right to manage options, so an author or editor whose role cannot got "The
-preview could not be loaded" on every block. It asks for the right to edit
-posts now.
-
-## What to do with the Vimeo video that brought no picture
-
-Open its block in the editor and read the notice. If it names a 403, the
-video is private or restricted to certain domains on Vimeo's side, and no
-setting here can change that: choose a poster in the field below it. If it
-says the site could not reach Vimeo, the words after the dash are what your
-server's HTTP client said, and that is what to hand to your host.
+Nothing changes on the front end, which was already right.
 
 ## Verified
 
-In the real block editor on WordPress 6.8: a Vimeo block on a host that
-cannot reach Vimeo shows the notice with the client's own words beside the
-poster field, and a mocked Vimeo answer produces the picture in the rendered
-player. The lookup is covered by tests driven with the answers Vimeo actually
-gives — a picture, a 403, a 404, a timeout, an outage, an answer with no
-picture, and a picture on a host that is not Vimeo's.
+In the real block editor on WordPress 6.8 with a block theme: a 16:9 video
+block is shown whole at the width of the canvas. A Chromium test holds a
+real sandboxed frame, proves its document is unreadable from outside,
+and checks that its report arrives, follows a change in size, is heard from
+inside a canvas frame, and is ignored when it comes from any other frame.
