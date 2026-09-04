@@ -154,7 +154,7 @@ function update_post_meta( $id, $key, $value ) {
 function delete_post_meta( $id, $key ) { unset( $GLOBALS['stub_meta'][ $id ][ $key ] ); return true; }
 function get_post_type( $id ) { return $GLOBALS['stub_posts'][ $id ]['type'] ?? ''; }
 function get_attached_file( $id ) { return $GLOBALS['stub_posts'][ $id ]['file'] ?? false; }
-function current_user_can( $cap ) { return true; }
+function current_user_can( $cap, ...$args ) { return ! isset( $GLOBALS['stub_caps'] ) || in_array( $cap, (array) $GLOBALS['stub_caps'], true ); }
 function current_time( $type, $gmt = 0 ) { return gmdate( 'Y-m-d H:i:s' ); }
 function rest_url( $path = '' ) { return 'https://example.test/wp-json/' . ltrim( $path, '/' ); }
 function admin_url( $path = '' ) { return 'https://example.test/wp-admin/' . ltrim( $path, '/' ); }
@@ -283,9 +283,19 @@ function wp_get_upload_dir() {
 }
 function wp_mkdir_p( $dir ) { return is_dir( $dir ) || mkdir( $dir, 0777, true ); }
 function home_url( $path = '/' ) { return 'https://example.test' . $path; }
+/*
+ * As WordPress does it: the values handed in are joined as they are, not
+ * URL-encoded — core leaves that to the caller. The stub used to encode them,
+ * which hid a URL the real function would build differently.
+ */
 function add_query_arg( $args, $url = '' ) {
 	$separator = str_contains( $url, '?' ) ? '&' : '?';
-	return $url . $separator . http_build_query( $args );
+	$pairs     = array();
+	foreach ( (array) $args as $key => $value ) {
+		if ( false === $value ) { continue; }
+		$pairs[] = $key . '=' . $value;
+	}
+	return $url . $separator . implode( '&', $pairs );
 }
 function is_user_logged_in() { return ! empty( $GLOBALS['stub_current_user'] ); }
 function get_current_user_id() { return (int) ( $GLOBALS['stub_current_user'] ?? 0 ); }
@@ -476,6 +486,7 @@ function wp_remote_get( $url, $args = array() ) {
  */
 function wp_safe_remote_get( $url, $args = array() ) {
 	$GLOBALS['stub_remote_gets'] = ( $GLOBALS['stub_remote_gets'] ?? 0 ) + 1;
+	$GLOBALS['stub_remote_urls'][] = $url;
 
 	/*
 	 * A different answer each time, for the cases where that is the point.
@@ -612,7 +623,7 @@ class WP_REST_Server {
 	const DELETABLE = 'DELETE';
 }
 
-function register_rest_route( ...$args ) { return true; }
+function register_rest_route( ...$args ) { $GLOBALS['stub_routes'][] = $args; return true; }
 
 function wp_strip_all_tags( $text, $remove_breaks = false ) {
 	$text = preg_replace( "@<(script|style)[^>]*?>.*?</\\1>@si", "", (string) $text );

@@ -38,6 +38,7 @@ interface PreviewProps {
 		title: string;
 		artist: string;
 		thumbnail: string;
+		posterReason: string;
 	} ) => void;
 	/**
 	 * Bumped to force a re-render when nothing in the attributes changed.
@@ -84,6 +85,7 @@ export function Preview( {
 							title: string;
 							artist: string;
 							thumbnail: string;
+							posterReason: string;
 						};
 					};
 

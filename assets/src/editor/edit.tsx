@@ -20,6 +20,7 @@ import {
 } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import apiFetch from '@wordpress/api-fetch';
 
 import { Swatches, TristateList } from './controls';
 import { Preview } from './preview';
@@ -231,7 +232,32 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 		title: '',
 		artist: '',
 		thumbnail: '',
+		posterReason: '',
 	} );
+
+	const [ askingVimeo, setAskingVimeo ] = useState( false );
+
+	/*
+	 * Forget what Vimeo said and ask once more. A picture is remembered for
+	 * a month and a refusal for an hour, so without this an author who has
+	 * just made the video public would be told for the next hour that it is
+	 * private. The preview is refreshed afterwards either way: it is the
+	 * preview that carries the answer.
+	 */
+	const askVimeoAgain = (): void => {
+		setAskingVimeo( true );
+
+		apiFetch( {
+			path: '/imagina-player/v1/provider/poster',
+			method: 'POST',
+			data: { src },
+		} )
+			.catch( () => undefined )
+			.finally( () => {
+				setAskingVimeo( false );
+				setRefresh( ( n ) => n + 1 );
+			} );
+	};
 
 	const patchLayer = ( index: number, patch: ListItem ): void =>
 		setAttributes( {
@@ -343,6 +369,33 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					*/ }
 					<SourceStatus src={ src } />
 					<SourceWarning src={ src } isVideoBlock={ isVideoBlock } />
+
+					{ resolved.posterReason && (
+						<Notice
+							status="warning"
+							isDismissible={ false }
+							className="imgp-editor__poster-notice"
+						>
+							<p>
+								{ sprintf(
+									/* translators: %s: why Vimeo did not hand over the picture. */
+									__(
+										'Vimeo did not hand over the video’s picture: %s. Choose a poster below, or ask again once the video is public.',
+										'imagina-player'
+									),
+									resolved.posterReason
+								) }
+							</p>
+							<Button
+								variant="secondary"
+								isBusy={ askingVimeo }
+								disabled={ askingVimeo }
+								onClick={ askVimeoAgain }
+							>
+								{ __( 'Ask Vimeo again', 'imagina-player' ) }
+							</Button>
+						</Notice>
+					) }
 
 					<WaveformNotice
 						attachmentIds={ [

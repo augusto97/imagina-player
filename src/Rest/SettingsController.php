@@ -14,6 +14,8 @@ declare( strict_types = 1 );
 
 namespace ImaginaPlayer\Rest;
 
+use ImaginaPlayer\Media\Provider;
+use ImaginaPlayer\Media\Providers\VimeoThumbnail;
 use ImaginaPlayer\Media\Track;
 use ImaginaPlayer\Peaks\PeaksGenerator;
 use ImaginaPlayer\Peaks\PeaksRepository;
@@ -23,6 +25,7 @@ use ImaginaPlayer\Protection\SelfCheck;
 use ImaginaPlayer\Protection\Vault;
 use ImaginaPlayer\Render\PlayerRenderer;
 use ImaginaPlayer\Settings;
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -39,6 +42,7 @@ final class SettingsController {
 
 	public function register_routes(): void {
 		$can_manage = static fn(): bool => current_user_can( 'manage_options' );
+		$can_edit   = static fn(): bool => current_user_can( 'edit_posts' );
 
 		register_rest_route(
 			PeaksController::REST_NAMESPACE,
@@ -69,13 +73,39 @@ final class SettingsController {
 			)
 		);
 
+		/*
+		 * Ask Vimeo again for a video's picture, forgetting what was remembered.
+		 * A write method: it makes an outbound request.
+		 */
+		register_rest_route(
+			PeaksController::REST_NAMESPACE,
+			'/provider/poster',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'retry_poster' ),
+				'permission_callback' => $can_edit,
+				'args'                => array(
+					'src' => array(
+						'type'     => 'string',
+						'required' => true,
+					),
+				),
+			)
+		);
+
+		/*
+		 * Open to anyone who can edit a post, not only administrators: this is
+		 * what the block shows while it is being edited, and an author whose
+		 * role cannot manage options was getting "The preview could not be
+		 * loaded" on every block.
+		 */
 		register_rest_route(
 			PeaksController::REST_NAMESPACE,
 			'/preview',
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'preview' ),
-				'permission_callback' => $can_manage,
+				'permission_callback' => $can_edit,
 				'args'                => array(
 					'preset'     => array(
 						'type' => 'object',
@@ -292,6 +322,40 @@ final class SettingsController {
 	}
 
 	/**
+	 * Why a video has no picture, when the reason is Vimeo's.
+	 */
+	private static function poster_reason( Track $track ): string {
+		if ( '' !== $track->poster || ! $track->is_provider() || 'vimeo' !== $track->provider->name ) {
+			return '';
+		}
+
+		// Already asked while the track was built, so this reads what was
+		// remembered and makes no second request.
+		return VimeoThumbnail::status( $track->provider )['why'];
+	}
+
+	/**
+	 * Forget what Vimeo said about a video and ask again.
+	 *
+	 * @return WP_REST_Response|WP_Error
+	 */
+	public function retry_poster( WP_REST_Request $request ) {
+		$provider = Provider::detect( Attributes::sanitize_media_url( (string) $request->get_param( 'src' ) ) );
+
+		if ( 'vimeo' !== $provider->name ) {
+			return new WP_Error(
+				'imagina_player_not_vimeo',
+				__( 'Only a Vimeo video has a picture that must be asked for.', 'imagina-player' ),
+				array( 'status' => 400 )
+			);
+		}
+
+		VimeoThumbnail::forget( $provider );
+
+		return new WP_REST_Response( VimeoThumbnail::status( $provider ), 200 );
+	}
+
+	/**
 	 * Render a player with a candidate preset, without saving anything.
 	 */
 	public function preview( WP_REST_Request $request ): WP_REST_Response {
@@ -429,6 +493,11 @@ final class SettingsController {
 					'title'     => $track->title,
 					'artist'    => $track->artist,
 					'thumbnail' => $track->thumbnail,
+					// The picture behind a video, and — for one Vimeo would not
+					// hand over — why, so the editor can say so rather than
+					// show a black rectangle that reads as "does not work".
+					'poster'       => $track->poster,
+					'posterReason' => self::poster_reason( $track ),
 				),
 			),
 			200

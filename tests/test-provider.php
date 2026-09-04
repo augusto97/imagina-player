@@ -304,5 +304,136 @@ if ( '' === $node ) {
 	}
 }
 
+echo PHP_EOL . '# Vimeo’s picture, and what is said when there is none' . PHP_EOL;
+
+/*
+ * Reported as "the thumbnail only works with YouTube". On a real WordPress
+ * with Vimeo answering, the same code produced the picture — so what was
+ * missing was not the lookup but any account of what Vimeo had said, and a
+ * memory that kept a single timeout for an hour. Both are checked here with
+ * the answers Vimeo actually gives.
+ */
+$vimeo_src = 'https://vimeo.com/76979871';
+$vimeo     = Provider::detect( $vimeo_src );
+$vimeo_key = 'imgp_vimeo_thumb_' . md5( '76979871|' );
+$picture   = 'https://i.vimeocdn.com/video/452001751-abc_1280';
+$good      = array( 'code' => 200, 'body' => json_encode( array( 'thumbnail_url' => $picture ) ) );
+
+$fresh = static function ( $answer ): void {
+	$GLOBALS['stub_transients']  = array();
+	$GLOBALS['stub_remote_urls'] = array();
+	$GLOBALS['stub_remote_gets'] = 0;
+	$GLOBALS['stub_remote']      = $answer;
+	unset( $GLOBALS['stub_remote_queue'] );
+};
+
+$remembered_for = static function () use ( $vimeo_key ): int {
+	$row = $GLOBALS['stub_transients'][ $vimeo_key ] ?? null;
+
+	return is_array( $row ) ? (int) $row['expires'] - time() : -1;
+};
+
+$fresh( $good );
+check( 'a public video’s picture comes back', $picture === ImaginaPlayer\Media\Providers\VimeoThumbnail::get( $vimeo ) );
+check(
+	'asked for at the address WordPress itself uses for a pasted Vimeo link',
+	'https://vimeo.com/api/oembed.json?url=https%3A%2F%2Fvimeo.com%2F76979871&width=1280' === ( $GLOBALS['stub_remote_urls'][0] ?? '' ),
+	(string) ( $GLOBALS['stub_remote_urls'][0] ?? '' )
+);
+ImaginaPlayer\Media\Providers\VimeoThumbnail::get( $vimeo );
+check( 'and remembered, so the next player does not ask again', 1 === $GLOBALS['stub_remote_gets'] );
+check( 'for a month', $remembered_for() > 29 * DAY_IN_SECONDS, (string) $remembered_for() );
+check( 'with nothing to explain', '' === ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo )['why'] );
+
+$fresh( array( 'code' => 403, 'body' => '' ) );
+$status = ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
+check( 'a private video gives no picture', '' === $status['url'] );
+check( 'and says so, with the status', str_contains( $status['why'], '403' ) && str_contains( $status['why'], 'private' ), $status['why'] );
+ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
+check( 'a refusal is remembered too', 1 === $GLOBALS['stub_remote_gets'] );
+check( 'for an hour', $remembered_for() > 3500 && $remembered_for() <= 3600, (string) $remembered_for() );
+
+$fresh( array( 'error' => 'cURL error 28: Operation timed out after 5001 milliseconds' ) );
+$status = ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
+check( 'a site that cannot reach Vimeo gets no picture', '' === $status['url'] );
+check( 'and is told what the HTTP client said, verbatim', str_contains( $status['why'], 'cURL error 28' ), $status['why'] );
+check( 'and that is remembered for minutes, not the hour', $remembered_for() > 0 && $remembered_for() <= 300, (string) $remembered_for() );
+
+$fresh( array( 'code' => 503, 'body' => '' ) );
+ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
+check( 'so is Vimeo being down', $remembered_for() > 0 && $remembered_for() <= 300, (string) $remembered_for() );
+
+$fresh( array( 'code' => 200, 'body' => json_encode( array( 'thumbnail_url' => 'https://evil.example/x.jpg' ) ) ) );
+$status = ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
+check( 'a picture on a host that is not Vimeo’s is not printed', '' === $status['url'] );
+check( 'and the reason names the host', str_contains( $status['why'], 'evil.example' ), $status['why'] );
+
+$fresh( array( 'code' => 200, 'body' => '{"title":"x"}' ) );
+$status = ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
+check( 'an answer with no picture in it says that', '' === $status['url'] && str_contains( $status['why'], 'without a picture' ), $status['why'] );
+
+$fresh( array( 'code' => 403, 'body' => '' ) );
+ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
+$GLOBALS['stub_remote'] = $good;
+check( 'until forgotten, the refusal stands even once the video is public', '' === ImaginaPlayer\Media\Providers\VimeoThumbnail::get( $vimeo ) );
+ImaginaPlayer\Media\Providers\VimeoThumbnail::forget( $vimeo );
+check( 'forgetting it asks again', $picture === ImaginaPlayer\Media\Providers\VimeoThumbnail::get( $vimeo ) && 2 === $GLOBALS['stub_remote_gets'] );
+
+$fresh( $good );
+set_transient( $vimeo_key, '', 3600 );
+check( 'a miss remembered by an earlier version is asked again rather than trusted', $picture === ImaginaPlayer\Media\Providers\VimeoThumbnail::get( $vimeo ) && 1 === $GLOBALS['stub_remote_gets'] );
+$fresh( array( 'code' => 403, 'body' => '' ) );
+set_transient( $vimeo_key, $picture, 3600 );
+check( 'a picture remembered by an earlier version is kept', $picture === ImaginaPlayer\Media\Providers\VimeoThumbnail::get( $vimeo ) && 0 === $GLOBALS['stub_remote_gets'] );
+
+echo PHP_EOL . '# And the editor is told' . PHP_EOL;
+
+$controller = new ImaginaPlayer\Rest\SettingsController();
+
+$fresh( array( 'code' => 403, 'body' => '' ) );
+$data = $controller->preview( new WP_REST_Request( array( 'attributes' => array( 'src' => $vimeo_src ) ) ) )->get_data();
+check( 'the block preview carries the reason', str_contains( (string) ( $data['resolved']['posterReason'] ?? '' ), '403' ), (string) ( $data['resolved']['posterReason'] ?? '' ) );
+check( 'and no poster', '' === ( $data['resolved']['poster'] ?? 'x' ) );
+check( 'without asking Vimeo twice for one preview', 1 === $GLOBALS['stub_remote_gets'], (string) $GLOBALS['stub_remote_gets'] );
+
+$fresh( $good );
+$data = $controller->preview( new WP_REST_Request( array( 'attributes' => array( 'src' => $vimeo_src ) ) ) )->get_data();
+check( 'and no reason when there is a picture', '' === ( $data['resolved']['posterReason'] ?? 'x' ) && $picture === ( $data['resolved']['poster'] ?? '' ) );
+check( 'which the rendered player shows', str_contains( (string) $data['html'], $picture ) );
+
+$data = $controller->preview( new WP_REST_Request( array( 'attributes' => array( 'src' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' ) ) ) )->get_data();
+check( 'YouTube needs no asking and has no reason', '' === ( $data['resolved']['posterReason'] ?? 'x' ) && str_contains( (string) ( $data['resolved']['poster'] ?? '' ), 'ytimg' ) );
+
+$fresh( array( 'code' => 403, 'body' => '' ) );
+ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
+$GLOBALS['stub_remote'] = $good;
+$again = $controller->retry_poster( new WP_REST_Request( array( 'src' => $vimeo_src ) ) );
+check( 'asking again from the editor forgets the refusal and asks', $picture === ( $again->get_data()['url'] ?? '' ) && 2 === $GLOBALS['stub_remote_gets'] );
+$other = $controller->retry_poster( new WP_REST_Request( array( 'src' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' ) ) );
+check( 'and refuses to ask for anything but a Vimeo video', is_wp_error( $other ) && 400 === ( $other->get_error_data()['status'] ?? 0 ) );
+
+$GLOBALS['stub_routes'] = array();
+$controller->register_routes();
+$route_for = static function ( string $path ): array {
+	foreach ( $GLOBALS['stub_routes'] as $args ) {
+		if ( ( $args[1] ?? '' ) === $path ) {
+			return (array) $args[2];
+		}
+	}
+
+	return array();
+};
+$preview_route = $route_for( '/preview' );
+$poster_route  = $route_for( '/provider/poster' );
+$GLOBALS['stub_caps'] = array( 'edit_posts' );
+check( 'the block preview is open to anyone who can edit a post', isset( $preview_route['permission_callback'] ) && true === call_user_func( $preview_route['permission_callback'] ) );
+check( 'so is asking Vimeo again', isset( $poster_route['permission_callback'] ) && true === call_user_func( $poster_route['permission_callback'] ) );
+$GLOBALS['stub_caps'] = array();
+check( 'and neither to anyone else', false === call_user_func( $preview_route['permission_callback'] ) && false === call_user_func( $poster_route['permission_callback'] ) );
+unset( $GLOBALS['stub_caps'] );
+
+$editor_bundle = (string) file_get_contents( dirname( __DIR__ ) . '/build/editor.js' );
+check( 'the editor shows the reason and offers to ask again', str_contains( $editor_bundle, 'provider/poster' ) && str_contains( $editor_bundle, 'Ask Vimeo again' ) && str_contains( $editor_bundle, 'posterReason' ) );
+
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
 exit( $failures ? 1 : 0 );

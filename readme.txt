@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.38.0
+Stable tag: 1.39.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -82,6 +82,31 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.39.0 =
+Reported: "the video's picture only works with YouTube — a Vimeo video does
+not bring one." On a real WordPress with Vimeo answering, the same lookup
+produced the picture; what was missing was any account of what Vimeo had said,
+and a memory that kept a single failed attempt for an hour.
+
+* The editor now says why a Vimeo video has no picture — "Vimeo answered 403:
+  the video is private, or its owner has restricted where it may be embedded",
+  or whatever the HTTP client reported, verbatim — and offers to ask again.
+  Nothing ever said anything before: a private video, a host that cannot
+  reach Vimeo and a plugin not trying all looked the same.
+* Fixed: a failure to reach Vimeo — a timeout during one preview, Vimeo being
+  down — was remembered for an hour, the same as a refusal. It is remembered
+  for five minutes now, and a refusal for an hour, with "Ask Vimeo again"
+  in the editor for an author who has just made the video public. A miss
+  remembered by an earlier version is asked again rather than trusted.
+* Fixed: the block preview asked for the right to manage options, so an
+  author or editor whose role cannot got "The preview could not be loaded"
+  on every block. It asks for the right to edit posts now.
+
+Verified on a real WordPress 6.8, in the real block editor: a Vimeo block
+whose host cannot reach Vimeo shows the notice with the client's own words
+beside the poster field, and a mocked Vimeo answer produces the picture in
+the rendered player.
 
 = 1.38.0 =
 The plugin was installed on a real WordPress 6.8 — not a stub — and every
