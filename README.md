@@ -1,9 +1,9 @@
-# Imagina Player — 1.40.1
+# Imagina Player — 1.40.2
 
-Download **imagina-player-1.40.1.zip** and install it in WordPress under
+Download **imagina-player-1.40.2.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  55b8fecf73af759163055b47e8defe84b27c64007f5ac45d5635c7ea44080df7
+    SHA-256  c6f14492f3c32360cd45e4021af5e0ccd3eb6aa0c797f12fb30a0f535e7a4b6d
 
 ## What this release is
 
@@ -28,6 +28,10 @@ and the same fix. Where a file cannot be fetched even by the page, it is
 linked as before.
 
 Nothing needs changing on your host.
+
+This replaces 1.40.1, which went out with one test red; the fix is the same
+and firmer: a file that never answers is given up after eight seconds and
+linked instead, and a missing address is skipped rather than failed on.
 
 ## Verified
 
