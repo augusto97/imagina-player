@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.40.1
+Stable tag: 1.40.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -102,6 +102,14 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.40.2 =
+* Hardening of the 1.40.1 change, which shipped with one test red. A file
+  that never answers is given up after eight seconds and linked instead, so
+  a slow host cannot hold the preview forever; an address that is missing is
+  skipped rather than failed on; and the plugin's own bundle no longer spells
+  the tags that a page inlining it would trip over. Install this one rather
+  than 1.40.1.
 
 = 1.40.1 =
 * Fixed: on some hosts the editor's preview showed the browser's bare
