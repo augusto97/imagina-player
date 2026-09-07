@@ -11,6 +11,10 @@ export interface EditorData {
 	frameCss: string;
 	/** Where the player inside a preview asks for a stored waveform. */
 	restUrl: string;
+	/** Where the player's on-demand pieces live. */
+	assetUrl: string;
+	/** Those pieces, to be written into the preview frame with the script. */
+	frontendChunks: string[];
 }
 
 declare global {

@@ -120,7 +120,45 @@ final class Assets {
 			 * fallback it was meant to be could never work.
 			 */
 			'restUrl'     => esc_url_raw( rest_url( Rest\PeaksController::REST_NAMESPACE ) ),
+			/*
+			 * The player loads its video chrome, provider shell and layers on
+			 * demand, from beside its own script. Inside a preview its script
+			 * is written into the frame as text, so "beside" would be the
+			 * frame's own address — nowhere — and the pieces are asked for
+			 * next to wp-admin instead. This says where they really are.
+			 */
+			'assetUrl'    => esc_url_raw( URL . 'build/' ),
+			/*
+			 * And the pieces themselves, so the preview can write them into
+			 * the frame as well: a frame that requests nothing cannot be
+			 * refused anything. All but the HLS library, which is half a
+			 * megabyte for a stream a preview never plays.
+			 */
+			'frontendChunks' => self::preview_chunks( $version ),
 		);
+	}
+
+	/**
+	 * The on-demand pieces of the front-end bundle, as versioned addresses.
+	 *
+	 * @return string[]
+	 */
+	public static function preview_chunks( string $version ): array {
+		$urls = array();
+
+		foreach ( glob( PATH . 'build/imagina-*.js' ) ?: array() as $file ) {
+			$name = basename( $file );
+
+			if ( 'imagina-hls.js' === $name ) {
+				continue;
+			}
+
+			$urls[] = add_query_arg( array( 'ver' => $version ), URL . 'build/' . $name );
+		}
+
+		sort( $urls );
+
+		return $urls;
 	}
 
 	/**

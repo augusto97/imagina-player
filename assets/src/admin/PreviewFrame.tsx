@@ -47,14 +47,21 @@ export function PreviewFrame( {
 		const timer = window.setTimeout( () => {
 			renderPreview( preset, medium, video )
 				.then( async ( result ) => {
-					const { frontendCss, frontendJs, frameCss, restUrl } =
-						boot();
+					const {
+						frontendCss,
+						frontendJs,
+						frameCss,
+						restUrl,
+						assetUrl,
+						frontendChunks,
+					} = boot();
 
 					// As text, not as links: from inside the sandboxed frame the
 					// files are cross-origin requests, which some hosts refuse.
 					const inlined = await inlineAssets(
 						[ frameCss, frontendCss ],
-						frontendJs
+						frontendJs,
+						frontendChunks ?? []
 					);
 
 					if ( cancelled ) {
@@ -71,7 +78,7 @@ export function PreviewFrame( {
 						${ inlined.head }
 						<style>body { padding: 24px 0; }</style>
 						</head><body>${ html }
-						<script>window.imaginaPlayer = { restUrl: "${ restUrl }", lazyInit: false, maxComputeBytes: 0, i18n: {} };</script>
+						<script>window.imaginaPlayer = { restUrl: "${ restUrl }", assetUrl: "${ assetUrl ?? '' }", lazyInit: false, maxComputeBytes: 0, i18n: {} };</script>
 						${ inlined.tail }
 						<script>${ FRAME_HEIGHT_SCRIPT }</script>
 						</body></html>`

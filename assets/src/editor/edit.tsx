@@ -1827,6 +1827,8 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					frontendJs: data.frontendJs,
 					frameCss: data.frameCss,
 					restUrl: data.restUrl,
+					assetUrl: data.assetUrl,
+					frontendChunks: data.frontendChunks,
 				} }
 			/>
 		</div>

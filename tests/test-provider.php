@@ -304,6 +304,27 @@ if ( '' === $node ) {
 	}
 }
 
+echo PHP_EOL . '# A video is not asked for a waveform' . PHP_EOL;
+
+/*
+ * The player asks the site for a waveform when it is given a key to ask
+ * with. A video never draws one, yet every video was given the key — so
+ * every video page view carried a request for a waveform that could not
+ * exist, and a 404 in the console for it.
+ */
+$config_of = static function ( string $html ): array {
+	preg_match( '/data-imagina-player="([^"]*)"/', $html, $m );
+
+	return (array) json_decode( html_entity_decode( $m[1] ?? '', ENT_QUOTES ), true );
+};
+
+$video_config = $config_of( $renderer->render( array( 'src' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' ) ) );
+check( 'a YouTube video is given no waveform key', '' === ( $video_config['peaksKey'] ?? 'missing' ), json_encode( $video_config['peaksKey'] ?? null ) );
+check( 'and cannot measure one', empty( $video_config['canCompute'] ) );
+
+$audio_config = $config_of( $renderer->render( array( 'src' => 'https://example.test/track.mp3' ) ) );
+check( 'an audio track still is', str_starts_with( (string) ( $audio_config['peaksKey'] ?? '' ), 'url_' ), json_encode( $audio_config['peaksKey'] ?? null ) );
+
 echo PHP_EOL . '# Vimeo’s picture, and what is said when there is none' . PHP_EOL;
 
 /*

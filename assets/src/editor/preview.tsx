@@ -26,6 +26,8 @@ interface EditorAssets {
 	frontendJs: string;
 	frameCss: string;
 	restUrl: string;
+	assetUrl?: string;
+	frontendChunks?: string[];
 }
 
 interface PreviewProps {
@@ -92,7 +94,8 @@ export function Preview( {
 					 */
 					const inlined = await inlineAssets(
 						[ assets.frameCss, assets.frontendCss ],
-						assets.frontendJs
+						assets.frontendJs,
+						assets.frontendChunks ?? []
 					);
 
 					if ( cancelled ) {
@@ -128,7 +131,7 @@ export function Preview( {
 						`<!doctype html><html><head><meta charset="utf-8">
 						${ inlined.head }
 						</head><body>${ markup }
-						<script>window.imaginaPlayer={restUrl:"${ assets.restUrl }",lazyInit:false,maxComputeBytes:0,i18n:{}};</script>
+						<script>window.imaginaPlayer={restUrl:"${ assets.restUrl }",assetUrl:"${ assets.assetUrl ?? '' }",lazyInit:false,maxComputeBytes:0,i18n:{}};</script>
 						${ inlined.tail }
 						<script>${ FRAME_HEIGHT_SCRIPT }</script>
 						</body></html>`

@@ -10,6 +10,8 @@ export function boot(): AdminBoot {
 			frontendCss: '',
 			frontendJs: '',
 			frameCss: '',
+			assetUrl: '',
+			frontendChunks: [],
 			docsUrl: '',
 		}
 	);

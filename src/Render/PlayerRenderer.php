@@ -76,6 +76,15 @@ final class PlayerRenderer {
 		// whether one is drawn are decided from the same answer.
 		$peaks_payload = $this->peaks_payload( $track, $config, $skin );
 
+		/*
+		 * Whether this player draws a waveform at all. A video never does, nor
+		 * does a skin without a scrubber — and a player that does not draw one
+		 * must not be told where to ask for one, because it asks: every video
+		 * page view carried a request for a waveform that could not exist and
+		 * a 404 in the console for it.
+		 */
+		$draws_waveform = ! $track->is_video() && Skins::uses_waveform( $skin );
+
 		// Resolved once: the site's video settings with this block's own
 		// answers over them. Every reader below takes it rather than going back
 		// to the options table, or two of them could disagree.
@@ -130,7 +139,7 @@ final class PlayerRenderer {
 			'onEnd'       => (string) $config['on_end'],
 			'sticky'      => (bool) $config['sticky'],
 			'duration'    => $track->duration,
-			'peaksKey'    => $track->peaks_key(),
+			'peaksKey'    => $draws_waveform ? $track->peaks_key() : '',
 			/*
 			 * A name for this player that survives a page load, so a call to
 			 * action somebody has dismissed stays dismissed. The DOM id was

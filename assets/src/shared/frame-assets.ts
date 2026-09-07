@@ -108,14 +108,19 @@ export interface InlinedAssets {
  *
  * @param styles Stylesheet addresses, in order.
  * @param script The script's address.
+ * @param extras Pieces the script would otherwise load on demand, by
+ *               address. Written in after it, they register themselves
+ *               and it never has to ask for them.
  */
-export async function inlineAssets( styles: string[], script: string ): Promise< InlinedAssets > {
+export async function inlineAssets( styles: string[], script: string, extras: string[] = [] ): Promise< InlinedAssets > {
 	// An address that is missing is nothing to include, not something to fail
 	// on: a caller without a frame stylesheet still gets its player styled.
 	const wanted = styles.map( ( url ) => String( url ?? '' ).trim() ).filter( ( url ) => '' !== url );
 	const wantedScript = String( script ?? '' ).trim();
+	const wantedExtras = extras.map( ( url ) => String( url ?? '' ).trim() ).filter( ( url ) => '' !== url );
 
-	const texts = await Promise.all( [ ...wanted, wantedScript ].map( fetchAsset ) );
+	const texts = await Promise.all( [ ...wanted, wantedScript, ...wantedExtras ].map( fetchAsset ) );
+	const extraTexts = texts.splice( wanted.length + 1 );
 	const scriptText = texts.pop() ?? null;
 
 	let complete = true;
@@ -144,6 +149,19 @@ export async function inlineAssets( styles: string[], script: string ): Promise<
 	} else {
 		tail = `<script>${ escapeInline( scriptText ) }` + SCRIPT_END;
 	}
+
+	wantedExtras.forEach( ( url, index ) => {
+		const text = extraTexts[ index ];
+
+		if ( null === text ) {
+			complete = false;
+			tail += `\n<script src="${ escapeAttribute( url ) }">` + SCRIPT_END;
+
+			return;
+		}
+
+		tail += `\n<script>${ escapeInline( text ) }` + SCRIPT_END;
+	} );
 
 	return { head, tail, complete };
 }

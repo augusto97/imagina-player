@@ -132,6 +132,8 @@ export interface AdminBoot {
 	frontendCss: string;
 	frontendJs: string;
 	frameCss: string;
+	assetUrl: string;
+	frontendChunks: string[];
 	docsUrl: string;
 }
 

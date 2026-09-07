@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.40.2
+Stable tag: 1.40.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -102,6 +102,24 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.40.3 =
+* Fixed: after 1.40.1 the editor's preview drew, but its console showed
+  `ChunkLoadError` for `imagina-provider.js` asked for next to wp-admin. The
+  player loads its video chrome, provider shell and layers on demand from
+  beside its own script; written into the frame as text, "beside" was the
+  frame's own address, and a host that refuses the frame's requests refused
+  those too. The previews now tell the player where the pieces live and
+  write every piece into the frame with the script — all but the HLS
+  library, half a megabyte for a stream a preview never plays.
+* Fixed: every video page view carried a request for a waveform, and a 404
+  for it in the console. A video never draws one, yet the player was given
+  the key to ask with. It is not any more; audio is unchanged.
+
+Verified in the real block editor against a server that refuses the
+plugin's files to cross-site requests: the video preview is enhanced, with
+its chrome and provider shell, and nothing is asked for from inside the
+frame. Verified in Chromium that a refused piece inlined this way runs.
 
 = 1.40.2 =
 * Hardening of the 1.40.1 change, which shipped with one test red. A file
