@@ -1,42 +1,44 @@
-# Imagina Player — 1.40.3
+# Imagina Player — 1.41.0
 
-Download **imagina-player-1.40.3.zip** and install it in WordPress under
+Download **imagina-player-1.41.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  f692d8850d024464a41d9ac2663623eb8a6b2d6ce0c9bdf41f941d8d9d024d66
+    SHA-256  ff4d9f22ee523ea663fae53d1f5f8c62531eb513b84f935a27d5c9a62bf956f3
 
 ## What this release is
 
-Reported after 1.40.2: the editor's preview loads and looks right, but the
-console shows `ChunkLoadError: Loading chunk 549 failed` for
-`imagina-provider.js`, asked for at `/wp-admin/imagina-provider.js` and
-refused with `ERR_BLOCKED_BY_RESPONSE.NotSameOrigin 403`.
+Asked: does the YouTube block control speed, subtitles and picture quality
+from this player's own interface?
 
-The player's script loads its video chrome, the YouTube and Vimeo shell,
-the calls-to-action layers and a few other pieces on demand, from beside its
-own file. Since 1.40.1 the script is written into the preview frame as text,
-so "beside its own file" became the frame's own address — nowhere — and the
-browser fell back to the page's, `/wp-admin/`. Your host then refused the
-request the same way it refused the stylesheet before.
+Speed already did. Quality nobody can: YouTube retired that control from its
+API in 2019, and every player that claims it only hides YouTube's interface.
+Subtitles did not — this player hid its subtitles button for YouTube and
+Vimeo, and with the provider's interface hidden too, a video with subtitles
+had no way to turn them on. That is what this release adds.
 
-**The preview now brings those pieces too.** The plugin tells the player
-where the pieces really live, hands the preview every one of them as a
-versioned address, and the preview writes each into the frame after the
-script. The pieces register themselves, so the player never has to ask for
-them. The only one left out is the HLS library: half a megabyte, for a
-stream a preview never plays.
+**The subtitles button now switches the provider's own subtitles.** Once the
+video has started — that is when the provider's frame exists and can say
+which languages it has — the button appears, lists **Off** and every
+language, and each pick goes to YouTube or Vimeo through its API. The
+subtitles are drawn by the provider, in the provider's style: their size and
+backing cannot be taken from this player's settings, because the provider
+does not hand the text over. The viewer's remembered language applies as it
+does to the player's own tracks, and the block's "subtitles on from the
+start" too — for YouTube it is also passed as YouTube's own switch, so they
+show from the first frame.
 
-**And a small thing seen along the way:** every video page view, front end
-included, carried a request for a waveform and a 404 in the console for it.
-A video never draws a waveform, yet the player was handed the key to ask
-with. It is not any more. Audio is unchanged.
-
-Nothing needs changing on your host.
+**A note on YouTube.** Turning subtitles on from the start is a documented
+parameter. Listing the languages and choosing one use a module YouTube's
+player API has carried for years without documenting; every player that
+offers YouTube subtitles from its own bar uses it. If YouTube ever removes
+it, the button will simply not appear for YouTube videos — nothing else
+breaks. Vimeo's calls are all documented.
 
 ## Verified
 
-Against a server that refuses the plugin's files to cross-site requests, in
-the real block editor: the video preview is enhanced, with its chrome and
-its provider shell, and nothing is requested from inside the frame. In
-Chromium, against the same kind of server: a refused piece written in this
-way runs, after the script that needs it.
+Driven in a real Chromium against stand-ins for both APIs that record what
+they are told: the button hidden before play and shown after; the menu
+listing Off and every language; each pick reaching the provider as the right
+call; the choice remembered for the next video; and a viewer's earlier choice
+applied without asking. The Vimeo stand-in includes a chapters track, which
+is correctly left out of the menu.
