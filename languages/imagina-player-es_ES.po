@@ -379,7 +379,7 @@ msgid "Card with cover"
 msgstr "Tarjeta con carátula"
 
 #: src/Render/PlayerRenderer.php:551
-#: src/Render/PlayerRenderer.php:724
+#: src/Render/PlayerRenderer.php:727
 msgid "Chapters"
 msgstr "Capítulos"
 
@@ -436,7 +436,7 @@ msgstr "Elige varios archivos de tu biblioteca de medios. Se reproducen en el or
 msgid "Classic (4:3)"
 msgstr "Clásico (4:3)"
 
-#: src/Render/PlayerRenderer.php:911
+#: src/Render/PlayerRenderer.php:914
 msgid "Close"
 msgstr "Cerrar"
 
@@ -540,7 +540,7 @@ msgid "Description"
 msgstr "Descripción"
 
 #: assets/src/admin/PresetsPanel.tsx:318
-#: src/Render/PlayerRenderer.php:1195
+#: src/Render/PlayerRenderer.php:1198
 msgid "Download"
 msgstr "Descargar"
 
@@ -585,7 +585,7 @@ msgstr "Tiempo transcurrido y total"
 msgid "Email"
 msgstr "Correo"
 
-#: src/Render/PlayerRenderer.php:865
+#: src/Render/PlayerRenderer.php:868
 msgid "Email address"
 msgstr "Dirección de correo"
 
@@ -665,7 +665,7 @@ msgid "For the weekly podcast"
 msgstr "Para el pódcast semanal"
 
 #. translators: %d: number of seconds
-#: src/Render/PlayerRenderer.php:1178
+#: src/Render/PlayerRenderer.php:1181
 msgid "Forward %d seconds"
 msgstr "Avanzar %d segundos"
 
@@ -682,7 +682,7 @@ msgid "From the start, before anything is played."
 msgstr "Desde el principio, antes de reproducir nada."
 
 #: assets/src/admin/panels.tsx:1248
-#: src/Render/PlayerRenderer.php:759
+#: src/Render/PlayerRenderer.php:762
 msgid "Full screen"
 msgstr "Pantalla completa"
 
@@ -799,12 +799,12 @@ msgid "Imagina Player requires PHP %1$s or newer. This site runs PHP %2$s."
 msgstr "Imagina Player necesita PHP %1$s o superior. Este sitio usa PHP %2$s."
 
 #. translators: %s: the name of a custom field.
-#: src/Render/PlayerRenderer.php:1321
+#: src/Render/PlayerRenderer.php:1324
 msgid "Imagina Player: no audio file selected."
 msgstr "Imagina Player: no hay ningún archivo de audio seleccionado."
 
 #. translators: %s: the name of a custom field.
-#: src/Render/PlayerRenderer.php:1312
+#: src/Render/PlayerRenderer.php:1315
 msgid "Imagina Player: the file comes from the custom field “%s” of the post this block is shown on. This one has none, so visitors see nothing here."
 msgstr "Imagina Player: el archivo sale del campo personalizado «%s» de la entrada en la que se muestra este bloque. Esta no tiene ninguno, así que los visitantes no ven nada aquí."
 
@@ -872,7 +872,7 @@ msgstr "Déjalo vacío para usar el título del propio archivo. Este no tiene, a
 msgid "Leave it empty"
 msgstr "Dejarlo vacío"
 
-#: src/Render/PlayerRenderer.php:886
+#: src/Render/PlayerRenderer.php:889
 msgid "Leave this field empty"
 msgstr "Deja este campo vacío"
 
@@ -991,7 +991,7 @@ msgid "Moves the file out of the public uploads folder and serves it through a s
 msgstr "Saca el archivo de la carpeta pública de subidas y lo sirve con un enlace firmado que caduca."
 
 #: src/Assets.php:242
-#: src/Render/PlayerRenderer.php:1204
+#: src/Render/PlayerRenderer.php:1207
 msgid "Mute"
 msgstr "Silenciar"
 
@@ -1169,7 +1169,7 @@ msgid "Percentage of the track. Rewinding past it brings it back."
 msgstr "Porcentaje de la pista. Si retrocedes por delante, vuelve a salir."
 
 #: assets/src/admin/panels.tsx:1255
-#: src/Render/PlayerRenderer.php:752
+#: src/Render/PlayerRenderer.php:755
 msgid "Picture in picture"
 msgstr "Imagen en imagen"
 
@@ -1183,7 +1183,7 @@ msgstr "Píldora"
 
 #: src/Assets.php:240
 #: src/Render/PlayerRenderer.php:689
-#: src/Render/PlayerRenderer.php:1121
+#: src/Render/PlayerRenderer.php:1124
 msgid "Play"
 msgstr "Reproducir"
 
@@ -1211,7 +1211,7 @@ msgstr "Reproducción"
 #. translators: %d: number of seconds
 #: assets/src/admin/PresetsPanel.tsx:309
 #: assets/src/admin/panels.tsx:1264
-#: src/Render/PlayerRenderer.php:1186
+#: src/Render/PlayerRenderer.php:1189
 msgid "Playback speed"
 msgstr "Velocidad de reproducción"
 
@@ -1303,7 +1303,7 @@ msgstr "La protección está desactivada en Ajustes → Imagina Player. Actíval
 msgid "Protection is switched on"
 msgstr "La protección está activada"
 
-#: src/Render/PlayerRenderer.php:744
+#: src/Render/PlayerRenderer.php:747
 msgid "Quality"
 msgstr "Calidad"
 
@@ -1363,7 +1363,7 @@ msgid "Reset"
 msgstr "Restablecer"
 
 #. translators: %d: number of seconds
-#: src/Render/PlayerRenderer.php:1173
+#: src/Render/PlayerRenderer.php:1176
 msgid "Rewind %d seconds"
 msgstr "Retroceder %d segundos"
 
@@ -1410,7 +1410,7 @@ msgstr "Vista previa al arrastrar"
 #: assets/src/admin/panels.tsx:1324
 #: assets/src/editor/edit.tsx:73
 #: src/Assets.php:247
-#: src/Render/PlayerRenderer.php:736
+#: src/Render/PlayerRenderer.php:739
 msgid "Search what is said"
 msgstr "Buscar en lo que se dice"
 
@@ -1613,7 +1613,7 @@ msgstr "Empieza en"
 msgid "Stick to the bottom while playing"
 msgstr "Fijar abajo mientras se reproduce"
 
-#: src/Render/PlayerRenderer.php:1041
+#: src/Render/PlayerRenderer.php:1044
 msgid "Stop following"
 msgstr "Dejar de seguir"
 
@@ -1646,7 +1646,7 @@ msgstr "Tamaño de los subtítulos"
 #: assets/src/admin/panels.tsx:1436
 #: assets/src/editor/edit.tsx:948
 #: assets/src/editor/edit.tsx:1196
-#: src/Render/PlayerRenderer.php:717
+#: src/Render/PlayerRenderer.php:720
 msgid "Subtitles"
 msgstr "Subtítulos"
 
@@ -2102,12 +2102,12 @@ msgstr "Vimeo señaló una imagen en %s, un dominio en el que este sitio no conf
 #: assets/src/admin/PresetsPanel.tsx:291
 #: assets/src/admin/panels.tsx:1301
 #: assets/src/editor/edit.tsx:69
-#: src/Render/PlayerRenderer.php:1219
+#: src/Render/PlayerRenderer.php:1222
 msgid "Volume"
 msgstr "Volumen"
 
 #. translators: %s: YouTube or Vimeo.
-#: src/Render/PlayerRenderer.php:985
+#: src/Render/PlayerRenderer.php:988
 msgid "Watch this video on %s"
 msgstr "Ver este vídeo en %s"
 
@@ -2350,7 +2350,7 @@ msgstr "este sitio rechazó la petición que descarga el archivo; recarga el edi
 msgid "this site refused to fetch the file and the reason did not survive the trip — Settings → Imagina Player → Waveforms has a check that asks the server directly and reports it"
 msgstr "este sitio rechazó descargar el archivo y el motivo se perdió por el camino; en Ajustes → Imagina Player → Ondas hay una comprobación que se lo pregunta al servidor directamente y lo informa"
 
-#: src/Render/PlayerRenderer.php:874
+#: src/Render/PlayerRenderer.php:877
 msgid "you@example.com"
 msgstr "tu@ejemplo.com"
 

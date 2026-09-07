@@ -61,6 +61,25 @@ export interface PlayerMedia extends EventTarget {
 	/** Only ever used to take the native controls off; a stand-in ignores it. */
 	removeAttribute: ( name: string ) => void;
 	setAttribute: ( name: string, value: string ) => void;
+	/**
+	 * Subtitles a provider draws inside its own frame, when it offers any.
+	 *
+	 * A provider will not hand the text over, so these cannot be drawn with
+	 * this player's size and backing — but they can be turned on and off and
+	 * a language chosen, which with the provider's own interface hidden is
+	 * the only way a viewer has to reach them at all.
+	 */
+	captionTracks?: () => Promise< ProviderCaptionTrack[] >;
+	/** The language showing, as its code, or an empty string for none. */
+	captionTrack?: string;
+	setCaptionTrack?: ( code: string ) => void;
+}
+
+/** One subtitle language a provider can draw. */
+export interface ProviderCaptionTrack {
+	/** The language code the provider knows it by. */
+	code: string;
+	label: string;
 }
 
 /** What a provider stand-in can do beyond the transport, if anything. */

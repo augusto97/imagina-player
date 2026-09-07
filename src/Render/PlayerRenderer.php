@@ -347,7 +347,7 @@ final class PlayerRenderer {
 
 			$parts['poster']  = $this->part_poster( $track, $video_settings );
 			$parts['bigplay'] = empty( $video_settings['big_play'] ) ? '' : $this->part_big_play();
-			$parts['video']   = $this->part_video_controls( $config, $atts, $video_config );
+			$parts['video']   = $this->part_video_controls( $config, $atts, $video_config, $track->is_provider() );
 			$parts['mark']    = $this->part_watermark( $atts );
 		}
 
@@ -706,12 +706,15 @@ final class PlayerRenderer {
 	 * @param array<string, mixed> $atts         Sanitised attributes.
 	 * @param array<string, mixed> $video_config Effective video settings.
 	 */
-	private function part_video_controls( array $config, array $atts, array $video_config ): string {
+	private function part_video_controls( array $config, array $atts, array $video_config, bool $provider = false ): string {
 		$buttons = array();
 
 		// Two conditions each, and they say different things: whether there is
 		// anything to show, and whether the author wants the button for it.
-		if ( array() !== (array) ( $atts['tracks'] ?? array() ) && ! empty( $video_config['show_captions'] ) ) {
+		// A provider video may carry the provider's own subtitles, which this
+		// bar can switch; the button starts hidden and the browser shows it
+		// once the provider has said there are any.
+		if ( ( $provider || array() !== (array) ( $atts['tracks'] ?? array() ) ) && ! empty( $video_config['show_captions'] ) ) {
 			$buttons['captions'] = array(
 				'icons' => array( 'cc' ),
 				'label' => __( 'Subtitles', 'imagina-player' ),

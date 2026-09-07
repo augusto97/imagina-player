@@ -26,7 +26,9 @@
  * controls is *when*, which is the part that shows up in PageSpeed.
  */
 
-import type { MediaCapabilities, PlayerMedia, VideoConfig } from './types';
+import type { MediaCapabilities, PlayerMedia, VideoConfig,
+	ProviderCaptionTrack,
+} from './types';
 
 /** Where each provider's API lives. Loaded on play, never before. */
 const API = {
@@ -65,6 +67,13 @@ abstract class ProviderMedia extends EventTarget implements PlayerMedia {
 	protected isMuted = false;
 
 	protected rate = 1;
+
+	/** The subtitle language showing in the provider's frame, or none. */
+	protected captionCode = '';
+
+	get captionTrack(): string {
+		return this.captionCode;
+	}
 
 	/** Set once the frame exists and its API has said it is ready. */
 	protected ready = false;
@@ -317,16 +326,116 @@ function loadScript( src: string ): Promise< void > {
  */
 const END_GUARD = 0.2;
 
+/**
+ * How long to wait for YouTube to list its subtitle languages, in
+ * milliseconds. A video that has none never says so; it simply never answers.
+ */
+const CAPTIONS_WAIT = 4000;
+
 class YouTubeMedia extends ProviderMedia {
 	capabilities: MediaCapabilities = {
 		// YouTube renders its own subtitles inside the frame, and refuses to
-		// hand the text out. Ours would be a second set on top of theirs.
+		// hand the text out. Ours would be a second set on top of theirs —
+		// but theirs can be switched and chosen; see captionTracks().
 		captions: false,
 		pictureInPicture: false,
 		elementFullscreen: false,
 	};
 
 	private player: YT.Player | null = null;
+
+	/** Whoever is waiting for YouTube to say which subtitle languages it has. */
+	private captionWaiters: Array< () => void > = [];
+
+	/**
+	 * The subtitle languages YouTube has for this video.
+	 *
+	 * Answered once the frame exists — it is built on the first play — and
+	 * once YouTube's captions module has loaded, which it announces with
+	 * `onApiChange`. The module is documented; the list of tracks and the
+	 * setting of one are options on it that YouTube has carried for years
+	 * without documenting, and every player that offers YouTube subtitles
+	 * from its own bar uses them. A video with no subtitles never announces
+	 * anything, so a clock gives up on it.
+	 */
+	captionTracks(): Promise< ProviderCaptionTrack[] > {
+		return new Promise( ( resolve ) => {
+			this.run( () => {
+				const player = this.player;
+
+				if ( ! player || ! player.getOption || ! player.loadModule ) {
+					resolve( [] );
+
+					return;
+				}
+
+				const read = (): ProviderCaptionTrack[] =>
+					( ( player.getOption?.( 'captions', 'tracklist' ) ??
+						[] ) as YT.CaptionTrack[] )
+						.filter( ( track ) => track && track.languageCode )
+						.map( ( track ) => ( {
+							code: String( track.languageCode ),
+							label: String(
+								track.displayName ||
+									track.languageName ||
+									track.languageCode
+							),
+						} ) );
+
+				const known = read();
+
+				if ( known.length ) {
+					resolve( known );
+
+					return;
+				}
+
+				let done = false;
+
+				const finish = (): void => {
+					if ( done ) {
+						return;
+					}
+
+					done = true;
+					resolve( read() );
+				};
+
+				this.captionWaiters.push( finish );
+				window.setTimeout( finish, CAPTIONS_WAIT );
+				player.loadModule( 'captions' );
+			} );
+		} );
+	}
+
+	setCaptionTrack( code: string ): void {
+		this.captionCode = code;
+		this.run( () => {
+			const player = this.player;
+
+			if ( ! player?.setOption ) {
+				return;
+			}
+
+			if ( '' === code ) {
+				// An empty track is how YouTube is told "none".
+				player.setOption( 'captions', 'track', {} );
+
+				return;
+			}
+
+			player.loadModule?.( 'captions' );
+			player.setOption( 'captions', 'track', { languageCode: code } );
+		} );
+	}
+
+	/** YouTube loaded or unloaded a module; the captions list may be there now. */
+	private apiChanged(): void {
+		const waiting = this.captionWaiters;
+
+		this.captionWaiters = [];
+		waiting.forEach( ( finish ) => finish() );
+	}
 
 	private timer = 0;
 
@@ -371,6 +480,9 @@ class YouTubeMedia extends ProviderMedia {
 					 */
 					iv_load_policy: 3,
 					fs: 0,
+					// Subtitles on from the first frame when the author asked for
+					// it, in YouTube's own words for the same switch.
+					cc_load_policy: this.config.captionsOn ? 1 : 0,
 					// Required by YouTube for a frame not on youtube.com.
 					origin: window.location.origin,
 					autoplay: this.config.autoplay ? 1 : 0,
@@ -386,6 +498,7 @@ class YouTubeMedia extends ProviderMedia {
 					...( this.config.loop ? { playlist: id } : {} ),
 				},
 				events: {
+					onApiChange: () => this.apiChanged(),
 					onReady: () => {
 						this.flush();
 						this.watch();
@@ -536,8 +649,72 @@ class VimeoMedia extends ProviderMedia {
 
 	private player: Vimeo.Player | null = null;
 
+	/** The subtitle languages Vimeo has for this video. Documented API. */
+	captionTracks(): Promise< ProviderCaptionTrack[] > {
+		return new Promise( ( resolve ) => {
+			this.run( () => {
+				const player = this.player;
+
+				if ( ! player?.getTextTracks ) {
+					resolve( [] );
+
+					return;
+				}
+
+				player
+					.getTextTracks()
+					.then( ( tracks ) => {
+						const list = ( tracks ?? [] ).filter(
+							( track ) =>
+								track.language &&
+								( 'subtitles' === track.kind ||
+									'captions' === track.kind )
+						);
+
+						const showing = list.find(
+							( track ) => 'showing' === track.mode
+						);
+
+						if ( showing ) {
+							this.captionCode = showing.language;
+						}
+
+						resolve(
+							list.map( ( track ) => ( {
+								code: track.language,
+								label: track.label || track.language,
+							} ) )
+						);
+					} )
+					.catch( () => resolve( [] ) );
+			} );
+		} );
+	}
+
+	setCaptionTrack( code: string ): void {
+		this.captionCode = code;
+		this.run( () => {
+			const player = this.player;
+			const ignore = (): void => undefined;
+
+			if ( ! player ) {
+				return;
+			}
+
+			if ( '' === code ) {
+				void player.disableTextTrack?.().catch( ignore );
+			} else {
+				void player.enableTextTrack?.( code ).catch( ignore );
+			}
+		} );
+	}
+
 	protected async mount(): Promise< void > {
-		await loadScript( API.vimeo );
+		// Another plugin may have loaded Vimeo's script already; asking for
+		// it twice is a second copy of the same file.
+		if ( ! window.Vimeo?.Player ) {
+			await loadScript( API.vimeo );
+		}
 
 		const mountPoint = document.createElement( 'div' );
 
@@ -658,11 +835,31 @@ declare global {
 			setPlaybackRate: ( rate: number ) => void;
 			getCurrentTime: () => number;
 			getDuration: () => number;
+			loadModule?: ( name: string ) => void;
+			getOption?: ( module: string, option: string ) => unknown;
+			setOption?: (
+				module: string,
+				option: string,
+				value: unknown
+			) => void;
 			destroy?: () => void;
+		}
+
+		interface CaptionTrack {
+			languageCode?: string;
+			languageName?: string;
+			displayName?: string;
 		}
 	}
 
 	namespace Vimeo {
+		interface TextTrackInfo {
+			language: string;
+			kind: string;
+			label: string;
+			mode: string;
+		}
+
 		interface Player {
 			play: () => Promise< void >;
 			pause: () => Promise< void >;
@@ -672,6 +869,12 @@ declare global {
 			setVolume: ( level: number ) => Promise< number >;
 			setMuted: ( muted: boolean ) => Promise< boolean >;
 			setPlaybackRate: ( rate: number ) => Promise< number >;
+			getTextTracks?: () => Promise< TextTrackInfo[] >;
+			enableTextTrack?: (
+				language: string,
+				kind?: string
+			) => Promise< TextTrackInfo >;
+			disableTextTrack?: () => Promise< void >;
 			on: ( event: string, handler: ( data: never ) => void ) => void;
 			destroy?: () => Promise< void >;
 		}
@@ -685,7 +888,7 @@ declare global {
 			) => YT.Player;
 		};
 		onYouTubeIframeAPIReady?: () => void;
-		Vimeo: {
+		Vimeo?: {
 			Player: new (
 				element: HTMLElement,
 				options: Record< string, unknown >

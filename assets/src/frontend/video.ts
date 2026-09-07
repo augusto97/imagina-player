@@ -600,6 +600,12 @@ export class VideoChrome {
 		const tracks = this.subtitleTracks();
 
 		if ( 0 === tracks.length ) {
+			// No tracks of ours. A provider may still have its own, drawn
+			// inside its frame; the same button then switches those.
+			if ( 'function' === typeof this.media.captionTracks ) {
+				void this.bindProviderCaptions( button );
+			}
+
 			return;
 		}
 
@@ -649,6 +655,84 @@ export class VideoChrome {
 					onPick: () => {
 						this.showTrack( tracks, track.language || track.label );
 						this.remember( track.language || track.label );
+					},
+				} ) ),
+			] );
+		} );
+	}
+
+	/**
+	 * The provider's own subtitles, switched from this bar.
+	 *
+	 * YouTube and Vimeo draw theirs inside their frame and will not hand the
+	 * text over, so they cannot take this player's size and backing. But with
+	 * the provider's interface hidden, this button is the only way a viewer
+	 * has to reach them at all — and a video with subtitles that nobody can
+	 * turn on is a video without subtitles.
+	 *
+	 * The list exists only once the provider's frame does, which is built on
+	 * the first play, so the button appears then. The viewer's remembered
+	 * language and the author's "on from the start" apply exactly as they do
+	 * to this player's own tracks.
+	 */
+	private async bindProviderCaptions(
+		button: HTMLButtonElement
+	): Promise< void > {
+		const media = this.media;
+
+		if ( ! media.captionTracks || ! media.setCaptionTrack ) {
+			return;
+		}
+
+		const list = await media.captionTracks();
+
+		if ( 0 === list.length || ! this.root.isConnected ) {
+			return;
+		}
+
+		const pick = ( code: string ): void => {
+			media.setCaptionTrack?.( code );
+			button.setAttribute( 'aria-pressed', '' !== code ? 'true' : 'false' );
+			button.classList.toggle( 'is-active', '' !== code );
+		};
+
+		const remembered = this.remembered();
+		const known = ( wanted: string | null ): string =>
+			list.find(
+				( track ) => track.code === wanted || track.label === wanted
+			)?.code ?? '';
+
+		if ( remembered ) {
+			pick( known( remembered ) );
+		} else if ( this.config.captionsOn ) {
+			pick( media.captionTrack || list[ 0 ].code );
+		} else {
+			// Loading the list can switch the provider's subtitles on by
+			// itself; the viewer has not asked, so they go back off.
+			pick( '' );
+		}
+
+		button.hidden = false;
+
+		this.on( button, 'click', () => {
+			const off = this.i18n( 'captionsOff', 'Off' );
+			const current = media.captionTrack ?? '';
+
+			this.openMenu( [
+				{
+					label: off,
+					active: '' === current,
+					onPick: () => {
+						pick( '' );
+						this.remember( '' );
+					},
+				},
+				...list.map( ( track ) => ( {
+					label: track.label,
+					active: track.code === current,
+					onPick: () => {
+						pick( track.code );
+						this.remember( track.code );
 					},
 				} ) ),
 			] );

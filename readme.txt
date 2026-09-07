@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.40.3
+Stable tag: 1.41.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,8 +60,11 @@ play — until then the page holds a picture, so there is no third-party request
 no cookie for a visitor who never watches.
 
 A video hosted by them is not a file on your site, so the download protection does
-not apply to it, and their own subtitles are drawn inside their frame rather than
-by this player.
+not apply to it. Their subtitles are drawn inside their frame, in their style, but
+this player's subtitles button turns them on and off and picks the language, so a
+viewer can reach them with the provider's own interface hidden. Playback speed is
+controlled from this player too. Picture quality is not: YouTube retired that
+control from its API in 2019, for every player.
 
 = Can the file come from a custom field, for a product template? =
 
@@ -102,6 +105,30 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.41.0 =
+* Added: the subtitles button switches a YouTube or Vimeo video's own
+  subtitles. Both providers draw theirs inside their frame and will not hand
+  the text over, so this player cannot draw them with its own size and
+  backing — but it can turn them on and off and pick the language, and with
+  the provider's interface hidden that was the only thing missing: a video
+  with subtitles nobody could turn on. The button appears once the video has
+  started, which is when the provider's frame exists and can list its
+  languages. The viewer's remembered language and the block's "subtitles on
+  from the start" apply to them as to the player's own tracks; for YouTube
+  the latter is also passed as YouTube's own switch, so they show from the
+  first frame.
+* Note on YouTube: the module that lists and sets subtitle tracks has been
+  in YouTube's player API for years without being documented. Turning them
+  on from the start is documented. Vimeo's calls are documented.
+* Vimeo's API script is not loaded a second time when another plugin already
+  loaded it.
+
+Driven in Chromium against stand-ins for both APIs that record what they are
+told: the button hidden before play and shown after, the menu listing off and
+every language, each pick reaching the provider as the right call, the choice
+remembered for the next video, and a viewer's earlier choice applied without
+asking.
 
 = 1.40.3 =
 * Fixed: after 1.40.1 the editor's preview drew, but its console showed
