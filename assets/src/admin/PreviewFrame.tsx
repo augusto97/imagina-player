@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
+import { inlineAssets } from '../shared/frame-assets';
 import {
 	FRAME_HEIGHT_SCRIPT,
 	listenForFrameHeight,
@@ -45,13 +46,20 @@ export function PreviewFrame( {
 		// pixel of travel.
 		const timer = window.setTimeout( () => {
 			renderPreview( preset, medium, video )
-				.then( ( result ) => {
+				.then( async ( result ) => {
+					const { frontendCss, frontendJs, frameCss, restUrl } =
+						boot();
+
+					// As text, not as links: from inside the sandboxed frame the
+					// files are cross-origin requests, which some hosts refuse.
+					const inlined = await inlineAssets(
+						[ frameCss, frontendCss ],
+						frontendJs
+					);
+
 					if ( cancelled ) {
 						return;
 					}
-
-					const { frontendCss, frontendJs, frameCss, restUrl } =
-						boot();
 					const html = result.html.replace(
 						'data-imagina-player=',
 						`data-peaks="${ result.peaks }" data-imagina-player=`
@@ -60,12 +68,11 @@ export function PreviewFrame( {
 					setFailed( false );
 					setDoc(
 						`<!doctype html><html><head><meta charset="utf-8">
-						<link rel="stylesheet" href="${ frameCss }">
-						<link rel="stylesheet" href="${ frontendCss }">
+						${ inlined.head }
 						<style>body { padding: 24px 0; }</style>
 						</head><body>${ html }
 						<script>window.imaginaPlayer = { restUrl: "${ restUrl }", lazyInit: false, maxComputeBytes: 0, i18n: {} };</script>
-						<script src="${ frontendJs }"></script>
+						${ inlined.tail }
 						<script>${ FRAME_HEIGHT_SCRIPT }</script>
 						</body></html>`
 					);

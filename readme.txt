@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.40.0
+Stable tag: 1.40.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -102,6 +102,23 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.40.1 =
+* Fixed: on some hosts the editor's preview showed the browser's bare
+  controls with no styling, and the console showed each of the plugin's own
+  files refused with `ERR_BLOCKED_BY_RESPONSE.NotSameOrigin 403`. The preview
+  runs in a sandboxed frame, so to the server its requests come from nowhere,
+  and hotlink protection, a Cross-Origin-Resource-Policy header or a firewall
+  rule on static files refuses them. The stylesheet and script are now
+  fetched by the editor page itself, which is the site, and written into the
+  frame as text, so the frame has nothing left to ask for. The settings
+  screen's live preview had the same fault and the same fix. Where a file
+  cannot be fetched at all it is linked as before.
+
+Verified against a server that refuses the plugin's files to cross-site
+requests, in a real Chromium: the old preview comes up unstyled on it and the
+new one styled, and in the real block editor on such a server the video
+stage takes its 16:9 height again.
 
 = 1.40.0 =
 * Added: a block can take its file from a custom field of the post it is

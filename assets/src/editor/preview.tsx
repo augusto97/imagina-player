@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
+import { inlineAssets } from '../shared/frame-assets';
 import {
 	FRAME_HEIGHT_SCRIPT,
 	listenForFrameHeight,
@@ -82,7 +83,18 @@ export function Preview( {
 				method: 'POST',
 				data: { attributes, postId },
 			} )
-				.then( ( result ) => {
+				.then( async ( result ) => {
+					/*
+					 * The stylesheet and script go into the frame as text. Linked
+					 * from inside it they are requests from an opaque origin, and
+					 * hosts that refuse those for static files gave a preview with
+					 * the browser's bare controls and no styling at all.
+					 */
+					const inlined = await inlineAssets(
+						[ assets.frameCss, assets.frontendCss ],
+						assets.frontendJs
+					);
+
 					if ( cancelled ) {
 						return;
 					}
@@ -114,11 +126,10 @@ export function Preview( {
 					setFailed( false );
 					setDoc(
 						`<!doctype html><html><head><meta charset="utf-8">
-						<link rel="stylesheet" href="${ assets.frameCss }">
-						<link rel="stylesheet" href="${ assets.frontendCss }">
+						${ inlined.head }
 						</head><body>${ markup }
 						<script>window.imaginaPlayer={restUrl:"${ assets.restUrl }",lazyInit:false,maxComputeBytes:0,i18n:{}};</script>
-						<script src="${ assets.frontendJs }"></script>
+						${ inlined.tail }
 						<script>${ FRAME_HEIGHT_SCRIPT }</script>
 						</body></html>`
 					);
