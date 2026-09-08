@@ -2,7 +2,7 @@
 # This file is distributed under the same licence as the Imagina Player plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: Imagina Player 1.42.0\n"
+"Project-Id-Version: Imagina Player 1.42.1\n"
 "Report-Msgid-Bugs-To: https://github.com/augusto97/imagina-player\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2330,27 +2330,27 @@ msgid "Video file"
 msgstr ""
 
 #. translators: %s: the HTTP status Vimeo returned.
-#: src/Media/Providers/VimeoThumbnail.php:243
+#: src/Media/Providers/VimeoThumbnail.php:357
 msgid "Vimeo answered %s when asked for it"
 msgstr ""
 
 #. translators: %s: what the HTTP client reported, verbatim.
-#: src/Media/Providers/VimeoThumbnail.php:234
+#: src/Media/Providers/VimeoThumbnail.php:348
 msgid "Vimeo answered 403 — the video is private, or its owner has restricted where it may be embedded"
 msgstr ""
 
 #. translators: %s: what the HTTP client reported, verbatim.
-#: src/Media/Providers/VimeoThumbnail.php:238
+#: src/Media/Providers/VimeoThumbnail.php:352
 msgid "Vimeo answered 404 — there is no video at that address"
 msgstr ""
 
 #. translators: %s: the HTTP status Vimeo returned.
-#: src/Media/Providers/VimeoThumbnail.php:248
-msgid "Vimeo answered, but without a picture for this video"
+#: src/Media/Providers/VimeoThumbnail.php:362
+msgid "Vimeo answered, but without a picture for this video — it does that for a video hidden from Vimeo.com or allowed only on chosen sites, and this site was named as the asker without success"
 msgstr ""
 
 #. translators: %s: the host the picture was on.
-#: src/Media/Providers/VimeoThumbnail.php:258
+#: src/Media/Providers/VimeoThumbnail.php:372
 msgid "Vimeo did not hand over a picture"
 msgstr ""
 
@@ -2360,7 +2360,7 @@ msgid "Vimeo did not hand over the video’s picture: %s. Choose a poster below,
 msgstr ""
 
 #. translators: %s: the host the picture was on.
-#: src/Media/Providers/VimeoThumbnail.php:253
+#: src/Media/Providers/VimeoThumbnail.php:367
 msgid "Vimeo pointed at a picture on %s, which this site does not trust"
 msgstr ""
 
@@ -2605,7 +2605,7 @@ msgid "this site could not open a temporary file to download into — check the 
 msgstr ""
 
 #. translators: %s: what the HTTP client reported, verbatim.
-#: src/Media/Providers/VimeoThumbnail.php:228
+#: src/Media/Providers/VimeoThumbnail.php:342
 msgid "this site could not reach Vimeo — %s"
 msgstr ""
 

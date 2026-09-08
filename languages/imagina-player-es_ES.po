@@ -2335,27 +2335,27 @@ msgid "Video file"
 msgstr "Archivo de vídeo"
 
 #. translators: %s: the HTTP status Vimeo returned.
-#: src/Media/Providers/VimeoThumbnail.php:243
+#: src/Media/Providers/VimeoThumbnail.php:357
 msgid "Vimeo answered %s when asked for it"
 msgstr "Vimeo respondió %s al pedírsela"
 
 #. translators: %s: what the HTTP client reported, verbatim.
-#: src/Media/Providers/VimeoThumbnail.php:234
+#: src/Media/Providers/VimeoThumbnail.php:348
 msgid "Vimeo answered 403 — the video is private, or its owner has restricted where it may be embedded"
 msgstr "Vimeo respondió 403: el vídeo es privado, o su propietario ha restringido dónde puede insertarse"
 
 #. translators: %s: what the HTTP client reported, verbatim.
-#: src/Media/Providers/VimeoThumbnail.php:238
+#: src/Media/Providers/VimeoThumbnail.php:352
 msgid "Vimeo answered 404 — there is no video at that address"
 msgstr "Vimeo respondió 404: no hay ningún vídeo en esa dirección"
 
 #. translators: %s: the HTTP status Vimeo returned.
-#: src/Media/Providers/VimeoThumbnail.php:248
-msgid "Vimeo answered, but without a picture for this video"
-msgstr "Vimeo respondió, pero sin una imagen para este vídeo"
+#: src/Media/Providers/VimeoThumbnail.php:362
+msgid "Vimeo answered, but without a picture for this video — it does that for a video hidden from Vimeo.com or allowed only on chosen sites, and this site was named as the asker without success"
+msgstr "Vimeo respondió, pero sin una imagen para este vídeo: lo hace con los vídeos ocultos de Vimeo.com o permitidos solo en ciertos sitios, y este sitio se identificó al preguntar sin éxito"
 
 #. translators: %s: the host the picture was on.
-#: src/Media/Providers/VimeoThumbnail.php:258
+#: src/Media/Providers/VimeoThumbnail.php:372
 msgid "Vimeo did not hand over a picture"
 msgstr "Vimeo no entregó ninguna imagen"
 
@@ -2365,7 +2365,7 @@ msgid "Vimeo did not hand over the video’s picture: %s. Choose a poster below,
 msgstr "Vimeo no entregó la imagen del vídeo: %s. Elige un póster más abajo, o vuelve a preguntar cuando el vídeo sea público."
 
 #. translators: %s: the host the picture was on.
-#: src/Media/Providers/VimeoThumbnail.php:253
+#: src/Media/Providers/VimeoThumbnail.php:367
 msgid "Vimeo pointed at a picture on %s, which this site does not trust"
 msgstr "Vimeo señaló una imagen en %s, un dominio en el que este sitio no confía"
 
@@ -2610,7 +2610,7 @@ msgid "this site could not open a temporary file to download into — check the 
 msgstr "este sitio no pudo crear el archivo temporal donde descargar; revisa el espacio libre en disco del servidor y que la carpeta de subidas tenga permiso de escritura"
 
 #. translators: %s: what the HTTP client reported, verbatim.
-#: src/Media/Providers/VimeoThumbnail.php:228
+#: src/Media/Providers/VimeoThumbnail.php:342
 msgid "this site could not reach Vimeo — %s"
 msgstr "este sitio no pudo llegar a Vimeo: %s"
 

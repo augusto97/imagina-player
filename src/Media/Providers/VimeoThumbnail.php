@@ -130,7 +130,19 @@ final class VimeoThumbnail {
 	}
 
 	/**
-	 * Ask Vimeo, once.
+	 * Ask Vimeo, at two doors.
+	 *
+	 * The first is the oEmbed endpoint WordPress core uses for a pasted Vimeo
+	 * link. For a video whose owner has hidden it from Vimeo.com, or allowed
+	 * it only on chosen sites, Vimeo answers that door with the player and
+	 * nothing else — no title, no picture — while the player itself, once on
+	 * the page, plainly has a picture to show. Seen on a real site: "Vimeo
+	 * answered, but without a picture", beside a Vimeo player showing one.
+	 *
+	 * So the second door is the one the player uses: its configuration, which
+	 * carries the stills it draws. It is asked only when the first gave no
+	 * picture, and only with this site named as the asker, which is how the
+	 * player's own request is allowed in.
 	 *
 	 * @return array{url: string, code: string, detail: string, soon: bool}
 	 *         `code` names what happened; `detail` is whatever the far end or
@@ -138,76 +150,178 @@ final class VimeoThumbnail {
 	 *         asking again in minutes rather than an hour.
 	 */
 	private static function fetch( Provider $provider ): array {
+		$first = self::ask_oembed( $provider );
+
+		if ( '' !== $first['url'] || 'no-picture' !== $first['code'] ) {
+			return $first;
+		}
+
+		$second = self::ask_player_config( $provider );
+
+		// The player's door answered with a picture, or with nothing at all —
+		// in which case the first door's honest answer is the one to keep.
+		return '' !== $second['url'] ? $second : $first;
+	}
+
+	/**
+	 * A request to Vimeo, saying which site is asking.
+	 *
+	 * A video its owner allows only on chosen sites is described only to a
+	 * request from one of them. A browser says where it is from by itself;
+	 * a server does not unless told to, and this site is the site the video
+	 * is embedded on.
+	 *
+	 * @return array<string, mixed>|\WP_Error
+	 */
+	private static function request( string $url ) {
+		return wp_safe_remote_get(
+			$url,
+			array(
+				'timeout'     => 5,
+				'redirection' => 2,
+				'headers'     => array(
+					'Referer' => home_url( '/' ),
+				),
+			)
+		);
+	}
+
+	/**
+	 * @return array{url: string, code: string, detail: string, soon: bool}
+	 */
+	private static function none( string $code, string $detail = '', bool $soon = false ): array {
+		return array(
+			'url'    => '',
+			'code'   => $code,
+			'detail' => $detail,
+			'soon'   => $soon,
+		);
+	}
+
+	/**
+	 * @return array{url: string, code: string, detail: string, soon: bool}
+	 */
+	private static function found( string $url ): array {
+		return array(
+			'url'    => $url,
+			'code'   => '',
+			'detail' => '',
+			'soon'   => false,
+		);
+	}
+
+	/**
+	 * The first door: the oEmbed endpoint, asked the way WordPress asks it.
+	 *
+	 * @return array{url: string, code: string, detail: string, soon: bool}
+	 */
+	private static function ask_oembed( Provider $provider ): array {
 		$target = 'https://vimeo.com/' . rawurlencode( $provider->id );
 
 		if ( '' !== $provider->hash ) {
 			$target .= '/' . rawurlencode( $provider->hash );
 		}
 
-		/*
-		 * The same endpoint WordPress core uses for a Vimeo link pasted into a
-		 * post, asked the same way, so a site whose posts can embed Vimeo can
-		 * get its pictures too.
-		 */
-		$response = wp_safe_remote_get(
+		$response = self::request(
 			add_query_arg(
 				array(
 					'url'   => rawurlencode( $target ),
 					'width' => 1280,
 				),
 				'https://vimeo.com/api/oembed.json'
-			),
-			array(
-				'timeout'     => 5,
-				'redirection' => 2,
 			)
 		);
 
-		$none = static fn( string $code, string $detail = '', bool $soon = false ): array => array(
-			'url'    => '',
-			'code'   => $code,
-			'detail' => $detail,
-			'soon'   => $soon,
-		);
-
 		if ( is_wp_error( $response ) ) {
-			return $none( 'unreachable', $response->get_error_message(), true );
+			return self::none( 'unreachable', $response->get_error_message(), true );
 		}
 
 		$status = (int) wp_remote_retrieve_response_code( $response );
 
 		if ( 200 !== $status ) {
-			return $none( 'status', (string) $status, 429 === $status || $status >= 500 );
+			return self::none( 'status', (string) $status, 429 === $status || $status >= 500 );
 		}
 
 		$body = json_decode( (string) wp_remote_retrieve_body( $response ), true );
 
 		if ( ! is_array( $body ) || empty( $body['thumbnail_url'] ) || ! is_string( $body['thumbnail_url'] ) ) {
-			return $none( 'no-picture' );
+			return self::none( 'no-picture' );
+		}
+
+		return self::trusted( $body['thumbnail_url'] );
+	}
+
+	/**
+	 * The second door: the player's own configuration, which lists its stills.
+	 *
+	 * Not a documented endpoint — it is the one Vimeo's player reads on
+	 * load, and it has been stable for years. Anything unexpected in its
+	 * answer is treated as no picture, which is where things stood anyway.
+	 *
+	 * @return array{url: string, code: string, detail: string, soon: bool}
+	 */
+	private static function ask_player_config( Provider $provider ): array {
+		$url = 'https://player.vimeo.com/video/' . rawurlencode( $provider->id ) . '/config';
+
+		if ( '' !== $provider->hash ) {
+			$url = add_query_arg( array( 'h' => rawurlencode( $provider->hash ) ), $url );
+		}
+
+		$response = self::request( $url );
+
+		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			return self::none( 'no-picture' );
+		}
+
+		$body   = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+		$thumbs = is_array( $body ) ? ( $body['video']['thumbs'] ?? null ) : null;
+
+		if ( ! is_array( $thumbs ) || array() === $thumbs ) {
+			return self::none( 'no-picture' );
 		}
 
 		/*
-		 * The address came from a third party and is about to be printed into
-		 * an `img src`, so it is checked rather than trusted: https only, and a
-		 * host Vimeo actually serves pictures from.
+		 * Keyed by width — "640", "1280", "base" — and the widest is wanted.
+		 * `base` is the picture without a size, which Vimeo serves at a
+		 * default width; it is the fallback when no sized one is listed.
 		 */
-		$parts = wp_parse_url( $body['thumbnail_url'] );
+		$best  = '';
+		$width = -1;
+
+		foreach ( $thumbs as $key => $candidate ) {
+			if ( ! is_string( $candidate ) || '' === $candidate ) {
+				continue;
+			}
+
+			$size = is_numeric( $key ) ? (int) $key : 0;
+
+			if ( $size > $width ) {
+				$width = $size;
+				$best  = $candidate;
+			}
+		}
+
+		return '' === $best ? self::none( 'no-picture' ) : self::trusted( $best );
+	}
+
+	/**
+	 * An address that came from a third party and is about to be printed
+	 * into an `img src`: https only, and a host Vimeo actually serves
+	 * pictures from.
+	 *
+	 * @return array{url: string, code: string, detail: string, soon: bool}
+	 */
+	private static function trusted( string $url ): array {
+		$parts = wp_parse_url( $url );
 		$host  = is_array( $parts ) ? strtolower( (string) ( $parts['host'] ?? '' ) ) : '';
 
 		if ( ! is_array( $parts ) || 'https' !== strtolower( (string) ( $parts['scheme'] ?? '' ) ) ) {
-			return $none( 'untrusted', $host );
+			return self::none( 'untrusted', $host );
 		}
 
 		$allowed = in_array( $host, self::PICTURE_HOSTS, true ) || str_ends_with( $host, '.vimeocdn.com' );
 
-		return $allowed
-			? array(
-				'url'    => $body['thumbnail_url'],
-				'code'   => '',
-				'detail' => '',
-				'soon'   => false,
-			)
-			: $none( 'untrusted', $host );
+		return $allowed ? self::found( $url ) : self::none( 'untrusted', $host );
 	}
 
 	/**
@@ -245,7 +359,7 @@ final class VimeoThumbnail {
 				);
 
 			case 'no-picture':
-				return __( 'Vimeo answered, but without a picture for this video', 'imagina-player' );
+				return __( 'Vimeo answered, but without a picture for this video — it does that for a video hidden from Vimeo.com or allowed only on chosen sites, and this site was named as the asker without success', 'imagina-player' );
 
 			case 'untrusted':
 				return sprintf(

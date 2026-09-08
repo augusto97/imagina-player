@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.42.0
+Stable tag: 1.42.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -123,6 +123,16 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.42.1 =
+* Fixed: a Vimeo video hidden from Vimeo.com, or allowed only on chosen
+  sites, had no picture — the editor said "Vimeo answered, but without a
+  picture", beside Vimeo's own player plainly showing one. Vimeo answers the
+  usual endpoint for such a video with the player and nothing else. The
+  picture is now asked for at a second door when the first gives none: the
+  player's own configuration, which lists the stills it draws. Every request
+  to Vimeo also names this site as the asker, which is how the player's own
+  request is let in for a video restricted to chosen sites.
 
 = 1.42.0 =
 * Added: Elementor widgets. With Elementor active, an **Imagina Player**

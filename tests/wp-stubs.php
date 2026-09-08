@@ -487,6 +487,7 @@ function wp_remote_get( $url, $args = array() ) {
 function wp_safe_remote_get( $url, $args = array() ) {
 	$GLOBALS['stub_remote_gets'] = ( $GLOBALS['stub_remote_gets'] ?? 0 ) + 1;
 	$GLOBALS['stub_remote_urls'][] = $url;
+	$GLOBALS['stub_remote_args'][] = $args;
 
 	/*
 	 * A different answer each time, for the cases where that is the point.

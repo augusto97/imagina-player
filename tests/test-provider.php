@@ -392,7 +392,50 @@ check( 'and the reason names the host', str_contains( $status['why'], 'evil.exam
 $fresh( array( 'code' => 200, 'body' => '{"title":"x"}' ) );
 $status = ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
 check( 'an answer with no picture in it says that', '' === $status['url'] && str_contains( $status['why'], 'without a picture' ), $status['why'] );
+check( 'after the player’s own door was tried as well', 2 === $GLOBALS['stub_remote_gets'] && str_contains( (string) ( $GLOBALS['stub_remote_urls'][1] ?? '' ), 'https://player.vimeo.com/video/76979871/config' ), json_encode( $GLOBALS['stub_remote_urls'] ) );
 
+echo PHP_EOL . '# A video Vimeo hides from Vimeo.com' . PHP_EOL;
+
+/*
+ * Seen on a real site: "Vimeo answered, but without a picture", beside
+ * Vimeo's own player showing one. For a video hidden from Vimeo.com, or
+ * allowed only on chosen sites, the oEmbed door hands out the player and
+ * nothing else; the player's own configuration lists the stills it draws.
+ */
+$fresh( $good );
+check( 'every request names this site as the asker, for a video allowed only on chosen sites', 'https://example.test/' === ( $GLOBALS['stub_remote_args'][0]['headers']['Referer'] ?? '' ), json_encode( $GLOBALS['stub_remote_args'][0]['headers'] ?? null ) );
+
+$config = array( 'code' => 200, 'body' => json_encode( array( 'video' => array( 'thumbs' => array( '640' => 'https://i.vimeocdn.com/video/999-abc_640', '1280' => 'https://i.vimeocdn.com/video/999-abc_1280', 'base' => 'https://i.vimeocdn.com/video/999-abc' ) ) ) ) );
+$fresh( null );
+$GLOBALS['stub_remote_queue'] = array( array( 'code' => 200, 'body' => '{"html":"<iframe></iframe>"}' ), $config );
+$status = ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
+check( 'the widest still from the player’s configuration is the picture', 'https://i.vimeocdn.com/video/999-abc_1280' === $status['url'], json_encode( $status ) );
+check( 'with nothing to explain', '' === $status['why'] );
+check( 'remembered for a month like any picture', $remembered_for() > 29 * DAY_IN_SECONDS );
+
+$fresh( null );
+$GLOBALS['stub_remote_queue'] = array( array( 'code' => 200, 'body' => '{"html":"x"}' ), array( 'code' => 200, 'body' => json_encode( array( 'video' => array( 'thumbs' => array( 'base' => 'https://i.vimeocdn.com/video/999-abc' ) ) ) ) ) );
+check( 'a configuration listing only the unsized still uses it', 'https://i.vimeocdn.com/video/999-abc' === ImaginaPlayer\Media\Providers\VimeoThumbnail::get( $vimeo ) );
+
+$unlisted = Provider::detect( 'https://vimeo.com/76979871/abc123def4' );
+$fresh( null );
+$GLOBALS['stub_remote_queue'] = array( array( 'code' => 200, 'body' => '{"html":"x"}' ), $config );
+ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $unlisted );
+check( 'an unlisted video’s code goes to the player’s door too', str_contains( (string) ( $GLOBALS['stub_remote_urls'][1] ?? '' ), '/video/76979871/config' ) && str_contains( (string) ( $GLOBALS['stub_remote_urls'][1] ?? '' ), 'h=abc123def4' ), (string) ( $GLOBALS['stub_remote_urls'][1] ?? '' ) );
+
+$fresh( null );
+$GLOBALS['stub_remote_queue'] = array( array( 'code' => 200, 'body' => '{"html":"x"}' ), array( 'code' => 200, 'body' => json_encode( array( 'video' => array( 'thumbs' => array( '1280' => 'https://evil.example/x.jpg' ) ) ) ) ) );
+$status = ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
+check( 'a still on a host that is not Vimeo’s is not used, and the honest answer stands', '' === $status['url'] && str_contains( $status['why'], 'without a picture' ), $status['why'] );
+
+$fresh( null );
+$GLOBALS['stub_remote_queue'] = array( array( 'code' => 200, 'body' => '{"html":"x"}' ), array( 'code' => 403, 'body' => '' ) );
+$status = ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
+check( 'the player’s door refusing leaves the first answer, and it is remembered for the hour', '' === $status['url'] && $remembered_for() > 3500, (string) $remembered_for() );
+
+$fresh( array( 'code' => 403, 'body' => '' ) );
+ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
+check( 'a refusal at the first door is not followed by a second knock', 1 === $GLOBALS['stub_remote_gets'] );
 $fresh( array( 'code' => 403, 'body' => '' ) );
 ImaginaPlayer\Media\Providers\VimeoThumbnail::status( $vimeo );
 $GLOBALS['stub_remote'] = $good;
