@@ -1,44 +1,51 @@
-# Imagina Player — 1.41.0
+# Imagina Player — 1.42.0
 
-Download **imagina-player-1.41.0.zip** and install it in WordPress under
+Download **imagina-player-1.42.0.zip** and install it in WordPress under
 Plugins → Add New → Upload Plugin.
 
-    SHA-256  ff4d9f22ee523ea663fae53d1f5f8c62531eb513b84f935a27d5c9a62bf956f3
+    SHA-256  6755e478bdfcaf0a0c72511a8170e07b03a9500513ca7b6455e2dd433202a43c
 
 ## What this release is
 
-Asked: does the YouTube block control speed, subtitles and picture quality
-from this player's own interface?
+Asked: make the plugin work with Elementor, with a widget or several.
 
-Speed already did. Quality nobody can: YouTube retired that control from its
-API in 2019, and every player that claims it only hides YouTube's interface.
-Subtitles did not — this player hid its subtitles button for YouTube and
-Vimeo, and with the provider's interface hidden too, a video with subtitles
-had no way to turn them on. That is what this release adds.
+**Three Elementor widgets.** With Elementor active, the widget panel gets an
+**Imagina Player** category holding the audio player, the video player and
+the playlist. They are rendered by the same code as the blocks, so a player
+on an Elementor page is exactly the player on any other page, and the front
+end loads the same small bundle.
 
-**The subtitles button now switches the provider's own subtitles.** Once the
-video has started — that is when the provider's frame exists and can say
-which languages it has — the button appears, lists **Off** and every
-language, and each pick goes to YouTube or Vimeo through its API. The
-subtitles are drawn by the provider, in the provider's style: their size and
-backing cannot be taken from this player's settings, because the provider
-does not hand the text over. The viewer's remembered language applies as it
-does to the player's own tracks, and the block's "subtitles on from the
-start" too — for YouTube it is also passed as YouTube's own switch, so they
-show from the first frame.
+Each widget's panel:
 
-**A note on YouTube.** Turning subtitles on from the start is a documented
-parameter. Listing the languages and choosing one use a module YouTube's
-player API has carried for years without documenting; every player that
-offers YouTube subtitles from its own bar uses it. If YouTube ever removes
-it, the button will simply not appear for YouTube videos — nothing else
-breaks. Vimeo's calls are all documented.
+- **Audio** and **Video**: the file from the media library, an address (a
+  YouTube or Vimeo link, an MP4, an HLS stream) or a custom field of the
+  post the page shows — the same dynamic source as the block, for product
+  templates. Title, artist, cover or poster. Preset, skin, accent colour,
+  corner radius. Every control as a three-way choice: the preset's answer,
+  show, or hide. Calls to action: a card, a bar or an email gate at a point
+  in the playback. Video adds the aspect ratio, autoplay and muting, the
+  controls' hiding delay, poster fit, subtitle size, subtitle tracks,
+  chapters, and the switch that hides YouTube's and Vimeo's own interface.
+- **Playlist**: a list of tracks by file or address, with title and artist,
+  a heading, list or grid, and a preset.
+
+Text and address fields accept Elementor's dynamic tags, so a title or an
+address can come from a post field, an ACF field or any other tag.
+
+Nothing is registered unless Elementor is active. Elementor 3.5 or newer is
+required, which is where its current widget registration arrived.
 
 ## Verified
 
-Driven in a real Chromium against stand-ins for both APIs that record what
-they are told: the button hidden before play and shown after; the menu
-listing Off and every language; each pick reaching the provider as the right
-call; the choice remembered for the next video; and a viewer's earlier choice
-applied without asking. The Vimeo stand-in includes a chapters track, which
-is correctly left out of the menu.
+On a real Elementor 4.4 on WordPress 6.8: the three widgets register in
+their category with their panels; a page built with all three renders all
+three players, with the front-end script and stylesheet enqueued; and a
+widget's switch set to off reaches the rendered player. Every choice each
+widget offers is checked, one by one, against what the renderer receives,
+with Elementor's base classes stood in for so the check runs anywhere.
+
+One thing I could not exercise from here is Elementor's editor itself,
+whose interface needs its built assets. The widgets are rendered on request
+by Elementor and the plugin's bundle picks new markup up as it arrives, so
+they should appear live in the editor's preview; if a widget does not show
+there, tell me what you see.
