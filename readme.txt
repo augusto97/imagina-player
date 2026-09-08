@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.41.0
+Stable tag: 1.42.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,9 +43,16 @@ custom field of the post it is shown on — an ACF or JetEngine field, or plain
 post meta — so a product template built once shows each product's own video,
 and a custom post type's single view plays each entry's own recording.
 
-= Blocks and shortcodes =
+**Elementor too.** The audio player, the video player and the playlist are
+Elementor widgets as well, in their own category, with the same choices the
+blocks offer and the same renderer behind them. A file from the library, an
+address, or a custom field of the post — with Elementor's dynamic tags where
+they apply.
 
-* Block: **Imagina Audio Player**
+= Blocks, widgets and shortcodes =
+
+* Blocks: **Imagina Audio Player**, **Imagina Video Player**, **Imagina Playlist**
+* Elementor widgets: the same three, under the **Imagina Player** category (Elementor 3.5 or newer)
 * Shortcode: `[imagina_player src="https://example.com/track.mp3" artist="…" title="…"]`
 * Shortcode, reading the file from a custom field of the current post: `[imagina_player field="video_url"]`
 
@@ -80,6 +87,17 @@ post type, and in the shortcode as `field="…"`.
 The field is read from the post the block is shown on, at the moment it is
 shown. A key starting with an underscore is hidden meta and is never read.
 
+= Does it work with Elementor? =
+
+Yes. With Elementor active, the widget panel has an **Imagina Player** category
+holding the audio player, the video player and the playlist. Each takes a file
+from the media library, an address — a YouTube or Vimeo link, an MP4, an HLS
+stream — or a custom field of the post the page shows, and offers the preset,
+the skin, every control as a three-way choice, subtitles, chapters and calls to
+action. Text fields accept Elementor's dynamic tags. The widgets are rendered
+by the same code as the blocks, so a player on an Elementor page is the same
+player, and the front end loads the same small bundle. Elementor 3.5 or newer.
+
 = Does it need ffmpeg? =
 
 No. ffmpeg makes waveforms appear instantly on first view; without it the first
@@ -105,6 +123,26 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.42.0 =
+* Added: Elementor widgets. With Elementor active, an **Imagina Player**
+  category in the widget panel holds the audio player, the video player and
+  the playlist. Each takes a file from the media library, an address, or a
+  custom field of the post the page shows; the audio and video widgets offer
+  the preset, the skin, the accent colour and corner radius, every control as
+  a three-way choice between the preset's answer, on and off, calls to
+  action, and — for video — the aspect ratio, poster, subtitles, chapters and
+  the YouTube and Vimeo interface switch. The playlist takes a list of tracks
+  by file or address, a heading, a layout and a preset. Text and address
+  fields accept Elementor's dynamic tags. Rendered by the same code as the
+  blocks. Nothing is registered unless Elementor is active, and Elementor
+  3.5 or newer is asked for.
+
+Verified on a real Elementor 4.4 on WordPress 6.8: the three widgets register
+in their category with their panels, a page built with all three renders all
+three players with the front-end bundle enqueued, and a widget's switch set
+to off reaches the rendered player. Every choice each widget offers is
+checked, one by one, against what the renderer receives.
 
 = 1.41.0 =
 * Added: the subtitles button switches a YouTube or Vimeo video's own

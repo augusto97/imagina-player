@@ -12,6 +12,7 @@ namespace ImaginaPlayer;
 use ImaginaPlayer\Admin\Dashboard;
 use ImaginaPlayer\Blocks\BlockRegistrar;
 use ImaginaPlayer\Peaks\PeaksRepository;
+use ImaginaPlayer\Integrations\Elementor\Integration as ElementorIntegration;
 use ImaginaPlayer\Protection\Integration as ProtectionIntegration;
 use ImaginaPlayer\Protection\StreamServer;
 use ImaginaPlayer\Leads\LeadRepository;
@@ -70,6 +71,7 @@ final class Plugin {
 			'blocks'      => new BlockRegistrar(),
 			'shortcodes'  => new PlayerShortcode(),
 			'dashboard'   => new Dashboard(),
+			'elementor'   => new ElementorIntegration(),
 		);
 
 		foreach ( $this->services as $service ) {
