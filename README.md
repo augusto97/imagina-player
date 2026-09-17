@@ -1,46 +1,87 @@
-# Imagina Player — 1.42.1
+# Imagina Player
 
-Download **imagina-player-1.42.1.zip** and install it in WordPress under
-Plugins → Add New → Upload Plugin.
+Reproductor de audio con forma de onda para WordPress: bloque de Gutenberg,
+presets reutilizables y un núcleo de ~8 KB gzip sin dependencias.
 
-    SHA-256  3c67956c22d105d17308ddc48e1771ce151a1f74c4ebd6c33df15c902db1b640
+![Vista del reproductor](docs/preview.png)
 
-## What this release is
+## Estado
 
-Reported: a Vimeo video showed no picture in the player, in this plugin and
-in Presto Player alike, while WordPress's own Vimeo embed showed it. The
-editor's notice read: "Vimeo answered, but without a picture for this
-video."
+`1.0.0` — audio completo y funcional. El vídeo está preparado en el núcleo pero
+su interfaz específica todavía no está construida (ver
+[docs/ARQUITECTURA.md](docs/ARQUITECTURA.md#vídeo-siguiente-fase)).
 
-That notice was exact. For a video its owner has hidden from Vimeo.com, or
-allowed only on chosen sites, Vimeo answers the usual endpoint with the
-player and nothing else — no title, no picture. WordPress's embed block
-never asks for a picture: it puts Vimeo's whole player on the page, and the
-player draws its own still from the browser. Any plugin that asks from the
-server got nothing.
+## Instalación para desarrollo
 
-**The picture is now asked for at a second door.** When the first gives
-none, the plugin reads the player's own configuration — the same thing
-Vimeo's player reads when it loads — which lists the stills it draws, and
-takes the widest. Every request to Vimeo also names your site as the asker,
-which is how a video restricted to chosen sites lets the player's own
-request in.
+```sh
+npm install
+npm run build          # o `npm start` para recompilar al guardar
+./tests/run.sh         # suite CLI (172 comprobaciones), no necesita WordPress
+./bin/build-zip.sh     # genera dist/imagina-player-<versión>.zip
+```
 
-A note: that second door is not a documented part of Vimeo's API. It is what
-Vimeo's own player uses and it has been stable for years; if Vimeo ever
-changes it, the plugin falls back to the honest "no picture" and the
-poster field, and nothing else is affected.
+La carpeta `build/` está versionada a propósito: al clonar el repositorio dentro
+de `wp-content/plugins/` el plugin funciona sin compilar nada.
 
-If the picture still does not appear after installing: open the block, and
-under Media press **Ask Vimeo again**, since the earlier answer is remembered
-for an hour. If the notice is still there, paste its text.
+## Instalación en un WordPress
 
-## Verified
+Descarga el ZIP de la rama [`release`](https://github.com/augusto97/imagina-player/tree/release)
+y súbelo en **Plugins → Añadir nuevo → Subir plugin**.
 
-Against recorded answers shaped like Vimeo's: an oEmbed answer without a
-picture followed by a player configuration with stills yields the widest
-still; an unlisted video's code travels to the second door; a still on a
-host that is not Vimeo's is refused; a refusal at the first door is not
-followed by a second knock; every request names the site. Vimeo itself is
-not reachable from where this was built, so the client's own video was not
-fetched here.
+Al publicar una versión: sube el número en `imagina-player.php` (la cabecera y la
+constante `VERSION`), en `package.json`, en `blocks/audio/block.json` y en el
+`Stable tag` de `readme.txt`; añade la entrada al changelog; y ejecuta
+`./tests/run.sh`, que falla si alguno de esos números no coincide.
+
+## Traducciones
+
+El plugin viene traducido al español (`languages/imagina-player-es_ES.po`). No
+hace falta `gettext` ni `msgfmt` instalados: las tres herramientas están en
+`bin/`.
+
+```sh
+php bin/make-pot.php                              # extrae las cadenas del código
+php bin/merge-po.php languages/imagina-player-es_ES.po   # trae las nuevas al .po
+#   … rellena los msgstr vacíos …
+php bin/make-mo.php languages/imagina-player-es_ES.po    # compila el .mo y los .json
+```
+
+Para un idioma nuevo, copia `languages/imagina-player.pot` a
+`languages/imagina-player-<locale>.po`, ajusta `Language:` y `Plural-Forms:` en
+la cabecera, traduce y compílalo igual.
+
+`tests/test-translations.php` comprueba que la plantilla sigue al día con el
+código, que no queda nada sin traducir, que los `%s` y `%d` de cada traducción
+coinciden con los del original, y que una página renderizada de verdad sale en
+español.
+
+## Uso
+
+**Bloque:** _Imagina Audio Player_, en la categoría Multimedia.
+
+**Shortcode:**
+
+```
+[imagina_player src="https://cdn.example.com/pista.mp3"
+                artist="Elízabeth Guerra Gómez"
+                title="1.1 El camino del amor"
+                preset="default"]
+```
+
+Los presets se editan en **Ajustes → Imagina Player**.
+
+**Archivos protegidos:** marca un audio como protegido en su ficha de la
+biblioteca de medios y pasará a servirse por un enlace firmado que caduca. Los
+detalles, en [docs/PROTECCION.md](docs/PROTECCION.md).
+
+## Documentación
+
+- [Análisis previo](docs/ANALISIS.md) — el plugin que se sustituye, los
+  competidores y por qué se reescribe en lugar de bifurcar.
+- [Arquitectura](docs/ARQUITECTURA.md) — cómo está montado y por qué.
+- [Medios protegidos](docs/PROTECCION.md) — enlaces firmados, configuración de
+  nginx, caché de página y el enganche con plugins de cursos.
+
+## Licencia
+
+GPL-2.0-or-later.
