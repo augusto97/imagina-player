@@ -324,7 +324,7 @@ $expected = array(
 	'Playback',
 	'Subtitles',
 	'Chapters and previews',
-	'Calls to action',
+	'Overlays and calls to action',
 	'Advanced',
 );
 

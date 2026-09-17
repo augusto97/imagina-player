@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.43.0
+Stable tag: 1.44.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -75,6 +75,24 @@ The same works from a link: an address ending in `?t=95` or `#t=1m35s` opens
 the player at that second, paused, and `&player=intro` says which one. The
 gear on a video's bar has **Copy link to this moment** for exactly this.
 
+= Can I put text, an image or a form over the video? =
+
+Yes. In the block's **Overlays and calls to action** panel, add an overlay and
+pick its kind: text in a corner, an image (a logo, a still), a hotspot — a
+spot on the picture that shows a label and can link somewhere — or a
+shortcode, which shows whatever another plugin prints: a form, a button, a
+countdown. Each appears at a moment and can go away at another, and none of
+them stops playback. The call to action and the email gate still do.
+
+= Can the video show its transcript? =
+
+Yes, when it carries subtitles. Turn on **Transcript under the picture** in the
+block's Controls panel, or for the whole site in Settings → Video. A closed
+panel under the video opens to every line with its time; the line being said
+is marked and kept in view, pressing a line jumps there, and the box above
+narrows the list to a word. YouTube and Vimeo keep their subtitles inside
+their frame, so this is for videos this site serves.
+
 = Can I use a YouTube or Vimeo video? =
 
 Yes. Paste the address into the Video block. It plays inside this player with your
@@ -140,6 +158,24 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.44.0 =
+* Added: four more kinds of overlay beside the call to action, the bar and
+  the email gate. **Text over the picture** puts a caption in one of nine
+  places; **Image over the picture** puts a logo or a still there, sized as
+  a share of the picture; **Hotspot** is a pulsing spot at a point of the
+  picture with a label on hover or press, and a link if wanted;
+  **Shortcode** shows whatever another plugin's shortcode prints — a form, a
+  button, a countdown — over the picture. All four appear at a moment and
+  can leave at another, and none of them pauses playback. In the block's
+  panel (now "Overlays and calls to action") and in the Elementor widgets.
+* Added: a transcript under the picture. With **Transcript under the
+  picture** on — in the video block's Controls, in Settings → Video, or in
+  the Elementor widget — a video that carries subtitles gets a closed panel
+  beneath it that opens to every line with its time, marks the line being
+  said and keeps it in view, jumps to a line when pressed, and narrows to a
+  word typed in its box, accents or not. Built from the subtitles the video
+  already carries; nothing is fetched twice. Off by default.
 
 = 1.43.0 =
 * Added: timestamp buttons. `[imagina_time at="1:35"]The second question[/imagina_time]`

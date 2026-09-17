@@ -117,6 +117,7 @@ export class VideoChrome {
 		this.bindSettings();
 		this.bindStoryboard();
 		this.bindSearch();
+		this.bindTranscript();
 		this.bindFocusMode();
 		this.hardenContextMenu();
 
@@ -1408,6 +1409,71 @@ export class VideoChrome {
 		paint();
 		this.on( this.media, 'loadedmetadata', paint );
 		this.on( this.media, 'durationchange', paint );
+	}
+
+	/**
+	 * The transcript under the picture.
+	 *
+	 * The server rendered the panel, closed; the first time it is opened the
+	 * lines are read from the subtitle tracks and follow playback from then
+	 * on. Only a real element carries tracks this can read, which is also
+	 * why the server only prints the panel for one.
+	 */
+	private bindTranscript(): void {
+		const panel =
+			this.root.querySelector< HTMLDetailsElement >(
+				'.imgp__transcript'
+			);
+		const element = this.element;
+
+		if ( ! panel || ! element ) {
+			return;
+		}
+
+		// Ask for the subtitle files now, as the search box does, so the
+		// lines are there by the time somebody opens the panel.
+		for ( let i = 0; i < element.textTracks.length; i++ ) {
+			const track = element.textTracks[ i ];
+
+			if ( 'disabled' === track.mode ) {
+				track.mode = 'hidden';
+			}
+		}
+
+		let mounted = false;
+
+		const open = (): void => {
+			if ( mounted || ! panel.open ) {
+				return;
+			}
+
+			mounted = true;
+
+			import(
+				/* webpackChunkName: "imagina-transcript" */ './transcript'
+			)
+				.then( ( { mount } ) => {
+					this.cleanup.push(
+						mount(
+							{
+								root: this.root,
+								element,
+								media: this.media,
+								i18n: this.host.i18n,
+								seekTo: ( seconds ) =>
+									this.host.seekTo( seconds ),
+							},
+							panel
+						)
+					);
+				} )
+				.catch( () => {
+					mounted = false;
+				} );
+		};
+
+		this.on( panel, 'toggle', open );
+		open();
 	}
 
 	/**

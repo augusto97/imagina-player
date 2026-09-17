@@ -249,7 +249,7 @@ abstract class PlayerWidget extends Widget_Base {
 	protected function layer_controls(): void {
 		$this->start_controls_section(
 			'layers_section',
-			array( 'label' => __( 'Calls to action', 'imagina-player' ) )
+			array( 'label' => __( 'Overlays and calls to action', 'imagina-player' ) )
 		);
 
 		$repeater = new Repeater();
@@ -261,19 +261,49 @@ abstract class PlayerWidget extends Widget_Base {
 				'type'    => Controls_Manager::SELECT,
 				'default' => 'cta',
 				'options' => array(
-					'cta'   => __( 'Card with a button', 'imagina-player' ),
-					'bar'   => __( 'Bar with a button', 'imagina-player' ),
-					'email' => __( 'Email gate', 'imagina-player' ),
+					'cta'       => __( 'Card with a button', 'imagina-player' ),
+					'bar'       => __( 'Bar with a button', 'imagina-player' ),
+					'email'     => __( 'Email gate', 'imagina-player' ),
+					'text'      => __( 'Text over the picture', 'imagina-player' ),
+					'image'     => __( 'Image over the picture', 'imagina-player' ),
+					'hotspot'   => __( 'Hotspot (a spot to press)', 'imagina-player' ),
+					'shortcode' => __( 'Shortcode', 'imagina-player' ),
 				),
 			)
 		);
 		$repeater->add_control( 'at', array( 'label' => __( 'Show at (percent of playback)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 0, 'max' => 100, 'default' => 100 ) );
 		$repeater->add_control( 'until', array( 'label' => __( 'Hide again at (percent of playback, 0 for never)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 0, 'max' => 100, 'default' => 0 ) );
-		$repeater->add_control( 'title', array( 'label' => __( 'Title', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'dynamic' => array( 'active' => true ) ) );
-		$repeater->add_control( 'text', array( 'label' => __( 'Text', 'imagina-player' ), 'type' => Controls_Manager::TEXTAREA, 'dynamic' => array( 'active' => true ) ) );
-		$repeater->add_control( 'button', array( 'label' => __( 'Button label', 'imagina-player' ), 'type' => Controls_Manager::TEXT ) );
-		$repeater->add_control( 'url', array( 'label' => __( 'Link', 'imagina-player' ), 'type' => Controls_Manager::URL, 'options' => false, 'dynamic' => array( 'active' => true ), 'condition' => array( 'type!' => 'email' ) ) );
-		$repeater->add_control( 'new_tab', array( 'label' => __( 'Open in a new tab', 'imagina-player' ), 'type' => Controls_Manager::SWITCHER, 'condition' => array( 'type!' => 'email' ) ) );
+		$repeater->add_control( 'shortcode', array( 'label' => __( 'Shortcode', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'placeholder' => '[contact-form-7 id="12"]', 'description' => __( 'Any shortcode another plugin provides. It runs when the page is shown.', 'imagina-player' ), 'condition' => array( 'type' => 'shortcode' ) ) );
+		$repeater->add_control( 'image', array( 'label' => __( 'Image', 'imagina-player' ), 'type' => Controls_Manager::MEDIA, 'media_types' => array( 'image' ), 'dynamic' => array( 'active' => true ), 'condition' => array( 'type' => 'image' ) ) );
+		$repeater->add_control( 'width', array( 'label' => __( 'Width (percent of the picture)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 5, 'max' => 100, 'default' => 25, 'condition' => array( 'type' => 'image' ) ) );
+		$repeater->add_control( 'x', array( 'label' => __( 'Across (percent from the left)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 0, 'max' => 100, 'default' => 50, 'condition' => array( 'type' => 'hotspot' ) ) );
+		$repeater->add_control( 'y', array( 'label' => __( 'Down (percent from the top)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 0, 'max' => 100, 'default' => 50, 'condition' => array( 'type' => 'hotspot' ) ) );
+		$repeater->add_control(
+			'position',
+			array(
+				'label'     => __( 'Position', 'imagina-player' ),
+				'type'      => Controls_Manager::SELECT,
+				'default'   => '',
+				'options'   => array(
+					''             => __( 'Default for the kind', 'imagina-player' ),
+					'top-left'     => __( 'Top left', 'imagina-player' ),
+					'top'          => __( 'Top', 'imagina-player' ),
+					'top-right'    => __( 'Top right', 'imagina-player' ),
+					'left'         => __( 'Left', 'imagina-player' ),
+					'center'       => __( 'Centre', 'imagina-player' ),
+					'right'        => __( 'Right', 'imagina-player' ),
+					'bottom-left'  => __( 'Bottom left', 'imagina-player' ),
+					'bottom'       => __( 'Bottom', 'imagina-player' ),
+					'bottom-right' => __( 'Bottom right', 'imagina-player' ),
+				),
+				'condition' => array( 'type' => array( 'text', 'image', 'shortcode' ) ),
+			)
+		);
+		$repeater->add_control( 'title', array( 'label' => __( 'Title', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'dynamic' => array( 'active' => true ), 'condition' => array( 'type!' => 'shortcode' ) ) );
+		$repeater->add_control( 'text', array( 'label' => __( 'Text', 'imagina-player' ), 'type' => Controls_Manager::TEXTAREA, 'dynamic' => array( 'active' => true ), 'condition' => array( 'type!' => array( 'shortcode', 'image' ) ) ) );
+		$repeater->add_control( 'button', array( 'label' => __( 'Button label', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'condition' => array( 'type' => array( 'cta', 'bar', 'email' ) ) ) );
+		$repeater->add_control( 'url', array( 'label' => __( 'Link', 'imagina-player' ), 'type' => Controls_Manager::URL, 'options' => false, 'dynamic' => array( 'active' => true ), 'condition' => array( 'type!' => array( 'email', 'shortcode' ) ) ) );
+		$repeater->add_control( 'new_tab', array( 'label' => __( 'Open in a new tab', 'imagina-player' ), 'type' => Controls_Manager::SWITCHER, 'condition' => array( 'type!' => array( 'email', 'shortcode' ) ) ) );
 		$repeater->add_control( 'skip', array( 'label' => __( 'Can be dismissed', 'imagina-player' ), 'type' => Controls_Manager::SWITCHER, 'default' => 'yes' ) );
 		$repeater->add_control( 'list', array( 'label' => __( 'List name', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'description' => __( 'Where the address is filed in Leads.', 'imagina-player' ), 'condition' => array( 'type' => 'email' ) ) );
 		$repeater->add_control( 'consent', array( 'label' => __( 'Consent text', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'condition' => array( 'type' => 'email' ) ) );
@@ -282,7 +312,7 @@ abstract class PlayerWidget extends Widget_Base {
 		$this->add_control(
 			'layers',
 			array(
-				'label'       => __( 'Calls to action', 'imagina-player' ),
+				'label'       => __( 'Overlays', 'imagina-player' ),
 				'type'        => Controls_Manager::REPEATER,
 				'fields'      => $repeater->get_controls(),
 				'default'     => array(),
@@ -401,19 +431,28 @@ abstract class PlayerWidget extends Widget_Base {
 				continue;
 			}
 
+			$image = self::image_from( $row['image'] ?? null );
+
 			$out[] = array(
-				'type'    => (string) ( $row['type'] ?? 'cta' ),
-				'at'      => (int) ( $row['at'] ?? 100 ),
-				'until'   => (int) ( $row['until'] ?? 0 ),
-				'title'   => (string) ( $row['title'] ?? '' ),
-				'text'    => (string) ( $row['text'] ?? '' ),
-				'button'  => (string) ( $row['button'] ?? '' ),
-				'url'     => self::url_from( $row['url'] ?? '' ),
-				'newTab'  => 'yes' === ( $row['new_tab'] ?? '' ),
-				'skip'    => 'yes' === ( $row['skip'] ?? '' ),
-				'list'    => (string) ( $row['list'] ?? '' ),
-				'consent' => (string) ( $row['consent'] ?? '' ),
-				'thanks'  => (string) ( $row['thanks'] ?? '' ),
+				'type'      => (string) ( $row['type'] ?? 'cta' ),
+				'at'        => (int) ( $row['at'] ?? 100 ),
+				'until'     => (int) ( $row['until'] ?? 0 ),
+				'title'     => (string) ( $row['title'] ?? '' ),
+				'text'      => (string) ( $row['text'] ?? '' ),
+				'button'    => (string) ( $row['button'] ?? '' ),
+				'url'       => self::url_from( $row['url'] ?? '' ),
+				'newTab'    => 'yes' === ( $row['new_tab'] ?? '' ),
+				'skip'      => 'yes' === ( $row['skip'] ?? '' ),
+				'list'      => (string) ( $row['list'] ?? '' ),
+				'consent'   => (string) ( $row['consent'] ?? '' ),
+				'thanks'    => (string) ( $row['thanks'] ?? '' ),
+				'position'  => (string) ( $row['position'] ?? '' ),
+				'image'     => $image['url'],
+				'imageId'   => $image['id'],
+				'width'     => (int) ( $row['width'] ?? 25 ),
+				'x'         => (int) ( $row['x'] ?? 50 ),
+				'y'         => (int) ( $row['y'] ?? 50 ),
+				'shortcode' => (string) ( $row['shortcode'] ?? '' ),
 			);
 		}
 

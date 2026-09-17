@@ -26,7 +26,10 @@
  * controls is *when*, which is the part that shows up in PageSpeed.
  */
 
-import type { MediaCapabilities, PlayerMedia, VideoConfig,
+import type {
+	MediaCapabilities,
+	PlayerMedia,
+	VideoConfig,
 	ProviderCaptionTrack,
 } from './types';
 
@@ -370,8 +373,10 @@ class YouTubeMedia extends ProviderMedia {
 				}
 
 				const read = (): ProviderCaptionTrack[] =>
-					( ( player.getOption?.( 'captions', 'tracklist' ) ??
-						[] ) as YT.CaptionTrack[] )
+					(
+						( player.getOption?.( 'captions', 'tracklist' ) ??
+							[] ) as YT.CaptionTrack[]
+					 )
 						.filter( ( track ) => track && track.languageCode )
 						.map( ( track ) => ( {
 							code: String( track.languageCode ),

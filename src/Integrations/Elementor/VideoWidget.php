@@ -31,6 +31,7 @@ final class VideoWidget extends PlayerWidget {
 		'videoCaptions'      => 'Subtitles',
 		'videoChapters'      => 'Chapters',
 		'videoSearch'        => 'Search what is said',
+		'videoTranscript'    => 'Transcript under the picture',
 		'videoPip'           => 'Picture in picture',
 		'videoFullscreen'    => 'Full screen',
 		'videoBlockDownload' => 'Block the browser download',
@@ -215,6 +216,8 @@ final class VideoWidget extends PlayerWidget {
 				return __( 'Chapters', 'imagina-player' );
 			case 'videoSearch':
 				return __( 'Search what is said', 'imagina-player' );
+			case 'videoTranscript':
+				return __( 'Transcript under the picture', 'imagina-player' );
 			case 'videoPip':
 				return __( 'Picture in picture', 'imagina-player' );
 			case 'videoFullscreen':

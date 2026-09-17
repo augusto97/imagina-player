@@ -71,6 +71,10 @@ const VIDEO_CONTROLS = [
 	[ 'videoCaptions', __( 'Subtitles button', 'imagina-player' ) ],
 	[ 'videoChapters', __( 'Chapters button', 'imagina-player' ) ],
 	[ 'videoSearch', __( 'Search what is said', 'imagina-player' ) ],
+	[
+		'videoTranscript',
+		__( 'Transcript under the picture', 'imagina-player' ),
+	],
 	[ 'videoPip', __( 'Picture-in-picture button', 'imagina-player' ) ],
 	[ 'videoFullscreen', __( 'Fullscreen button', 'imagina-player' ) ],
 ] as const;
@@ -163,6 +167,49 @@ const LAYER_TYPES: Array< { value: string; label: string } > = [
 		label: __( 'Bar (does not stop playback)', 'imagina-player' ),
 	},
 	{ value: 'email', label: __( 'Email gate', 'imagina-player' ) },
+	{ value: 'text', label: __( 'Text over the picture', 'imagina-player' ) },
+	{ value: 'image', label: __( 'Image over the picture', 'imagina-player' ) },
+	{
+		value: 'hotspot',
+		label: __( 'Hotspot (a spot to press)', 'imagina-player' ),
+	},
+	{ value: 'shortcode', label: __( 'Shortcode', 'imagina-player' ) },
+];
+
+/** The kinds that decorate rather than ask: they never stop playback. */
+const DECOR_KINDS = [ 'text', 'image', 'hotspot', 'shortcode' ];
+
+/**
+ * Where a decoration goes when the author has not said.
+ * @param kind
+ */
+function defaultPosition( kind: string ): string {
+	if ( 'image' === kind ) {
+		return 'top-right';
+	}
+
+	return 'shortcode' === kind ? 'center' : 'bottom-left';
+}
+
+/**
+ * When a layer appears if the author has not said: a decoration from the start.
+ * @param kind
+ */
+function defaultAt( kind: string ): number {
+	return 'bar' === kind || DECOR_KINDS.includes( kind ) ? 0 : 100;
+}
+
+/** Where a decoration sits over the picture. */
+const POSITIONS: Array< { value: string; label: string } > = [
+	{ value: 'top-left', label: __( 'Top left', 'imagina-player' ) },
+	{ value: 'top', label: __( 'Top', 'imagina-player' ) },
+	{ value: 'top-right', label: __( 'Top right', 'imagina-player' ) },
+	{ value: 'left', label: __( 'Left', 'imagina-player' ) },
+	{ value: 'center', label: __( 'Centre', 'imagina-player' ) },
+	{ value: 'right', label: __( 'Right', 'imagina-player' ) },
+	{ value: 'bottom-left', label: __( 'Bottom left', 'imagina-player' ) },
+	{ value: 'bottom', label: __( 'Bottom', 'imagina-player' ) },
+	{ value: 'bottom-right', label: __( 'Bottom right', 'imagina-player' ) },
 ];
 
 /*
@@ -301,42 +348,45 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					/>
 				</InspectorControls>
 				<div { ...blockProps }>
-				<MediaPlaceholder
-					icon={ isVideoBlock ? 'format-video' : 'format-audio' }
-					labels={ {
-						title: isVideoBlock
-							? __( 'Imagina Video Player', 'imagina-player' )
-							: __( 'Imagina Audio Player', 'imagina-player' ),
-						instructions: isVideoBlock
-							? __(
-									'Upload a video, pick one from your media library, or paste a YouTube or Vimeo address, an MP4, or an HLS stream (.m3u8).',
-									'imagina-player'
-							  )
-							: __(
-									'Upload an audio file, pick one from your media library, or paste a URL from your streaming provider.',
-									'imagina-player'
-							  ),
-					} }
-					accept={ isVideoBlock ? 'video/*' : 'audio/*,video/*' }
-					allowedTypes={
-						isVideoBlock ? [ 'video' ] : [ 'audio', 'video' ]
-					}
-					onSelect={ ( media: {
-						id?: number;
-						url?: string;
-						title?: string;
-						artist?: string;
-					} ) =>
-						setAttributes( {
-							src: media.url ?? '',
-							attachmentId: media.id ?? 0,
-							title: attributes.title || media.title || '',
-						} )
-					}
-					onSelectURL={ ( url: string ) =>
-						setAttributes( { src: url, attachmentId: 0 } )
-					}
-				/>
+					<MediaPlaceholder
+						icon={ isVideoBlock ? 'format-video' : 'format-audio' }
+						labels={ {
+							title: isVideoBlock
+								? __( 'Imagina Video Player', 'imagina-player' )
+								: __(
+										'Imagina Audio Player',
+										'imagina-player'
+								  ),
+							instructions: isVideoBlock
+								? __(
+										'Upload a video, pick one from your media library, or paste a YouTube or Vimeo address, an MP4, or an HLS stream (.m3u8).',
+										'imagina-player'
+								  )
+								: __(
+										'Upload an audio file, pick one from your media library, or paste a URL from your streaming provider.',
+										'imagina-player'
+								  ),
+						} }
+						accept={ isVideoBlock ? 'video/*' : 'audio/*,video/*' }
+						allowedTypes={
+							isVideoBlock ? [ 'video' ] : [ 'audio', 'video' ]
+						}
+						onSelect={ ( media: {
+							id?: number;
+							url?: string;
+							title?: string;
+							artist?: string;
+						} ) =>
+							setAttributes( {
+								src: media.url ?? '',
+								attachmentId: media.id ?? 0,
+								title: attributes.title || media.title || '',
+							} )
+						}
+						onSelectURL={ ( url: string ) =>
+							setAttributes( { src: url, attachmentId: 0 } )
+						}
+					/>
 				</div>
 			</>
 		);
@@ -1560,12 +1610,15 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 				) }
 
 				<PanelBody
-					title={ __( 'Calls to action', 'imagina-player' ) }
+					title={ __(
+						'Overlays and calls to action',
+						'imagina-player'
+					) }
 					initialOpen={ false }
 				>
 					<p className="imgp-editor__hint">
 						{ __(
-							'Appears part-way through. A bar sits alongside playback; the other two stop it until the listener answers or closes them.',
+							'Appears part-way through. A call to action and an email gate stop playback until answered or closed; a bar, a text, an image, a hotspot and a shortcode sit alongside it.',
 							'imagina-player'
 						) }
 					</p>
@@ -1580,18 +1633,20 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								onChange={ ( value: string ) =>
 									/*
 									 * Changing the kind changes when it makes
-									 * sense to appear. A bar is a standing
-									 * offer and belongs from the start; the
-									 * other two interrupt, and belong at the
-									 * end. Leaving a bar on the old default
-									 * meant it only ever appeared once the
-									 * video had finished, which reads as the
-									 * feature not working.
+									 * sense to appear. A bar or a decoration
+									 * is a standing thing and belongs from
+									 * the start; the other two interrupt,
+									 * and belong at the end. Leaving a bar
+									 * on the old default meant it only ever
+									 * appeared once the video had finished,
+									 * which reads as the feature not
+									 * working.
 									 */
 									patchLayer( index, {
 										type: value,
 										at:
-											'bar' === value
+											'bar' === value ||
+											DECOR_KINDS.includes( value )
 												? 0
 												: Number( layer.at ?? 100 ),
 									} )
@@ -1601,7 +1656,11 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								__nextHasNoMarginBottom
 								label={ __( 'Appears at', 'imagina-player' ) }
 								help={
-									0 === Number( layer.at ?? 100 )
+									0 ===
+									Number(
+										layer.at ??
+											defaultAt( String( layer.type ?? '' ) )
+									)
 										? __(
 												'From the start, before anything is played.',
 												'imagina-player'
@@ -1611,7 +1670,10 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 												'imagina-player'
 										  )
 								}
-								value={ Number( layer.at ?? 100 ) }
+								value={ Number(
+									layer.at ??
+										defaultAt( String( layer.type ?? '' ) )
+								) }
 								min={ 0 }
 								max={ 100 }
 								step={ 5 }
@@ -1641,32 +1703,214 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 									patchLayer( index, { until: value ?? 0 } )
 								}
 							/>
-							<TextControl
-								__nextHasNoMarginBottom
-								label={ __( 'Headline', 'imagina-player' ) }
-								value={ String( layer.title ?? '' ) }
-								onChange={ ( value: string ) =>
-									patchLayer( index, { title: value } )
-								}
-							/>
-							<TextControl
-								__nextHasNoMarginBottom
-								label={ __( 'Text', 'imagina-player' ) }
-								value={ String( layer.text ?? '' ) }
-								onChange={ ( value: string ) =>
-									patchLayer( index, { text: value } )
-								}
-							/>
-							<TextControl
-								__nextHasNoMarginBottom
-								label={ __( 'Button label', 'imagina-player' ) }
-								value={ String( layer.button ?? '' ) }
-								onChange={ ( value: string ) =>
-									patchLayer( index, { button: value } )
-								}
-							/>
+							{ 'shortcode' === layer.type && (
+								<TextControl
+									__nextHasNoMarginBottom
+									label={ __(
+										'Shortcode',
+										'imagina-player'
+									) }
+									help={ __(
+										'Any shortcode another plugin provides — a form, a button, a countdown. It runs when the page is shown.',
+										'imagina-player'
+									) }
+									value={ String( layer.shortcode ?? '' ) }
+									placeholder='[contact-form-7 id="12"]'
+									onChange={ ( value: string ) =>
+										patchLayer( index, {
+											shortcode: value,
+										} )
+									}
+								/>
+							) }
 
-							{ 'email' === layer.type ? (
+							{ 'image' === layer.type && (
+								<>
+									<MediaUploadCheck>
+										<MediaUpload
+											allowedTypes={ [ 'image' ] }
+											value={ Number(
+												layer.imageId ?? 0
+											) }
+											onSelect={ ( media: {
+												id?: number;
+												url?: string;
+											} ) =>
+												patchLayer( index, {
+													imageId: Number(
+														media.id ?? 0
+													),
+													image: String(
+														media.url ?? ''
+													),
+												} )
+											}
+											render={ ( { open } ) => (
+												<Button
+													variant="secondary"
+													onClick={ open }
+												>
+													{ layer.image
+														? __(
+																'Change image',
+																'imagina-player'
+														  )
+														: __(
+																'Choose an image',
+																'imagina-player'
+														  ) }
+												</Button>
+											) }
+										/>
+									</MediaUploadCheck>
+									<TextControl
+										__nextHasNoMarginBottom
+										label={ __(
+											'Image URL',
+											'imagina-player'
+										) }
+										value={ String( layer.image ?? '' ) }
+										placeholder="https://…"
+										onChange={ ( value: string ) =>
+											patchLayer( index, {
+												image: value,
+												imageId: 0,
+											} )
+										}
+									/>
+									<RangeControl
+										__nextHasNoMarginBottom
+										label={ __(
+											'Width (percent of the picture)',
+											'imagina-player'
+										) }
+										value={ Number( layer.width ?? 25 ) }
+										min={ 5 }
+										max={ 100 }
+										step={ 5 }
+										onChange={ ( value?: number ) =>
+											patchLayer( index, {
+												width: value ?? 25,
+											} )
+										}
+									/>
+								</>
+							) }
+
+							{ 'hotspot' === layer.type && (
+								<>
+									<RangeControl
+										__nextHasNoMarginBottom
+										label={ __(
+											'Across (percent from the left)',
+											'imagina-player'
+										) }
+										value={ Number( layer.x ?? 50 ) }
+										min={ 0 }
+										max={ 100 }
+										onChange={ ( value?: number ) =>
+											patchLayer( index, {
+												x: value ?? 50,
+											} )
+										}
+									/>
+									<RangeControl
+										__nextHasNoMarginBottom
+										label={ __(
+											'Down (percent from the top)',
+											'imagina-player'
+										) }
+										value={ Number( layer.y ?? 50 ) }
+										min={ 0 }
+										max={ 100 }
+										onChange={ ( value?: number ) =>
+											patchLayer( index, {
+												y: value ?? 50,
+											} )
+										}
+									/>
+								</>
+							) }
+
+							{ ( 'text' === layer.type ||
+								'image' === layer.type ||
+								'shortcode' === layer.type ) && (
+								<SelectControl
+									__nextHasNoMarginBottom
+									label={ __( 'Position', 'imagina-player' ) }
+									value={ String(
+										layer.position ??
+											defaultPosition(
+												String( layer.type ?? '' )
+											)
+									) }
+									options={ POSITIONS }
+									onChange={ ( value: string ) =>
+										patchLayer( index, {
+											position: value,
+										} )
+									}
+								/>
+							) }
+
+							{ 'shortcode' !== layer.type && (
+								<>
+									<TextControl
+										__nextHasNoMarginBottom
+										label={
+											'image' === layer.type
+												? __(
+														'Alternative text',
+														'imagina-player'
+												  )
+												: __(
+														'Headline',
+														'imagina-player'
+												  )
+										}
+										value={ String( layer.title ?? '' ) }
+										onChange={ ( value: string ) =>
+											patchLayer( index, {
+												title: value,
+											} )
+										}
+									/>
+									{ 'image' !== layer.type && (
+										<TextControl
+											__nextHasNoMarginBottom
+											label={ __(
+												'Text',
+												'imagina-player'
+											) }
+											value={ String( layer.text ?? '' ) }
+											onChange={ ( value: string ) =>
+												patchLayer( index, {
+													text: value,
+												} )
+											}
+										/>
+									) }
+								</>
+							) }
+
+							{ ! DECOR_KINDS.includes(
+								String( layer.type ?? 'cta' )
+							) && (
+								<TextControl
+									__nextHasNoMarginBottom
+									label={ __(
+										'Button label',
+										'imagina-player'
+									) }
+									value={ String( layer.button ?? '' ) }
+									onChange={ ( value: string ) =>
+										patchLayer( index, { button: value } )
+									}
+								/>
+							) }
+
+							{ 'shortcode' !== layer.type &&
+							( 'email' === layer.type ? (
 								<>
 									<TextControl
 										__nextHasNoMarginBottom
@@ -1701,10 +1945,19 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								<>
 									<TextControl
 										__nextHasNoMarginBottom
-										label={ __(
-											'Button links to',
-											'imagina-player'
-										) }
+										label={
+											DECOR_KINDS.includes(
+												String( layer.type ?? '' )
+											)
+												? __(
+														'Links to (optional)',
+														'imagina-player'
+												  )
+												: __(
+														'Button links to',
+														'imagina-player'
+												  )
+										}
 										value={ String( layer.url ?? '' ) }
 										placeholder="https://…"
 										onChange={ ( value: string ) =>
@@ -1725,7 +1978,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 										}
 									/>
 								</>
-							) }
+							) ) }
 
 							<ToggleControl
 								__nextHasNoMarginBottom
@@ -1780,7 +2033,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							} )
 						}
 					>
-						{ __( 'Add a call to action', 'imagina-player' ) }
+						{ __( 'Add an overlay', 'imagina-player' ) }
 					</Button>
 				</PanelBody>
 

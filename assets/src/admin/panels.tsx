@@ -1331,6 +1331,20 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 					/>
 					<Toggle
 						label={ __(
+							'Transcript under the picture',
+							'imagina-player'
+						) }
+						help={ __(
+							'The whole of what is said, as a list under the video that follows playback and can be searched. Built from the subtitles the video already carries.',
+							'imagina-player'
+						) }
+						checked={ Boolean( video.show_transcript ) }
+						onChange={ ( value ) =>
+							set( { show_transcript: value } )
+						}
+					/>
+					<Toggle
+						label={ __(
 							'Subtitles on from the start',
 							'imagina-player'
 						) }

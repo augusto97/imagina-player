@@ -75,8 +75,12 @@ $budgets = array(
 	 * segmented bar and its tip, the resume chip, the toast and the
 	 * timestamp pill — and the compressed figure below raised with it,
 	 * by the same half kilobyte they weigh on the wire.
+	 *
+	 * And to 38.0 in 1.44.0: decorations over the picture at nine places, a
+	 * hotspot with its label, and the transcript panel with its list. Two
+	 * features' worth of interface, on the wire under a kilobyte.
 	 */
-	'the stylesheet'  => array( $css, 33.0 ),
+	'the stylesheet'  => array( $css, 38.0 ),
 );
 
 foreach ( $budgets as $label => $budget ) {
@@ -114,8 +118,8 @@ $compressed = array(
 	// Tightened from 6.5 in 1.19.0. Today's stylesheet compresses to 5.7 KB,
 	// and the raw budget above has now been raised twice; this is the half of
 	// the pair that has to hold.
-	// Raised to 6.5 in 1.43.0, with the raw budget above; see there.
-	'the stylesheet'  => array( $css, 6.5 ),
+	// Raised to 6.5 in 1.43.0 and 7.5 in 1.44.0, with the raw budget above.
+	'the stylesheet'  => array( $css, 7.5 ),
 );
 
 foreach ( $compressed as $label => $budget ) {

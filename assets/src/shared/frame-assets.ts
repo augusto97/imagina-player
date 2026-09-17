@@ -31,6 +31,7 @@ export const FETCH_TIMEOUT_MS = 8000;
  *
  * Remembered per address for the life of the page: the editor previews on
  * every change, and the files are versioned in their address.
+ * @param url
  */
 export function fetchAsset( url: string ): Promise< string | null > {
 	const known = fetched.get( url );
@@ -112,14 +113,24 @@ export interface InlinedAssets {
  *               address. Written in after it, they register themselves
  *               and it never has to ask for them.
  */
-export async function inlineAssets( styles: string[], script: string, extras: string[] = [] ): Promise< InlinedAssets > {
+export async function inlineAssets(
+	styles: string[],
+	script: string,
+	extras: string[] = []
+): Promise< InlinedAssets > {
 	// An address that is missing is nothing to include, not something to fail
 	// on: a caller without a frame stylesheet still gets its player styled.
-	const wanted = styles.map( ( url ) => String( url ?? '' ).trim() ).filter( ( url ) => '' !== url );
+	const wanted = styles
+		.map( ( url ) => String( url ?? '' ).trim() )
+		.filter( ( url ) => '' !== url );
 	const wantedScript = String( script ?? '' ).trim();
-	const wantedExtras = extras.map( ( url ) => String( url ?? '' ).trim() ).filter( ( url ) => '' !== url );
+	const wantedExtras = extras
+		.map( ( url ) => String( url ?? '' ).trim() )
+		.filter( ( url ) => '' !== url );
 
-	const texts = await Promise.all( [ ...wanted, wantedScript, ...wantedExtras ].map( fetchAsset ) );
+	const texts = await Promise.all(
+		[ ...wanted, wantedScript, ...wantedExtras ].map( fetchAsset )
+	);
 	const extraTexts = texts.splice( wanted.length + 1 );
 	const scriptText = texts.pop() ?? null;
 
@@ -132,7 +143,9 @@ export async function inlineAssets( styles: string[], script: string, extras: st
 			if ( null === text ) {
 				complete = false;
 
-				return `<link rel="stylesheet" href="${ escapeAttribute( url ) }">`;
+				return `<link rel="stylesheet" href="${ escapeAttribute(
+					url
+				) }">`;
 			}
 
 			return `<style>${ escapeInline( text ) }` + STYLE_END;
@@ -145,7 +158,8 @@ export async function inlineAssets( styles: string[], script: string, extras: st
 		tail = '';
 	} else if ( null === scriptText ) {
 		complete = false;
-		tail = `<script src="${ escapeAttribute( wantedScript ) }">` + SCRIPT_END;
+		tail =
+			`<script src="${ escapeAttribute( wantedScript ) }">` + SCRIPT_END;
 	} else {
 		tail = `<script>${ escapeInline( scriptText ) }` + SCRIPT_END;
 	}
@@ -175,11 +189,15 @@ const SCRIPT_END = '</' + 'script>';
 const STYLE_END = '</' + 'style>';
 
 function escapeAttribute( value: string ): string {
-	return value.replace( /&/g, '&amp;' ).replace( /"/g, '&quot;' ).replace( /</g, '&lt;' );
+	return value
+		.replace( /&/g, '&amp;' )
+		.replace( /"/g, '&quot;' )
+		.replace( /</g, '&lt;' );
 }
 
 /**
  * Whether an address, relative or not, is one the page can fetch.
+ * @param url
  */
 function isWebAddress( url: string ): boolean {
 	try {

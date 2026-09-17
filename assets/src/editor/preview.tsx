@@ -131,7 +131,9 @@ export function Preview( {
 						`<!doctype html><html><head><meta charset="utf-8">
 						${ inlined.head }
 						</head><body>${ markup }
-						<script>window.imaginaPlayer={restUrl:"${ assets.restUrl }",assetUrl:"${ assets.assetUrl ?? '' }",lazyInit:false,maxComputeBytes:0,i18n:{}};</script>
+						<script>window.imaginaPlayer={restUrl:"${ assets.restUrl }",assetUrl:"${
+							assets.assetUrl ?? ''
+						}",lazyInit:false,maxComputeBytes:0,i18n:{}};</script>
 						${ inlined.tail }
 						<script>${ FRAME_HEIGHT_SCRIPT }</script>
 						</body></html>`

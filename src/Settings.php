@@ -180,6 +180,13 @@ final class Settings {
 				// Presto keeps this for its paid tier. The text is already in
 				// the page, so it costs a few hundred bytes and no server work.
 				'show_search'     => true,
+				/*
+				 * The whole transcript under the picture, from the same
+				 * subtitles. Off by default: it is a panel below every video
+				 * that carries subtitles, which is a layout decision for the
+				 * site rather than a control.
+				 */
+				'show_transcript' => false,
 				'show_skip'       => true,
 				'show_time'       => true,
 				'show_volume'     => true,

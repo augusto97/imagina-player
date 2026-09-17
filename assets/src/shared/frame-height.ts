@@ -66,7 +66,11 @@ export function listenForFrameHeight(
 
 		// Only the window this holder created. Any other frame on the page —
 		// another preview, an embed, an advert — can post whatever it likes.
-		if ( ! target || ! target.contentWindow || event.source !== target.contentWindow ) {
+		if (
+			! target ||
+			! target.contentWindow ||
+			event.source !== target.contentWindow
+		) {
 			return;
 		}
 
@@ -98,6 +102,7 @@ export function listenForFrameHeight(
  *
  * Its own function so it can be tested without a window: the shape check is
  * the part that decides whether a hostile page can size the frame.
+ * @param data
  */
 export function reportedHeight( data: unknown ): number | null {
 	if ( ! data || 'object' !== typeof data ) {
@@ -106,9 +111,16 @@ export function reportedHeight( data: unknown ): number | null {
 
 	const message = data as { type?: unknown; height?: unknown };
 
-	if ( FRAME_HEIGHT_TYPE !== message.type || 'number' !== typeof message.height || ! Number.isFinite( message.height ) ) {
+	if (
+		FRAME_HEIGHT_TYPE !== message.type ||
+		'number' !== typeof message.height ||
+		! Number.isFinite( message.height )
+	) {
 		return null;
 	}
 
-	return Math.min( FRAME_HEIGHT_MAX, Math.max( FRAME_HEIGHT_MIN, Math.ceil( message.height ) ) );
+	return Math.min(
+		FRAME_HEIGHT_MAX,
+		Math.max( FRAME_HEIGHT_MIN, Math.ceil( message.height ) )
+	);
 }

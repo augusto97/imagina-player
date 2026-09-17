@@ -2659,3 +2659,304 @@
 .imgp-time:focus-visible {
 	background: rgb(31 41 55 / 18%);
 }
+
+/* --- Decorations over the picture -----------------------------------------
+   A caption, a logo, a spot to press, another plugin's shortcode. Unlike a
+   call to action they cover nothing and stop nothing: each sits at one of
+   nine places (a spot at a point of its own) and is otherwise left alone. */
+
+.imgp__layer--decor {
+	inset: auto;
+	display: block;
+	max-width: min(60%, 24rem);
+	padding: 0;
+	background: none;
+	color: inherit;
+	text-align: left;
+	backdrop-filter: none;
+}
+
+.imgp__layer--at-top-left { top: 0.75rem; left: 0.75rem; }
+.imgp__layer--at-top { top: 0.75rem; left: 50%; transform: translateX(-50%); text-align: center; }
+.imgp__layer--at-top-right { top: 0.75rem; right: 0.75rem; text-align: right; }
+.imgp__layer--at-left { top: 50%; left: 0.75rem; transform: translateY(-50%); }
+.imgp__layer--at-center { top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+.imgp__layer--at-right { top: 50%; right: 0.75rem; transform: translateY(-50%); text-align: right; }
+.imgp__layer--at-bottom-left { bottom: 3.6rem; left: 0.75rem; }
+.imgp__layer--at-bottom { bottom: 3.6rem; left: 50%; transform: translateX(-50%); text-align: center; }
+.imgp__layer--at-bottom-right { bottom: 3.6rem; right: 0.75rem; text-align: right; }
+
+/* Under the bar rather than on it once the controls have gone away. */
+.imgp--video.is-idle .imgp__layer--at-bottom-left,
+.imgp--video.is-idle .imgp__layer--at-bottom,
+.imgp--video.is-idle .imgp__layer--at-bottom-right {
+	bottom: 0.75rem;
+}
+
+.imgp__layer-link {
+	display: block;
+	color: inherit;
+	text-decoration: none;
+}
+
+/* A caption: a few words in a dark pill, readable on any picture. */
+.imgp__layer--text {
+	padding: 0.55rem 0.8rem;
+	border-radius: 0.5rem;
+	background: rgb(20 20 20 / 82%);
+	color: #fff;
+	font-size: 0.9rem;
+	line-height: 1.35;
+}
+
+.imgp__layer--text .imgp__layer-title {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 600;
+	line-height: 1.3;
+	text-shadow: none;
+}
+
+.imgp__layer--text .imgp__layer-text {
+	margin: 0.15rem 0 0;
+	opacity: 0.9;
+	font-size: inherit;
+}
+
+.imgp__layer--text .imgp__layer-close {
+	top: 0.15rem;
+	right: 0.15rem;
+}
+
+/* A picture over the picture, as a share of its width. */
+.imgp__layer--image {
+	width: var(--imgp-layer-width, 25%);
+	max-width: none;
+}
+
+.imgp__layer-image {
+	display: block;
+	width: 100%;
+	height: auto;
+}
+
+/* A spot to press, with its label above it on hover, focus or press. */
+.imgp__layer--hotspot {
+	top: var(--imgp-y, 50%);
+	left: var(--imgp-x, 50%);
+	max-width: none;
+	overflow: visible;
+	transform: translate(-50%, -50%);
+}
+
+.imgp__layer--hotspot .imgp__layer-link {
+	position: relative;
+	display: block;
+	width: 1.6rem;
+	height: 1.6rem;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: #fff;
+	cursor: pointer;
+}
+
+.imgp__hotspot-dot {
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	background: var(--imgp-accent);
+	box-shadow: 0 0 0 3px rgb(255 255 255 / 85%);
+	animation: imgp-pulse 1.8s ease-out infinite;
+}
+
+@keyframes imgp-pulse {
+	0% { box-shadow: 0 0 0 3px rgb(255 255 255 / 85%), 0 0 0 3px rgb(255 255 255 / 45%); }
+	100% { box-shadow: 0 0 0 3px rgb(255 255 255 / 85%), 0 0 0 14px rgb(255 255 255 / 0%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.imgp__hotspot-dot { animation: none; }
+}
+
+.imgp__hotspot-label {
+	position: absolute;
+	bottom: calc(100% + 0.55rem);
+	left: 50%;
+	z-index: 1;
+	width: max-content;
+	max-width: 14rem;
+	padding: 0.4rem 0.65rem;
+	border-radius: 0.4rem;
+	background: rgb(20 20 20 / 92%);
+	color: #fff;
+	font-size: 0.8rem;
+	line-height: 1.3;
+	text-align: center;
+	opacity: 0;
+	visibility: hidden;
+	transform: translateX(-50%);
+	transition: opacity 0.15s ease;
+}
+
+.imgp__hotspot-label:empty {
+	display: none;
+}
+
+.imgp__layer--hotspot .imgp__layer-link:hover .imgp__hotspot-label,
+.imgp__layer--hotspot .imgp__layer-link:focus-visible .imgp__hotspot-label,
+.imgp__layer--hotspot.is-open .imgp__hotspot-label {
+	opacity: 1;
+	visibility: visible;
+}
+
+.imgp__hotspot-title {
+	display: block;
+	font-weight: 600;
+}
+
+.imgp__hotspot-text {
+	display: block;
+	margin-top: 0.15rem;
+	opacity: 0.85;
+}
+
+/* Another plugin's output: a light card, so its own styles read. */
+.imgp__layer--shortcode {
+	max-width: min(90%, 32rem);
+	color: inherit;
+}
+
+.imgp__layer-shortcode {
+	padding: 1rem;
+	border-radius: 0.6rem;
+	background: rgb(255 255 255 / 96%);
+	color: #111;
+	text-align: left;
+}
+
+/* Beside audio there is no picture to sit on: back into the flow. */
+.imgp--audio .imgp__layer--decor {
+	inset: auto;
+	width: auto;
+	max-width: none;
+	transform: none;
+	text-align: left;
+}
+
+.imgp--audio .imgp__layer--hotspot {
+	display: none;
+}
+
+/* --- The transcript ---------------------------------------------------------
+   Under the picture, closed until opened: every line with its time, the one
+   being said marked, and a box that narrows the list to a word. */
+
+.imgp__transcript {
+	margin-top: var(--imgp-gap, 0.5rem);
+	border-radius: var(--imgp-radius, 0.5rem);
+	background: color-mix(in srgb, currentcolor 6%, transparent);
+	font-size: 0.9rem;
+}
+
+.imgp__transcript-summary {
+	padding: 0.6rem 0.9rem;
+	cursor: pointer;
+	font-weight: 600;
+	list-style: none;
+}
+
+.imgp__transcript-summary::-webkit-details-marker {
+	display: none;
+}
+
+.imgp__transcript-summary::before {
+	content: "";
+	display: inline-block;
+	width: 0.45em;
+	height: 0.45em;
+	margin-right: 0.6em;
+	border-right: 2px solid currentcolor;
+	border-bottom: 2px solid currentcolor;
+	transform: translateY(-0.15em) rotate(-45deg);
+	transition: transform 0.15s ease;
+}
+
+.imgp__transcript[open] .imgp__transcript-summary::before {
+	transform: translateY(-0.25em) rotate(45deg);
+}
+
+.imgp__transcript-panel {
+	padding: 0 0.6rem 0.6rem;
+}
+
+.imgp__transcript-search {
+	box-sizing: border-box;
+	width: 100%;
+	margin: 0 0 0.4rem;
+	padding: 0.45rem 0.6rem;
+	border: 1px solid color-mix(in srgb, currentcolor 25%, transparent);
+	border-radius: 0.4rem;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: 0.9rem;
+}
+
+.imgp__transcript-note {
+	margin: 0.2rem 0.3rem 0.4rem;
+	opacity: 0.7;
+	font-size: 0.85rem;
+}
+
+.imgp__transcript-note[hidden] {
+	display: none;
+}
+
+.imgp__transcript-body {
+	max-height: 16rem;
+	overflow-y: auto;
+	scroll-behavior: smooth;
+}
+
+.imgp__cue {
+	display: flex;
+	gap: 0.6rem;
+	align-items: baseline;
+	width: 100%;
+	padding: 0.35rem 0.5rem;
+	border: 0;
+	border-radius: 0.35rem;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	line-height: 1.4;
+	text-align: left;
+	cursor: pointer;
+}
+
+.imgp__cue[hidden] {
+	display: none;
+}
+
+.imgp__cue:hover,
+.imgp__cue:focus-visible {
+	background: color-mix(in srgb, currentcolor 8%, transparent);
+}
+
+.imgp__cue.is-current {
+	background: color-mix(in srgb, var(--imgp-accent) 16%, transparent);
+	box-shadow: inset 3px 0 0 var(--imgp-accent);
+}
+
+.imgp__cue-at {
+	flex: 0 0 auto;
+	min-width: 2.6rem;
+	opacity: 0.65;
+	font-size: 0.8rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.imgp.is-stuck .imgp__transcript {
+	display: none;
+}

@@ -3,7 +3,7 @@
  * Things that appear over a player part-way through, and ask something of the
  * listener.
  *
- * Three kinds, because they answer three different questions:
+ * Three kinds ask something, because they answer three different questions:
  *
  * - **cta**    — "now that you have seen this, do that." Interrupts: it pauses
  *                playback and covers the picture, so it is used sparingly and
@@ -12,6 +12,12 @@
  *                edge that appears and stays. Nothing pauses.
  * - **email**  — a gate. Playback stops until an address is given, or until the
  *                listener skips, if skipping is allowed.
+ *
+ * Four more decorate the picture and ask nothing: **text** (a caption in a
+ * corner), **image** (a logo or a still), **hotspot** (a spot to press, with a
+ * label and maybe a link) and **shortcode** (whatever another plugin prints).
+ * They sit where the author put them, between the moments they were given,
+ * and never pause anything.
  *
  * Deliberately not video-only. An email gate two thirds of the way through a
  * podcast episode is exactly the same feature, and the player it hangs on is
@@ -30,7 +36,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 final class Layers {
 
-	public const TYPES = array( 'cta', 'bar', 'email' );
+	public const TYPES = array( 'cta', 'bar', 'email', 'text', 'image', 'hotspot', 'shortcode' );
+
+	/** The kinds that stop playback: they are asking a question. */
+	public const INTERRUPTING = array( 'cta', 'email' );
+
+	/**
+	 * The kinds that decorate the picture rather than ask anything of the
+	 * viewer: a caption, a logo, a spot to press, a form from another plugin.
+	 * They never pause, and they sit over the picture at a place of the
+	 * author's choosing.
+	 */
+	public const DECOR = array( 'text', 'image', 'hotspot', 'shortcode' );
+
+	public const POSITIONS = array( 'top-left', 'top', 'top-right', 'left', 'center', 'right', 'bottom-left', 'bottom', 'bottom-right' );
+
+	/**
+	 * The kinds rendered over the picture, as opposed to under it.
+	 *
+	 * @return array<int, string>
+	 */
+	public static function over(): array {
+		return array_values( array_diff( self::TYPES, array( 'bar' ) ) );
+	}
 
 	/**
 	 * Clean a list of layers from block JSON.
@@ -56,7 +84,9 @@ final class Layers {
 				continue;
 			}
 
-			$at = min( 100, max( 0, (int) ( $layer['at'] ?? 100 ) ) );
+			// A decoration is there from the start unless told otherwise; an
+			// offer that interrupts belongs at the end.
+			$at = min( 100, max( 0, (int) ( $layer['at'] ?? ( in_array( $type, self::DECOR, true ) ? 0 : 100 ) ) ) );
 
 			/*
 			 * When it goes away again.
@@ -91,6 +121,26 @@ final class Layers {
 			);
 
 			$clean[] = match ( $type ) {
+				'text' => $common + self::link( $layer ) + array(
+					'position' => self::position( $layer, 'bottom-left' ),
+				),
+				'image' => $common + self::link( $layer ) + array(
+					'image'    => Attributes::sanitize_media_url( (string) ( $layer['image'] ?? '' ) ),
+					'imageId'  => max( 0, (int) ( $layer['imageId'] ?? 0 ) ),
+					// As a share of the picture's width, so it scales with it.
+					'width'    => min( 100, max( 5, (int) ( $layer['width'] ?? 25 ) ) ),
+					'position' => self::position( $layer, 'top-right' ),
+				),
+				'hotspot' => $common + self::link( $layer ) + array(
+					'x' => min( 100, max( 0, (int) ( $layer['x'] ?? 50 ) ) ),
+					'y' => min( 100, max( 0, (int) ( $layer['y'] ?? 50 ) ) ),
+				),
+				'shortcode' => $common + array(
+					// The shortcode's own output is what the viewer sees; this
+					// is the text that names it, and it runs when rendered.
+					'shortcode' => sanitize_text_field( (string) ( $layer['shortcode'] ?? '' ) ),
+					'position'  => self::position( $layer, 'center' ),
+				),
 				'email' => $common + array(
 					// Where an address goes after it is captured. Stored on the
 					// layer rather than globally so one site can run a course
@@ -108,12 +158,44 @@ final class Layers {
 			};
 		}
 
-		// A button that goes nowhere is not a call to action.
+		// A button that goes nowhere is not a call to action, a caption with
+		// no words is not a caption, and a picture with no picture is nothing.
 		return array_values(
 			array_filter(
 				$clean,
-				static fn( array $layer ): bool => 'email' === $layer['type'] || '' !== $layer['url']
+				static fn( array $layer ): bool => match ( $layer['type'] ) {
+					'email'     => true,
+					'text'      => '' !== $layer['title'] || '' !== $layer['text'],
+					'image'     => '' !== $layer['image'],
+					'hotspot'   => '' !== $layer['title'] || '' !== $layer['text'] || '' !== $layer['url'],
+					'shortcode' => str_contains( $layer['shortcode'], '[' ),
+					default     => '' !== $layer['url'],
+				}
 			)
+		);
+	}
+
+	/**
+	 * Where a decoration sits, from the nine places it can.
+	 *
+	 * @param array<string, mixed> $layer Raw layer.
+	 */
+	private static function position( array $layer, string $fallback ): string {
+		$position = (string) ( $layer['position'] ?? '' );
+
+		return in_array( $position, self::POSITIONS, true ) ? $position : $fallback;
+	}
+
+	/**
+	 * An optional link: a decoration may take the viewer somewhere, or not.
+	 *
+	 * @param array<string, mixed> $layer Raw layer.
+	 * @return array{url: string, newTab: bool}
+	 */
+	private static function link( array $layer ): array {
+		return array(
+			'url'    => Attributes::sanitize_media_url( (string) ( $layer['url'] ?? '' ) ),
+			'newTab' => ! empty( $layer['newTab'] ),
 		);
 	}
 
@@ -137,7 +219,7 @@ final class Layers {
 	 */
 	public static function interrupts( array $layers ): bool {
 		foreach ( $layers as $layer ) {
-			if ( in_array( $layer['type'], array( 'cta', 'email' ), true ) ) {
+			if ( in_array( $layer['type'], self::INTERRUPTING, true ) ) {
 				return true;
 			}
 		}

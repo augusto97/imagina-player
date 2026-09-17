@@ -43,8 +43,11 @@ interface LayerHost {
 	runtime: RuntimeData;
 }
 
+/** The kinds that stop playback: they are asking a question. */
+const INTERRUPTING = [ 'cta', 'email' ];
+
 interface LayerSpec {
-	type: 'cta' | 'bar' | 'email';
+	type: string;
 	at: number;
 	/** Where it goes away again, as a percentage. Zero means it stays. */
 	until: number;
@@ -89,6 +92,7 @@ export class LayerStack {
 
 		this.bindDismiss();
 		this.bindForms();
+		this.bindHotspots();
 
 		const watch = (): void => this.check();
 
@@ -213,10 +217,11 @@ export class LayerStack {
 		element.hidden = false;
 		this.host.root.classList.add( 'has-layer' );
 
-		// A bar sits alongside playback; the other two are asking a question, so
-		// they stop it. Nothing resumes on its own afterwards: the person chose
-		// to stop reading, and starting the video under them would be rude.
-		if ( 'bar' !== spec.type ) {
+		// A bar and a decoration sit alongside playback; a call to action and
+		// a gate are asking a question, so they stop it. Nothing resumes on
+		// its own afterwards: the person chose to stop reading, and starting
+		// the video under them would be rude.
+		if ( INTERRUPTING.includes( spec.type ) ) {
 			this.host.media.pause();
 			this.host.root.classList.add( 'has-modal-layer' );
 
@@ -293,6 +298,35 @@ export class LayerStack {
 		this.cleanup.push( () =>
 			this.host.root.removeEventListener( 'keydown', escape )
 		);
+	}
+
+	/**
+	 * A spot with nowhere to go opens its label when pressed.
+	 *
+	 * Hovering shows it on a desktop; a finger has no hover, so the press
+	 * has to do the same, and a second press puts it away.
+	 */
+	private bindHotspots(): void {
+		this.elements.forEach( ( element ) => {
+			const spot = element.querySelector< HTMLButtonElement >(
+				'button.imgp__layer-link'
+			);
+
+			if ( ! spot ) {
+				return;
+			}
+
+			const toggle = (): void => {
+				const open = element.classList.toggle( 'is-open' );
+
+				spot.setAttribute( 'aria-expanded', open ? 'true' : 'false' );
+			};
+
+			spot.addEventListener( 'click', toggle );
+			this.cleanup.push( () =>
+				spot.removeEventListener( 'click', toggle )
+			);
+		} );
 	}
 
 	private bindForms(): void {

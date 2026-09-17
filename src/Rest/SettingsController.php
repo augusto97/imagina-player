@@ -224,7 +224,7 @@ final class SettingsController {
 				: 'solid';
 			$settings['video']['provider_privacy'] = ! empty( $video['provider_privacy'] );
 
-			foreach ( array( 'show_captions', 'show_chapters', 'show_search', 'show_skip', 'show_time', 'show_volume', 'show_title', 'focus_mode', 'captions_on', 'provider_bare' ) as $flag ) {
+			foreach ( array( 'show_captions', 'show_chapters', 'show_search', 'show_transcript', 'show_skip', 'show_time', 'show_volume', 'show_title', 'focus_mode', 'captions_on', 'provider_bare' ) as $flag ) {
 				$settings['video'][ $flag ] = ! empty( $video[ $flag ] );
 			}
 

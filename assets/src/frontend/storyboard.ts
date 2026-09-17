@@ -141,7 +141,8 @@ function webOrOwn( protocol: string ): boolean {
 		'http:' === protocol ||
 		'https:' === protocol ||
 		// Guarded, because the parser is also run outside a browser.
-		( 'undefined' !== typeof window && protocol === window.location.protocol )
+		( 'undefined' !== typeof window &&
+			protocol === window.location.protocol )
 	);
 }
 

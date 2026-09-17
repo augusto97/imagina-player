@@ -22,6 +22,7 @@ use ImaginaPlayer\Rest\CaptionController;
 use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Peaks\PeaksToken;
 use ImaginaPlayer\Player\Attributes;
+use ImaginaPlayer\Player\Layers;
 use ImaginaPlayer\Protection\Vault;
 use ImaginaPlayer\Player\Config;
 use ImaginaPlayer\Player\Skins;
@@ -342,8 +343,20 @@ final class PlayerRenderer {
 		 * underneath the video and Fluent's "sits below the player", for this
 		 * reason.
 		 */
-		$parts['layers'] = $this->part_layers( $track, $config, $atts, $id, array( 'cta', 'email' ) );
+		$parts['layers'] = $this->part_layers( $track, $config, $atts, $id, Layers::over() );
 		$parts['bars']   = $this->part_layers( $track, $config, $atts, $id, array( 'bar' ) );
+		/*
+		 * The transcript wants the same three things the search box does —
+		 * a real element, subtitle tracks and the author's say-so — and
+		 * reads the same cues. It is a panel under the picture rather than
+		 * a box on the bar, so it is printed with the bars, in the flow.
+		 */
+		$parts['transcript'] = $track->is_video()
+			&& ! $track->is_provider()
+			&& array() !== (array) ( $atts['tracks'] ?? array() )
+			&& ! empty( $video_config['show_transcript'] )
+			? $this->part_transcript()
+			: '';
 
 		if ( 'theater' === $layout ) {
 			$video_settings = $video_config;
@@ -440,6 +453,7 @@ final class PlayerRenderer {
 			}
 
 			echo $parts['bars']; // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
+			echo $parts['transcript']; // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
 
 			echo $parts['unstick']; // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
 			?>
@@ -829,6 +843,10 @@ final class PlayerRenderer {
 	private function part_layer( array $layer, string $id, int $index = 0 ): string {
 		$type = (string) $layer['type'];
 
+		if ( in_array( $type, Layers::DECOR, true ) ) {
+			return $this->part_decor( $layer, $id, $index );
+		}
+
 		ob_start();
 		?>
 		<div
@@ -932,6 +950,110 @@ final class PlayerRenderer {
 		<?php
 
 		return (string) ob_get_clean();
+	}
+
+	/**
+	 * A decoration over the picture: a caption, a logo, a spot to press, or
+	 * another plugin's shortcode.
+	 *
+	 * Rendered by the server like every other layer, hidden until its moment,
+	 * and never pausing anything. A shortcode runs here, at render time, so
+	 * whatever it prints — a form, a button, a countdown — is in the page for
+	 * anything that reads pages.
+	 *
+	 * @param array<string, mixed> $layer Sanitised layer.
+	 */
+	private function part_decor( array $layer, string $id, int $index ): string {
+		$type    = (string) $layer['type'];
+		$title   = (string) ( $layer['title'] ?? '' );
+		$text    = (string) ( $layer['text'] ?? '' );
+		$url     = (string) ( $layer['url'] ?? '' );
+		$classes = array( 'imgp__layer', 'imgp__layer--decor', 'imgp__layer--' . $type );
+		$style   = '';
+
+		if ( 'hotspot' === $type ) {
+			$style = sprintf( '--imgp-x:%d%%;--imgp-y:%d%%', (int) $layer['x'], (int) $layer['y'] );
+		} else {
+			$classes[] = 'imgp__layer--at-' . (string) $layer['position'];
+		}
+
+		if ( 'image' === $type ) {
+			$style = sprintf( '--imgp-layer-width:%d%%', (int) $layer['width'] );
+		}
+
+		$inner = '';
+
+		if ( 'text' === $type ) {
+			$inner .= '' === $title ? '' : '<p class="imgp__layer-title" id="' . esc_attr( $id ) . '-t">' . esc_html( $title ) . '</p>';
+			$inner .= '' === $text ? '' : '<p class="imgp__layer-text">' . esc_html( $text ) . '</p>';
+		} elseif ( 'image' === $type ) {
+			$inner = sprintf(
+				'<img class="imgp__layer-image" src="%s" alt="%s" decoding="async" loading="lazy" />',
+				esc_url( (string) $layer['image'] ),
+				esc_attr( $title )
+			);
+		} elseif ( 'hotspot' === $type ) {
+			$inner = '<span class="imgp__hotspot-dot" aria-hidden="true"></span>'
+				. '<span class="imgp__hotspot-label">'
+				. ( '' === $title ? '' : '<span class="imgp__hotspot-title">' . esc_html( $title ) . '</span>' )
+				. ( '' === $text ? '' : '<span class="imgp__hotspot-text">' . esc_html( $text ) . '</span>' )
+				. '</span>';
+		} else {
+			// Another plugin's output, trusted as far as the post it sits in is:
+			// a shortcode in a block attribute runs for the same author who
+			// could have put it in the paragraph below.
+			$inner = '<div class="imgp__layer-shortcode">' . do_shortcode( (string) $layer['shortcode'] ) . '</div>';
+		}
+
+		if ( '' !== $url ) {
+			$inner = sprintf(
+				'<a class="imgp__layer-link" href="%s"%s>%s</a>',
+				esc_url( $url ),
+				! empty( $layer['newTab'] ) ? ' target="_blank" rel="noopener noreferrer"' : '',
+				$inner
+			);
+		} elseif ( 'hotspot' === $type ) {
+			// With nowhere to go, the spot opens its label when pressed —
+			// a finger cannot hover.
+			$inner = '<button type="button" class="imgp__layer-link" aria-expanded="false">' . $inner . '</button>';
+		}
+
+		$close = empty( $layer['skip'] )
+			? ''
+			: sprintf(
+				'<button type="button" class="imgp__layer-close" aria-label="%s">%s</button>',
+				esc_attr__( 'Close', 'imagina-player' ),
+				Icons::get( 'close' )
+			);
+
+		return sprintf(
+			'<div class="%s" data-layer-index="%s" data-layer="%s"%s%s hidden>%s%s</div>',
+			esc_attr( implode( ' ', $classes ) ),
+			esc_attr( (string) $index ),
+			esc_attr( (string) wp_json_encode( array( 'type' => $type, 'at' => $layer['at'], 'until' => $layer['until'] ?? 0 ) ) ),
+			'' === $style ? '' : ' style="' . esc_attr( $style ) . '"',
+			'' === $title ? '' : ' aria-label="' . esc_attr( $title ) . '"',
+			$inner,
+			$close
+		);
+	}
+
+	/**
+	 * The transcript panel, closed, and empty until opened.
+	 *
+	 * Rendered by the server so the control exists without the script; the
+	 * lines come from the subtitle tracks the browser loads, so there is
+	 * nothing to print here but the frame for them.
+	 */
+	private function part_transcript(): string {
+		return sprintf(
+			'<details class="imgp__transcript"><summary class="imgp__transcript-summary">%s</summary>'
+			. '<div class="imgp__transcript-panel"><input type="search" class="imgp__transcript-search" placeholder="%s" aria-label="%s" />'
+			. '<p class="imgp__transcript-note" hidden></p><div class="imgp__transcript-body" role="list"></div></div></details>',
+			esc_html__( 'Transcript', 'imagina-player' ),
+			esc_attr__( 'Search the transcript', 'imagina-player' ),
+			esc_attr__( 'Search the transcript', 'imagina-player' )
+		);
 	}
 
 	/**

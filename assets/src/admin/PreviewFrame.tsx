@@ -78,7 +78,9 @@ export function PreviewFrame( {
 						${ inlined.head }
 						<style>body { padding: 24px 0; }</style>
 						</head><body>${ html }
-						<script>window.imaginaPlayer = { restUrl: "${ restUrl }", assetUrl: "${ assetUrl ?? '' }", lazyInit: false, maxComputeBytes: 0, i18n: {} };</script>
+						<script>window.imaginaPlayer = { restUrl: "${ restUrl }", assetUrl: "${
+							assetUrl ?? ''
+						}", lazyInit: false, maxComputeBytes: 0, i18n: {} };</script>
 						${ inlined.tail }
 						<script>${ FRAME_HEIGHT_SCRIPT }</script>
 						</body></html>`

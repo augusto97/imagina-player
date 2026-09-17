@@ -57,6 +57,16 @@ function apply_filters( $hook, $value, ...$args ) {
 $GLOBALS['stub_shortcodes'] = array();
 function add_shortcode( $tag, $callback ) { $GLOBALS['stub_shortcodes'][ $tag ] = $callback; }
 function shortcode_exists( $tag ) { return isset( $GLOBALS['stub_shortcodes'][ $tag ] ); }
+function do_shortcode( $content ) {
+	return preg_replace_callback(
+		'/\[([a-z_]+)([^\]]*)\]/',
+		static function ( $m ) {
+			$callback = $GLOBALS['stub_shortcodes'][ $m[1] ] ?? null;
+			return $callback ? (string) call_user_func( $callback, array(), '', $m[1] ) : $m[0];
+		},
+		(string) $content
+	);
+}
 if ( ! function_exists( 'wp_kses_post' ) ) {
 	function wp_kses_post( $text ) { return strip_tags( (string) $text, '<a><b><i><em><strong><span><code><br>' ); }
 }

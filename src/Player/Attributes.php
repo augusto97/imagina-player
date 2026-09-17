@@ -206,6 +206,10 @@ final class Attributes {
 				'type'    => 'tristate',
 				'default' => self::INHERIT,
 			),
+			'videoTranscript'    => array(
+				'type'    => 'tristate',
+				'default' => self::INHERIT,
+			),
 			'videoChapters'      => array(
 				'type'    => 'tristate',
 				'default' => self::INHERIT,
