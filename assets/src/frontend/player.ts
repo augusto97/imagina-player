@@ -18,6 +18,8 @@ import type {
 type ProviderStandIn = PlayerMedia & {
 	capabilities: MediaCapabilities;
 	destroy: () => void;
+	/** Switch to another of the provider's videos inside the same frame. */
+	load?: ( id: string, hash: string, play: boolean ) => void;
 };
 import { clamp, formatTime, rafThrottle } from './utils';
 import { Waveform } from './waveform';
@@ -1099,8 +1101,31 @@ export class Player {
 	 * @param track The item to play.
 	 * @param play  Whether to start it. False when restoring a page's last item.
 	 */
+	/**
+	 * Whether this player can take the track without leaving the page.
+	 *
+	 * A file into a file player, or a provider's video into that provider's
+	 * frame. A YouTube video cannot be poured into a `<video>` element, nor
+	 * a file into YouTube's frame; for those the list's own link is the
+	 * honest answer, and the caller leaves it to be one.
+	 * @param track
+	 */
+	canLoad( track: TrackChange ): boolean {
+		const provider = this.config.video?.provider ?? '';
+
+		if ( ! track.provider ) {
+			return '' === provider;
+		}
+
+		return (
+			track.provider === provider &&
+			'function' === typeof this.standIn?.load
+		);
+	}
+
 	loadTrack( track: TrackChange, play = true ): void {
 		this.savePosition();
+		this.hideResume();
 
 		this.config.peaksKey = track.peaksKey ?? '';
 		this.config.duration = track.duration ?? 0;
@@ -1123,6 +1148,32 @@ export class Player {
 
 		if ( thumb && track.thumbnail ) {
 			thumb.src = track.thumbnail;
+		}
+
+		// A video's still comes back up for the new one, and the picture is
+		// "not started" again until it plays.
+		const poster =
+			this.root.querySelector< HTMLImageElement >( '.imgp__poster img' );
+
+		if ( poster && track.poster ) {
+			poster.src = track.poster;
+		}
+
+		if ( this.config.video ) {
+			this.root.classList.remove( 'is-started' );
+		}
+
+		if ( track.provider && this.standIn?.load ) {
+			this.config.layerKey = track.providerId ?? '';
+			this.standIn.load(
+				track.providerId ?? '',
+				track.providerHash ?? '',
+				play
+			);
+			this.render();
+			this.restorePosition();
+
+			return;
 		}
 
 		// The waveform belongs to the file, so it goes with it. Cleared before

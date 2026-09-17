@@ -159,14 +159,9 @@ function wire( root: HTMLElement ): void {
 		return;
 	}
 
-	// The player has to exist before the playlist can drive it, and a lazily
-	// initialised one does not until it is scrolled to.
-	create( host );
-
-	const player = players.get( host );
 	const data = root.getAttribute( 'data-imagina-playlist' );
 
-	if ( ! player || ! data ) {
+	if ( ! data ) {
 		return;
 	}
 
@@ -178,9 +173,18 @@ function wire( root: HTMLElement ): void {
 		return;
 	}
 
-	import( /* webpackChunkName: "imagina-playlist" */ './playlist' )
-		.then( ( { Playlist } ) => new Playlist( root, player, tracks ) )
-		.catch( () => undefined );
+	/*
+	 * The player has to exist before the playlist can drive it, and it may
+	 * not yet: a lazily initialised one waits to be scrolled to, and one for
+	 * a YouTube or Vimeo video waits for its stand-in to arrive. Asking for
+	 * it synchronously found nothing for those, and a list of YouTube videos
+	 * never got its runtime at all.
+	 */
+	withPlayer( host, ( player ) => {
+		import( /* webpackChunkName: "imagina-playlist" */ './playlist' )
+			.then( ( { Playlist } ) => new Playlist( root, player, tracks ) )
+			.catch( () => undefined );
+	} );
 }
 
 /**

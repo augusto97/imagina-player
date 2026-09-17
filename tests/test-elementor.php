@@ -66,7 +66,7 @@ check( 'and so does the title', true === ( $audio_controls['title']['dynamic']['
 check( 'every audio switch is a three-way choice', array() === array_diff( array_keys( AudioWidget::SWITCHES ), array_keys( $audio_controls ) ) && array( '', 'yes', 'no' ) === array_keys( $audio_controls['showSpeed']['options'] ?? array() ) );
 check( 'the video widget offers subtitles, chapters and calls to action as lists', 'repeater' === ( $video_controls['tracks']['type'] ?? '' ) && 'repeater' === ( $video_controls['chapters']['type'] ?? '' ) && 'repeater' === ( $video_controls['layers']['type'] ?? '' ) );
 check( 'every video switch is offered', array() === array_diff( array_keys( VideoWidget::SWITCHES ), array_keys( $video_controls ) ) );
-check( 'the playlist widget is a list of tracks with a layout and a preset', 'repeater' === ( $list_controls['items']['type'] ?? '' ) && array( 'list', 'grid' ) === array_keys( $list_controls['layout']['options'] ?? array() ) && isset( $list_controls['preset'] ) );
+check( 'the playlist widget is a list of tracks with a layout and a preset', 'repeater' === ( $list_controls['items']['type'] ?? '' ) && array( 'list', 'grid', 'side', 'rail', 'slider' ) === array_keys( $list_controls['layout']['options'] ?? array() ) && isset( $list_controls['preset'] ) );
 check( 'the preset choices are the site’s presets', array_key_exists( 'default', $audio_controls['preset']['options'] ?? array() ) );
 check( 'the skins offered to a video are the video skins', array( '', 'theater', 'minimal', 'stacked' ) === array_keys( $video_controls['skin']['options'] ?? array() ), implode( ',', array_keys( $video_controls['skin']['options'] ?? array() ) ) );
 

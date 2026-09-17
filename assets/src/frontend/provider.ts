@@ -122,6 +122,17 @@ abstract class ProviderMedia extends EventTarget implements PlayerMedia {
 	/** Build the frame and connect to it. Called once, on the first play. */
 	protected abstract mount(): Promise< void >;
 
+	/**
+	 * Forget the video that was playing: another is about to take the frame.
+	 */
+	protected reset(): void {
+		this.time = 0;
+		this.length = 0;
+		this.isEnded = false;
+		this.emit( 'timeupdate' );
+		this.emit( 'durationchange' );
+	}
+
 	protected abstract command( name: string, value?: number | boolean ): void;
 
 	get currentTime(): number {
@@ -444,6 +455,38 @@ class YouTubeMedia extends ProviderMedia {
 
 	private timer = 0;
 
+	/**
+	 * Another video in the same frame.
+	 *
+	 * Loading it plays it; cueing it shows its still and waits — which is
+	 * what restoring a list's last item wants.
+	 * @param id
+	 * @param hash
+	 * @param play
+	 */
+	load( id: string, hash: string, play: boolean ): void {
+		void hash;
+		this.config.providerId = id;
+		this.reset();
+
+		const player = this.player;
+
+		// No frame yet: the first play builds one, and with the new name.
+		if ( ! player ) {
+			if ( play ) {
+				void this.play().catch( () => undefined );
+			}
+
+			return;
+		}
+
+		if ( play ) {
+			player.loadVideoById?.( id );
+		} else {
+			player.cueVideoById?.( id );
+		}
+	}
+
 	protected async mount(): Promise< void > {
 		await loadReadyYouTube();
 
@@ -714,6 +757,39 @@ class VimeoMedia extends ProviderMedia {
 		} );
 	}
 
+	/**
+	 * Another video in the same frame.
+	 * @param id
+	 * @param hash
+	 * @param play
+	 */
+	load( id: string, hash: string, play: boolean ): void {
+		this.config.providerId = id;
+		this.config.providerHash = hash;
+		this.reset();
+
+		const player = this.player;
+
+		if ( ! player ) {
+			if ( play ) {
+				void this.play().catch( () => undefined );
+			}
+
+			return;
+		}
+
+		void player
+			.loadVideo?.( hash ? { id: Number( id ), h: hash } : Number( id ) )
+			.then( () => {
+				if ( play ) {
+					return player.play();
+				}
+
+				return undefined;
+			} )
+			.catch( () => undefined );
+	}
+
 	protected async mount(): Promise< void > {
 		// Another plugin may have loaded Vimeo's script already; asking for
 		// it twice is a second copy of the same file.
@@ -840,6 +916,8 @@ declare global {
 			setPlaybackRate: ( rate: number ) => void;
 			getCurrentTime: () => number;
 			getDuration: () => number;
+			loadVideoById?: ( id: string ) => void;
+			cueVideoById?: ( id: string ) => void;
 			loadModule?: ( name: string ) => void;
 			getOption?: ( module: string, option: string ) => unknown;
 			setOption?: (
@@ -874,6 +952,9 @@ declare global {
 			setVolume: ( level: number ) => Promise< number >;
 			setMuted: ( muted: boolean ) => Promise< boolean >;
 			setPlaybackRate: ( rate: number ) => Promise< number >;
+			loadVideo?: (
+				id: number | { id: number; h: string }
+			) => Promise< number >;
 			getTextTracks?: () => Promise< TextTrackInfo[] >;
 			enableTextTrack?: (
 				language: string,

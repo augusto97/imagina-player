@@ -1659,7 +1659,9 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 									0 ===
 									Number(
 										layer.at ??
-											defaultAt( String( layer.type ?? '' ) )
+											defaultAt(
+												String( layer.type ?? '' )
+											)
 									)
 										? __(
 												'From the start, before anything is played.',
@@ -1910,75 +1912,81 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							) }
 
 							{ 'shortcode' !== layer.type &&
-							( 'email' === layer.type ? (
-								<>
-									<TextControl
-										__nextHasNoMarginBottom
-										label={ __(
-											'List name',
-											'imagina-player'
-										) }
-										help={ __(
-											'Groups the addresses this player captures. Anything you like: "course", "newsletter".',
-											'imagina-player'
-										) }
-										value={ String( layer.list ?? '' ) }
-										onChange={ ( value: string ) =>
-											patchLayer( index, { list: value } )
-										}
-									/>
-									<TextControl
-										__nextHasNoMarginBottom
-										label={ __(
-											'Small print',
-											'imagina-player'
-										) }
-										value={ String( layer.consent ?? '' ) }
-										onChange={ ( value: string ) =>
-											patchLayer( index, {
-												consent: value,
-											} )
-										}
-									/>
-								</>
-							) : (
-								<>
-									<TextControl
-										__nextHasNoMarginBottom
-										label={
-											DECOR_KINDS.includes(
-												String( layer.type ?? '' )
-											)
-												? __(
-														'Links to (optional)',
-														'imagina-player'
-												  )
-												: __(
-														'Button links to',
-														'imagina-player'
-												  )
-										}
-										value={ String( layer.url ?? '' ) }
-										placeholder="https://…"
-										onChange={ ( value: string ) =>
-											patchLayer( index, { url: value } )
-										}
-									/>
-									<ToggleControl
-										__nextHasNoMarginBottom
-										label={ __(
-											'Open in a new tab',
-											'imagina-player'
-										) }
-										checked={ Boolean( layer.newTab ) }
-										onChange={ ( value: boolean ) =>
-											patchLayer( index, {
-												newTab: value,
-											} )
-										}
-									/>
-								</>
-							) ) }
+								( 'email' === layer.type ? (
+									<>
+										<TextControl
+											__nextHasNoMarginBottom
+											label={ __(
+												'List name',
+												'imagina-player'
+											) }
+											help={ __(
+												'Groups the addresses this player captures. Anything you like: "course", "newsletter".',
+												'imagina-player'
+											) }
+											value={ String( layer.list ?? '' ) }
+											onChange={ ( value: string ) =>
+												patchLayer( index, {
+													list: value,
+												} )
+											}
+										/>
+										<TextControl
+											__nextHasNoMarginBottom
+											label={ __(
+												'Small print',
+												'imagina-player'
+											) }
+											value={ String(
+												layer.consent ?? ''
+											) }
+											onChange={ ( value: string ) =>
+												patchLayer( index, {
+													consent: value,
+												} )
+											}
+										/>
+									</>
+								) : (
+									<>
+										<TextControl
+											__nextHasNoMarginBottom
+											label={
+												DECOR_KINDS.includes(
+													String( layer.type ?? '' )
+												)
+													? __(
+															'Links to (optional)',
+															'imagina-player'
+													  )
+													: __(
+															'Button links to',
+															'imagina-player'
+													  )
+											}
+											value={ String( layer.url ?? '' ) }
+											placeholder="https://…"
+											onChange={ ( value: string ) =>
+												patchLayer( index, {
+													url: value,
+												} )
+											}
+										/>
+										<ToggleControl
+											__nextHasNoMarginBottom
+											label={ __(
+												'Open in a new tab',
+												'imagina-player'
+											) }
+											checked={ Boolean( layer.newTab ) }
+											onChange={ ( value: boolean ) =>
+												patchLayer( index, {
+													newTab: value,
+												} )
+											}
+										/>
+									</>
+								) ) }
 
 							<ToggleControl
 								__nextHasNoMarginBottom

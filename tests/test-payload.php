@@ -79,8 +79,16 @@ $budgets = array(
 	 * And to 38.0 in 1.44.0: decorations over the picture at nine places, a
 	 * hotspot with its label, and the transcript panel with its list. Two
 	 * features' worth of interface, on the wire under a kilobyte.
+	 *
+	 * And to 42.0 in 1.45.0, for the three video playlist layouts. The
+	 * stylesheet is one file for every player on purpose — the block
+	 * editor's preview inlines it, and a chunk's own stylesheet would be
+	 * fetched from the plugin's address, which some hosts refuse to a
+	 * sandboxed frame — so it carries the playlist even where there is
+	 * none. Splitting it is the next saving worth making, once the preview
+	 * can inline a chunk's stylesheet as it inlines its script.
 	 */
-	'the stylesheet'  => array( $css, 38.0 ),
+	'the stylesheet'  => array( $css, 42.0 ),
 );
 
 foreach ( $budgets as $label => $budget ) {
@@ -118,8 +126,9 @@ $compressed = array(
 	// Tightened from 6.5 in 1.19.0. Today's stylesheet compresses to 5.7 KB,
 	// and the raw budget above has now been raised twice; this is the half of
 	// the pair that has to hold.
-	// Raised to 6.5 in 1.43.0 and 7.5 in 1.44.0, with the raw budget above.
-	'the stylesheet'  => array( $css, 7.5 ),
+	// Raised to 6.5 in 1.43.0, 7.5 in 1.44.0 and 8.0 in 1.45.0, with the raw
+	// budget above; see there for what to do about it.
+	'the stylesheet'  => array( $css, 8.0 ),
 );
 
 foreach ( $compressed as $label => $budget ) {

@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.44.0
+Stable tag: 1.45.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,15 @@ is marked and kept in view, pressing a line jumps there, and the box above
 narrows the list to a word. YouTube and Vimeo keep their subtitles inside
 their frame, so this is for videos this site serves.
 
+= Can I make a playlist of videos? =
+
+Yes: the **Imagina Playlist** block takes videos as well as audio, and three
+of its layouts are made for them — the list beside the picture, a rail of
+thumbnails under it, or a slider of cards with arrows. Keep a list to one
+kind: files this site serves, or videos from one provider. A YouTube video in
+a list of files still works as a link, but it cannot take the place of a file
+in the same player.
+
 = Can I use a YouTube or Vimeo video? =
 
 Yes. Paste the address into the Video block. It plays inside this player with your
@@ -158,6 +167,25 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.45.0 =
+* Added: three layouts for a playlist of videos, beside the list and the
+  grid: **Video with the list beside it**, **Video with a rail of thumbnails
+  under it** and **Video with a slider of cards under it**, with arrows once
+  the cards overflow. Each item shows its picture — the one given, or the
+  video's poster, a provider's still or an upload's cover — with its length
+  on it and a play glyph, and the row scrolls to the one playing. In the
+  block's Layout setting and in the Elementor widget.
+* Added: a playlist switches videos without rebuilding the player. A file
+  takes the place of a file, with its poster back up until it plays; a
+  YouTube or Vimeo video takes the place of another from the same provider
+  inside the provider's own frame. A YouTube item in a list of files, or the
+  other way round, is left to its link, which opens it, rather than a click
+  that does nothing.
+* Fixed: an item's length was only shown when typed in; an upload's own
+  length is now read from the library.
+* Fixed: the close button of a text or shortcode overlay sat over its first
+  words; it sits on the corner now.
 
 = 1.44.0 =
 * Added: four more kinds of overlay beside the call to action, the bar and

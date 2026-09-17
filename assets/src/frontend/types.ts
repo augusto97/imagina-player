@@ -143,6 +143,12 @@ export interface TrackChange {
 	/** Base64 peaks, when the server already had them measured. */
 	peaks?: string;
 	protectedId?: number;
+	/** A video's still, shown until it starts. */
+	poster?: string;
+	/** Set for a video a provider serves, which is switched by name. */
+	provider?: string;
+	providerId?: string;
+	providerHash?: string;
 }
 
 export interface RuntimeData {

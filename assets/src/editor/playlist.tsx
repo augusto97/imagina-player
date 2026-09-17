@@ -65,6 +65,21 @@ interface Selected {
 const LAYOUTS: Array< { value: string; label: string } > = [
 	{ value: 'list', label: __( 'List', 'imagina-player' ) },
 	{ value: 'grid', label: __( 'Grid of covers', 'imagina-player' ) },
+	{
+		value: 'side',
+		label: __( 'Video with the list beside it', 'imagina-player' ),
+	},
+	{
+		value: 'rail',
+		label: __(
+			'Video with a rail of thumbnails under it',
+			'imagina-player'
+		),
+	},
+	{
+		value: 'slider',
+		label: __( 'Video with a slider of cards under it', 'imagina-player' ),
+	},
 ];
 
 function toItem( media: Selected ): Item {

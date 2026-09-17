@@ -25,6 +25,9 @@ export class Playlist {
 
 	private readonly links: HTMLAnchorElement[];
 
+	/** The list itself, which the sideways layouts scroll. */
+	private readonly list: HTMLElement | null;
+
 	private current = 0;
 
 	private readonly cleanup: Array< () => void > = [];
@@ -36,9 +39,13 @@ export class Playlist {
 		this.links = Array.from(
 			root.querySelectorAll< HTMLAnchorElement >( '.imgp-playlist__link' )
 		);
+		this.list = root.querySelector< HTMLElement >(
+			'.imgp-playlist__items'
+		);
 
 		this.bindClicks();
 		this.bindAdvance();
+		this.bindArrows();
 		this.restore();
 	}
 
@@ -62,6 +69,18 @@ export class Playlist {
 					event.altKey ||
 					0 !== event.button
 				) {
+					return;
+				}
+
+				/*
+				 * A video the player cannot take — YouTube into a file
+				 * player, a file into YouTube's frame — is left to the
+				 * link, which opens it. Better an honest page change than
+				 * a click that does nothing.
+				 */
+				const track = this.tracks[ index ];
+
+				if ( ! track || ! this.player.canLoad( track ) ) {
 					return;
 				}
 
@@ -124,6 +143,101 @@ export class Playlist {
 
 		this.player.loadTrack( track, autoplay );
 		this.remember( index );
+		this.reveal( index );
+	}
+
+	/**
+	 * Bring the current item into view along a sideways list.
+	 *
+	 * The list's own scroll only: `scrollIntoView` would also move the page
+	 * to the item, and a track advancing while the reader is elsewhere on
+	 * the page must not drag them back.
+	 * @param index
+	 */
+	private reveal( index: number ): void {
+		const list = this.list;
+		const link = this.links[ index ];
+
+		if (
+			! list ||
+			! link ||
+			( list.scrollWidth <= list.clientWidth &&
+				list.scrollHeight <= list.clientHeight )
+		) {
+			return;
+		}
+
+		const item = link.parentElement ?? link;
+
+		// A list beside the picture scrolls down; a rail or slider along.
+		if ( list.scrollHeight > list.clientHeight + 1 ) {
+			list.scrollTo( {
+				top:
+					item.offsetTop -
+					list.clientHeight / 2 +
+					item.offsetHeight / 2,
+				behavior: 'smooth',
+			} );
+
+			return;
+		}
+
+		list.scrollTo( {
+			left: item.offsetLeft - list.clientWidth / 2 + item.offsetWidth / 2,
+			behavior: 'smooth',
+		} );
+	}
+
+	/**
+	 * The slider's arrows: shown once the cards overflow, and each moves the
+	 * row most of a width, so the last card seen becomes the first.
+	 */
+	private bindArrows(): void {
+		const list = this.list;
+		const prev = this.root.querySelector< HTMLButtonElement >(
+			'.imgp-playlist__nav--prev'
+		);
+		const next = this.root.querySelector< HTMLButtonElement >(
+			'.imgp-playlist__nav--next'
+		);
+
+		if ( ! list || ! prev || ! next ) {
+			return;
+		}
+
+		const review = (): void => {
+			const overflow = list.scrollWidth > list.clientWidth + 1;
+
+			prev.hidden = ! overflow;
+			next.hidden = ! overflow;
+			prev.disabled = list.scrollLeft <= 0;
+			next.disabled =
+				list.scrollLeft + list.clientWidth >= list.scrollWidth - 1;
+		};
+
+		const by = ( direction: number ): void => {
+			list.scrollBy( {
+				left: direction * list.clientWidth * 0.8,
+				behavior: 'smooth',
+			} );
+		};
+
+		const back = (): void => by( -1 );
+		const forward = (): void => by( 1 );
+
+		prev.addEventListener( 'click', back );
+		next.addEventListener( 'click', forward );
+		list.addEventListener( 'scroll', review, { passive: true } );
+		window.addEventListener( 'resize', review );
+
+		this.cleanup.push( () => {
+			prev.removeEventListener( 'click', back );
+			next.removeEventListener( 'click', forward );
+			list.removeEventListener( 'scroll', review );
+			window.removeEventListener( 'resize', review );
+		} );
+
+		review();
 	}
 
 	/**

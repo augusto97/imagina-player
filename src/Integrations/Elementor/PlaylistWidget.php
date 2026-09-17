@@ -68,8 +68,11 @@ final class PlaylistWidget extends PlayerWidget {
 				'type'    => Controls_Manager::SELECT,
 				'default' => 'list',
 				'options' => array(
-					'list' => __( 'List', 'imagina-player' ),
-					'grid' => __( 'Grid', 'imagina-player' ),
+					'list'   => __( 'List', 'imagina-player' ),
+					'grid'   => __( 'Grid', 'imagina-player' ),
+					'side'   => __( 'Video with the list beside it', 'imagina-player' ),
+					'rail'   => __( 'Video with a rail of thumbnails under it', 'imagina-player' ),
+					'slider' => __( 'Video with a slider of cards under it', 'imagina-player' ),
 				),
 			)
 		);
@@ -124,7 +127,7 @@ final class PlaylistWidget extends PlayerWidget {
 		return array(
 			'items'   => $items,
 			'heading' => (string) ( $settings['heading'] ?? '' ),
-			'layout'  => 'grid' === ( $settings['layout'] ?? 'list' ) ? 'grid' : 'list',
+			'layout'  => PlaylistRenderer::layout( (string) ( $settings['layout'] ?? 'list' ) ),
 			'preset'  => (string) ( $settings['preset'] ?? 'default' ),
 		);
 	}

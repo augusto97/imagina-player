@@ -1883,6 +1883,7 @@
 }
 
 .imgp-playlist__link {
+	box-sizing: border-box;
 	display: flex;
 	align-items: center;
 	gap: 0.7rem;
@@ -2959,4 +2960,230 @@
 
 .imgp.is-stuck .imgp__transcript {
 	display: none;
+}
+
+/* --- Video playlists ------------------------------------------------------
+   Three more shapes for a list of videos: the list beside the picture, a rail
+   of thumbnails under it, and a slider of larger cards with arrows. */
+
+/* The close button of a decoration sits on its corner rather than over its
+   words. */
+.imgp__layer--decor .imgp__layer-close {
+	top: -0.55rem;
+	right: -0.55rem;
+	width: 1.6rem;
+	height: 1.6rem;
+	border-radius: 50%;
+	background: rgb(20 20 20 / 92%);
+	color: #fff;
+	box-shadow: 0 2px 8px rgb(0 0 0 / 30%);
+}
+
+.imgp-playlist__cover {
+	position: relative;
+	display: block;
+	flex: 0 0 auto;
+}
+
+.imgp-playlist__cover--blank {
+	width: 3rem;
+	height: 3rem;
+	border-radius: 0.35rem;
+	background: color-mix(in srgb, var(--imgp-accent, #1f2937) 18%, transparent);
+}
+
+.imgp-playlist__cover--video::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 0;
+	height: 0;
+	border-style: solid;
+	border-width: 0.45rem 0 0.45rem 0.75rem;
+	border-color: transparent transparent transparent rgb(255 255 255 / 92%);
+	transform: translate(-40%, -50%);
+	filter: drop-shadow(0 1px 2px rgb(0 0 0 / 50%));
+	pointer-events: none;
+}
+
+.imgp-playlist--grid .imgp-playlist__cover {
+	width: 100%;
+}
+
+/* Beside: the picture takes two thirds, the list the rest and scrolls to
+   about the picture's height. Flex rather than grid so the list wraps under
+   the picture by itself once the two no longer fit — the picture keeps at
+   least thirty-two rem, below which a video's bar wraps its controls into
+   rows — with no query on a container the element cannot see. */
+.imgp-playlist--side {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+}
+
+.imgp-playlist--side .imgp-playlist__heading {
+	flex: 1 0 100%;
+}
+
+.imgp-playlist--side .imgp-playlist__player {
+	flex: 2 1 32rem;
+	min-width: 0;
+}
+
+.imgp-playlist--side .imgp-playlist__items {
+	flex: 1 1 13rem;
+	min-width: 0;
+	max-height: var(--imgp-side-height, 26rem);
+	overflow: hidden auto;
+	padding-right: 0.2rem;
+}
+
+.imgp-playlist--side .imgp-playlist__cover,
+.imgp-playlist--side .imgp-playlist__cover--blank {
+	width: 5.2rem;
+	height: auto;
+}
+
+.imgp-playlist--side .imgp-playlist__art,
+.imgp-playlist--side .imgp-playlist__cover--blank {
+	width: 5.2rem;
+	height: 2.95rem;
+	border-radius: 0.3rem;
+}
+
+/* Under, sideways: a row that scrolls and snaps, one card per item. */
+.imgp-playlist--rail,
+.imgp-playlist--slider {
+	position: relative;
+}
+
+.imgp-playlist--rail .imgp-playlist__items,
+.imgp-playlist--slider .imgp-playlist__items {
+	display: flex;
+	gap: 0.6rem;
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	scroll-snap-type: x mandatory;
+	scrollbar-width: thin;
+	padding-bottom: 0.25rem;
+}
+
+.imgp-playlist--rail .imgp-playlist__item,
+.imgp-playlist--slider .imgp-playlist__item {
+	flex: 0 0 9.5rem;
+	scroll-snap-align: start;
+}
+
+.imgp-playlist--slider .imgp-playlist__item {
+	flex-basis: min(15rem, 44cqw);
+}
+
+.imgp-playlist--rail .imgp-playlist__link,
+.imgp-playlist--slider .imgp-playlist__link {
+	flex-direction: column;
+	align-items: stretch;
+	gap: 0.4rem;
+	height: 100%;
+	padding: 0.35rem;
+}
+
+.imgp-playlist--rail .imgp-playlist__cover,
+.imgp-playlist--slider .imgp-playlist__cover {
+	width: 100%;
+	height: auto;
+	overflow: hidden;
+	border-radius: 0.35rem;
+	background: color-mix(in srgb, var(--imgp-accent, #1f2937) 18%, transparent);
+}
+
+.imgp-playlist--rail .imgp-playlist__art,
+.imgp-playlist--slider .imgp-playlist__art,
+.imgp-playlist--rail .imgp-playlist__cover--blank,
+.imgp-playlist--slider .imgp-playlist__cover--blank {
+	display: block;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 16 / 9;
+	border-radius: 0;
+}
+
+/* The length sits on the picture, as it does on every video site. */
+.imgp-playlist--rail .imgp-playlist__cover .imgp-playlist__time,
+.imgp-playlist--slider .imgp-playlist__cover .imgp-playlist__time {
+	position: absolute;
+	right: 0.3rem;
+	bottom: 0.3rem;
+	padding: 0.05rem 0.35rem;
+	border-radius: 0.25rem;
+	background: rgb(0 0 0 / 78%);
+	color: #fff;
+	font-size: 0.72rem;
+}
+
+.imgp-playlist--rail .imgp-playlist__title,
+.imgp-playlist--slider .imgp-playlist__title {
+	white-space: normal;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	font-size: 0.85rem;
+}
+
+.imgp-playlist--rail .imgp-playlist__item.is-current .imgp-playlist__link,
+.imgp-playlist--slider .imgp-playlist__item.is-current .imgp-playlist__link {
+	box-shadow: inset 0 0 0 2px var(--imgp-accent);
+}
+
+/* The slider's arrows, over the ends of the row. */
+.imgp-playlist__nav {
+	position: absolute;
+	top: 30%;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.2rem;
+	height: 2.2rem;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: rgb(20 20 20 / 85%);
+	color: #fff;
+	cursor: pointer;
+	box-shadow: 0 4px 14px rgb(0 0 0 / 30%);
+}
+
+.imgp-playlist__nav[hidden] {
+	display: none;
+}
+
+.imgp-playlist__nav:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.imgp-playlist__nav .imgp__icon {
+	width: 1.2rem;
+	height: 1.2rem;
+	fill: currentcolor;
+}
+
+.imgp-playlist__nav--prev {
+	left: -0.6rem;
+}
+
+.imgp-playlist__nav--next {
+	right: -0.6rem;
+}
+
+/* The strip holds the row and its arrows, so the arrows sit over the row's
+   ends — about level with the pictures — and not over the video. */
+.imgp-playlist__strip {
+	position: relative;
+	min-width: 0;
+}
+
+.imgp-playlist__nav {
+	top: 30%;
 }
