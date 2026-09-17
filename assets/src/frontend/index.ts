@@ -77,12 +77,26 @@ async function start( root: HTMLElement, video: VideoConfig ): Promise< void > {
 	}
 }
 
+/** Callers waiting for a player that is still being built. */
+const waiting = new WeakMap<
+	HTMLElement,
+	Array< ( player: Player ) => void >
+>();
+
 function build(
 	root: HTMLElement,
 	standIn: ConstructorParameters< typeof Player >[ 2 ]
 ): void {
 	try {
-		players.set( root, new Player( root, runtime(), standIn ) );
+		const player = new Player( root, runtime(), standIn );
+
+		players.set( root, player );
+
+		for ( const callback of waiting.get( root ) ?? [] ) {
+			callback( player );
+		}
+
+		waiting.delete( root );
 	} catch ( error ) {
 		// A single broken player must not take the rest of the page with it.
 		if ( window.console ) {
@@ -169,8 +183,71 @@ function wire( root: HTMLElement ): void {
 		.catch( () => undefined );
 }
 
+/**
+ * Run something against a player, building it first if it is still waiting
+ * to be scrolled to.
+ *
+ * A timestamp button above the fold points at a player below it that a lazy
+ * page has not built yet, and a provider video is built only once its
+ * stand-in has arrived — so "the player for this root" is a promise, not a
+ * lookup.
+ * @param root
+ * @param callback
+ */
+function withPlayer(
+	root: HTMLElement,
+	callback: ( player: Player ) => void
+): void {
+	const existing = players.get( root );
+
+	if ( existing ) {
+		callback( existing );
+
+		return;
+	}
+
+	waiting.set( root, [ ...( waiting.get( root ) ?? [] ), callback ] );
+	observer?.unobserve( root );
+	create( root );
+}
+
+/**
+ * Links to a moment and timestamp buttons live in their own chunk, fetched
+ * the first time a page shows it needs them: an address carrying `t=`, or
+ * a click on a button the shortcode wrote.
+ */
+function moments(): Promise< typeof import('./moments') > {
+	return import( /* webpackChunkName: "imagina-moments" */ './moments' );
+}
+
+function bindMoments(): void {
+	if ( /[?#&]t=/.test( window.location.search + window.location.hash ) ) {
+		moments()
+			.then( ( m ) => m.followDeepLink( withPlayer ) )
+			.catch( () => undefined );
+	}
+
+	// Delegated, so buttons written by the shortcode, by a theme or added by
+	// an AJAX load all work, and a button placed before its player finds it.
+	document.addEventListener( 'click', ( event ) => {
+		const button = (
+			event.target as HTMLElement | null
+		 )?.closest< HTMLElement >( '[data-imgp-time]' );
+
+		if ( ! button ) {
+			return;
+		}
+
+		event.preventDefault();
+		moments()
+			.then( ( m ) => m.pressTimestamp( button, withPlayer ) )
+			.catch( () => undefined );
+	} );
+}
+
 function boot(): void {
 	scan();
+	bindMoments();
 
 	// Players injected later — infinite scroll, AJAX filters, the block editor
 	// preview — are picked up without a second script.

@@ -247,6 +247,14 @@ final class Assets {
 				'searchPlaceholder' => __( 'Search what is said', 'imagina-player' ),
 				'searchEmpty' => __( 'The subtitles for this video have not loaded yet.', 'imagina-player' ),
 				'searchNone' => __( 'Nothing found.', 'imagina-player' ),
+				'speed' => __( 'Speed', 'imagina-player' ),
+				'speedNormal' => __( 'Normal', 'imagina-player' ),
+				'copyLink' => __( 'Copy link to this moment', 'imagina-player' ),
+				'linkCopied' => __( 'Link copied', 'imagina-player' ),
+				/* translators: %s: a time such as 12:40 */
+				'resumeFrom' => __( 'Resume from %s', 'imagina-player' ),
+				'startOver' => __( 'Start over', 'imagina-player' ),
+				'dismiss' => __( 'Dismiss', 'imagina-player' ),
 			),
 		);
 	}

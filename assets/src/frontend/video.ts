@@ -39,6 +39,23 @@ interface Host {
 	toggle: () => void;
 	seekBy: ( seconds: number ) => void;
 	seekTo: ( seconds: number ) => void;
+	/** The core's own rate change, so the audio-style button stays in step. */
+	setSpeed: ( rate: number ) => void;
+	speed: () => number;
+}
+
+/** What the speed list offers. */
+const SPEED_CHOICES = [ 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2 ];
+
+/** How long "Link copied" stays on the picture. */
+const TOAST_FOR = 1800;
+
+interface MenuItem {
+	label: string;
+	active: boolean;
+	onPick: () => void;
+	/** Leave the menu open after picking: the item opened another list in it. */
+	keepOpen?: boolean;
 }
 
 /**
@@ -97,6 +114,7 @@ export class VideoChrome {
 		this.bindGestures();
 		this.bindCaptions();
 		this.bindChapters();
+		this.bindSettings();
 		this.bindStoryboard();
 		this.bindSearch();
 		this.bindFocusMode();
@@ -496,10 +514,9 @@ export class VideoChrome {
 	 * offered — and because two menus that never open together do not need two
 	 * containers.
 	 * @param items
+	 * @param replace Swap the list in the open panel rather than toggling it.
 	 */
-	private openMenu(
-		items: Array< { label: string; active: boolean; onPick: () => void } >
-	): void {
+	private openMenu( items: MenuItem[], replace = false ): void {
 		const menu = this.root.querySelector< HTMLElement >( '.imgp__menu' );
 
 		if ( ! menu ) {
@@ -507,11 +524,19 @@ export class VideoChrome {
 		}
 
 		if ( ! menu.hidden ) {
-			this.closeMenu();
+			// Pressing the button again closes what it opened — unless this
+			// is one list giving way to another inside the same panel.
+			if ( ! replace ) {
+				this.closeMenu();
 
-			return;
+				return;
+			}
+
+			this.dismissMenu?.();
+			this.dismissMenu = null;
 		}
 
+		menu.classList.remove( 'imgp__menu--search' );
 		menu.textContent = '';
 
 		for ( const item of items ) {
@@ -528,7 +553,10 @@ export class VideoChrome {
 
 			button.addEventListener( 'click', () => {
 				item.onPick();
-				this.closeMenu();
+
+				if ( ! item.keepOpen ) {
+					this.closeMenu();
+				}
 			} );
 
 			menu.appendChild( button );
@@ -544,10 +572,12 @@ export class VideoChrome {
 				return;
 			}
 
+			// The bar's own buttons toggle their menus themselves; closing
+			// on the way down would only have the click reopen it.
 			if (
 				event instanceof PointerEvent &&
 				( event.target as HTMLElement | null )?.closest(
-					'.imgp__vcontrols'
+					'.imgp__vcontrols, .imgp__speed'
 				)
 			) {
 				return;
@@ -674,6 +704,7 @@ export class VideoChrome {
 	 * the first play, so the button appears then. The viewer's remembered
 	 * language and the author's "on from the start" apply exactly as they do
 	 * to this player's own tracks.
+	 * @param button
 	 */
 	private async bindProviderCaptions(
 		button: HTMLButtonElement
@@ -692,7 +723,10 @@ export class VideoChrome {
 
 		const pick = ( code: string ): void => {
 			media.setCaptionTrack?.( code );
-			button.setAttribute( 'aria-pressed', '' !== code ? 'true' : 'false' );
+			button.setAttribute(
+				'aria-pressed',
+				'' !== code ? 'true' : 'false'
+			);
 			button.classList.toggle( 'is-active', '' !== code );
 		};
 
@@ -1156,6 +1190,133 @@ export class VideoChrome {
 		};
 	}
 
+	/**
+	 * The gear: playback speed as a list, and a link to this moment.
+	 */
+	private bindSettings(): void {
+		const button = this.root.querySelector< HTMLButtonElement >(
+			'.imgp__vbtn--settings'
+		);
+
+		if ( ! button || ! this.root.querySelector( '.imgp__menu' ) ) {
+			return;
+		}
+
+		button.hidden = false;
+
+		this.on( button, 'click', () => {
+			this.openMenu( this.settingsItems() );
+		} );
+	}
+
+	private settingsItems(): MenuItem[] {
+		const items: MenuItem[] = [];
+
+		// Only when the author left the speed control on: the gear does not
+		// bring back a control that was switched off.
+		if ( this.root.querySelector( '.imgp__speed' ) ) {
+			items.push( {
+				label: `${ this.i18n( 'speed', 'Speed' ) } · ${ this.speedLabel(
+					this.host.speed()
+				) }`,
+				active: false,
+				keepOpen: true,
+				onPick: () => this.openMenu( this.speedItems(), true ),
+			} );
+		}
+
+		items.push( {
+			label: this.i18n( 'copyLink', 'Copy link to this moment' ),
+			active: false,
+			onPick: () => void this.copyMomentLink(),
+		} );
+
+		return items;
+	}
+
+	private speedItems(): MenuItem[] {
+		const current = this.host.speed();
+
+		return SPEED_CHOICES.map( ( rate ) => ( {
+			label: this.speedLabel( rate ),
+			active: Math.abs( rate - current ) < 0.001,
+			onPick: () => this.host.setSpeed( rate ),
+		} ) );
+	}
+
+	private speedLabel( rate: number ): string {
+		return 1 === rate ? this.i18n( 'speedNormal', 'Normal' ) : `${ rate }×`;
+	}
+
+	/**
+	 * The speed button, when the core asks: the list instead of the cycle.
+	 *
+	 * @return True when a menu was opened or closed; false leaves the core to
+	 *         cycle as it does for audio.
+	 */
+	pickSpeed(): boolean {
+		const menu = this.root.querySelector< HTMLElement >( '.imgp__menu' );
+
+		if ( ! menu ) {
+			return false;
+		}
+
+		this.openMenu( this.speedItems() );
+
+		return true;
+	}
+
+	/**
+	 * The page's address with `t=` at the current second — and `player=`
+	 * naming this one when the block was given an anchor, so a page with
+	 * two videos opens the right one.
+	 */
+	private async copyMomentLink(): Promise< void > {
+		const win = this.root.ownerDocument.defaultView ?? window;
+		const url = new URL( win.location.href );
+		const name = this.root.closest< HTMLElement >( '.imgp-block' )?.id;
+
+		url.searchParams.set(
+			't',
+			String( Math.floor( this.media.currentTime ) )
+		);
+		url.hash = '';
+
+		if ( name ) {
+			url.searchParams.set( 'player', name );
+		} else {
+			url.searchParams.delete( 'player' );
+		}
+
+		try {
+			await win.navigator.clipboard.writeText( url.toString() );
+			this.toast( this.i18n( 'linkCopied', 'Link copied' ) );
+		} catch {
+			// No clipboard — an insecure page, or permission refused. Show
+			// the link so it can still be copied by hand.
+			this.toast( url.toString() );
+		}
+	}
+
+	/**
+	 * A line over the picture that goes away by itself.
+	 * @param text
+	 */
+	private toast( text: string ): void {
+		const doc = this.root.ownerDocument;
+
+		this.root.querySelector( '.imgp__toast' )?.remove();
+
+		const toast = doc.createElement( 'div' );
+
+		toast.className = 'imgp__toast';
+		toast.setAttribute( 'role', 'status' );
+		toast.textContent = text;
+		( this.stage ?? this.root ).appendChild( toast );
+
+		window.setTimeout( () => toast.remove(), TOAST_FOR );
+	}
+
 	private bindChapters(): void {
 		const chapters = this.config.chapters ?? [];
 
@@ -1164,6 +1325,7 @@ export class VideoChrome {
 		}
 
 		this.paintMarkers( chapters );
+		this.bindChapterTitles( chapters );
 
 		const button = this.root.querySelector< HTMLButtonElement >(
 			'.imgp__vbtn--chapters'
@@ -1246,6 +1408,91 @@ export class VideoChrome {
 		paint();
 		this.on( this.media, 'loadedmetadata', paint );
 		this.on( this.media, 'durationchange', paint );
+	}
+
+	/**
+	 * The chapter under the pointer, named.
+	 *
+	 * The bar is cut into segments by the markers; this says which one the
+	 * pointer is over, and the time there, in a tip that follows it. Only a
+	 * pointer — a finger dragging the bar is covering the tip anyway.
+	 * @param chapters
+	 */
+	private bindChapterTitles(
+		chapters: Array< { start: number; title: string } >
+	): void {
+		const scrubber =
+			this.root.querySelector< HTMLElement >( '.imgp__scrubber' );
+
+		if ( ! scrubber ) {
+			return;
+		}
+
+		const tip = this.root.ownerDocument.createElement( 'div' );
+
+		tip.className = 'imgp__chapter-tip';
+		tip.hidden = true;
+		tip.setAttribute( 'aria-hidden', 'true' );
+
+		const name = this.root.ownerDocument.createElement( 'span' );
+
+		name.className = 'imgp__chapter-tip-title';
+
+		const when = this.root.ownerDocument.createElement( 'span' );
+
+		when.className = 'imgp__chapter-tip-time';
+		tip.append( name, when );
+		scrubber.appendChild( tip );
+
+		const sorted = [ ...chapters ].sort( ( a, b ) => a.start - b.start );
+
+		const move = ( event: PointerEvent ): void => {
+			const duration = this.media.duration;
+
+			if ( ! Number.isFinite( duration ) || duration <= 0 ) {
+				tip.hidden = true;
+
+				return;
+			}
+
+			const box = scrubber.getBoundingClientRect();
+			const ratio = Math.min(
+				1,
+				Math.max( 0, ( event.clientX - box.left ) / box.width )
+			);
+			const at = ratio * duration;
+			let current: { start: number; title: string } | null = null;
+
+			for ( const chapter of sorted ) {
+				if ( chapter.start <= at ) {
+					current = chapter;
+				}
+			}
+
+			if ( ! current ) {
+				tip.hidden = true;
+
+				return;
+			}
+
+			name.textContent = current.title;
+			when.textContent = stamp( at );
+			tip.hidden = false;
+
+			// Kept inside the bar so a title near either end does not hang
+			// off the side of the picture.
+			const half = tip.offsetWidth / 2;
+
+			tip.style.left = `${ Math.min(
+				box.width - half,
+				Math.max( half, ratio * box.width )
+			) }px`;
+		};
+
+		this.on( scrubber, 'pointermove', move );
+		this.on( scrubber, 'pointerleave', () => {
+			tip.hidden = true;
+		} );
 	}
 
 	private i18n( key: string, fallback: string ): string {

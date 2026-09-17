@@ -2484,3 +2484,178 @@
 	-webkit-box-orient: vertical;
 	-webkit-line-clamp: 2;
 }
+
+/* --- Chapter segments -----------------------------------------------------
+   With chapters the scrub bar is cut where each one begins: the tick becomes
+   a notch the height of the track, so the bar reads as segments rather than
+   as a line with pins in it. The notch grows with the track on hover. */
+
+.imgp--video .imgp__mark {
+	height: 5px;
+	width: 3px;
+	margin-left: -1.5px;
+	border-radius: 0;
+	background: rgb(0 0 0 / 80%);
+	opacity: 1;
+	transition: height 0.12s ease;
+}
+
+.imgp--video .imgp__scrubber:hover .imgp__mark,
+.imgp--video.is-scrubbing .imgp__mark {
+	height: 9px;
+}
+
+/* The chapter under the pointer, named, in a tip that follows it. */
+.imgp__chapter-tip {
+	position: absolute;
+	bottom: calc(100% + 0.45rem);
+	left: 0;
+	z-index: 13;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.1rem;
+	max-width: 16rem;
+	padding: 0.3rem 0.55rem;
+	border-radius: 0.4rem;
+	background: rgb(20 20 20 / 92%);
+	color: #fff;
+	font-size: 0.75rem;
+	line-height: 1.3;
+	text-align: center;
+	white-space: nowrap;
+	transform: translateX(-50%);
+	pointer-events: none;
+}
+
+.imgp__chapter-tip[hidden] {
+	display: none;
+}
+
+.imgp__chapter-tip-title {
+	overflow: hidden;
+	max-width: 100%;
+	font-weight: 600;
+	text-overflow: ellipsis;
+}
+
+.imgp__chapter-tip-time {
+	opacity: 0.7;
+	font-variant-numeric: tabular-nums;
+}
+
+/* --- Resuming ---------------------------------------------------------------
+   "Resume from 12:40 · Start over": a sentence and a way back to the start,
+   shown when a remembered position was restored, gone once playback has
+   clearly carried on. Inline under an audio player; over the picture of a
+   video. */
+
+.imgp__resume {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.2rem 0.6rem;
+	margin: 0.4rem 0 0;
+	padding: 0.35rem 0.65rem;
+	border-radius: 0.5rem;
+	background: color-mix(in srgb, var(--imgp-accent, #1f2937) 10%, transparent);
+	font-size: 0.8rem;
+	line-height: 1.3;
+}
+
+.imgp__resume-restart,
+.imgp__resume-close {
+	padding: 0.1rem 0.35rem;
+	border: 0;
+	border-radius: 0.3rem;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-size: 0.8rem;
+	cursor: pointer;
+}
+
+.imgp__resume-restart {
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 0.15em;
+}
+
+.imgp__resume-close {
+	margin-left: auto;
+	font-size: 1rem;
+	line-height: 1;
+	opacity: 0.7;
+}
+
+.imgp__resume-restart:hover,
+.imgp__resume-close:hover {
+	background: color-mix(in srgb, currentcolor 12%, transparent);
+	opacity: 1;
+}
+
+.imgp--video .imgp__resume {
+	position: absolute;
+	top: 0.6rem;
+	left: 0.6rem;
+	z-index: 11;
+	max-width: calc(100% - 1.2rem);
+	margin: 0;
+	background: rgb(20 20 20 / 88%);
+	color: #fff;
+	box-shadow: 0 4px 14px rgb(0 0 0 / 30%);
+}
+
+.imgp.is-stuck .imgp__resume,
+.imgp.is-stuck .imgp__vbtn--settings,
+.imgp.is-stuck .imgp__chapter-tip {
+	display: none;
+}
+
+/* --- A word over the picture ----------------------------------------------
+   "Link copied", and gone. */
+
+.imgp__toast {
+	position: absolute;
+	left: 50%;
+	bottom: 4.2rem;
+	z-index: 13;
+	max-width: 90%;
+	padding: 0.4rem 0.8rem;
+	border-radius: 0.4rem;
+	background: rgb(20 20 20 / 90%);
+	color: #fff;
+	font-size: 0.8rem;
+	line-height: 1.3;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	transform: translateX(-50%);
+	pointer-events: none;
+}
+
+/* --- Timestamp buttons ---------------------------------------------------
+   Written into the text by `[imagina_time]`, outside any player, so they
+   cannot lean on the player's own variables. A pill that reads as a time. */
+
+.imgp-time {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3em;
+	padding: 0.05em 0.55em;
+	border: 0;
+	border-radius: 999px;
+	background: rgb(31 41 55 / 10%);
+	color: inherit;
+	font: inherit;
+	font-size: 0.92em;
+	font-variant-numeric: tabular-nums;
+	line-height: 1.5;
+	cursor: pointer;
+	vertical-align: baseline;
+}
+
+.imgp-time:hover,
+.imgp-time:focus-visible {
+	background: rgb(31 41 55 / 18%);
+}

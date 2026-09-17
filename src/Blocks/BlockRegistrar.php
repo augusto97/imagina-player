@@ -117,9 +117,31 @@ final class BlockRegistrar {
 			return '';
 		}
 
-		$wrapper = get_block_wrapper_attributes( array( 'class' => 'imgp-block' ) );
+		$wrapper = get_block_wrapper_attributes( self::wrapper_attributes( $attributes ) );
 
 		return sprintf( '<div %s>%s</div>', $wrapper, $html );
+	}
+
+	/**
+	 * The wrapper's class, and its id when the author gave the block one.
+	 *
+	 * The editor's "HTML anchor" field writes an `anchor` attribute, which a
+	 * static block prints itself and a dynamic block has to print by hand:
+	 * core adds no id on the server. It is what a timestamp button or a
+	 * `?player=` link names when a page carries more than one player.
+	 *
+	 * @param array<string, mixed> $attributes Block attributes.
+	 * @return array<string, string>
+	 */
+	public static function wrapper_attributes( array $attributes ): array {
+		$wrapper = array( 'class' => 'imgp-block' );
+		$anchor  = sanitize_html_class( (string) ( $attributes['anchor'] ?? '' ) );
+
+		if ( '' !== $anchor ) {
+			$wrapper['id'] = $anchor;
+		}
+
+		return $wrapper;
 	}
 
 	/**
@@ -166,7 +188,7 @@ final class BlockRegistrar {
 			return '';
 		}
 
-		$wrapper = get_block_wrapper_attributes( array( 'class' => 'imgp-block' ) );
+		$wrapper = get_block_wrapper_attributes( self::wrapper_attributes( $attributes ) );
 
 		return sprintf( '<div %s>%s</div>', $wrapper, $html );
 	}

@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.42.1
+Stable tag: 1.43.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,7 +15,7 @@ A fast, accessible waveform audio player for WordPress, built for the block edit
 Imagina Player renders an audio player with a real waveform, a Gutenberg block, and
 reusable presets so a whole site can be restyled from one screen.
 
-It is deliberately small. The front-end bundle is under 8 KB gzipped with no
+It is deliberately small. The front-end bundle is under 9 KB gzipped with no
 runtime dependencies — no jQuery, no player framework — and a page only loads it
 when it actually contains a player.
 
@@ -55,8 +55,25 @@ they apply.
 * Elementor widgets: the same three, under the **Imagina Player** category (Elementor 3.5 or newer)
 * Shortcode: `[imagina_player src="https://example.com/track.mp3" artist="…" title="…"]`
 * Shortcode, reading the file from a custom field of the current post: `[imagina_player field="video_url"]`
+* Timestamp button, in the text around a player: `[imagina_time at="1:35"]The second question[/imagina_time]`
+* Link to a moment: `https://example.com/interview/?t=95`, with `&player=intro` naming a block by its HTML anchor
 
 == Frequently Asked Questions ==
+
+= Can a button in the text jump to a moment in the video? =
+
+Yes. Write `[imagina_time at="1:35"]The second question[/imagina_time]` where the
+button should go; a click takes the player to 1:35 and starts it. The time can
+be `95`, `1:35`, `1:02:03` or `1m35s`, and a shortcode with no text shows the
+time itself — write that one as `[imagina_time at="1:35" /]`, closed with the
+slash, so WordPress does not pair it with the closing tag of the next button.
+On a page with more than one player, give the block an **HTML anchor** (in its
+Advanced panel) and name it: `player="intro"`. Otherwise the first player on
+the page is meant.
+
+The same works from a link: an address ending in `?t=95` or `#t=1m35s` opens
+the player at that second, paused, and `&player=intro` says which one. The
+gear on a video's bar has **Copy link to this moment** for exactly this.
 
 = Can I use a YouTube or Vimeo video? =
 
@@ -123,6 +140,43 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.43.0 =
+* Added: timestamp buttons. `[imagina_time at="1:35"]The second question[/imagina_time]`
+  writes a button into the text that takes the player to that moment and
+  starts it. `player="intro"` names a block by its HTML anchor when a page
+  has more than one; without it, the first player on the page is meant.
+  The time can be written as `95`, `1:35`, `1:02:03` or `1m35s`, and the
+  button reads the time itself when no text is given.
+* Added: links to a moment. A page address ending in `?t=95` or `#t=1m35s`
+  opens the player at that second, paused, and `&player=intro` says which
+  one. The video gear offers **Copy link to this moment**, which writes such
+  a link to the clipboard.
+* Added: a speed list for video. The speed button now opens a list from
+  0.5× to 2× with the current speed marked, instead of stepping through
+  five speeds in turn; audio keeps its one-press button.
+* Added: a gear on the video bar. It holds the speed list and the link to
+  the current moment.
+* Added: the scrub bar is cut into segments where each chapter begins, and
+  moving the pointer along it names the chapter underneath and the time
+  there.
+* Added: a player that remembers where the viewer stopped now says so —
+  "Resume from 12:40", with **Start over** beside it — rather than opening
+  silently part way through. The chip leaves by itself once playback has
+  carried on.
+* Added: the Elementor video widget now offers **Keep playing in a corner
+  while scrolling** and **Remember where the viewer left off**, as the
+  video block's Playback panel already did.
+* Fixed: the video block's own **Speed control** switch had no effect. The
+  video bar took the speed flag from the audio preset, whose default is
+  off, so the control was missing from most videos whatever the block said.
+* Changed: the core bundle is 8.3 KB gzipped, up from 7.8. The half kilobyte
+  is the glue that decides whether to fetch the links-to-a-moment, timestamp
+  and resume-chip code, each of which is its own file and costs a page
+  nothing until it uses it.
+* Fixed: two YouTube or Vimeo videos on one site shared a single remembered
+  position, because neither has a file address to remember it under. Each
+  is now remembered under its own name.
 
 = 1.42.1 =
 * Fixed: a Vimeo video hidden from Vimeo.com, or allowed only on chosen

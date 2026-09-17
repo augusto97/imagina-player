@@ -98,7 +98,7 @@ final class PlayerRenderer {
 		 * two with neither of them complete.
 		 */
 		if ( $track->is_video() ) {
-			foreach ( array( 'show_skip', 'show_time', 'show_volume', 'show_title' ) as $key ) {
+			foreach ( array( 'show_skip', 'show_time', 'show_volume', 'show_title', 'show_speed' ) as $key ) {
 				$config[ $key ] = (bool) $video_config[ $key ];
 			}
 		}
@@ -110,6 +110,9 @@ final class PlayerRenderer {
 			$config['sticky'] ? 'imgp--sticky' : '',
 			$config['sticky'] ? 'imgp--stick-' . $config['sticky_position'] : '',
 			$track->is_video() ? 'imgp--video' : 'imgp--audio',
+			// Chapters cut the scrub bar into segments; the class is what
+			// restyles it, before the script has measured anything.
+			$track->is_video() && array() !== (array) ( $atts['chapters'] ?? array() ) ? 'imgp--chaptered' : '',
 			$track->is_video() ? 'imgp--cc-' . sanitize_html_class( (string) $video_config['caption_size'] ) : '',
 			$track->is_video() ? 'imgp--ccbg-' . sanitize_html_class( (string) $video_config['caption_bg'] ) : '',
 			/*
@@ -745,6 +748,16 @@ final class PlayerRenderer {
 		$buttons['quality'] = array(
 			'icons' => array( 'quality' ),
 			'label' => __( 'Quality', 'imagina-player' ),
+		);
+
+		/*
+		 * The gear. Playback speed as a list rather than a button to press
+		 * five times, and a link to the moment being watched. Hidden until
+		 * the script has something to put in it, like every other button.
+		 */
+		$buttons['settings'] = array(
+			'icons' => array( 'gear' ),
+			'label' => __( 'Settings', 'imagina-player' ),
 		);
 
 		$video = $video_config;

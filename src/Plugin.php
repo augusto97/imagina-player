@@ -22,6 +22,7 @@ use ImaginaPlayer\Rest\PeaksController;
 use ImaginaPlayer\Rest\SettingsController;
 use ImaginaPlayer\Rest\StreamController;
 use ImaginaPlayer\Shortcodes\PlayerShortcode;
+use ImaginaPlayer\Shortcodes\TimeShortcode;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -70,6 +71,7 @@ final class Plugin {
 			'protection'  => new ProtectionIntegration(),
 			'blocks'      => new BlockRegistrar(),
 			'shortcodes'  => new PlayerShortcode(),
+			'timestamps'  => new TimeShortcode(),
 			'dashboard'   => new Dashboard(),
 			'elementor'   => new ElementorIntegration(),
 		);

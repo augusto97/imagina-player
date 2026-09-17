@@ -37,6 +37,8 @@ final class VideoWidget extends PlayerWidget {
 		'videoFocusMode'     => 'Focus mode',
 		'videoCaptionsOn'    => 'Subtitles on from the start',
 		'videoProviderBare'  => 'Hide YouTube’s and Vimeo’s own interface',
+		'sticky'             => 'Keep playing in a corner while scrolling',
+		'rememberPosition'   => 'Remember where the viewer left off',
 	);
 
 	public const RATIOS = array( '16:9', '4:3', '1:1', '9:16', '21:9' );
@@ -219,6 +221,10 @@ final class VideoWidget extends PlayerWidget {
 				return __( 'Full screen', 'imagina-player' );
 			case 'videoBlockDownload':
 				return __( 'Block the browser download', 'imagina-player' );
+			case 'sticky':
+				return __( 'Keep playing in a corner while scrolling', 'imagina-player' );
+			case 'rememberPosition':
+				return __( 'Remember where the viewer left off', 'imagina-player' );
 			case 'videoFocusMode':
 				return __( 'Focus mode', 'imagina-player' );
 			case 'videoCaptionsOn':

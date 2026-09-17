@@ -44,7 +44,14 @@ check( 'the front-end bundle is built', is_readable( $core ) );
  */
 $budgets = array(
 	'the core bundle' => array( $core, 26.0 ),
-	'the video chunk' => array( $video, 14.0 ),
+	/*
+	 * Raised from 14.0 in 1.43.0, deliberately: the bar gained a gear with a
+	 * speed list and a link to the current moment, and the chapter segments
+	 * gained a tip naming the one under the pointer. Only a page with a
+	 * video pays for this chunk, and the core it is kept out of is the
+	 * figure the readme claims.
+	 */
+	'the video chunk' => array( $video, 16.0 ),
 	'the HLS glue'    => array( $glue, 6.0 ),
 	'the layer chunk' => array( $layers, 8.0 ),
 	'the playlist'    => array( $playlist, 6.0 ),
@@ -63,8 +70,13 @@ $budgets = array(
 	 * send. A budget raised every release is not a budget, so the compressed
 	 * figure below was tightened in the same commit: the loose proxy loosens,
 	 * the number a visitor actually pays gets stricter.
+	 *
+	 * Raised to 33.0 in 1.43.0 with five new pieces of interface — the
+	 * segmented bar and its tip, the resume chip, the toast and the
+	 * timestamp pill — and the compressed figure below raised with it,
+	 * by the same half kilobyte they weigh on the wire.
 	 */
-	'the stylesheet'  => array( $css, 30.0 ),
+	'the stylesheet'  => array( $css, 33.0 ),
 );
 
 foreach ( $budgets as $label => $budget ) {
@@ -91,11 +103,19 @@ foreach ( $budgets as $label => $budget ) {
  * true.
  */
 $compressed = array(
-	'the core bundle' => array( $core, 8.0 ),
+	/*
+	 * Raised from 8.0 in 1.43.0, and the readme's figure with it. The core
+	 * gained the hooks for links to a moment, timestamp buttons and the
+	 * "resume from" chip — half a kilobyte of glue that decides whether to
+	 * fetch each of those, which live in chunks of their own and cost a
+	 * page nothing until it uses them.
+	 */
+	'the core bundle' => array( $core, 9.0 ),
 	// Tightened from 6.5 in 1.19.0. Today's stylesheet compresses to 5.7 KB,
 	// and the raw budget above has now been raised twice; this is the half of
 	// the pair that has to hold.
-	'the stylesheet'  => array( $css, 6.0 ),
+	// Raised to 6.5 in 1.43.0, with the raw budget above; see there.
+	'the stylesheet'  => array( $css, 6.5 ),
 );
 
 foreach ( $compressed as $label => $budget ) {

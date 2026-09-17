@@ -1,7 +1,7 @@
 # Imagina Player
 
 Reproductor de audio con forma de onda para WordPress: bloque de Gutenberg,
-presets reutilizables y un núcleo de ~5 KB gzip sin dependencias.
+presets reutilizables y un núcleo de ~8 KB gzip sin dependencias.
 
 ![Vista del reproductor](docs/preview.png)
 

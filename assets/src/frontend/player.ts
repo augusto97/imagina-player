@@ -22,7 +22,11 @@ type ProviderStandIn = PlayerMedia & {
 import { clamp, formatTime, rafThrottle } from './utils';
 import { Waveform } from './waveform';
 
+/** What the audio button cycles through; the video chrome offers a list. */
 const SPEEDS = [ 1, 1.25, 1.5, 2, 0.75 ];
+
+/** A stored position shorter than this is not worth offering to resume. */
+const RESUME_WORTH = 5;
 
 const STORAGE_PREFIX = 'imagina-player:position:';
 
@@ -96,7 +100,14 @@ export class Player {
 	private onWindowResize: ( () => void ) | null = null;
 
 	/** Set once the video chunk has loaded; absent for audio, always. */
-	private video: { destroy: () => void } | null = null;
+	private video: {
+		destroy: () => void;
+		/** True when the chrome took the click: it opened a menu instead. */
+		pickSpeed?: () => boolean;
+	} | null = null;
+
+	/** Takes down the "resume from" offer, while it is showing. */
+	private resumeHide: ( () => void ) | null = null;
 
 	/** Set once the layer chunk has loaded; absent unless one was configured. */
 	private layers: { destroy: () => void } | null = null;
@@ -218,6 +229,8 @@ export class Player {
 					seekBy: ( seconds: number ) =>
 						this.seekTo( this.media.currentTime + seconds ),
 					seekTo: ( seconds: number ) => this.seekTo( seconds ),
+					setSpeed: ( rate: number ) => this.setSpeed( rate ),
+					speed: () => this.media.playbackRate || 1,
 				},
 				config
 			);
@@ -273,14 +286,15 @@ export class Player {
 		} );
 
 		this.speedButton?.addEventListener( 'click', () => {
-			this.speedIndex = ( this.speedIndex + 1 ) % SPEEDS.length;
-			this.media.playbackRate = SPEEDS[ this.speedIndex ];
-
-			if ( this.speedButton ) {
-				this.speedButton.textContent = `${
-					SPEEDS[ this.speedIndex ]
-				}×`;
+			// A video offers a list; pressing through five speeds to reach
+			// the one before is fine for a button in an audio bar and not for
+			// a picture somebody is watching.
+			if ( this.video?.pickSpeed?.() ) {
+				return;
 			}
+
+			this.speedIndex = ( this.speedIndex + 1 ) % SPEEDS.length;
+			this.setSpeed( SPEEDS[ this.speedIndex ] );
 		} );
 
 		this.root
@@ -835,24 +849,78 @@ export class Player {
 		return this.config.duration > 0 ? this.config.duration : 0;
 	}
 
+	/**
+	 * Where this player's position is kept.
+	 *
+	 * The waveform key only exists for a player that draws one, and a video
+	 * on YouTube has no `src` of its own — so two such videos on one site
+	 * shared a single empty key, and each opened where the other had
+	 * stopped. The layer key is minted from the source for every player.
+	 */
 	private storageKey(): string {
-		return `${ STORAGE_PREFIX }${ this.config.peaksKey || this.media.src }`;
+		return `${ STORAGE_PREFIX }${
+			this.config.peaksKey || this.config.layerKey || this.media.src
+		}`;
 	}
 
 	private restorePosition(): void {
+		this.hideResume();
+
 		if ( ! this.config.remember ) {
 			return;
 		}
 
 		try {
-			const stored = window.localStorage.getItem( this.storageKey() );
+			const stored = Number(
+				window.localStorage.getItem( this.storageKey() ) ?? 0
+			);
 
-			if ( stored ) {
-				this.seekTo( Number( stored ) );
+			if ( stored > 0 ) {
+				this.seekTo( stored );
+			}
+
+			if ( stored >= RESUME_WORTH ) {
+				this.offerResume( stored );
 			}
 		} catch {
 			// Storage can be unavailable in private mode; the player still works.
 		}
+	}
+
+	/**
+	 * Say where playback is picking up from, and offer the beginning.
+	 *
+	 * The chip is in its own chunk; a page where nothing is resumed never
+	 * fetches it.
+	 * @param seconds
+	 */
+	private offerResume( seconds: number ): void {
+		import( /* webpackChunkName: "imagina-resume" */ './resume' )
+			.then( ( { offerResume } ) => {
+				if ( this.destroyed || this.media.currentTime > seconds + 1 ) {
+					return;
+				}
+
+				this.hideResume();
+				this.resumeHide = offerResume(
+					{
+						root: this.root,
+						media: this.media,
+						i18n: this.runtime.i18n,
+						restart: () => {
+							this.clearPosition();
+							this.seekTo( 0 );
+						},
+					},
+					seconds
+				);
+			} )
+			.catch( () => undefined );
+	}
+
+	private hideResume(): void {
+		this.resumeHide?.();
+		this.resumeHide = null;
 	}
 
 	private savePosition(): void {
@@ -875,6 +943,20 @@ export class Player {
 			window.localStorage.removeItem( this.storageKey() );
 		} catch {
 			// Ignored.
+		}
+	}
+
+	setSpeed( rate: number ): void {
+		const index = SPEEDS.indexOf( rate );
+
+		if ( index >= 0 ) {
+			this.speedIndex = index;
+		}
+
+		this.media.playbackRate = rate;
+
+		if ( this.speedButton ) {
+			this.speedButton.textContent = `${ rate }×`;
 		}
 	}
 
@@ -1071,6 +1153,7 @@ export class Player {
 
 	destroy(): void {
 		this.destroyed = true;
+		this.hideResume();
 		this.layers?.destroy();
 		this.resizeObserver?.disconnect();
 		this.stickyObserver?.disconnect();
