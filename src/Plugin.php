@@ -71,6 +71,7 @@ final class Plugin {
 			'settingsApi' => new SettingsController(),
 			'protection'  => new ProtectionIntegration(),
 			'blocks'      => new BlockRegistrar(),
+			'patterns'    => new Blocks\Patterns(),
 			'shortcodes'  => new PlayerShortcode(),
 			'timestamps'  => new TimeShortcode(),
 			'dashboard'   => new Dashboard(),

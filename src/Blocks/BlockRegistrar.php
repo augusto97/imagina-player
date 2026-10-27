@@ -55,8 +55,10 @@ final class BlockRegistrar {
 		register_block_type(
 			\ImaginaPlayer\PATH . 'blocks/audio',
 			array(
-				'attributes'      => self::block_attributes(),
-				'render_callback' => array( $this, 'render' ),
+				'attributes'         => self::block_attributes(),
+				'render_callback'    => array( $this, 'render' ),
+				// Asked for only when the editor wants them; see `Variations`.
+				'variation_callback' => array( Variations::class, 'audio' ),
 			)
 		);
 
@@ -70,8 +72,9 @@ final class BlockRegistrar {
 		register_block_type(
 			\ImaginaPlayer\PATH . 'blocks/video',
 			array(
-				'attributes'      => self::block_attributes(),
-				'render_callback' => array( $this, 'render' ),
+				'attributes'         => self::block_attributes(),
+				'render_callback'    => array( $this, 'render' ),
+				'variation_callback' => array( Variations::class, 'video' ),
 			)
 		);
 
@@ -117,7 +120,8 @@ final class BlockRegistrar {
 						'default' => '',
 					),
 				) + self::anchor_attribute() + self::access_attributes(),
-				'render_callback' => array( $this, 'render_playlist' ),
+				'render_callback'    => array( $this, 'render_playlist' ),
+				'variation_callback' => array( Variations::class, 'playlist' ),
 			)
 		);
 	}

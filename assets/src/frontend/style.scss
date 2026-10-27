@@ -1699,7 +1699,10 @@
 	height: 0.4rem;
 	margin-inline-end: 0.45rem;
 	border-radius: 50%;
-	background: var(--imgp-accent);
+
+	/* The text's own colour: the menu is always dark, and a dark accent —
+	   the factory one among them — made the dot vanish into it. */
+	background: currentcolor;
 	vertical-align: 0.1em;
 }
 

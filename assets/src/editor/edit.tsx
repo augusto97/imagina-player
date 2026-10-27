@@ -34,6 +34,7 @@ import {
 	isVideoSource,
 } from '../shared/source';
 import { SourceStatus, SourceWarning } from './source-notice';
+import { SourcesPanel } from './sources-panel';
 import { WaveformNotice } from './waveform-notice';
 import type { EditorData } from './types';
 import { layerGap } from './layer-rules';
@@ -419,7 +420,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 			// A provider's video cannot carry our subtitle files, and the
 			// panel that lists them is not shown for one, so they could never
 			// be removed.
-			...( provider ? { tracks: [] } : {} ),
+			...( provider ? { tracks: [], sources: [], audioTracks: [] } : {} ),
 		} );
 
 		setReplaced(
@@ -2642,6 +2643,14 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 						{ __( 'Add an overlay', 'imagina-player' ) }
 					</Button>
 				</PanelBody>
+
+				{ isVideo && ! isProvider && (
+					<SourcesPanel
+						attributes={ attributes }
+						setAttributes={ setAttributes }
+						isStream={ 'hls' === identify( src ).kind }
+					/>
+				) }
 
 				<AccessPanel
 					attributes={ attributes }

@@ -20,7 +20,33 @@
  */
 
 import type Hls from 'hls.js';
-import type { ErrorData, Level, ManifestParsedData } from 'hls.js';
+import type {
+	AudioTracksUpdatedData,
+	ErrorData,
+	Level,
+	ManifestParsedData,
+} from 'hls.js';
+import type { AudioChoices } from './types';
+
+/** The quality and the language last chosen, as files beside a video keep them. */
+const QUALITY_KEY = 'imagina-player:quality';
+const AUDIO_KEY = 'imagina-player:audio';
+
+function read( key: string ): string {
+	try {
+		return window.localStorage.getItem( key ) ?? '';
+	} catch {
+		return '';
+	}
+}
+
+function keep( key: string, value: string ): void {
+	try {
+		window.localStorage.setItem( key, value );
+	} catch {
+		// Storage off.
+	}
+}
 
 /** Query keys carried from the manifest onto every segment it names. */
 type Params = Array< [ string, string ] >;
@@ -36,6 +62,8 @@ export interface HlsHost {
 	i18n: Record< string, string >;
 	/** The stream was refused: its signed address has run out. */
 	expired?: () => void;
+	/** The stream carries more than one soundtrack. */
+	audio?: ( choices: AudioChoices ) => void;
 }
 
 export function canPlayNatively( media: HTMLVideoElement ): boolean {
@@ -161,6 +189,58 @@ export class HlsStream {
 			( _event, data: ManifestParsedData ) => {
 				this.levels = data.levels;
 				this.showQualityButton();
+
+				// The quality chosen on the last video, when this one has it.
+				const stored = read( QUALITY_KEY );
+				const index = this.levels.findIndex(
+					( level ) => `${ level.height }p` === stored
+				);
+
+				if ( index >= 0 && this.hls ) {
+					this.hls.currentLevel = index;
+				}
+			}
+		);
+
+		// Soundtracks in other languages, offered in the gear.
+		this.hls.on(
+			HlsCtor.Events.AUDIO_TRACKS_UPDATED,
+			( _event, data: AudioTracksUpdatedData ) => {
+				const tracks = data.audioTracks;
+
+				if ( tracks.length < 2 || ! this.host.audio ) {
+					return;
+				}
+
+				const stored = read( AUDIO_KEY );
+				const preferred = stored
+					? tracks.findIndex(
+							( track ) =>
+								track.lang === stored || track.name === stored
+					  )
+					: -1;
+
+				if ( preferred >= 0 && this.hls ) {
+					this.hls.audioTrack = preferred;
+				}
+
+				this.host.audio( {
+					labels: () =>
+						tracks.map(
+							( track ) => track.name || track.lang || ''
+						),
+					current: () => Math.max( 0, this.hls?.audioTrack ?? 0 ),
+					pick: ( index ) => {
+						if ( this.hls ) {
+							this.hls.audioTrack = index;
+						}
+
+						keep(
+							AUDIO_KEY,
+							tracks[ index ]?.lang || tracks[ index ]?.name || ''
+						);
+					},
+				} );
 			}
 		);
 
@@ -264,6 +344,8 @@ export class HlsStream {
 							if ( this.hls ) {
 								this.hls.currentLevel = -1;
 							}
+
+							keep( QUALITY_KEY, '' );
 						},
 					},
 					// Highest first: a person opening this menu is usually reaching
@@ -279,6 +361,10 @@ export class HlsStream {
 							onPick: () => {
 								if ( this.hls ) {
 									this.hls.currentLevel = index;
+								}
+
+								if ( level.height ) {
+									keep( QUALITY_KEY, `${ level.height }p` );
 								}
 							},
 						} ) ),

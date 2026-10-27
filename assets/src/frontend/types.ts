@@ -134,6 +134,31 @@ export interface VideoConfig {
 	 * of suggested videos at the end answer to no embed parameter.
 	 */
 	providerBare?: boolean;
+	/**
+	 * The same video in other files, a quality each, the main one first.
+	 * Absent unless there are two to choose between.
+	 */
+	qualities?: SourceChoice[];
+	/**
+	 * Other soundtracks, played in step with the picture; the video's own
+	 * sound first, with no address. Absent unless there are two.
+	 */
+	dubs?: SourceChoice[];
+}
+
+/** Soundtracks to choose between: a stream's own, or files beside it. */
+export interface AudioChoices {
+	labels: () => string[];
+	current: () => number;
+	pick: ( index: number ) => void;
+}
+
+export interface SourceChoice {
+	src: string;
+	label: string;
+	/** The library file a signed address is refreshed from; 0 when none. */
+	protectedId: number;
+	srclang?: string;
 }
 
 /** One item of a playlist, as the server hands it over. */

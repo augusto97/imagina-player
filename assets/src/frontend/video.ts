@@ -13,7 +13,12 @@
  * keyboard and touch.
  */
 
-import type { MediaCapabilities, PlayerMedia, VideoConfig } from './types';
+import type {
+	AudioChoices,
+	MediaCapabilities,
+	PlayerMedia,
+	VideoConfig,
+} from './types';
 
 /** How long a tap counts as part of a double tap. */
 const DOUBLE_TAP_MS = 300;
@@ -44,6 +49,8 @@ interface Host {
 	speed: () => number;
 	/** Ask for a fresh signed address, when a stream reports its own expired. */
 	refreshSource?: () => void;
+	/** Another file for the same video, from the same moment. */
+	switchSource: ( src: string, protectedId: number ) => void;
 }
 
 /** What the speed list offers. */
@@ -153,6 +160,12 @@ export class VideoChrome {
 
 	private destroyed = false;
 
+	/** Soundtracks to offer in the gear, once something has found two. */
+	private audio: AudioChoices | null = null;
+
+	/** Other files for this video, when it has any. */
+	private sources: { destroy: () => void } | null = null;
+
 	constructor( host: Host, config: VideoConfig ) {
 		this.host = host;
 		this.root = host.root;
@@ -183,6 +196,49 @@ export class VideoChrome {
 		if ( config.hls ) {
 			void this.setupHls();
 		}
+
+		if ( config.qualities || config.dubs ) {
+			void this.setupSources();
+		}
+	}
+
+	/**
+	 * Other qualities and soundtracks — files beside the video, or a stream's
+	 * own soundtracks where Safari plays it. A chunk of its own: most videos
+	 * have neither.
+	 * @param native The browser is playing a stream by itself.
+	 */
+	private async setupSources( native = false ): Promise< void > {
+		const element = this.element;
+
+		if ( ! element ) {
+			return;
+		}
+
+		try {
+			const { Sources } = await import(
+				/* webpackChunkName: "imagina-sources" */ './sources'
+			);
+
+			if ( ! this.destroyed ) {
+				this.sources = new Sources(
+					{
+						root: this.root,
+						element,
+						menu: ( items, opener ) =>
+							this.openMenu( items, opener ),
+						switchSource: this.host.switchSource,
+						audio: ( choices ) => {
+							this.audio = choices;
+						},
+					},
+					this.config,
+					native
+				);
+			}
+		} catch {
+			// The main file and its own sound play on.
+		}
 	}
 
 	/**
@@ -212,6 +268,9 @@ export class VideoChrome {
 				i18n: this.host.i18n,
 				menu: ( items, opener ) => this.openMenu( items, opener ),
 				expired: () => this.host.refreshSource?.(),
+				audio: ( choices ) => {
+					this.audio = choices;
+				},
 			} );
 
 			if ( this.destroyed ) {
@@ -222,6 +281,9 @@ export class VideoChrome {
 
 			if ( await stream.attach( element.currentSrc || element.src ) ) {
 				this.hls = stream;
+			} else {
+				// Safari plays the stream itself and lists its soundtracks.
+				void this.setupSources( true );
 			}
 		} catch {
 			// The element keeps its own src, so Safari — which plays HLS by
@@ -252,6 +314,7 @@ export class VideoChrome {
 		window.clearTimeout( this.toastTimer );
 		this.dismissMenu?.();
 		this.hls?.destroy();
+		this.sources?.destroy();
 
 		for ( const off of this.cleanup ) {
 			off();
@@ -1678,11 +1741,39 @@ export class VideoChrome {
 		} );
 	}
 
+	/**
+	 * A second list in the gear, with the way back to the first, as a
+	 * settings menu's second level has.
+	 * @param items
+	 */
+	private sublist( items: MenuItem[] ): void {
+		const settings = this.root.querySelector< HTMLElement >(
+			'.imgp__vbtn--settings'
+		);
+
+		this.openMenu(
+			[
+				{
+					label: `‹ ${ this.i18n( 'back', 'Back' ) }`,
+					active: false,
+					action: true,
+					keepOpen: true,
+					onPick: () =>
+						this.openMenu( this.settingsItems(), settings, true ),
+				},
+				...items,
+			],
+			settings,
+			true
+		);
+	}
+
 	private settingsItems(): MenuItem[] {
 		const items: MenuItem[] = [];
 		const settings = this.root.querySelector< HTMLElement >(
 			'.imgp__vbtn--settings'
 		);
+		const audio = this.audio;
 
 		// Only when the author left the speed control on: the gear does not
 		// bring back a control that was switched off.
@@ -1694,27 +1785,28 @@ export class VideoChrome {
 				active: false,
 				action: true,
 				keepOpen: true,
+				onPick: () => this.sublist( this.speedItems() ),
+			} );
+		}
+
+		// The soundtrack: a dubbing, or the stream's own languages.
+		if ( audio && audio.labels().length > 1 ) {
+			const labels = audio.labels();
+
+			items.push( {
+				label: `${ this.i18n( 'audioTrack', 'Audio' ) } · ${
+					labels[ audio.current() ] ?? ''
+				}`,
+				active: false,
+				action: true,
+				keepOpen: true,
 				onPick: () =>
-					this.openMenu(
-						[
-							// The way back to the gear's own list, as a
-							// settings menu's second level has.
-							{
-								label: `‹ ${ this.i18n( 'back', 'Back' ) }`,
-								active: false,
-								action: true,
-								keepOpen: true,
-								onPick: () =>
-									this.openMenu(
-										this.settingsItems(),
-										settings,
-										true
-									),
-							},
-							...this.speedItems(),
-						],
-						settings,
-						true
+					this.sublist(
+						labels.map( ( label, index ) => ( {
+							label,
+							active: index === audio.current(),
+							onPick: () => audio.pick( index ),
+						} ) )
 					),
 			} );
 		}

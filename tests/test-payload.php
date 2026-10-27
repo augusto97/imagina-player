@@ -34,6 +34,7 @@ $layers   = $plugin . 'build/imagina-layers.js';
 $playlist = $plugin . 'build/imagina-playlist.js';
 $course   = $plugin . 'build/imagina-course.js';
 $extras   = $plugin . 'build/imagina-extras.js';
+$sources  = $plugin . 'build/imagina-sources.js';
 $hls   = $plugin . 'build/imagina-hls.js';
 $css   = $plugin . 'build/style-frontend.css';
 
@@ -73,7 +74,13 @@ $budgets = array(
 	 * and a tap on a playing picture that brings the controls back instead
 	 * of pausing.
 	 */
-	'the video chunk' => array( $video, 19.0 ),
+	/*
+	 * And to 20.5 in 1.52.0: the gear's second lists share one way back, and
+	 * gained the soundtrack — a dubbing, or a stream's own languages — and
+	 * the loader for the chunk that switches qualities and keeps a
+	 * soundtrack in step with the picture, which is not in here.
+	 */
+	'the video chunk' => array( $video, 20.5 ),
 	'the HLS glue'    => array( $glue, 6.0 ),
 	'the layer chunk' => array( $layers, 8.0 ),
 	'the playlist'    => array( $playlist, 6.0 ),
@@ -81,6 +88,8 @@ $budgets = array(
 	// button of an audio player the first time it is pressed.
 	'the course chunk' => array( $course, 6.0 ),
 	'the more menu'    => array( $extras, 7.0 ),
+	// Fetched only by a video with other qualities or soundtracks.
+	'the qualities and soundtracks' => array( $sources, 6.0 ),
 	/*
 	 * Raised from 24.0 in 1.15.0, deliberately. The stylesheet gained a block
 	 * that restates, for the elements this player owns, the handful of
@@ -213,6 +222,7 @@ $optional = array(
 	'imagina-player-playlist' => $playlist,
 	'imagina-player-course:'  => $course,
 	'imagina-player:bookmarks:' => $extras,
+	'imagina-player:quality'    => $sources,
 );
 
 foreach ( $video_only as $needle ) {

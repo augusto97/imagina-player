@@ -244,7 +244,7 @@ final class PlayerRenderer {
 					),
 					(array) $atts['chapters']
 				),
-			);
+			) + $this->choices( $track, $atts );
 
 			/*
 			 * Its presence is what makes the browser load the provider chunk at
@@ -809,15 +809,109 @@ final class PlayerRenderer {
 	}
 
 	/**
+	 * The qualities and the soundtracks a viewer can choose between, the main
+	 * file first in each list.
+	 *
+	 * A list of one is not a choice and is left out, and its absence is what
+	 * keeps the browser from fetching the code for it. A file from the library
+	 * is asked for its address now, as the main one is, so a protected file
+	 * answers on a signed link and says which file to refresh it from.
+	 *
+	 * @param array<string, mixed> $atts Sanitised attributes.
+	 * @return array<string, array<int, array<string, mixed>>>
+	 */
+	private function choices( Track $track, array $atts ): array {
+		if ( $track->is_provider() ) {
+			return array();
+		}
+
+		$resolve = static function ( array $item ): array {
+			$id  = (int) ( $item['id'] ?? 0 );
+			$src = (string) ( $item['src'] ?? '' );
+			$url = $id > 0 ? wp_get_attachment_url( $id ) : false;
+
+			if ( $url ) {
+				$src = (string) $url;
+			} else {
+				$id = 0;
+			}
+
+			return array(
+				'src'         => $src,
+				'protectedId' => $id > 0 && Vault::is_protected( $id ) ? $id : 0,
+				// A label left empty is the file's own name.
+				'label'       => '' !== (string) ( $item['label'] ?? '' )
+					? (string) $item['label']
+					: Track::title_from_filename( $src ),
+			);
+		};
+
+		$original = __( 'Original', 'imagina-player' );
+		$out      = array();
+
+		// A stream picks its own quality, and offers its renditions itself.
+		if ( ! $track->is_hls() ) {
+			$qualities = array(
+				array(
+					'src'         => $track->src,
+					'protectedId' => Vault::is_protected( $track->attachment_id ) ? $track->attachment_id : 0,
+					'label'       => '' !== (string) $atts['qualityLabel'] ? (string) $atts['qualityLabel'] : $original,
+				),
+			);
+
+			foreach ( (array) $atts['sources'] as $source ) {
+				$choice = $resolve( (array) $source );
+
+				if ( '' !== $choice['src'] ) {
+					$qualities[] = $choice;
+				}
+			}
+
+			if ( count( $qualities ) > 1 ) {
+				$out['qualities'] = $qualities;
+			}
+		}
+
+		$dubs = array(
+			array(
+				'src'         => '',
+				'protectedId' => 0,
+				'label'       => '' !== (string) $atts['audioLabel'] ? (string) $atts['audioLabel'] : $original,
+				'srclang'     => '',
+			),
+		);
+
+		foreach ( (array) $atts['audioTracks'] as $dub ) {
+			$choice = $resolve( (array) $dub );
+
+			if ( '' === $choice['src'] ) {
+				continue;
+			}
+
+			$language = (string) ( $dub['srclang'] ?? '' );
+
+			// Named by its language before its file, when it has one.
+			if ( '' === (string) ( $dub['label'] ?? '' ) && '' !== $language ) {
+				$choice['label'] = $language;
+			}
+
+			$dubs[] = $choice + array( 'srclang' => $language );
+		}
+
+		if ( count( $dubs ) > 1 ) {
+			$out['dubs'] = $dubs;
+		}
+
+		return $out;
+	}
+
+	/**
 	 * Controls that only make sense over a picture.
 	 *
 	 * Built from a list rather than written out, so a later control — captions,
 	 * quality, chapters — is an entry here and a case in the module, not a
 	 * rewrite of this markup.
 	 *
-	 * @param array<string, mixed> $config Effective settings.
-	 */
-	/**
 	 * @param array<string, mixed> $config       Effective player settings.
 	 * @param array<string, mixed> $atts         Sanitised attributes.
 	 * @param array<string, mixed> $video_config Effective video settings.

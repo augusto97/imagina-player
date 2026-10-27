@@ -316,6 +316,29 @@ final class Attributes {
 				'type'    => 'array',
 				'default' => array(),
 			),
+
+			/*
+			 * The same video in other sizes, for the viewer to choose from, and
+			 * other soundtracks for it — a dubbing — played in step with the
+			 * picture. Each label names the main file's own entry in the list;
+			 * empty is "Original".
+			 */
+			'sources'      => array(
+				'type'    => 'array',
+				'default' => array(),
+			),
+			'qualityLabel' => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'audioTracks'  => array(
+				'type'    => 'array',
+				'default' => array(),
+			),
+			'audioLabel'   => array(
+				'type'    => 'string',
+				'default' => '',
+			),
 			'layers'       => array(
 				'type'    => 'array',
 				'default' => array(),
@@ -428,6 +451,10 @@ final class Attributes {
 			: self::sanitize_ratio( (string) $out['aspectRatio'] );
 		$out['tracks']      = self::sanitize_tracks( (array) $out['tracks'] );
 		$out['chapters']    = self::sanitize_chapters( (array) $out['chapters'] );
+		$out['sources']      = self::sanitize_sources( (array) $out['sources'] );
+		$out['qualityLabel'] = self::label( (string) $out['qualityLabel'] );
+		$out['audioTracks']  = self::sanitize_audio_tracks( (array) $out['audioTracks'] );
+		$out['audioLabel']   = self::label( (string) $out['audioLabel'] );
 		$out['layers']      = Layers::sanitize( (array) $out['layers'] );
 
 		$out['accessRule']    = Access::rule( (string) $out['accessRule'] );
@@ -499,6 +526,74 @@ final class Attributes {
 		}
 
 		return array();
+	}
+
+	/** Choices offered to a viewer at most, of each kind. */
+	public const MAX_CHOICES = 8;
+
+	/**
+	 * Other files for the same video: a quality each.
+	 *
+	 * One from the library keeps its number, so the address is asked for
+	 * when the page is drawn — a protected file answers on a signed link —
+	 * rather than trusted from what was saved.
+	 *
+	 * @param array<int, mixed> $sources Raw sources.
+	 * @return array<int, array{src: string, id: int, label: string}>
+	 */
+	public static function sanitize_sources( array $sources ): array {
+		$clean = array();
+
+		foreach ( $sources as $source ) {
+			if ( ! is_array( $source ) ) {
+				continue;
+			}
+
+			$src = self::sanitize_media_url( (string) ( $source['src'] ?? '' ) );
+			$id  = max( 0, (int) ( $source['id'] ?? 0 ) );
+
+			if ( '' === $src && 0 === $id ) {
+				continue;
+			}
+
+			$clean[] = array(
+				'src'   => $src,
+				'id'    => $id,
+				'label' => self::label( (string) ( $source['label'] ?? '' ) ),
+			);
+		}
+
+		return array_slice( $clean, 0, self::MAX_CHOICES );
+	}
+
+	/**
+	 * Other soundtracks for the video, played in step with it.
+	 *
+	 * @param array<int, mixed> $tracks Raw tracks.
+	 * @return array<int, array{src: string, id: int, label: string, srclang: string}>
+	 */
+	public static function sanitize_audio_tracks( array $tracks ): array {
+		$clean = array();
+
+		foreach ( $tracks as $track ) {
+			$source = is_array( $track ) ? self::sanitize_sources( array( $track ) ) : array();
+
+			if ( array() === $source ) {
+				continue;
+			}
+
+			// It reaches a `lang`-like choice a browser parses: cut down to
+			// what a language tag may hold, as a subtitle's is.
+			$language = strtolower( (string) preg_replace( '/[^A-Za-z0-9-]/', '', (string) ( $track['srclang'] ?? '' ) ) );
+			$clean[]  = $source[0] + array( 'srclang' => substr( $language, 0, 20 ) );
+		}
+
+		return array_slice( $clean, 0, self::MAX_CHOICES );
+	}
+
+	/** A name a viewer reads in a menu: plain, and short. */
+	private static function label( string $label ): string {
+		return mb_substr( sanitize_text_field( $label ), 0, 40 );
 	}
 
 	/**

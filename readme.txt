@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.51.0
+Stable tag: 1.52.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -51,7 +51,7 @@ they apply.
 
 = Blocks, widgets and shortcodes =
 
-* Blocks: **Imagina Audio Player**, **Imagina Video Player**, **Imagina Playlist**
+* Blocks: **Imagina Audio Player**, **Imagina Video Player**, **Imagina Playlist**, with patterns and variations ready to insert
 * Elementor widgets: the same three, under the **Imagina Player** category (Elementor 3.5 or newer)
 * Shortcode: `[imagina_player src="https://example.com/track.mp3" artist="…" title="…"]`
 * Shortcode, reading the file from a custom field of the current post: `[imagina_player field="video_url"]`
@@ -197,6 +197,21 @@ together with bookmarks and a link to the moment playing. The timer fades the
 sound out after 15, 30, 45 or 60 minutes, or stops at the end of what is
 playing. The speed a listener picks is remembered on every player of the site.
 
+= Can a video offer other qualities or languages? =
+
+Yes. In the video block's **Qualities and languages** panel, add the same video
+in other sizes, and viewers switch between them with the quality button. Add an
+audio file as long as the video for each other language, and viewers pick it
+under **Audio** in the settings menu; it plays in step with the picture. An HLS
+stream offers its own qualities and languages by itself.
+
+= Are there ready-made layouts? =
+
+Yes: the **Imagina Player** pattern category has a podcast episode, a lesson
+with its transcript, a silent video header and a course, and the inserter
+offers the blocks already set up as a podcast episode, a short clip, a lesson,
+a silent loop, a course or a video series.
+
 = Can I stop people downloading my audio? =
 
 Mark a file as protected and it moves out of the public uploads folder, served
@@ -212,6 +227,35 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.52.0 =
+Two new features: a video in other qualities and other languages, and block
+patterns and variations.
+
+* New: **Qualities and languages**, on the video block and widget. Add the same
+  video in other sizes and viewers pick one under the quality button, carrying
+  on from the same second; the choice is remembered on every video of the site,
+  a stream's own renditions included. Add an audio file as long as the video —
+  a dubbing — and it is offered as **Audio** in the settings menu, played in
+  step with the picture in place of its own sound: it follows play, pause,
+  seeks and speed, is put back when it drifts, and the picture waits for it
+  while it loads. The volume and mute controls go on working on whichever
+  sound is playing. A soundtrack that cannot be kept with the picture, on a
+  server that cannot seek in the file, is put away rather than left out of
+  step. An HLS stream with several languages offers them in the same menu,
+  through hls.js or Safari's own player. Files from the library are signed
+  like the main one when protected, and refreshed the same way when their link
+  runs out. In the shortcode, `sources`, `quality_label`, `audio_tracks` and
+  `audio_label`, the lists as JSON.
+* New: **Block patterns** in an Imagina Player category: a podcast episode with
+  the earlier ones, a lesson with its transcript, a silent video header, and a
+  course with its lessons.
+* New: **Block variations** in the inserter: Podcast episode and Short clip for
+  audio, Lesson and Silent loop for video, Course and Video series for the
+  playlist.
+* Fixed: the dot that marks the chosen item in the video's menus took the
+  accent colour and vanished on the dark menu with a dark accent.
+* Changed: the strings for all of this translated into Spanish.
 
 = 1.51.0 =
 Two new features: a playlist that is a course, and a "more" menu on the audio

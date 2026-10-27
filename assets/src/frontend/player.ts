@@ -327,6 +327,8 @@ export class Player {
 					setSpeed: ( rate: number ) => this.setSpeed( rate ),
 					speed: () => this.media.playbackRate || 1,
 					refreshSource: () => void this.recoverSource(),
+					switchSource: ( src: string, protectedId: number ) =>
+						this.switchSource( src, protectedId ),
 				},
 				config
 			);
@@ -1288,39 +1290,63 @@ export class Player {
 				this.sourceRefreshed = false;
 			}, SOURCE_REFRESH_GRACE );
 
-			this.signedSrc = data.url;
-
 			// A stream is fed by hls.js through a MediaSource; handing the
 			// element the manifest's address would play nothing in any browser
 			// but Safari. The stream takes the new address itself.
 			if ( this.video?.replaceSource?.( data.url ) ) {
+				this.signedSrc = data.url;
+
 				return true;
 			}
 
-			this.media.src = data.url;
-			// Only a real element reloads. A provider link is not ours to sign
-			// and never expires, so there is nothing here for a stand-in to do.
-			this.element?.load();
-
-			if ( resumeAt > 0 ) {
-				this.media.addEventListener(
-					'loadedmetadata',
-					() => this.seekTo( resumeAt ),
-					{ once: true }
-				);
-			}
-
-			if ( wasPlaying ) {
-				void this.media.play().catch( () => {
-					this.root.classList.add( 'has-error' );
-				} );
-			}
+			this.reload( data.url, resumeAt, wasPlaying );
 
 			return true;
 		} catch {
 			this.root.classList.add( 'has-error' );
 
 			return false;
+		}
+	}
+
+	/**
+	 * Another file for the same video — another quality — carried on from
+	 * the same moment, and refreshed from its own library file when its
+	 * signed address runs out.
+	 * @param src
+	 * @param protectedId
+	 */
+	switchSource( src: string, protectedId: number ): void {
+		this.config.protectedId = protectedId;
+		this.sourceRefreshed = false;
+		this.reload( src, this.media.currentTime, ! this.media.paused );
+	}
+
+	/**
+	 * A new address in the element, at the same moment and playing if it was.
+	 * @param url
+	 * @param at
+	 * @param playing
+	 */
+	private reload( url: string, at: number, playing: boolean ): void {
+		this.signedSrc = url;
+		this.media.src = url;
+		// Only a real element reloads. A provider link is not ours to sign
+		// and never expires, so there is nothing here for a stand-in to do.
+		this.element?.load();
+
+		if ( at > 0 ) {
+			this.media.addEventListener(
+				'loadedmetadata',
+				() => this.seekTo( at ),
+				{ once: true }
+			);
+		}
+
+		if ( playing ) {
+			void this.media.play().catch( () => {
+				this.root.classList.add( 'has-error' );
+			} );
 		}
 	}
 

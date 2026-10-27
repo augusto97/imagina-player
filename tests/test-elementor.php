@@ -155,6 +155,21 @@ check( 'a chapter with its start as typed', '1:30' === ( $vid['chapters'][0]['st
 $vsane = Attributes::sanitize( $vid );
 check( 'and the sanitiser keeps them', 1 === count( $vsane['tracks'] ) && 90.0 === ( $vsane['chapters'][0]['start'] ?? 0 ) && 'no' === $vsane['videoProviderBare'], json_encode( $vsane['chapters'] ) );
 
+$choices = $video->attributes_from( array(
+	'quality_label' => '1080p',
+	'sources'       => array(
+		array( 'label' => '720p', 'file' => array( 'id' => 88, 'url' => 'https://example.test/uploads/clase-720.mp4' ) ),
+		array( 'label' => '480p', 'file' => array( 'id' => 0, 'url' => '' ), 'url' => array( 'url' => 'https://cdn.example.test/clase-480.mp4' ) ),
+	),
+	'audio_label'   => 'Español',
+	'audio_tracks'  => array(
+		array( 'label' => 'English', 'srclang' => 'en', 'url' => array( 'url' => 'https://cdn.example.test/en.mp3' ) ),
+	),
+) );
+check( 'other qualities: the library’s file by number, or an address', 88 === ( $choices['sources'][0]['id'] ?? 0 ) && 'https://cdn.example.test/clase-480.mp4' === ( $choices['sources'][1]['src'] ?? '' ) && '1080p' === $choices['qualityLabel'] );
+check( 'and soundtracks with their language', 'en' === ( $choices['audioTracks'][0]['srclang'] ?? '' ) && 'Español' === $choices['audioLabel'] );
+check( 'which the sanitiser keeps', 2 === count( Attributes::sanitize( $choices )['sources'] ) && 1 === count( Attributes::sanitize( $choices )['audioTracks'] ) );
+
 echo PHP_EOL . '# What the playlist widget’s choices become' . PHP_EOL;
 
 $list = new PlaylistWidget();

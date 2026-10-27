@@ -249,6 +249,55 @@ final class VideoWidget extends PlayerWidget {
 
 		$this->end_controls_section();
 
+		/*
+		 * The same video in other sizes, and other soundtracks for it. A file
+		 * from the library or an address, for each.
+		 */
+		$this->start_controls_section(
+			'sources_section',
+			array( 'label' => __( 'Qualities and languages', 'imagina-player' ) )
+		);
+
+		$this->add_control( 'quality_label', array( 'label' => __( 'Name of the main file', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'placeholder' => __( 'Original', 'imagina-player' ), 'description' => __( 'As it appears in the menu, such as 1080p.', 'imagina-player' ) ) );
+
+		$sources = new Repeater();
+		$sources->add_control( 'label', array( 'label' => __( 'Name in the menu', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'placeholder' => '720p' ) );
+		$sources->add_control( 'file', array( 'label' => __( 'File', 'imagina-player' ), 'type' => Controls_Manager::MEDIA, 'media_types' => array( 'video' ) ) );
+		$sources->add_control( 'url', array( 'label' => __( 'Or its address', 'imagina-player' ), 'type' => Controls_Manager::URL, 'options' => false ) );
+
+		$this->add_control(
+			'sources',
+			array(
+				'label'       => __( 'Other qualities', 'imagina-player' ),
+				'type'        => Controls_Manager::REPEATER,
+				'fields'      => $sources->get_controls(),
+				'default'     => array(),
+				'title_field' => '{{{ label }}}',
+			)
+		);
+
+		$this->add_control( 'audio_label', array( 'label' => __( 'Name of the video’s own sound', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'placeholder' => __( 'Original', 'imagina-player' ), 'separator' => 'before' ) );
+
+		$dubs = new Repeater();
+		$dubs->add_control( 'label', array( 'label' => __( 'Name in the menu', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'placeholder' => __( 'English', 'imagina-player' ) ) );
+		$dubs->add_control( 'srclang', array( 'label' => __( 'Language code', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'placeholder' => 'en' ) );
+		$dubs->add_control( 'file', array( 'label' => __( 'Audio file', 'imagina-player' ), 'type' => Controls_Manager::MEDIA, 'media_types' => array( 'audio' ) ) );
+		$dubs->add_control( 'url', array( 'label' => __( 'Or its address', 'imagina-player' ), 'type' => Controls_Manager::URL, 'options' => false ) );
+
+		$this->add_control(
+			'audio_tracks',
+			array(
+				'label'       => __( 'Soundtracks', 'imagina-player' ),
+				'type'        => Controls_Manager::REPEATER,
+				'fields'      => $dubs->get_controls(),
+				'default'     => array(),
+				'title_field' => '{{{ label || srclang }}}',
+				'description' => __( 'An audio file as long as the video, played in step with the picture in place of its own sound.', 'imagina-player' ),
+			)
+		);
+
+		$this->end_controls_section();
+
 		$this->layer_controls();
 		$this->access_controls();
 	}
@@ -325,6 +374,10 @@ final class VideoWidget extends PlayerWidget {
 			'videoCaptionSize' => (string) ( $settings['caption_size'] ?? '' ),
 			'tracks'           => self::tracks_from( $settings['tracks'] ?? array() ),
 			'chapters'         => self::chapters_from( $settings['chapters'] ?? array() ),
+			'sources'          => self::choices_from( $settings['sources'] ?? array() ),
+			'qualityLabel'     => (string) ( $settings['quality_label'] ?? '' ),
+			'audioTracks'      => self::choices_from( $settings['audio_tracks'] ?? array() ),
+			'audioLabel'       => (string) ( $settings['audio_label'] ?? '' ),
 			'layers'           => self::layers_from( $settings['layers'] ?? array() ),
 			'watermark'         => $watermark['url'],
 			'watermarkId'       => $watermark['id'],
@@ -352,6 +405,34 @@ final class VideoWidget extends PlayerWidget {
 				'label'   => (string) ( $row['label'] ?? '' ),
 				'kind'    => 'subtitles',
 				'default' => 'yes' === ( $row['default'] ?? '' ),
+			);
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Qualities or soundtracks: the library's file when one was chosen, the
+	 * typed address otherwise.
+	 *
+	 * @param mixed $rows
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function choices_from( $rows ): array {
+		$out = array();
+
+		foreach ( is_array( $rows ) ? $rows : array() as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+
+			$file = self::image_from( $row['file'] ?? null );
+
+			$out[] = array(
+				'src'     => '' !== $file['url'] ? $file['url'] : self::url_from( $row['url'] ?? '' ),
+				'id'      => '' !== $file['url'] ? $file['id'] : 0,
+				'label'   => (string) ( $row['label'] ?? '' ),
+				'srclang' => (string) ( $row['srclang'] ?? '' ),
 			);
 		}
 
