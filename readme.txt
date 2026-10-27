@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.50.0
+Stable tag: 1.51.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -180,6 +180,23 @@ name of whoever made it. Only that person's own name is shown, only when they
 are signed in; picture-in-picture is turned off with it. It deters; it does not
 lock anything.
 
+= Can a playlist be a course? =
+
+Yes: turn on **This list is a course** in the playlist's Course panel. Each
+lesson gets a tick once it has been watched, the list says how many are done,
+and coming back carries on with the lesson that was playing, where it stopped.
+For a student who is signed in, the progress is kept with their account and
+follows them to another device. **One lesson at a time** keeps a lesson shut
+until the one before has been watched; it guides students, it does not protect
+the files — use **Who can play it** for that.
+
+= Is there a sleep timer? =
+
+Yes, in the audio player's **More** menu, the three dots beside the volume,
+together with bookmarks and a link to the moment playing. The timer fades the
+sound out after 15, 30, 45 or 60 minutes, or stops at the end of what is
+playing. The speed a listener picks is remembered on every player of the site.
+
 = Can I stop people downloading my audio? =
 
 Mark a file as protected and it moves out of the public uploads folder, served
@@ -195,6 +212,30 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.51.0 =
+Two new features: a playlist that is a course, and a "more" menu on the audio
+player.
+
+* New: **Course**, on the playlist block and widget. Each lesson is marked once
+  nine tenths of it has played, the list says how many are done with a bar and
+  a "Start over" button, and coming back loads the lesson that was playing,
+  where it stopped. A visitor's progress is kept in their browser; a student
+  who is signed in has it kept with their account too, so it follows them to
+  another device and to another page carrying the same list. **One lesson at a
+  time** opens a lesson only once the one before has been watched — a guide
+  for the student, not a protection, which is what **Who can play it** is
+  for. Progress goes to a REST route open only to people signed in, is written
+  only to their own account, and is removed when the plugin is uninstalled.
+* New: **More** on the audio player, the three dots beside the volume (on by
+  default; a preset or a block can turn it off). A sleep timer of 15 to 60
+  minutes that fades the sound out rather than cutting it, or that stops at the
+  end of the file playing, even one set to loop; bookmarks a listener puts in a
+  file, kept in their browser and listed to jump back to; and a link to the
+  moment playing.
+* New: the speed a listener picks is remembered across the site, on every
+  player that shows the speed control.
+* Changed: the strings for all of this translated into Spanish.
 
 = 1.50.0 =
 Two new features: who can play a player, and the viewer's own name over the

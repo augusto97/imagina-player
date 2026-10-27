@@ -32,6 +32,8 @@ $video = $plugin . 'build/imagina-video.js';
 $glue  = $plugin . 'build/imagina-hls-glue.js';
 $layers   = $plugin . 'build/imagina-layers.js';
 $playlist = $plugin . 'build/imagina-playlist.js';
+$course   = $plugin . 'build/imagina-course.js';
+$extras   = $plugin . 'build/imagina-extras.js';
 $hls   = $plugin . 'build/imagina-hls.js';
 $css   = $plugin . 'build/style-frontend.css';
 
@@ -43,7 +45,13 @@ check( 'the front-end bundle is built', is_readable( $core ) );
  * the claim survives. Raise one deliberately, in a commit that says why.
  */
 $budgets = array(
-	'the core bundle' => array( $core, 26.0 ),
+	/*
+	 * Raised from 26.0 in 1.51.0 by six hundred bytes: the listener's speed
+	 * remembered across the site, the "more" button that fetches its menu
+	 * on the first press, and the two new chunks' entries in the loader's
+	 * map. The compressed budget below, the readme's figure, did not move.
+	 */
+	'the core bundle' => array( $core, 27.0 ),
 	/*
 	 * Raised from 14.0 in 1.43.0, deliberately: the bar gained a gear with a
 	 * speed list and a link to the current moment, and the chapter segments
@@ -69,6 +77,10 @@ $budgets = array(
 	'the HLS glue'    => array( $glue, 6.0 ),
 	'the layer chunk' => array( $layers, 8.0 ),
 	'the playlist'    => array( $playlist, 6.0 ),
+	// Fetched only by a playlist marked as a course, and only by the "more"
+	// button of an audio player the first time it is pressed.
+	'the course chunk' => array( $course, 6.0 ),
+	'the more menu'    => array( $extras, 7.0 ),
 	/*
 	 * Raised from 24.0 in 1.15.0, deliberately. The stylesheet gained a block
 	 * that restates, for the elements this player owns, the handful of
@@ -114,7 +126,14 @@ $budgets = array(
 	 * And to 56.0 in 1.50.0 for two features: the locked player's offer and
 	 * the viewer's name over the picture. Under half a kilobyte on the wire.
 	 */
-	'the stylesheet'  => array( $css, 56.0 ),
+	/*
+	 * And to 58.0 in 1.51.0 for a course's progress, its ticks and its locked
+	 * lessons, and the audio player's "more" menu. Written to borrow what was
+	 * there — the screen-reader class, the menu of the video's gear, the
+	 * audio buttons' own rule — and still four tenths of a kilobyte on the
+	 * wire, which is why the compressed budget below moves with it.
+	 */
+	'the stylesheet'  => array( $css, 58.0 ),
 );
 
 foreach ( $budgets as $label => $budget ) {
@@ -154,7 +173,8 @@ $compressed = array(
 	// the pair that has to hold.
 	// Raised to 6.5 in 1.43.0, 7.5 in 1.44.0, 8.0 in 1.45.0 and 10.0 in
 	// 1.48.0, with the raw budget above; see there for what to do about it.
-	'the stylesheet'  => array( $css, 10.0 ),
+	// And to 10.5 in 1.51.0, with the raw one.
+	'the stylesheet'  => array( $css, 10.5 ),
 );
 
 foreach ( $compressed as $label => $budget ) {
@@ -191,6 +211,8 @@ $video_only = array( 'requestPictureInPicture', 'webkitEnterFullscreen', 'is-chr
 $optional = array(
 	'imagina-player-layers'   => $layers,
 	'imagina-player-playlist' => $playlist,
+	'imagina-player-course:'  => $course,
+	'imagina-player:bookmarks:' => $extras,
 );
 
 foreach ( $video_only as $needle ) {

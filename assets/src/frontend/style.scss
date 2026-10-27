@@ -294,7 +294,8 @@
 .imgp__mute,
 .imgp__skip,
 .imgp__speed,
-.imgp__download {
+.imgp__download,
+.imgp__more {
 	display: grid;
 	place-items: center;
 	padding: 0.25rem;
@@ -2481,7 +2482,8 @@
 .imgp .imgp__mute,
 .imgp .imgp__skip,
 .imgp .imgp__speed,
-.imgp .imgp__download {
+.imgp .imgp__download,
+.imgp .imgp__more {
 	padding: 0.25rem !important;
 }
 
@@ -2754,11 +2756,11 @@ button.imgp-time:focus-visible {
  */
 @media (pointer: coarse) {
 
-	.imgp :is(.imgp__mute, .imgp__skip, .imgp__speed, .imgp__download, .imgp__vbtn, .imgp__resume-restart, .imgp__resume-close) {
+	.imgp :is(.imgp__mute, .imgp__skip, .imgp__speed, .imgp__download, .imgp__more, .imgp__vbtn, .imgp__resume-restart, .imgp__resume-close) {
 		position: relative;
 	}
 
-	.imgp :is(.imgp__mute, .imgp__skip, .imgp__speed, .imgp__download, .imgp__vbtn, .imgp__resume-restart, .imgp__resume-close, .imgp__layer-close, .imgp__unstick)::after {
+	.imgp :is(.imgp__mute, .imgp__skip, .imgp__speed, .imgp__download, .imgp__more, .imgp__vbtn, .imgp__resume-restart, .imgp__resume-close, .imgp__layer-close, .imgp__unstick)::after {
 		content: "";
 		position: absolute;
 		top: 50%;
@@ -4102,4 +4104,151 @@ button.imgp-time:focus-visible {
 .imgp-playlist--locked .imgp-playlist__link {
 	cursor: default;
 	opacity: 0.75;
+}
+
+/* --- A course -------------------------------------------------------------
+   How many lessons are done, a mark on each one that is, and the ones not
+   open yet, faded. */
+
+.imgp-playlist__progress {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem 0.8rem;
+	font-size: 0.85rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.imgp-playlist__progress-bar {
+	flex: 1 1 8rem;
+	height: 6px;
+	overflow: hidden;
+	border-radius: 9px;
+	background: color-mix(in srgb, currentcolor 12%, transparent);
+}
+
+.imgp-playlist__progress-bar > span {
+	display: block;
+	height: 100%;
+	background: var(--imgp-accent);
+	transition: width 0.3s;
+}
+
+.imgp-playlist .imgp-playlist__restart {
+	margin: 0 !important;
+	padding: 0.15rem 0.4rem !important;
+	border: 0 !important;
+	background: none !important;
+	color: inherit !important;
+	font: inherit !important;
+	text-decoration: underline !important;
+	cursor: pointer;
+	min-height: 0 !important;
+}
+
+.imgp-playlist__restart[hidden],
+.imgp-playlist__check {
+	display: none !important;
+}
+
+/* A tick drawn with two borders, on a disc of the accent. */
+.imgp-playlist__item.is-watched .imgp-playlist__check {
+	position: relative;
+	display: block !important;
+	flex: 0 0 auto;
+	width: 1.15rem;
+	height: 1.15rem;
+	border-radius: 50%;
+	background: var(--imgp-accent);
+}
+
+.imgp-playlist__check::after {
+	content: "";
+	position: absolute;
+	inset: 22% 36% 32%;
+	border: solid var(--imgp-on-accent, #fff);
+	border-width: 0 2px 2px 0;
+	transform: rotate(45deg);
+}
+
+:is(.imgp-playlist--rail, .imgp-playlist--slider, .imgp-playlist--grid) .imgp-playlist__link {
+	position: relative;
+}
+
+:is(.imgp-playlist--rail, .imgp-playlist--slider, .imgp-playlist--grid) .imgp-playlist__item.is-watched .imgp-playlist__check {
+	position: absolute;
+	top: 0.5rem;
+	inset-inline-end: 0.5rem;
+	z-index: 1;
+	box-shadow: 0 0 0 2px #fff;
+}
+
+.imgp-playlist__item.is-locked .imgp-playlist__link {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+/* --- The "more" menu beside audio ----------------------------------------- */
+
+.imgp__more-wrap,
+.imgp__more {
+	position: relative;
+}
+
+.imgp__more-wrap {
+	display: inline-flex;
+}
+
+/* A dot on the button while a sleep timer is set. */
+.imgp__more.is-sleeping::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	inset-inline-end: 0;
+	width: 0.45rem;
+	height: 0.45rem;
+	border-radius: 50%;
+	background: var(--imgp-accent);
+}
+
+/* Dark like the video's menus, whatever colour the player around it is: the
+   buttons in it inherit their colour, whatever a theme says. */
+.imgp--audio .imgp__more-menu {
+	--imgp-on-chrome: #fff;
+	bottom: calc(100% + 0.4rem);
+	inset-inline-end: 0;
+	width: max-content;
+	max-width: 16rem;
+	max-height: 18rem;
+	background: #141414;
+	color: #fff;
+}
+
+.imgp__more-note {
+	margin: 0.35rem 0.6rem 0.1rem !important;
+	font-size: 0.7rem;
+	opacity: 0.65;
+	text-transform: uppercase;
+}
+
+.imgp--audio .imgp__toast {
+	top: 0.4rem;
+	bottom: auto;
+}
+
+/* As wide as the player on a phone, and opening over what comes before it:
+   a box hung from a small button in the corner runs off the screen. Not
+   fixed to the screen, which the player — a container — would not let it
+   leave anyway. */
+@container (max-width: 30rem) {
+
+	.imgp--audio .imgp__more-wrap {
+		position: static;
+	}
+
+	.imgp--audio .imgp__more-menu {
+		inset-inline: 0;
+		width: auto;
+		max-width: none;
+	}
 }

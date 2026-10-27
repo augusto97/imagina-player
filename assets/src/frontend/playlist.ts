@@ -32,6 +32,18 @@ export class Playlist {
 
 	private readonly cleanup: Array< () => void > = [];
 
+	/**
+	 * Whether an item may be played now; a course that goes one lesson at a
+	 * time says no to the ones further on.
+	 */
+	gate: ( ( index: number ) => boolean ) | null = null;
+
+	/** Told whenever another item is loaded. */
+	onPlay: ( ( index: number ) => void ) | null = null;
+
+	/** The course, when the list is one: loaded on demand, like this. */
+	private course: { destroy: () => void } | null = null;
+
 	constructor( root: HTMLElement, player: Player, tracks: TrackChange[] ) {
 		this.root = root;
 		this.player = player;
@@ -47,14 +59,41 @@ export class Playlist {
 		this.bindAdvance();
 		this.bindArrows();
 		this.restore();
+
+		if ( root.dataset.imaginaCourse ) {
+			void this.setupCourse( root.dataset.imaginaCourse );
+		}
+	}
+
+	/** Which item is loaded. */
+	get index(): number {
+		return this.current;
+	}
+
+	get length(): number {
+		return this.tracks.length;
 	}
 
 	destroy(): void {
+		this.course?.destroy();
+
 		for ( const off of this.cleanup ) {
 			off();
 		}
 
 		this.cleanup.length = 0;
+	}
+
+	private async setupCourse( data: string ): Promise< void > {
+		try {
+			const { Course } = await import(
+				/* webpackChunkName: "imagina-course" */ './course'
+			);
+
+			this.course = new Course( this.root, this, this.player, data );
+		} catch {
+			// The list still plays; it just does not keep count.
+		}
 	}
 
 	private bindClicks(): void {
@@ -79,6 +118,13 @@ export class Playlist {
 				 * a click that does nothing.
 				 */
 				const track = this.tracks[ index ];
+
+				// A lesson further on than the student has got to.
+				if ( this.gate && ! this.gate( index ) ) {
+					event.preventDefault();
+
+					return;
+				}
 
 				if ( ! track || ! this.player.canLoad( track ) ) {
 					return;
@@ -112,8 +158,19 @@ export class Playlist {
 		this.player.endHandledElsewhere = true;
 
 		const ended = (): void => {
+			// The sleep timer said "at the end of this one".
+			if ( this.player.holdAtEnd ) {
+				this.player.holdAtEnd = false;
+
+				return;
+			}
+
 			if ( this.current + 1 < this.tracks.length ) {
-				this.play( this.current + 1 );
+				// Into the next lesson only if the course allows it; the one
+				// that just ended counts as watched by now.
+				if ( ! this.gate || this.gate( this.current + 1 ) ) {
+					this.play( this.current + 1 );
+				}
 
 				return;
 			}
@@ -162,6 +219,7 @@ export class Playlist {
 		this.player.loadTrack( track, autoplay );
 		this.remember( index );
 		this.reveal( index );
+		this.onPlay?.( index );
 	}
 
 	/**

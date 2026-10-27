@@ -286,6 +286,21 @@ final class Assets {
 				'speed' => __( 'Speed', 'imagina-player' ),
 				'speedNormal' => __( 'Normal', 'imagina-player' ),
 				'back' => __( 'Back', 'imagina-player' ),
+				/* translators: 1: lessons watched, 2: lessons in the course. */
+				'courseProgress' => __( '%1$d of %2$d watched', 'imagina-player' ),
+				'courseWatched' => __( 'Watched', 'imagina-player' ),
+				'courseLocked' => __( 'Finish the one before to open this', 'imagina-player' ),
+				'sleepTimer' => __( 'Sleep timer', 'imagina-player' ),
+				'sleepEnd' => __( 'End of this one', 'imagina-player' ),
+				/* translators: %d: minutes */
+				'sleepLeft' => __( '%d min left', 'imagina-player' ),
+				/* translators: %d: minutes */
+				'sleepMinutes' => __( '%d minutes', 'imagina-player' ),
+				'bookmarkAdd' => __( 'Bookmark this moment', 'imagina-player' ),
+				/* translators: %s: a time such as 12:40 */
+				'bookmarkAdded' => __( 'Bookmarked at %s', 'imagina-player' ),
+				'bookmarks' => __( 'Bookmarks', 'imagina-player' ),
+				'bookmarksClear' => __( 'Clear bookmarks', 'imagina-player' ),
 				'copyLink' => __( 'Copy link to this moment', 'imagina-player' ),
 				'linkCopied' => __( 'Link copied', 'imagina-player' ),
 				/* translators: %s: a time such as 12:40 */

@@ -54,6 +54,7 @@ final class Attributes {
 		'show_download'     => 'showDownload',
 		'show_speed'        => 'showSpeed',
 		'show_skip'         => 'showSkip',
+		'show_more'         => 'showMore',
 		'skip_seconds'      => 'skipSeconds',
 		'sticky'            => 'sticky',
 		'remember_position' => 'rememberPosition',

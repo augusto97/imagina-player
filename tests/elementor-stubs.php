@@ -74,6 +74,11 @@ abstract class Widget_Base {
 		return $this->settings;
 	}
 
+	/** Elementor's own id for the element, fixed when it is added to a page. */
+	public function get_id() {
+		return '3f9a2c1';
+	}
+
 	public function get_categories() {
 		return array();
 	}

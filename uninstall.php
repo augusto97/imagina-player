@@ -150,6 +150,12 @@ function imagina_player_uninstall_site(): void {
 	// Waveforms cached against attachments.
 	delete_post_meta_by_key( '_imagina_player_peaks' );
 
+	// Students' progress through courses. User meta is shared by a network,
+	// so this runs once per site and finds nothing after the first.
+	if ( function_exists( 'delete_metadata' ) ) {
+		delete_metadata( 'user', 0, 'imagina_player_progress', '', true );
+	}
+
 	// Waveforms cached against external URLs, and the captured addresses.
 	foreach ( array( 'imagina_player_peaks', 'imagina_player_leads' ) as $table ) {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- own tables, fixed names.

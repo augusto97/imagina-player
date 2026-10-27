@@ -24,6 +24,7 @@ use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Player\Access;
 use ImaginaPlayer\Player\Attributes;
 use ImaginaPlayer\Player\Config;
+use ImaginaPlayer\Player\CourseProgress;
 use ImaginaPlayer\Protection\Vault;
 use ImaginaPlayer\Settings;
 
@@ -90,6 +91,35 @@ final class PlaylistRenderer {
 		);
 		$locked = ! Access::allows( $access );
 
+		/*
+		 * A course: each lesson is marked once it has been watched, the list
+		 * says how far through it is, and coming back carries on where it
+		 * stopped — on this device from the browser, on any other from the
+		 * student's account. Optionally one lesson at a time.
+		 */
+		$course     = ! $locked && ! empty( $atts['course'] );
+		$course_key = CourseProgress::key( (string) ( $atts['courseKey'] ?? '' ) );
+		$course_key = '' === $course_key ? self::stable_key( $items ) : $course_key;
+		$sequential = $course && ! empty( $atts['courseSequential'] );
+		$progress   = $course ? CourseProgress::get( (int) get_current_user_id(), $course_key ) : null;
+		$watched    = array_flip( (array) ( $progress['w'] ?? array() ) );
+		$item_keys  = array_map( static fn( array $item ): string => substr( md5( (string) $item['stableKey'] ), 0, 12 ), $items );
+
+		// The first lesson not yet watched: the furthest a student may go.
+		$frontier = count( $items );
+
+		foreach ( $item_keys as $index => $item_key ) {
+			if ( ! isset( $watched[ $item_key ] ) ) {
+				$frontier = $index;
+				break;
+			}
+		}
+
+		// Progress drawn for one person is not a page for the next one.
+		if ( $course && is_user_logged_in() ) {
+			Access::do_not_cache();
+		}
+
 		$player = $this->player->render(
 			array(
 				'src'          => $first['src'],
@@ -99,7 +129,11 @@ final class PlaylistRenderer {
 				'thumbnail'    => $first['thumbnail'],
 				'poster'       => $first['poster'],
 				'preset'       => (string) ( $atts['preset'] ?? Settings::DEFAULT_PRESET ),
-			) + $access
+			)
+			// A course remembers where each lesson stopped, whatever its
+			// preset says.
+			+ ( $course ? array( 'rememberPosition' => 'yes' ) : array() )
+			+ $access
 		);
 
 		$tracks     = array_map( array( $this, 'client_track' ), $items );
@@ -119,7 +153,7 @@ final class PlaylistRenderer {
 		ob_start();
 		?>
 		<div
-			class="imgp-playlist imgp-playlist--<?php echo esc_attr( $layout ); ?><?php echo $locked ? ' imgp-playlist--locked' : ''; ?>"
+			class="imgp-playlist imgp-playlist--<?php echo esc_attr( $layout ); ?><?php echo $locked ? ' imgp-playlist--locked' : ''; ?><?php echo $course ? ' imgp-playlist--course' : ''; ?>"
 			id="<?php echo esc_attr( $id ); ?>"
 			<?php if ( ! $locked ) : ?>
 				data-imagina-playlist="<?php echo esc_attr( (string) wp_json_encode( $tracks ) ); ?>"
@@ -128,9 +162,32 @@ final class PlaylistRenderer {
 			<?php if ( '' !== $style ) : ?>
 				style="<?php echo esc_attr( $style ); ?>"
 			<?php endif; ?>
+			<?php if ( $course ) : ?>
+				data-imagina-course="<?php echo esc_attr( (string) wp_json_encode( array( 'key' => $course_key, 'items' => $item_keys, 'sequential' => $sequential, 'sync' => is_user_logged_in(), 'state' => $progress ) ) ); ?>"
+			<?php endif; ?>
 		>
 			<?php if ( '' !== $heading ) : ?>
 				<h3 class="imgp-playlist__heading"><?php echo esc_html( $heading ); ?></h3>
+			<?php endif; ?>
+
+			<?php if ( $course ) : ?>
+				<?php $done = count( array_intersect( $item_keys, array_keys( $watched ) ) ); ?>
+				<div class="imgp-playlist__progress">
+					<span class="imgp-playlist__progress-text">
+						<?php
+						echo esc_html(
+							sprintf(
+								/* translators: 1: lessons watched, 2: lessons in the course. */
+								__( '%1$d of %2$d watched', 'imagina-player' ),
+								$done,
+								count( $items )
+							)
+						);
+						?>
+					</span>
+					<span class="imgp-playlist__progress-bar" aria-hidden="true"><span style="width:<?php echo esc_attr( (string) ( count( $items ) ? round( 100 * $done / count( $items ) ) : 0 ) ); ?>%"></span></span>
+					<button type="button" class="imgp-playlist__restart"<?php echo 0 === $done ? ' hidden' : ''; ?>><?php esc_html_e( 'Start over', 'imagina-player' ); ?></button>
+				</div>
 			<?php endif; ?>
 
 			<div class="imgp-playlist__player">
@@ -153,7 +210,11 @@ final class PlaylistRenderer {
 
 			<ol class="imgp-playlist__items">
 				<?php foreach ( $items as $index => $item ) : ?>
-					<li class="imgp-playlist__item<?php echo 0 === $index ? ' is-current' : ''; ?>">
+					<?php
+					$is_watched = $course && isset( $watched[ $item_keys[ $index ] ] );
+					$is_shut    = $sequential && $index > $frontier;
+					?>
+					<li class="imgp-playlist__item<?php echo 0 === $index ? ' is-current' : ''; ?><?php echo $is_watched ? ' is-watched' : ''; ?><?php echo $is_shut ? ' is-locked' : ''; ?>"<?php echo $course ? ' data-key="' . esc_attr( $item_keys[ $index ] ) . '"' : ''; ?>>
 						<?php
 						/*
 						 * A link to the file, not a button. Without JavaScript it
@@ -196,6 +257,11 @@ final class PlaylistRenderer {
 
 							<?php if ( ! $horizontal ) : ?>
 								<?php echo $time; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped above. ?>
+							<?php endif; ?>
+
+							<?php if ( $course ) : ?>
+								<span class="imgp-playlist__check" aria-hidden="true"></span>
+								<span class="imgp-playlist__status imgp__sr"><?php echo $is_watched ? esc_html__( 'Watched', 'imagina-player' ) : ''; ?></span>
 							<?php endif; ?>
 						<?php echo $locked ? '</span>' : '</a>'; ?>
 					</li>

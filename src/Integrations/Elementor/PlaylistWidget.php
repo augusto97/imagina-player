@@ -93,6 +93,9 @@ final class PlaylistWidget extends PlayerWidget {
 			)
 		);
 
+		$this->add_control( 'course', array( 'label' => __( 'This list is a course', 'imagina-player' ), 'type' => Controls_Manager::SWITCHER, 'description' => __( 'Marks each lesson once watched, counts them, and carries on where the student stopped.', 'imagina-player' ) ) );
+		$this->add_control( 'course_sequential', array( 'label' => __( 'One lesson at a time', 'imagina-player' ), 'type' => Controls_Manager::SWITCHER, 'condition' => array( 'course' => 'yes' ) ) );
+
 		$this->end_controls_section();
 
 		$this->access_controls();
@@ -131,6 +134,10 @@ final class PlaylistWidget extends PlayerWidget {
 			'heading' => (string) ( $settings['heading'] ?? '' ),
 			'layout'  => PlaylistRenderer::layout( (string) ( $settings['layout'] ?? 'list' ) ),
 			'preset'  => (string) ( $settings['preset'] ?? 'default' ),
+			'course'           => self::switch_from( $settings, 'course' ),
+			'courseSequential' => self::switch_from( $settings, 'course_sequential' ),
+			// The widget's own id: it stays as lessons come and go.
+			'courseKey'        => method_exists( $this, 'get_id' ) ? 'el' . (string) $this->get_id() : '',
 		) + self::access_from( $settings );
 	}
 

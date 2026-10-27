@@ -21,6 +21,9 @@ import { Waveform } from './waveform';
 /** What the audio button cycles through; the video chrome offers a list. */
 const SPEEDS = [ 1, 1.25, 1.5, 2, 0.75 ];
 
+/** The speed the listener last chose, for every player on the site. */
+const SPEED_KEY = 'imagina-player:speed';
+
 /** A stored position shorter than this is not worth offering to resume. */
 const RESUME_WORTH = 5;
 
@@ -415,6 +418,27 @@ export class Player {
 			?.addEventListener( 'click', () => {
 				this.seekTo( this.media.currentTime + this.config.skipSeconds );
 			} );
+
+		this.root
+			.querySelector< HTMLButtonElement >( '.imgp__more' )
+			?.addEventListener( 'click', ( event ) => {
+				const button = event.currentTarget as HTMLButtonElement;
+
+				void import(
+					/* webpackChunkName: "imagina-extras" */ './extras'
+				).then( ( { openExtras } ) => openExtras( this, button ) );
+			} );
+
+		// The listener's speed, on a player that lets them change it back.
+		try {
+			const rate = Number( window.localStorage.getItem( SPEED_KEY ) );
+
+			if ( this.speedButton && rate >= 0.5 && rate <= 3 && 1 !== rate ) {
+				this.setSpeed( rate, false );
+			}
+		} catch {
+			// Storage off.
+		}
 
 		this.bindSeek();
 		this.syncVolumeUi();
@@ -833,7 +857,7 @@ export class Player {
 			return;
 		}
 
-		if ( 'loop' === this.config.onEnd ) {
+		if ( 'loop' === this.config.onEnd && ! this.holdAtEnd ) {
 			this.seekTo( 0 );
 			void this.media.play().catch( () => undefined );
 
@@ -929,17 +953,27 @@ export class Player {
 	}
 
 	/**
-	 * Where this player's position is kept.
+	 * Stop at the end of this file rather than going on to the next or
+	 * round again: the sleep timer's "end of this one".
+	 */
+	holdAtEnd = false;
+
+	/**
+	 * What the current file is called in this browser's storage: its
+	 * position, and the bookmarks a listener puts in it.
 	 *
 	 * The waveform key only exists for a player that draws one, and a video
 	 * on YouTube has no `src` of its own — so two such videos on one site
 	 * shared a single empty key, and each opened where the other had
 	 * stopped. The layer key is minted from the source for every player.
 	 */
+	get trackKey(): string {
+		return this.config.peaksKey || this.config.layerKey || this.media.src;
+	}
+
+	/** Where this player's position is kept. */
 	private storageKey(): string {
-		return `${ STORAGE_PREFIX }${
-			this.config.peaksKey || this.config.layerKey || this.media.src
-		}`;
+		return `${ STORAGE_PREFIX }${ this.trackKey }`;
 	}
 
 	/**
@@ -1102,6 +1136,16 @@ export class Player {
 		this.resumeHide = null;
 	}
 
+	/**
+	 * Back to the beginning of this file, and forget where it was: a course
+	 * started over starts its first lesson at nought.
+	 */
+	startOver(): void {
+		this.dismissResume();
+		this.clearPosition();
+		this.seekTo( 0 );
+	}
+
 	private clearPosition(): void {
 		this.lastSaved = -1;
 
@@ -1112,7 +1156,12 @@ export class Player {
 		}
 	}
 
-	setSpeed( rate: number ): void {
+	/**
+	 * @param rate
+	 * @param remember Keep it for every player on the site: a listener who
+	 *                 likes a podcast at 1.5× likes the next one at 1.5×.
+	 */
+	setSpeed( rate: number, remember = true ): void {
 		const index = SPEEDS.indexOf( rate );
 
 		if ( index >= 0 ) {
@@ -1120,6 +1169,16 @@ export class Player {
 		}
 
 		this.media.playbackRate = rate;
+		// Survives the next file, which resets the rate to this.
+		this.media.defaultPlaybackRate = rate;
+
+		if ( remember ) {
+			try {
+				window.localStorage.setItem( SPEED_KEY, String( rate ) );
+			} catch {
+				// Storage off: this page keeps it, the next does not.
+			}
+		}
 
 		if ( this.speedButton ) {
 			this.speedButton.textContent = `${ rate }×`;

@@ -175,6 +175,8 @@ function update_post_meta( $id, $key, $value ) {
 	return true;
 }
 function delete_post_meta( $id, $key ) { unset( $GLOBALS['stub_meta'][ $id ][ $key ] ); return true; }
+function get_user_meta( $id, $key = '', $single = false ) { return $GLOBALS['stub_user_meta'][ (int) $id ][ $key ] ?? ( $single ? '' : array() ); }
+function update_user_meta( $id, $key, $value ) { $GLOBALS['stub_user_meta'][ (int) $id ][ $key ] = $value; return true; }
 function get_post_type( $id ) { return $GLOBALS['stub_posts'][ $id ]['type'] ?? ''; }
 function get_attached_file( $id ) { return $GLOBALS['stub_posts'][ $id ]['file'] ?? false; }
 function current_user_can( $cap, ...$args ) { return ! isset( $GLOBALS['stub_caps'] ) || in_array( $cap, (array) $GLOBALS['stub_caps'], true ); }

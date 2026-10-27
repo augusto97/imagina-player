@@ -77,6 +77,9 @@ final class Settings {
 			'show_download'     => false,
 			'show_speed'        => false,
 			'show_skip'         => false,
+			// The "more" menu beside an audio player: a sleep timer, the
+			// listener's bookmarks and a link to the moment.
+			'show_more'         => true,
 			'skip_seconds'      => 15,
 			'sticky'            => false,
 			'sticky_position'   => 'bottom',

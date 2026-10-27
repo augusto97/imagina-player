@@ -65,6 +65,7 @@ final class Plugin {
 			'rest'        => new PeaksController(),
 			'captions'    => new CaptionController(),
 			'leads'       => new LeadController(),
+			'progress'    => new Rest\ProgressController(),
 			'stream'      => new StreamServer(),
 			'streamRest'  => new StreamController(),
 			'settingsApi' => new SettingsController(),

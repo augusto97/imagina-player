@@ -96,6 +96,22 @@ final class BlockRegistrar {
 						'type'    => 'string',
 						'default' => Settings::DEFAULT_PRESET,
 					),
+					// A course: what has been watched, how far, where to
+					// carry on, and optionally one lesson at a time.
+					'course'           => array(
+						'type'    => 'boolean',
+						'default' => false,
+					),
+					'courseSequential' => array(
+						'type'    => 'boolean',
+						'default' => false,
+					),
+					// The course's own name, set once by the editor, so its
+					// progress survives lessons being added or moved.
+					'courseKey'        => array(
+						'type'    => 'string',
+						'default' => '',
+					),
 					'className' => array(
 						'type'    => 'string',
 						'default' => '',

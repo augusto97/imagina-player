@@ -23,6 +23,7 @@ export interface Preset {
 	show_download: boolean;
 	show_speed: boolean;
 	show_skip: boolean;
+	show_more: boolean;
 	skip_seconds: number;
 	sticky: boolean;
 	sticky_position: string;

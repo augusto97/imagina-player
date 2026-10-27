@@ -20,6 +20,7 @@ import {
 	PanelBody,
 	SelectControl,
 	TextControl,
+	ToggleControl,
 	ToolbarButton,
 	ToolbarGroup,
 } from '@wordpress/components';
@@ -257,6 +258,55 @@ export function PlaylistEdit( { attributes, setAttributes }: EditProps ) {
 					>
 						{ __( 'Add to the list', 'imagina-player' ) }
 					</Button>
+				</PanelBody>
+
+				<PanelBody
+					title={ __( 'Course', 'imagina-player' ) }
+					initialOpen={ false }
+				>
+					<ToggleControl
+						__nextHasNoMarginBottom
+						label={ __(
+							'This list is a course',
+							'imagina-player'
+						) }
+						help={ __(
+							'Each lesson is marked once it has been watched, the list says how many are done, and coming back carries on where the student stopped — on another device too, for a student who is signed in.',
+							'imagina-player'
+						) }
+						checked={ Boolean( attributes.course ) }
+						onChange={ ( value: boolean ) =>
+							setAttributes( {
+								course: value,
+								// Named once, so the progress survives lessons
+								// being added, removed or moved.
+								...( value && ! attributes.courseKey
+									? {
+											courseKey: Math.random()
+												.toString( 36 )
+												.slice( 2, 12 ),
+									  }
+									: {} ),
+							} )
+						}
+					/>
+					{ Boolean( attributes.course ) && (
+						<ToggleControl
+							__nextHasNoMarginBottom
+							label={ __(
+								'One lesson at a time',
+								'imagina-player'
+							) }
+							help={ __(
+								'A lesson opens once the one before it has been watched. It guides; it does not protect — use “Who can play it” for that.',
+								'imagina-player'
+							) }
+							checked={ Boolean( attributes.courseSequential ) }
+							onChange={ ( value: boolean ) =>
+								setAttributes( { courseSequential: value } )
+							}
+						/>
+					) }
 				</PanelBody>
 
 				<AccessPanel

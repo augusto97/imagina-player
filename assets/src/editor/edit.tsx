@@ -222,6 +222,7 @@ function humanise( key: string, isVideo = false ): string {
 		show_download: __( 'Show download button', 'imagina-player' ),
 		show_speed: __( 'Show speed control', 'imagina-player' ),
 		show_skip: __( 'Show skip buttons', 'imagina-player' ),
+		show_more: __( 'More: sleep timer, bookmarks, link', 'imagina-player' ),
 	};
 
 	return labels[ key ] ?? key.replace( /_/g, ' ' );

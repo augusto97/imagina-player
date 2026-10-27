@@ -28,6 +28,7 @@ final class AudioWidget extends PlayerWidget {
 		'showSpeed'        => 'Speed',
 		'showSkip'         => 'Skip back and forward',
 		'showDownload'     => 'Download',
+		'showMore'         => 'More: sleep timer, bookmarks, link',
 		'sticky'           => 'Stick to the edge while scrolling',
 		'rememberPosition' => 'Remember where the listener left off',
 	);
@@ -135,6 +136,8 @@ final class AudioWidget extends PlayerWidget {
 				return __( 'Skip back and forward', 'imagina-player' );
 			case 'showDownload':
 				return __( 'Download', 'imagina-player' );
+			case 'showMore':
+				return __( 'More: sleep timer, bookmarks, link', 'imagina-player' );
 			case 'sticky':
 				return __( 'Stick to the edge while scrolling', 'imagina-player' );
 			case 'rememberPosition':

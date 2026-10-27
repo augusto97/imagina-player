@@ -174,6 +174,10 @@ check( 'a library track by id', 77 === ( $items['items'][0]['id'] ?? 0 ) );
 check( 'a track by address when no file is chosen', 'https://cdn.example.test/two.mp3' === ( $items['items'][1]['src'] ?? '' ) && 'B' === ( $items['items'][1]['artist'] ?? '' ) );
 check( 'a row with neither is dropped', 2 === count( $items['items'] ) );
 check( 'the heading and the layout', 'Album' === $items['heading'] && 'grid' === $items['layout'] );
+$course = $list->attributes_from( array( 'course' => 'yes', 'course_sequential' => 'yes' ) );
+check( 'a course, one lesson at a time', true === $course['course'] && true === $course['courseSequential'] );
+check( 'named after the widget, so lessons can come and go', 'el3f9a2c1' === $course['courseKey'] );
+check( 'and a list that is not one', false === $list->attributes_from( array() )['course'] );
 check( 'an unknown layout falls back to the list', 'list' === $list->attributes_from( array( 'layout' => 'carousel' ) )['layout'] );
 
 echo PHP_EOL . '# And they render' . PHP_EOL;

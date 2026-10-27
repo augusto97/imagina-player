@@ -348,6 +348,16 @@ export function PresetsPanel( { settings, onChange }: Props ) {
 										update( { show_download: value } )
 									}
 								/>
+								<Toggle
+									label={ __(
+										'More: sleep timer, bookmarks and a link to the moment',
+										'imagina-player'
+									) }
+									checked={ preset.show_more }
+									onChange={ ( value ) =>
+										update( { show_more: value } )
+									}
+								/>
 							</div>
 
 							{ preset.show_skip && (

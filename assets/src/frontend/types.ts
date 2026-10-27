@@ -54,6 +54,10 @@ export interface PlayerMedia extends EventTarget {
 	volume: number;
 	muted: boolean;
 	playbackRate: number;
+	/** What a newly loaded file starts at; an element's own, absent on a stand-in. */
+	defaultPlaybackRate?: number;
+	/** Round again at the end; a provider's frame has its own way. */
+	loop?: boolean;
 	src: string;
 	readonly currentSrc: string;
 	play: () => Promise< void >;

@@ -1668,6 +1668,27 @@ final class PlayerRenderer {
 				</div>
 			<?php endif; ?>
 
+			<?php if ( ! $track->is_video() && ! empty( $config['show_more'] ) ) : ?>
+				<?php
+				/*
+				 * A sleep timer, bookmarks and a link to the moment, in a
+				 * menu of their own: three things a listener wants now and
+				 * then, which would be three more buttons on the bar. A video
+				 * has its gear for the same purpose.
+				 */
+				?>
+				<span class="imgp__more-wrap">
+					<button
+						type="button"
+						class="imgp__more"
+						aria-label="<?php esc_attr_e( 'More', 'imagina-player' ); ?>"
+						aria-haspopup="menu"
+						aria-expanded="false"
+					><?php echo Icons::get( 'more' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG. ?></button>
+					<span class="imgp__more-menu imgp__menu" role="menu" hidden></span>
+				</span>
+			<?php endif; ?>
+
 			<?php echo $logo; // phpcs:ignore WordPress.Security.EscapeOutput -- built by part_logo(), which escapes. ?>
 		</div>
 		<?php
