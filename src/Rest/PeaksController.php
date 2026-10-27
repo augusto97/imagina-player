@@ -570,6 +570,35 @@ final class PeaksController {
 		}
 
 		/*
+		 * Never this site. WordPress's own check lets the site's host through
+		 * even when it resolves to a private address, and a file on this site
+		 * is read directly by the browser anyway — this doorway is for other
+		 * domains. Asked for this site, it was a way to reach whatever else
+		 * listens on the same machine.
+		 */
+		$host = strtolower( (string) wp_parse_url( $src, PHP_URL_HOST ) );
+
+		if ( $host === strtolower( (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST ) ) ) {
+			$this->refuse( 400, 'own-site' );
+		}
+
+		if ( ! $this->within_proxy_limit() ) {
+			$this->refuse( 429, 'too-many' );
+		}
+
+		/*
+		 * The address is resolved once, checked to be public, and the
+		 * connection is made to that address. Otherwise the name is looked up
+		 * again when connecting — and a name that answered with a public
+		 * address for the check can answer with a private one a moment later.
+		 */
+		$pinned = $this->pin_resolution( $src );
+
+		if ( false === $pinned ) {
+			$this->refuse( 400, 'bad-url' );
+		}
+
+		/*
 		 * Asked for once, not once per slice.
 		 *
 		 * A large file arrives in a dozen or more pieces, and each piece used to
@@ -629,7 +658,7 @@ final class PeaksController {
 
 		// Checked against the download's own answer when there was no head
 		// request to check, which is the same guarantee a step later.
-		if ( null !== $head && ! $this->looks_like_media( $type ) ) {
+		if ( null !== $head && ! $this->looks_like_media( $type, $src ) ) {
 			$this->refuse( 415, 'not-media' );
 		}
 
@@ -740,7 +769,7 @@ final class PeaksController {
 			// The checks the head request would have made, made here instead.
 			$type = strtolower( (string) wp_remote_retrieve_header( $body, 'content-type' ) );
 
-			if ( ! $this->looks_like_media( $type ) ) {
+			if ( ! $this->looks_like_media( $type, $src ) ) {
 				$this->refuse( 415, 'not-media' );
 			}
 
@@ -879,21 +908,87 @@ final class PeaksController {
 		);
 	}
 
-	private function looks_like_media( string $type ): bool {
+	private function looks_like_media( string $type, string $src = '' ): bool {
 		$type = trim( explode( ';', $type )[0] );
 
 		/*
-		 * A missing type is accepted, and that is a trade-off worth naming.
-		 * Plenty of storage buckets send no Content-Type at all, and refusing
-		 * them would refuse the files this doorway exists for. The cost is that
-		 * an internal service which also says nothing would pass this check —
-		 * behind an author's login, on a public-looking name, on ports 80, 443
-		 * or 8080 only, and never rendered as anything but audio bytes.
+		 * A missing type is accepted only for an address that names a media
+		 * file. Plenty of storage buckets send no Content-Type at all, and
+		 * refusing them would refuse the files this doorway exists for; but
+		 * taken on its own, "says nothing" also let through any service that
+		 * says nothing.
 		 */
+		if ( '' === $type ) {
+			$extension = strtolower( pathinfo( (string) wp_parse_url( $src, PHP_URL_PATH ), PATHINFO_EXTENSION ) );
+
+			return in_array( $extension, array( 'mp3', 'm4a', 'm4b', 'aac', 'ogg', 'oga', 'opus', 'wav', 'flac', 'weba', 'mp4', 'm4v', 'webm', 'mov', 'ogv' ), true );
+		}
+
 		return str_starts_with( $type, 'audio/' )
 			|| str_starts_with( $type, 'video/' )
-			|| 'application/octet-stream' === $type
-			|| '' === $type;
+			|| 'application/octet-stream' === $type;
+	}
+
+	/**
+	 * Resolve the address's host once, and make every connection to it go there.
+	 *
+	 * @return bool|null False when the host resolves to something that is not
+	 *                   public; null when there is nothing to pin (an IP
+	 *                   address already, or a transport other than cURL).
+	 */
+	private function pin_resolution( string $src ): ?bool {
+		$host = (string) wp_parse_url( $src, PHP_URL_HOST );
+
+		if ( '' === $host || filter_var( $host, FILTER_VALIDATE_IP ) ) {
+			return null;
+		}
+
+		$addresses = gethostbynamel( $host );
+
+		// A name that does not resolve here cannot be fetched either; the
+		// request itself fails, and says so in its own words.
+		if ( ! is_array( $addresses ) || array() === $addresses ) {
+			return null;
+		}
+
+		foreach ( $addresses as $address ) {
+			if ( ! filter_var( $address, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+				return false;
+			}
+		}
+
+		$port = (int) ( wp_parse_url( $src, PHP_URL_PORT ) ?: ( 'https' === wp_parse_url( $src, PHP_URL_SCHEME ) ? 443 : 80 ) );
+		$pin  = $host . ':' . $port . ':' . $addresses[0];
+
+		add_action(
+			'http_api_curl',
+			static function ( $handle, array $args, string $url ) use ( $host, $pin ): void {
+				if ( defined( 'CURLOPT_RESOLVE' ) && strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) ) === strtolower( $host ) ) {
+					curl_setopt( $handle, CURLOPT_RESOLVE, array( $pin ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt -- pinning the resolved address.
+				}
+			},
+			10,
+			3
+		);
+
+		return true;
+	}
+
+	/**
+	 * A ceiling per user. Measuring a long file is a few dozen slices; a
+	 * script looping on this doorway is not measuring anything.
+	 */
+	private function within_proxy_limit(): bool {
+		$key   = 'imgp_proxy_user_' . get_current_user_id();
+		$count = (int) get_transient( $key );
+
+		if ( $count >= (int) apply_filters( 'imagina_player_proxy_limit', 300 ) ) {
+			return false;
+		}
+
+		set_transient( $key, $count + 1, 10 * MINUTE_IN_SECONDS );
+
+		return true;
 	}
 
 	/**

@@ -46,15 +46,14 @@ final class StreamServer {
 			$this->deny( 404, 'not_found' );
 		}
 
+		/*
+		 * Not protected: not this door's business. It used to redirect to
+		 * the file's real address — for any attachment, including those of
+		 * drafts and private posts that core keeps out of public listings —
+		 * which made this a way to find files by counting. Same answer as a
+		 * file that does not exist, so it tells nobody which is which.
+		 */
 		if ( ! Vault::is_protected( $attachment_id ) ) {
-			// Not protected: nothing to gate, send the visitor to the real file.
-			$url = wp_get_attachment_url( $attachment_id );
-
-			if ( $url ) {
-				wp_safe_redirect( $url, 302 );
-				exit;
-			}
-
 			$this->deny( 404, 'not_found' );
 		}
 

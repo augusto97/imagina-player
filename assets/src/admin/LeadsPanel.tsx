@@ -9,7 +9,7 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { boot, deleteLead, exportUrl, listLeads } from './api';
+import { deleteLead, downloadLeads, listLeads } from './api';
 import type { Lead } from './api';
 import { Card, Notice, Select } from './controls';
 
@@ -23,6 +23,8 @@ export function LeadsPanel() {
 	const [ list, setList ] = useState( '' );
 	const [ loading, setLoading ] = useState( true );
 	const [ error, setError ] = useState( '' );
+	const [ exporting, setExporting ] = useState( false );
+	const [ exportError, setExportError ] = useState( '' );
 
 	useEffect( () => {
 		let cancelled = false;
@@ -98,7 +100,6 @@ export function LeadsPanel() {
 	};
 
 	const pages = Math.max( 1, Math.ceil( total / PER_PAGE ) );
-	const runtime = boot();
 
 	return (
 		<Card
@@ -131,13 +132,35 @@ export function LeadsPanel() {
 					/>
 				) }
 
-				<a
+				<button
+					type="button"
 					className="imgpa-btn imgpa-btn--ghost"
-					href={ exportUrl( list, runtime.restUrl, runtime.nonce ) }
-					download
+					disabled={ exporting }
+					onClick={ () => {
+						setExporting( true );
+						setExportError( '' );
+						downloadLeads( list )
+							.catch( () =>
+								setExportError(
+									__(
+										'The file could not be prepared. Reload the page and try again.',
+										'imagina-player'
+									)
+								)
+							)
+							.finally( () => setExporting( false ) );
+					} }
 				>
-					{ __( 'Download as CSV', 'imagina-player' ) }
-				</a>
+					{ exporting
+						? __( 'Preparing…', 'imagina-player' )
+						: __( 'Download as CSV', 'imagina-player' ) }
+				</button>
+
+				{ exportError && (
+					<span className="imgpa-hint imgpa-hint--error" role="alert">
+						{ exportError }
+					</span>
+				) }
 
 				<span className="imgpa-hint">
 					{ loading

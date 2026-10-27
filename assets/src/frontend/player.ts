@@ -143,6 +143,9 @@ export class Player {
 	/** Takes down the "resume from" offer, while it is showing. */
 	private resumeHide: ( () => void ) | null = null;
 
+	/** The signed address this file was last served at, for a refresh. */
+	private signedSrc = '';
+
 	/** The position restored from memory this load, or zero. */
 	private resumedAt = 0;
 
@@ -183,6 +186,9 @@ export class Player {
 
 		this.standIn = standIn ?? null;
 		this.element = element;
+		// Kept as the server wrote it: once hls.js takes over a stream, the
+		// element's own address is a blob and the link is gone from it.
+		this.signedSrc = element?.getAttribute( 'src' ) ?? '';
 		this.media = standIn ?? ( element as HTMLMediaElement );
 		this.playButton = root.querySelector( '.imgp__play' );
 		this.seek = root.querySelector( '.imgp__seek' );
@@ -1129,11 +1135,28 @@ export class Player {
 		const resumeAt = this.media.currentTime;
 		const wasPlaying = ! this.media.paused;
 
+		/*
+		 * The link that expired goes with the request: it is what shows this
+		 * visitor was given the player. The server no longer hands a working
+		 * link to anyone who only knows the file's number.
+		 */
+		let token = '';
+
+		try {
+			token =
+				new URL(
+					this.signedSrc,
+					window.location.href
+				).searchParams.get( 'imgpt' ) ?? '';
+		} catch {
+			// No link to prove anything with; the server will say no.
+		}
+
 		try {
 			const response = await fetch(
 				`${ this.runtime.restUrl }/stream-url?id=${ encodeURIComponent(
 					String( this.config.protectedId )
-				) }`,
+				) }&token=${ encodeURIComponent( token ) }`,
 				{
 					credentials: 'same-origin',
 					// As the visitor, when there is one: without the nonce a
@@ -1165,6 +1188,8 @@ export class Player {
 			window.setTimeout( () => {
 				this.sourceRefreshed = false;
 			}, SOURCE_REFRESH_GRACE );
+
+			this.signedSrc = data.url;
 
 			// A stream is fed by hls.js through a MediaSource; handing the
 			// element the manifest's address would play nothing in any browser
@@ -1327,6 +1352,7 @@ export class Player {
 		this.root.classList.remove( 'imgp--no-peaks' );
 
 		this.media.src = track.src;
+		this.signedSrc = track.src;
 		this.element?.load();
 
 		if ( track.peaks ) {

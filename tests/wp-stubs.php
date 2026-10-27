@@ -713,3 +713,12 @@ if ( ! function_exists( 'is_multisite' ) ) {
 	function switch_to_blog( $id ) { $GLOBALS['stub_blog_switches'][] = (int) $id; $GLOBALS['stub_current_blog'] = (int) $id; return true; }
 	function restore_current_blog() { $GLOBALS['stub_current_blog'] = 1; return true; }
 }
+
+if ( ! function_exists( 'wp_schedule_event' ) ) {
+	function wp_schedule_event( $timestamp, $recurrence, $hook, $args = array() ) { $GLOBALS['stub_scheduled'][] = array( $hook, $args ); return true; }
+}
+if ( ! function_exists( "has_filter" ) ) { function has_filter( $hook, $cb = false ) { return ! empty( $GLOBALS["stub_filters"][ $hook ] ); } }
+
+if ( ! function_exists( 'get_post_status' ) ) {
+	function get_post_status( $id ) { return (string) ( $GLOBALS['stub_posts'][ (int) $id ]['status'] ?? 'publish' ); }
+}

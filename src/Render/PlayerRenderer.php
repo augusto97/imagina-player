@@ -984,6 +984,18 @@ final class PlayerRenderer {
 	 *
 	 * @param array<string, mixed> $layer Sanitised layer.
 	 */
+	/**
+	 * Whether a shortcode overlay may run its shortcode in this request.
+	 *
+	 * Always on a page. The editor's preview turns it off for an author who
+	 * may not publish arbitrary markup.
+	 */
+	private static bool $shortcodes = true;
+
+	public static function allow_shortcodes( bool $allowed ): void {
+		self::$shortcodes = $allowed;
+	}
+
 	private function part_decor( array $layer, string $id, int $index ): string {
 		$type    = (string) $layer['type'];
 		$title   = (string) ( $layer['title'] ?? '' );
@@ -1019,11 +1031,15 @@ final class PlayerRenderer {
 				. ( '' === $title ? '' : '<span class="imgp__hotspot-title">' . esc_html( $title ) . '</span>' )
 				. ( '' === $text ? '' : '<span class="imgp__hotspot-text">' . esc_html( $text ) . '</span>' )
 				. '</span>';
-		} else {
+		} elseif ( self::$shortcodes ) {
 			// Another plugin's output, trusted as far as the post it sits in is:
 			// a shortcode in a block attribute runs for the same author who
 			// could have put it in the paragraph below.
 			$inner = '<div class="imgp__layer-shortcode">' . do_shortcode( (string) $layer['shortcode'] ) . '</div>';
+		} else {
+			$inner = '<div class="imgp__layer-shortcode imgp__layer-shortcode--held"><code>'
+				. esc_html( (string) $layer['shortcode'] ) . '</code><br />'
+				. esc_html__( 'Runs on the published page.', 'imagina-player' ) . '</div>';
 		}
 
 		if ( '' !== $url ) {

@@ -18,6 +18,12 @@ function check( string $label, bool $ok ): void {
 	echo ( $ok ? "PASS  " : "FAIL  " ) . $label . PHP_EOL;
 }
 
+// The files these checks stream belong to no post, so anyone may see them;
+// whether a post's privacy reaches its files is tested in test-security.php.
+foreach ( array( 7, 8 ) as $file ) {
+	$GLOBALS['stub_posts'][ $file ] = array( 'type' => 'attachment', 'post_parent' => 0 ) + ( $GLOBALS['stub_posts'][ $file ] ?? array() );
+}
+
 // --- Signature --------------------------------------------------------------
 
 $token  = Signature::create( array( 'id' => 42 ), 3600, 'stream' );

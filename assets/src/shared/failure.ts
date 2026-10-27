@@ -111,6 +111,20 @@ function explain( message: string ): string {
 		);
 	}
 
+	if ( 'proxy-own-site' === message ) {
+		return __(
+			'the file is on this site, so the browser reads it directly — if that failed, the file itself could not be read',
+			'imagina-player'
+		);
+	}
+
+	if ( 'proxy-too-many' === message ) {
+		return __(
+			'too many files were fetched in the last few minutes — wait a little and try again',
+			'imagina-player'
+		);
+	}
+
 	if ( 'proxy-bad-url' === message ) {
 		return __(
 			'that address was refused as unsafe to fetch',

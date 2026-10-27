@@ -49,8 +49,43 @@ final class SelfCheck {
 	 *
 	 * @return array{status: string, summary: string, checks: array<int, array{id: string, label: string, status: string, detail: string}>}
 	 */
+	/** Set when a request to the site had to be made without verifying TLS. */
+	private static bool $unverified = false;
+
+	/**
+	 * Who can play a protected file, said plainly.
+	 *
+	 * Protection keeps a file from being linked to or downloaded by its
+	 * address. It does not decide who may watch: anyone shown the player can
+	 * play it. With neither "visitors must be logged in" nor a rule of the
+	 * site's own on `imagina_player_can_stream`, that is anyone who can open
+	 * the page — which is right for a public page, and worth saying for one
+	 * that is meant to be for members.
+	 */
+	private static function check_who_may_play(): array {
+		$settings = \ImaginaPlayer\Settings::protection();
+		$filtered = has_filter( 'imagina_player_can_stream' );
+
+		if ( ! ProtectedMedia::is_enabled() || ! empty( $settings['require_login'] ) || $filtered ) {
+			return self::result(
+				'who',
+				__( 'Who may play a protected file', 'imagina-player' ),
+				self::PASS,
+				''
+			);
+		}
+
+		return self::result(
+			'who',
+			__( 'Who may play a protected file', 'imagina-player' ),
+			self::WARN,
+			__( 'Anyone who can open a page with the player can play the file. Links expire and cannot be shared for long, but nothing limits playback to members: turn on “Require a logged-in user”, or decide it per visitor with the imagina_player_can_stream filter.', 'imagina-player' )
+		);
+	}
+
 	public static function run(): array {
-		$checks = array();
+		self::$unverified = false;
+		$checks           = array();
 
 		if ( ! ProtectedMedia::is_enabled() ) {
 			$checks[] = self::result(
@@ -81,6 +116,16 @@ final class SelfCheck {
 		}
 
 		$checks[] = self::check_offload();
+		$checks[] = self::check_who_may_play();
+
+		if ( self::$unverified ) {
+			$checks[] = self::result(
+				'certificate',
+				__( 'The site’s own certificate', 'imagina-player' ),
+				self::WARN,
+				__( 'This server could not verify the site’s HTTPS certificate when asking itself for files, so the checks above were made without verifying it. Visitors are not affected; the server’s list of trusted certificates may be out of date.', 'imagina-player' )
+			);
+		}
 
 		return array(
 			'status'  => self::worst( $checks ),
@@ -426,20 +471,29 @@ final class SelfCheck {
 	 *                                             not be made at all.
 	 */
 	private static function fetch( string $url ): ?array {
-		$response = wp_remote_get(
-			$url,
-			array(
-				'timeout'     => self::TIMEOUT,
-				'redirection' => 0,
-				'sslverify'   => false,
-				'cookies'     => array(),
-				'headers'     => array(
-					// Ask for the first bytes only. A protected file can be an
-					// hour long, and the status line is all this needs.
-					'Range' => 'bytes=0-2047',
-				),
-			)
+		$args = array(
+			'timeout'     => self::TIMEOUT,
+			'redirection' => 0,
+			// Verified. It was not, which meant the site would believe any
+			// answer to its own address — including one from whatever sits
+			// in between. Only a certificate the server cannot check is
+			// retried unverified, and the result says so.
+			'sslverify'   => true,
+			'cookies'     => array(),
+			'headers'     => array(
+				// Ask for the first bytes only. A protected file can be an
+				// hour long, and the status line is all this needs.
+				'Range' => 'bytes=0-2047',
+			),
 		);
+
+		$response = wp_remote_get( $url, $args );
+
+		if ( is_wp_error( $response ) && preg_match( '/ssl|certificate|tls/i', $response->get_error_message() ) ) {
+			self::$unverified = true;
+			$args['sslverify'] = false;
+			$response          = wp_remote_get( $url, $args );
+		}
 
 		if ( is_wp_error( $response ) ) {
 			return null;

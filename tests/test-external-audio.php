@@ -181,7 +181,8 @@ $types = array(
 	'audio/mp4; charset=utf-8'         => true,
 	'video/mp4'                        => true,
 	'application/octet-stream'         => true,
-	// Plenty of storage buckets send nothing at all.
+	// Plenty of storage buckets send nothing at all — accepted for an
+	// address that names a media file (see below), refused otherwise.
 	''                                 => true,
 	'text/html'                        => false,
 	'text/html; charset=utf-8'         => false,
@@ -197,9 +198,14 @@ foreach ( $types as $type => $expected ) {
 			'' === $type ? '(no content type)' : $type,
 			$expected ? 'accepted' : 'refused'
 		),
-		$expected === $looks_like_media->invoke( $controller_instance, $type )
+		$expected === $looks_like_media->invoke( $controller_instance, $type, 'https://bucket.example/track.mp3' )
 	);
 }
+
+check(
+	'(no content type) on an address that names no media file is refused',
+	false === $looks_like_media->invoke( $controller_instance, '', 'https://internal.example/status' )
+);
 
 echo PHP_EOL;
 if ( $failures > 0 ) {

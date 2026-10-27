@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.46.0
+Stable tag: 1.47.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -152,6 +152,15 @@ visitor's browser computes the waveform once and the site caches it.
 Yes. Any HTTPS URL works, including files served from a streaming provider or CDN.
 Waveforms for external URLs are cached in the plugin's own table, keyed by URL.
 
+= Who can play a protected file? =
+
+Anyone who is shown the player. Protection keeps a file from being linked to or
+downloaded by its address — links expire within minutes and cannot be passed
+around — but it does not decide who may watch. For members only, turn on
+**Require a logged-in user** in Settings → Protection, or decide per visitor with
+the `imagina_player_can_stream` filter. The self-check in the same screen says
+which of these is in force.
+
 = Can I stop people downloading my audio? =
 
 Mark a file as protected and it moves out of the public uploads folder, served
@@ -167,6 +176,46 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.47.0 =
+The security findings of the audit. None was a door anyone could walk
+through unaided; each is closed.
+
+* Security: a fresh link to a protected file was handed to anyone who asked
+  with the file's number, so counting upwards found every protected file —
+  including those of drafts and private posts. The player now trades in the
+  link that expired, which only a page with the player on it could have
+  given; a link from another site's page, a link for another person, or one
+  older than two weeks gets nothing. Every refusal is the same answer, so it
+  no longer says which numbers exist or which files are protected.
+* Security: a protected file stops playing when its post is made private or
+  unpublished, for anyone who may not read that post.
+* Security: the media address redirected to any unprotected attachment's real
+  address, including those of drafts and private posts. It answers "not
+  found" for anything not in the vault.
+* Security: the block editor's preview read the title, tags, cover and address
+  of any file named in it, including other people's private files. It reads
+  only files the author may read. A shortcode overlay is shown, not run, in the
+  preview of an author who may not publish arbitrary markup.
+* Security: the doorway that fetches other sites' files for measuring would
+  fetch from this site's own host and from any address with no content type.
+  It refuses this site, accepts a missing type only for an address that names a
+  media file, connects to the address it checked rather than looking the name
+  up again, and limits how often one person may use it.
+* Security: email capture counted a network by its /64, so one household with
+  IPv6 counted as hundreds; it counts a /48 now, adds a ceiling for the whole
+  site, clears its counters daily, and takes a check of the site's own — a
+  captcha, say — through the `imagina_player_lead_allowed` filter. Behind a
+  proxy, `imagina_player_client_ip` can name the visitor's real address.
+* Security: the protection self-check trusted any answer to its own address,
+  without verifying the certificate. It verifies it now, and says so when the
+  server cannot. It also says plainly when nothing limits who may play a
+  protected file.
+* Fixed: the "Download as CSV" link in Leads carried the nonce from when the
+  screen opened, and after a while saved WordPress's refusal under the name of
+  the export. It fetches the file when pressed.
+* Removed: a third-party plugin archive that had been committed to the source
+  repository. It was never part of the plugin's download.
 
 = 1.46.0 =
 This release fixes what an audit of the whole plugin found; the security

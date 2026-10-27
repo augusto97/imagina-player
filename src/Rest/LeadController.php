@@ -52,14 +52,25 @@ final class LeadController {
 	 */
 	private const NETWORK_LIMIT = 60;
 
+	/** Addresses the whole site takes in one window, from everyone at once. */
+	private const SITE_LIMIT = 300;
+
 	private LeadRepository $leads;
 
 	public function __construct( ?LeadRepository $leads = null ) {
 		$this->leads = $leads ?? new LeadRepository();
 	}
 
+	/** The cron hook the expired counters are cleared on. */
+	public const PURGE_HOOK = 'imagina_player_purge_counters';
+
 	public function hooks(): void {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_action( self::PURGE_HOOK, array( self::class, 'purge_counters' ) );
+
+		if ( function_exists( 'wp_next_scheduled' ) && ! wp_next_scheduled( self::PURGE_HOOK ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::PURGE_HOOK );
+		}
 
 		// Activation creates the table, but a site that *updates* never runs
 		// activation again — so the version check runs on every load and does
@@ -152,7 +163,26 @@ final class LeadController {
 			);
 		}
 
-		if ( ! $this->within_limit( $email ) || ! $this->network_within_limit() ) {
+		/*
+		 * A site can put its own check in front — a Turnstile or hCaptcha
+		 * token sent with the form, say — and answer with a WP_Error to turn
+		 * the address away, or false for a plain refusal.
+		 */
+		$allowed = apply_filters( 'imagina_player_lead_allowed', true, $request );
+
+		if ( is_wp_error( $allowed ) ) {
+			return $allowed;
+		}
+
+		if ( true !== $allowed ) {
+			return new WP_Error(
+				'imagina_player_lead_refused',
+				__( 'That could not be sent. Please try again.', 'imagina-player' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		if ( ! $this->within_limit( $email ) || ! $this->network_within_limit() || ! $this->site_within_limit() ) {
 			return new WP_Error(
 				'imagina_player_too_many',
 				__( 'Too many attempts. Try again in a few minutes.', 'imagina-player' ),
@@ -232,6 +262,52 @@ final class LeadController {
 		set_transient( $key, $count + 1, self::WINDOW );
 
 		return true;
+	}
+
+	/**
+	 * A ceiling for the whole site.
+	 *
+	 * The two limits above are per address and per network, and a script
+	 * with many of both gets past each one. A site's form fills up at a
+	 * human pace; this is set well above that, and filterable for a site
+	 * running a launch.
+	 */
+	private function site_within_limit(): bool {
+		$key   = 'imgp_lead_site';
+		$count = (int) get_transient( $key );
+
+		if ( $count >= (int) apply_filters( 'imagina_player_lead_site_limit', self::SITE_LIMIT ) ) {
+			return false;
+		}
+
+		set_transient( $key, $count + 1, self::WINDOW );
+
+		return true;
+	}
+
+	/**
+	 * Remove the counters that have run out.
+	 *
+	 * WordPress clears expired transients on its own daily job — when it
+	 * runs. Without a persistent object cache every new address writes two
+	 * rows of its own, so this does the same for this plugin's, on a
+	 * schedule of its own, rather than leaving them to accumulate.
+	 */
+	public static function purge_counters(): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- expired rows of our own transients.
+		$expired = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s AND option_value < %d",
+				$wpdb->esc_like( '_transient_timeout_imgp_' ) . '%',
+				time()
+			)
+		);
+
+		foreach ( (array) $expired as $name ) {
+			delete_transient( substr( (string) $name, strlen( '_transient_timeout_' ) ) );
+		}
 	}
 
 	public function listing( WP_REST_Request $request ): WP_REST_Response {

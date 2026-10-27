@@ -328,6 +328,42 @@ final class SettingsController {
 	}
 
 	/**
+	 * Attributes with every file the user may not read taken out.
+	 *
+	 * @param array<string, mixed> $attributes Block attributes as sent.
+	 * @return array<string, mixed>
+	 */
+	public static function readable_files( array $attributes ): array {
+		$readable = static fn( $id ): bool => (int) $id <= 0 || current_user_can( 'read_post', (int) $id );
+
+		foreach ( array( 'attachmentId', 'posterId', 'thumbnailId', 'watermarkId', 'storyboardId' ) as $key ) {
+			if ( isset( $attributes[ $key ] ) && ! $readable( $attributes[ $key ] ) ) {
+				$attributes[ $key ] = 0;
+			}
+		}
+
+		foreach ( array( 'items', 'layers' ) as $list ) {
+			if ( ! isset( $attributes[ $list ] ) || ! is_array( $attributes[ $list ] ) ) {
+				continue;
+			}
+
+			foreach ( $attributes[ $list ] as $index => $row ) {
+				if ( ! is_array( $row ) ) {
+					continue;
+				}
+
+				foreach ( array( 'id', 'imageId' ) as $key ) {
+					if ( isset( $row[ $key ] ) && ! $readable( $row[ $key ] ) ) {
+						$attributes[ $list ][ $index ][ $key ] = 0;
+					}
+				}
+			}
+		}
+
+		return $attributes;
+	}
+
+	/**
 	 * Why a video has no picture, when the reason is Vimeo's.
 	 */
 	private static function poster_reason( Track $track ): string {
@@ -385,6 +421,23 @@ final class SettingsController {
 			if ( $post_id > 0 && ! current_user_can( 'edit_post', $post_id ) ) {
 				$post_id = 0;
 			}
+
+			/*
+			 * Every file the attributes name, read only if the author may read
+			 * it. The preview reports a file's title, tags, cover and address,
+			 * and naming somebody else's attachment here used to read those
+			 * from files core keeps from this user — those of other people's
+			 * drafts and private posts.
+			 */
+			$attributes = self::readable_files( $attributes );
+
+			/*
+			 * Another plugin's shortcode runs here only for an author whose
+			 * own posts may carry anything. Anyone else sees what it will be,
+			 * not what it does: a preview is not the place to run arbitrary
+			 * shortcodes with arbitrary attributes without saving anything.
+			 */
+			PlayerRenderer::allow_shortcodes( current_user_can( 'unfiltered_html' ) );
 
 			// A block previewing a real file gets that file's real waveform. It
 			// used to get the demo one, which told the author their waveform was

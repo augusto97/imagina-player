@@ -173,27 +173,42 @@ export function deleteLead( id: number ): Promise< unknown > {
 }
 
 /**
- * The export URL, for a plain link.
+ * Download the captured addresses as a CSV file.
  *
- * A link rather than a fetch: the browser's own download handling is better
- * than anything reconstructed with a blob, and it keeps the nonce in the URL
- * where a `<a download>` can carry it.
+ * Fetched rather than linked. A link carried the nonce minted when the page
+ * loaded, and an admin who left the screen open past its lifetime clicked it
+ * and saved WordPress's refusal under the name of the export. Through
+ * `apiFetch` the nonce is current — it renews it when it has to — and the
+ * file is handed to the browser to save once it has actually arrived.
  * @param list
- * @param restUrl
- * @param nonce
  */
-export function exportUrl(
-	list: string,
-	restUrl: string,
-	nonce: string
-): string {
-	const query = new URLSearchParams( { _wpnonce: nonce } );
+export async function downloadLeads( list: string ): Promise< void > {
+	const query = new URLSearchParams();
 
 	if ( list ) {
 		query.set( 'list', list );
 	}
 
-	return restUrl + '/leads/export?' + query.toString();
+	const response = ( await apiFetch( {
+		path:
+			'/imagina-player/v1/leads/export' +
+			( query.toString() ? '?' + query.toString() : '' ),
+		parse: false,
+	} ) ) as Response;
+
+	if ( ! response.ok ) {
+		throw new Error( 'export-' + response.status );
+	}
+
+	const url = URL.createObjectURL( await response.blob() );
+	const link = document.createElement( 'a' );
+
+	link.href = url;
+	link.download = 'imagina-player-leads.csv';
+	document.body.appendChild( link );
+	link.click();
+	link.remove();
+	window.setTimeout( () => URL.revokeObjectURL( url ), 1000 );
 }
 
 /**

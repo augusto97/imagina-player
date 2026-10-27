@@ -40,7 +40,7 @@ final class Signature {
 	 *
 	 * @return array<string, scalar>|null
 	 */
-	public static function verify( string $token, string $context ): ?array {
+	public static function verify( string $token, string $context, int $grace = 0 ): ?array {
 		$parts = explode( '.', $token );
 
 		if ( count( $parts ) !== 2 ) {
@@ -65,7 +65,9 @@ final class Signature {
 			return null;
 		}
 
-		if ( (int) $claims['exp'] < time() ) {
+		// `$grace` lets a caller accept a token that has run out recently —
+		// only ever to prove a page was served, never to serve the file.
+		if ( (int) $claims['exp'] + max( 0, $grace ) < time() ) {
 			return null;
 		}
 

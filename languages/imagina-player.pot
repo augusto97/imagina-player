@@ -2,7 +2,7 @@
 # This file is distributed under the same licence as the Imagina Player plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: Imagina Player 1.45.0\n"
+"Project-Id-Version: Imagina Player 1.46.0\n"
 "Report-Msgid-Bugs-To: https://github.com/augusto97/imagina-player\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -33,7 +33,7 @@ msgid "%1$d of %2$d — %3$s — %4$s"
 msgstr ""
 
 #. translators: %d: number of failed checks.
-#: src/Protection/SelfCheck.php:478
+#: src/Protection/SelfCheck.php:532
 msgid "%d check failed. Protected files are not safe yet."
 msgid_plural "%d checks failed. Protected files are not safe yet."
 msgstr[0] ""
@@ -61,7 +61,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %d: number of captured addresses.
-#: assets/src/admin/LeadsPanel.tsx:147
+#: assets/src/admin/LeadsPanel.tsx:170
 msgid "%d in total"
 msgstr ""
 
@@ -105,7 +105,7 @@ msgid "A box that finds the moment a word is spoken and jumps to it. Uses the su
 msgstr ""
 
 #. translators: %d: HTTP status code.
-#: src/Protection/SelfCheck.php:314
+#: src/Protection/SelfCheck.php:359
 msgid "A correctly signed link was answered with %d. Protected media will not play."
 msgstr ""
 
@@ -113,15 +113,15 @@ msgstr ""
 msgid "A file on another site or a streaming provider."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:155
+#: src/Protection/SelfCheck.php:200
 msgid "A file placed in the vault was downloaded in full over a plain URL. The deny rules are not being applied — check that AllowOverride lets .htaccess take effect for the uploads directory."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:156
+#: src/Protection/SelfCheck.php:201
 msgid "A file placed in the vault was downloaded in full over a plain URL. This server does not read .htaccess, so the deny rule has to be added to its own configuration — the rule is shown below. Until then, protected files are reachable by anyone who knows or guesses the address."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:219
+#: src/Protection/SelfCheck.php:264
 msgid "A link with no token is refused"
 msgstr ""
 
@@ -150,7 +150,7 @@ msgstr ""
 msgid "A solid band reads over any footage. A shadow is lighter but struggles over a bright, busy shot."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:224
+#: src/Protection/SelfCheck.php:269
 msgid "A tampered token is refused"
 msgstr ""
 
@@ -158,11 +158,11 @@ msgstr ""
 msgid "A thin progress line and nothing else until the pointer arrives. For a video that is part of the page rather than the point of it."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:234
+#: src/Protection/SelfCheck.php:279
 msgid "A token for one file cannot open another"
 msgstr ""
 
-#: src/Protection/SelfCheck.php:272
+#: src/Protection/SelfCheck.php:317
 msgid "A valid signed link plays"
 msgstr ""
 
@@ -185,7 +185,7 @@ msgstr ""
 msgid "Across (percent from the left)"
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:181
+#: assets/src/admin/LeadsPanel.tsx:204
 msgid "Actions"
 msgstr ""
 
@@ -214,7 +214,7 @@ msgstr ""
 msgid "Address"
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:107
+#: assets/src/admin/LeadsPanel.tsx:108
 msgid "Addresses given through an email gate on a player. Grouped by the list name set on each one."
 msgstr ""
 
@@ -240,7 +240,7 @@ msgstr ""
 msgid "Alternative text"
 msgstr ""
 
-#: src/Protection/SelfCheck.php:229
+#: src/Protection/SelfCheck.php:274
 msgid "An expired token is refused"
 msgstr ""
 
@@ -250,6 +250,10 @@ msgstr ""
 
 #: src/Integrations/Elementor/PlayerWidget.php:286
 msgid "Any shortcode another plugin provides. It runs when the page is shown."
+msgstr ""
+
+#: src/Protection/SelfCheck.php:82
+msgid "Anyone who can open a page with the player can play the file. Links expire and cannot be shared for long, but nothing limits playback to members: turn on “Require a logged-in user”, or decide it per visitor with the imagina_player_can_stream filter."
 msgstr ""
 
 #: assets/src/editor/edit.tsx:807
@@ -277,7 +281,7 @@ msgstr ""
 msgid "Artist"
 msgstr ""
 
-#: src/Rest/SettingsController.php:440
+#: src/Rest/SettingsController.php:493
 msgid "Artist name"
 msgstr ""
 
@@ -435,7 +439,7 @@ msgstr ""
 msgid "Can be dismissed"
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:105
+#: assets/src/admin/LeadsPanel.tsx:106
 msgid "Captured emails"
 msgstr ""
 
@@ -519,7 +523,7 @@ msgid "Classic (4:3)"
 msgstr ""
 
 #: src/Render/PlayerRenderer.php:966
-#: src/Render/PlayerRenderer.php:1046
+#: src/Render/PlayerRenderer.php:1062
 msgid "Close"
 msgstr ""
 
@@ -630,7 +634,7 @@ msgstr ""
 msgid "Default for the kind"
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:216
+#: assets/src/admin/LeadsPanel.tsx:239
 msgid "Delete"
 msgstr ""
 
@@ -638,7 +642,7 @@ msgstr ""
 msgid "Delete preset"
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:72
+#: assets/src/admin/LeadsPanel.tsx:74
 msgid "Delete this address? This cannot be undone."
 msgstr ""
 
@@ -662,7 +666,7 @@ msgstr ""
 
 #: assets/src/admin/PresetsPanel.tsx:318
 #: src/Integrations/Elementor/AudioWidget.php:136
-#: src/Render/PlayerRenderer.php:1357
+#: src/Render/PlayerRenderer.php:1373
 msgid "Download"
 msgstr ""
 
@@ -670,7 +674,7 @@ msgstr ""
 msgid "Download URL"
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:139
+#: assets/src/admin/LeadsPanel.tsx:156
 msgid "Download as CSV"
 msgstr ""
 
@@ -704,7 +708,7 @@ msgstr ""
 msgid "Elapsed and total time"
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:168
+#: assets/src/admin/LeadsPanel.tsx:191
 msgid "Email"
 msgstr ""
 
@@ -740,7 +744,7 @@ msgid "Español"
 msgstr ""
 
 #. translators: %d: number of checks not confirmed.
-#: src/Protection/SelfCheck.php:488
+#: src/Protection/SelfCheck.php:542
 msgid "Every check passed. Files in the vault are reachable only through a valid signed link."
 msgstr ""
 
@@ -748,7 +752,7 @@ msgstr ""
 msgid "Every file already has a waveform."
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:124
+#: assets/src/admin/LeadsPanel.tsx:125
 msgid "Every list"
 msgstr ""
 
@@ -796,7 +800,7 @@ msgstr ""
 msgid "Focus mode"
 msgstr ""
 
-#: src/Render/PlayerRenderer.php:1079
+#: src/Render/PlayerRenderer.php:1095
 msgid "Follow the video"
 msgstr ""
 
@@ -809,11 +813,11 @@ msgid "For the weekly podcast"
 msgstr ""
 
 #. translators: %d: number of seconds
-#: src/Render/PlayerRenderer.php:1340
+#: src/Render/PlayerRenderer.php:1356
 msgid "Forward %d seconds"
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:174
+#: assets/src/admin/LeadsPanel.tsx:197
 msgid "From"
 msgstr ""
 
@@ -979,12 +983,12 @@ msgid "Imagina Player requires PHP %1$s or newer. This site runs PHP %2$s."
 msgstr ""
 
 #. translators: %s: the name of a custom field.
-#: src/Render/PlayerRenderer.php:1483
+#: src/Render/PlayerRenderer.php:1499
 msgid "Imagina Player: no audio file selected."
 msgstr ""
 
 #. translators: %s: the name of a custom field.
-#: src/Render/PlayerRenderer.php:1474
+#: src/Render/PlayerRenderer.php:1490
 msgid "Imagina Player: the file comes from the custom field “%s” of the post this block is shown on. This one has none, so visitors see nothing here."
 msgstr ""
 
@@ -1002,11 +1006,11 @@ msgstr ""
 msgid "Imagina Video Player"
 msgstr ""
 
-#: src/Protection/SelfCheck.php:325
+#: src/Protection/SelfCheck.php:370
 msgid "It could not be created. Check the permissions on wp-content/uploads."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:329
+#: src/Protection/SelfCheck.php:374
 msgid "It exists but cannot be written to, so no file can be moved into it."
 msgstr ""
 
@@ -1107,7 +1111,7 @@ msgstr ""
 msgid "Links to (optional)"
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:171
+#: assets/src/admin/LeadsPanel.tsx:194
 #: assets/src/editor/playlist.tsx:66
 #: src/Integrations/Elementor/PlaylistWidget.php:71
 msgid "List"
@@ -1127,7 +1131,7 @@ msgid "Load the bundled stylesheet"
 msgstr ""
 
 #: assets/src/admin/App.tsx:125
-#: assets/src/admin/LeadsPanel.tsx:144
+#: assets/src/admin/LeadsPanel.tsx:167
 msgid "Loading…"
 msgstr ""
 
@@ -1203,7 +1207,7 @@ msgid "Minutes and seconds, or seconds."
 msgstr ""
 
 #. translators: %s: comma-separated list of filenames.
-#: src/Protection/SelfCheck.php:355
+#: src/Protection/SelfCheck.php:400
 msgid "Missing: %s. They are rewritten when the directory is next created; the check below is what actually decides whether access is denied."
 msgstr ""
 
@@ -1220,7 +1224,7 @@ msgid "Moves the file out of the public uploads folder and serves it through a s
 msgstr ""
 
 #: src/Assets.php:278
-#: src/Render/PlayerRenderer.php:1366
+#: src/Render/PlayerRenderer.php:1382
 msgid "Mute"
 msgstr ""
 
@@ -1239,17 +1243,17 @@ msgid "New preset"
 msgstr ""
 
 #. translators: 1: current page, 2: total pages.
-#: assets/src/admin/LeadsPanel.tsx:250
+#: assets/src/admin/LeadsPanel.tsx:273
 #: src/Render/PlaylistRenderer.php:122
 msgid "Next"
 msgstr ""
 
-#: src/Rest/PeaksController.php:1064
+#: src/Rest/PeaksController.php:1159
 msgid "No track was named."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1078
-#: src/Rest/PeaksController.php:1138
+#: src/Rest/PeaksController.php:1173
+#: src/Rest/PeaksController.php:1233
 msgid "No waveform data was supplied."
 msgstr ""
 
@@ -1270,17 +1274,17 @@ msgstr ""
 msgid "Not checked."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:298
+#: src/Protection/SelfCheck.php:343
 msgid "Not checked: links are bound to the visitor, so a link minted here cannot be replayed from here. Play a track on the site instead."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:208
+#: src/Protection/SelfCheck.php:253
 msgid "Not checked: no file has been protected yet. Protect one under Media and run this again."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:168
-#: src/Protection/SelfCheck.php:251
-#: src/Protection/SelfCheck.php:275
+#: src/Protection/SelfCheck.php:213
+#: src/Protection/SelfCheck.php:296
+#: src/Protection/SelfCheck.php:320
 msgid "Not checked: this site could not make a request to itself."
 msgstr ""
 
@@ -1294,7 +1298,7 @@ msgid "Nothing"
 msgstr ""
 
 #. translators: %d: number of checks not confirmed.
-#: src/Protection/SelfCheck.php:485
+#: src/Protection/SelfCheck.php:539
 msgid "Nothing failed, but %d check could not be confirmed."
 msgid_plural "Nothing failed, but %d checks could not be confirmed."
 msgstr[0] ""
@@ -1309,7 +1313,7 @@ msgid "Nothing is requested from YouTube or Vimeo until somebody presses play �
 msgstr ""
 
 #. translators: %d: number of captured addresses.
-#: assets/src/admin/LeadsPanel.tsx:156
+#: assets/src/admin/LeadsPanel.tsx:179
 msgid "Nothing yet. Add an email gate to a player under Calls to action in the block, and addresses will appear here."
 msgstr ""
 
@@ -1317,7 +1321,7 @@ msgstr ""
 msgid "Off"
 msgstr ""
 
-#: src/Protection/SelfCheck.php:373
+#: src/Protection/SelfCheck.php:418
 msgid "Off. Every protected file is streamed through PHP, which holds a worker for the whole length of the track. Fine for a handful of listeners; on a busy site turn on X-Accel-Redirect (nginx) or X-Sendfile (Apache, LiteSpeed)."
 msgstr ""
 
@@ -1329,7 +1333,7 @@ msgstr ""
 msgid "On by default"
 msgstr ""
 
-#: src/Rest/SettingsController.php:354
+#: src/Rest/SettingsController.php:390
 msgid "Only a Vimeo video has a picture that must be asked for."
 msgstr ""
 
@@ -1392,7 +1396,7 @@ msgid "PHP (works everywhere)"
 msgstr ""
 
 #. translators: 1: current page, 2: total pages.
-#: assets/src/admin/LeadsPanel.tsx:239
+#: assets/src/admin/LeadsPanel.tsx:262
 msgid "Page %1$d of %2$d"
 msgstr ""
 
@@ -1440,7 +1444,7 @@ msgstr ""
 
 #: src/Assets.php:276
 #: src/Render/PlayerRenderer.php:717
-#: src/Render/PlayerRenderer.php:1283
+#: src/Render/PlayerRenderer.php:1299
 msgid "Play"
 msgstr ""
 
@@ -1469,7 +1473,7 @@ msgstr ""
 #. translators: %d: number of seconds
 #: assets/src/admin/PresetsPanel.tsx:309
 #: assets/src/admin/panels.tsx:1264
-#: src/Render/PlayerRenderer.php:1348
+#: src/Render/PlayerRenderer.php:1364
 msgid "Playback speed"
 msgstr ""
 
@@ -1513,6 +1517,10 @@ msgstr ""
 msgid "Preload"
 msgstr ""
 
+#: assets/src/admin/LeadsPanel.tsx:155
+msgid "Preparing…"
+msgstr ""
+
 #: assets/src/editor/edit.tsx:812
 #: src/Integrations/Elementor/PlayerWidget.php:168
 #: src/Integrations/Elementor/PlaylistWidget.php:89
@@ -1532,7 +1540,7 @@ msgstr ""
 msgid "Preview"
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:234
+#: assets/src/admin/LeadsPanel.tsx:257
 #: src/Render/PlaylistRenderer.php:121
 msgid "Previous"
 msgstr ""
@@ -1561,7 +1569,7 @@ msgstr ""
 msgid "Protection is currently switched off in Settings → Imagina Player."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:60
+#: src/Protection/SelfCheck.php:95
 msgid "Protection is off, so none of the rules below are in force. Nothing here is broken — the files are simply public, as they would be without the plugin."
 msgstr ""
 
@@ -1569,8 +1577,8 @@ msgstr ""
 msgid "Protection is switched off in Settings → Imagina Player. Turn it on to protect files."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:58
-#: src/Protection/SelfCheck.php:65
+#: src/Protection/SelfCheck.php:93
+#: src/Protection/SelfCheck.php:100
 msgid "Protection is switched on"
 msgstr ""
 
@@ -1583,11 +1591,11 @@ msgid "Reflection"
 msgstr ""
 
 #. translators: %d: HTTP status code.
-#: src/Protection/SelfCheck.php:263
+#: src/Protection/SelfCheck.php:308
 msgid "Refused with %d."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:287
+#: src/Protection/SelfCheck.php:332
 msgid "Refused with 401, which is correct: “Require login” is on and this check runs as a logged-out visitor."
 msgstr ""
 
@@ -1647,7 +1655,7 @@ msgid "Resume from %s"
 msgstr ""
 
 #. translators: %d: number of seconds
-#: src/Render/PlayerRenderer.php:1335
+#: src/Render/PlayerRenderer.php:1351
 msgid "Rewind %d seconds"
 msgstr ""
 
@@ -1676,6 +1684,10 @@ msgstr ""
 msgid "Run the check"
 msgstr ""
 
+#: src/Render/PlayerRenderer.php:1042
+msgid "Runs on the published page."
+msgstr ""
+
 #: assets/src/admin/panels.tsx:542
 msgid "Runs outside the page request, so nobody waits for it."
 msgstr ""
@@ -1696,8 +1708,8 @@ msgstr ""
 msgid "Scrub previews"
 msgstr ""
 
-#: src/Render/PlayerRenderer.php:1077
-#: src/Render/PlayerRenderer.php:1078
+#: src/Render/PlayerRenderer.php:1093
+#: src/Render/PlayerRenderer.php:1094
 msgid "Search the transcript"
 msgstr ""
 
@@ -1738,11 +1750,11 @@ msgid "Serve through a signed link"
 msgstr ""
 
 #. translators: %d: HTTP status code.
-#: src/Protection/SelfCheck.php:312
+#: src/Protection/SelfCheck.php:357
 msgid "Served with %d."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1406
+#: src/Rest/PeaksController.php:1501
 msgid "Server-side waveform generation is unavailable on this host."
 msgstr ""
 
@@ -1844,7 +1856,7 @@ msgstr ""
 msgid "Shown next to the title. Optional."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:206
+#: src/Protection/SelfCheck.php:251
 msgid "Signed links are enforced"
 msgstr ""
 
@@ -1962,7 +1974,7 @@ msgstr ""
 msgid "Stick to the edge while scrolling"
 msgstr ""
 
-#: src/Render/PlayerRenderer.php:1203
+#: src/Render/PlayerRenderer.php:1219
 msgid "Stop following"
 msgstr ""
 
@@ -1975,7 +1987,7 @@ msgstr ""
 msgid "Stop where it ended"
 msgstr ""
 
-#: src/Protection/SelfCheck.php:364
+#: src/Protection/SelfCheck.php:409
 msgid "Streaming is handed to the web server"
 msgstr ""
 
@@ -2043,32 +2055,32 @@ msgstr ""
 msgid "Thank-you text"
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:88
+#: assets/src/admin/LeadsPanel.tsx:90
 msgid "That address could not be deleted. Try again."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1398
-#: src/Rest/StreamController.php:60
+#: src/Rest/PeaksController.php:1493
 msgid "That attachment does not exist."
 msgstr ""
 
-#: src/Rest/LeadController.php:179
+#: src/Rest/LeadController.php:209
 msgid "That could not be saved. Please try again."
 msgstr ""
 
 #: src/Assets.php:282
+#: src/Rest/LeadController.php:180
 msgid "That could not be sent. Please try again."
 msgstr ""
 
-#: src/Rest/LeadController.php:150
+#: src/Rest/LeadController.php:161
 msgid "That does not look like an email address."
 msgstr ""
 
-#: src/Rest/StreamController.php:68
-msgid "That file is not protected."
+#: src/Rest/StreamController.php:72
+msgid "That file is not available."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1056
+#: src/Rest/PeaksController.php:1151
 msgid "That is not a media file."
 msgstr ""
 
@@ -2092,11 +2104,11 @@ msgstr ""
 msgid "The default preset, drawn as a video, with the settings below as they stand now."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:336
+#: src/Protection/SelfCheck.php:381
 msgid "The deny rules are in place"
 msgstr ""
 
-#: src/Protection/SelfCheck.php:179
+#: src/Protection/SelfCheck.php:224
 msgid "The directory answers with an empty page rather than a listing."
 msgstr ""
 
@@ -2114,6 +2126,10 @@ msgstr ""
 
 #: src/Protection/Vault.php:174
 msgid "The file could not be moved into the protected directory."
+msgstr ""
+
+#: assets/src/admin/LeadsPanel.tsx:146
+msgid "The file could not be prepared. Reload the page and try again."
 msgstr ""
 
 #: src/Protection/Vault.php:155
@@ -2170,16 +2186,16 @@ msgstr ""
 msgid "The preview could not be loaded."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:103
+#: src/Protection/SelfCheck.php:148
 msgid "The protected directory could not be created, so nothing can be stored there."
 msgstr ""
 
 #. translators: %d: HTTP status code.
-#: src/Protection/SelfCheck.php:321
+#: src/Protection/SelfCheck.php:366
 msgid "The protected directory exists and is writable"
 msgstr ""
 
-#: src/Protection/SelfCheck.php:112
+#: src/Protection/SelfCheck.php:157
 msgid "The protected directory is not writable, so protected files cannot be stored there."
 msgstr ""
 
@@ -2189,25 +2205,25 @@ msgid "The protected media directory could not be created."
 msgstr ""
 
 #. translators: %d: HTTP status code.
-#: src/Protection/SelfCheck.php:135
+#: src/Protection/SelfCheck.php:180
 msgid "The server answered %d for a file inside the vault."
 msgstr ""
 
 #. translators: %d: HTTP status code.
-#: src/Protection/SelfCheck.php:265
+#: src/Protection/SelfCheck.php:310
 msgid "The server answered %d instead of refusing. The file was served to a request that should not have had it."
 msgstr ""
 
 #. translators: %d: HTTP status code.
-#: src/Protection/SelfCheck.php:173
+#: src/Protection/SelfCheck.php:218
 msgid "The server answered %d."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:146
+#: src/Protection/SelfCheck.php:191
 msgid "The server answered 200, but with something other than the file — a rewrite or an error page is standing in front of the vault."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:100
+#: src/Protection/SelfCheck.php:145
 msgid "The server refuses direct access to the vault"
 msgstr ""
 
@@ -2219,6 +2235,10 @@ msgstr ""
 msgid "The settings could not be saved."
 msgstr ""
 
+#: src/Protection/SelfCheck.php:124
+msgid "The site’s own certificate"
+msgstr ""
+
 #: src/Assets.php:284
 msgid "The subtitles for this video have not loaded yet."
 msgstr ""
@@ -2227,20 +2247,20 @@ msgstr ""
 msgid "The uploads directory could not be written to."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:164
+#: src/Protection/SelfCheck.php:209
 msgid "The vault cannot be browsed"
 msgstr ""
 
-#: src/Protection/SelfCheck.php:186
+#: src/Protection/SelfCheck.php:231
 msgid "The vault directory returned a page listing its contents. Turn directory indexes off for the uploads directory."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1452
+#: src/Rest/PeaksController.php:1547
 msgid "The waveform could not be generated for this file."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1093
-#: src/Rest/PeaksController.php:1153
+#: src/Rest/PeaksController.php:1188
+#: src/Rest/PeaksController.php:1248
 msgid "The waveform data is malformed."
 msgstr ""
 
@@ -2257,7 +2277,7 @@ msgstr ""
 msgid "Theater"
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:51
+#: assets/src/admin/LeadsPanel.tsx:53
 msgid "These could not be loaded."
 msgstr ""
 
@@ -2273,7 +2293,7 @@ msgstr ""
 msgid "This browser cannot measure audio."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1422
+#: src/Rest/PeaksController.php:1517
 msgid "This file is already being measured. Try again in a minute."
 msgstr ""
 
@@ -2285,13 +2305,17 @@ msgstr ""
 msgid "This host does not let PHP start other programs (popen is in disable_functions), so ffmpeg cannot be used even if it is installed."
 msgstr ""
 
-#: src/Protection/StreamServer.php:258
+#: src/Protection/StreamServer.php:257
 msgid "This media is not available."
 msgstr ""
 
 #. translators: %d: how many files have no waveform.
 #: assets/src/admin/panels.tsx:482
 msgid "This server cannot measure them, so measure them here: “Generate missing waveforms” below downloads each file once, in this browser, and stores the result for every visitor."
+msgstr ""
+
+#: src/Protection/SelfCheck.php:126
+msgid "This server could not verify the site’s HTTPS certificate when asking itself for files, so the checks above were made without verifying it. Visitors are not affected; the server’s list of trusted certificates may be out of date."
 msgstr ""
 
 #: assets/src/admin/panels.tsx:831
@@ -2302,7 +2326,7 @@ msgstr ""
 msgid "This server reads .htaccess, and the plugin writes deny rules into that folder. Nothing else to do."
 msgstr ""
 
-#: src/Protection/SelfCheck.php:125
+#: src/Protection/SelfCheck.php:170
 msgid "This site could not make a request to itself, so the check could not run. That is a host restriction on loopback requests, not a sign that protection has failed — but it does mean this cannot be confirmed from here."
 msgstr ""
 
@@ -2315,7 +2339,7 @@ msgstr ""
 msgid "This video is hosted by %s."
 msgstr ""
 
-#: src/Rest/PeaksController.php:1114
+#: src/Rest/PeaksController.php:1209
 msgid "This waveform grant is missing or expired."
 msgstr ""
 
@@ -2357,7 +2381,8 @@ msgstr ""
 msgid "Title on the bar"
 msgstr ""
 
-#: src/Rest/LeadController.php:158
+#: src/Rest/LeadController.php:188
+#: src/Rest/StreamController.php:85
 msgid "Too many attempts. Try again in a few minutes."
 msgstr ""
 
@@ -2391,7 +2416,7 @@ msgstr ""
 msgid "Tracks"
 msgstr ""
 
-#: src/Render/PlayerRenderer.php:1076
+#: src/Render/PlayerRenderer.php:1092
 msgid "Transcript"
 msgstr ""
 
@@ -2557,12 +2582,12 @@ msgstr ""
 #: assets/src/editor/edit.tsx:69
 #: src/Integrations/Elementor/AudioWidget.php:130
 #: src/Integrations/Elementor/VideoWidget.php:208
-#: src/Render/PlayerRenderer.php:1381
+#: src/Render/PlayerRenderer.php:1397
 msgid "Volume"
 msgstr ""
 
 #. translators: %s: YouTube or Vimeo.
-#: src/Render/PlayerRenderer.php:1147
+#: src/Render/PlayerRenderer.php:1163
 msgid "Watch this video on %s"
 msgstr ""
 
@@ -2621,7 +2646,7 @@ msgstr ""
 msgid "Whatever is there, in that order"
 msgstr ""
 
-#: assets/src/admin/LeadsPanel.tsx:177
+#: assets/src/admin/LeadsPanel.tsx:200
 msgid "When"
 msgstr ""
 
@@ -2651,6 +2676,11 @@ msgstr ""
 
 #: assets/src/editor/edit.tsx:1200
 msgid "While the video plays and nobody moves. Empty uses the site setting; zero keeps them up."
+msgstr ""
+
+#: src/Protection/SelfCheck.php:72
+#: src/Protection/SelfCheck.php:80
+msgid "Who may play a protected file"
 msgstr ""
 
 #: assets/src/admin/panels.tsx:384
@@ -2692,11 +2722,11 @@ msgstr ""
 msgid "YouTube and Vimeo"
 msgstr ""
 
-#: src/Rest/SettingsController.php:439
+#: src/Rest/SettingsController.php:492
 msgid "Your track title"
 msgstr ""
 
-#: src/Rest/SettingsController.php:422
+#: src/Rest/SettingsController.php:475
 msgid "Your video title"
 msgstr ""
 
@@ -2732,11 +2762,11 @@ msgstr ""
 msgid "measuring"
 msgstr ""
 
-#: assets/src/shared/failure.ts:218
+#: assets/src/shared/failure.ts:232
 msgid "measuring was stopped before it finished"
 msgstr ""
 
-#: assets/src/shared/failure.ts:201
+#: assets/src/shared/failure.ts:215
 msgid "nothing in the file decoded as audio"
 msgstr ""
 
@@ -2745,11 +2775,11 @@ msgid "seconds"
 msgstr ""
 
 #. translators: %s: the HTTP status returned.
-#: assets/src/shared/failure.ts:172
+#: assets/src/shared/failure.ts:186
 msgid "something between the browser and WordPress answered %s — this plugin did not, because every refusal it makes says why. Settings → Imagina Player → Waveforms has a check that asks the server directly and reports what it finds."
 msgstr ""
 
-#: assets/src/shared/failure.ts:116
+#: assets/src/shared/failure.ts:130
 msgid "that address was refused as unsafe to fetch"
 msgstr ""
 
@@ -2758,16 +2788,16 @@ msgstr ""
 msgid "the address does not return an audio or video file"
 msgstr ""
 
-#: assets/src/shared/failure.ts:206
+#: assets/src/shared/failure.ts:220
 msgid "the browser could not decode it — check that the file plays"
 msgstr ""
 
-#: assets/src/shared/failure.ts:239
+#: assets/src/shared/failure.ts:253
 msgid "the browser could not read it, which is usually a cross-origin refusal"
 msgstr ""
 
 #. translators: %s: HTTP status code, or "?" when there was none.
-#: assets/src/shared/failure.ts:191
+#: assets/src/shared/failure.ts:205
 msgid "the download stopped early — the file may be behind something that cuts long transfers off"
 msgstr ""
 
@@ -2775,8 +2805,12 @@ msgstr ""
 msgid "the file is larger than this site will fetch on your behalf"
 msgstr ""
 
+#: assets/src/shared/failure.ts:116
+msgid "the file is on this site, so the browser reads it directly — if that failed, the file itself could not be read"
+msgstr ""
+
 #. translators: %s: HTTP status code, or "?" when there was none.
-#: assets/src/shared/failure.ts:182
+#: assets/src/shared/failure.ts:196
 msgid "the server answered %s when asked for the file"
 msgstr ""
 
@@ -2785,11 +2819,11 @@ msgstr ""
 msgid "the server hosting the file answered %s to this site as well — check that domain’s hotlink protection or signed-link rules"
 msgstr ""
 
-#: assets/src/shared/failure.ts:225
+#: assets/src/shared/failure.ts:239
 msgid "the server sent nothing back for part of the file"
 msgstr ""
 
-#: assets/src/shared/failure.ts:197
+#: assets/src/shared/failure.ts:211
 msgid "this browser cannot decode audio"
 msgstr ""
 
@@ -2806,12 +2840,16 @@ msgstr ""
 msgid "this site could not reach the file’s own server"
 msgstr ""
 
-#: assets/src/shared/failure.ts:130
+#: assets/src/shared/failure.ts:144
 msgid "this site refused the request that fetches the file — reload the editor and try again"
 msgstr ""
 
-#: assets/src/shared/failure.ts:163
+#: assets/src/shared/failure.ts:177
 msgid "this site refused to fetch the file and the reason did not survive the trip — Settings → Imagina Player → Waveforms has a check that asks the server directly and reports it"
+msgstr ""
+
+#: assets/src/shared/failure.ts:123
+msgid "too many files were fetched in the last few minutes — wait a little and try again"
 msgstr ""
 
 #: src/Render/PlayerRenderer.php:919
