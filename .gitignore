@@ -5,3 +5,5 @@ vendor/
 .idea/
 .vscode/
 dist/
+# Transient workdirs the browser tests create under build/ while they run.
+build/.*-test/
