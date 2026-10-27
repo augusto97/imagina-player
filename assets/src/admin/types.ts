@@ -96,6 +96,8 @@ export interface SettingsPayload {
 		/** A box that finds the moment a word is said. */
 		show_search: boolean;
 		show_transcript: boolean;
+		viewer_mark: string;
+		viewer_mark_opacity: number;
 		show_skip: boolean;
 		show_time: boolean;
 		show_volume: boolean;

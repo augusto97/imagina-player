@@ -3972,3 +3972,134 @@ button.imgp-time:focus-visible {
 		overflow: visible !important;
 	}
 }
+
+/* --- The viewer's own name over the picture -------------------------------
+   Faint, never in the way of a click, and moved by the script every few
+   seconds so it cannot be cropped out of one corner. */
+
+.imgp__viewer-mark {
+	position: absolute;
+	top: var(--imgp-vm-y, 12%);
+	left: var(--imgp-vm-x, 8%);
+	z-index: 6;
+	max-width: 80%;
+	overflow: hidden;
+	color: #fff;
+	font-size: clamp(0.7rem, 2.4cqw, 1.05rem);
+	font-weight: 600;
+	line-height: 1.2;
+	text-overflow: ellipsis;
+	text-shadow: 0 1px 2px rgb(0 0 0 / 70%);
+	white-space: nowrap;
+	opacity: var(--imgp-vm-opacity, 0.3);
+	pointer-events: none;
+	user-select: none;
+	transition: opacity 0.6s ease;
+}
+
+.imgp__viewer-mark.is-moving {
+	opacity: 0;
+}
+
+@media print {
+
+	.imgp__viewer-mark {
+		display: none;
+	}
+}
+
+/* --- A player this visitor may not play -----------------------------------
+   The picture and the title stay; the offer sits where the play button was. */
+
+.imgp__locked {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.6rem;
+	padding: 1rem 1.25rem;
+	text-align: center;
+}
+
+.imgp--video .imgp__locked {
+	position: absolute;
+	inset: 0;
+	z-index: 9;
+	color: #fff;
+	background: radial-gradient(ellipse at center, rgb(0 0 0 / 45%), rgb(0 0 0 / 70%));
+	text-shadow: 0 1px 3px rgb(0 0 0 / 55%);
+}
+
+/* The title stays readable above the offer. */
+.imgp--locked .imgp__top {
+	z-index: 10;
+}
+
+.imgp--audio .imgp__locked {
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: flex-start;
+	margin-top: var(--imgp-gap);
+	border-radius: var(--imgp-radius, 0.5rem);
+	background: color-mix(in srgb, currentcolor 6%, transparent);
+	text-align: start;
+}
+
+.imgp__locked-icon svg {
+	display: block;
+	width: 1.6rem;
+	height: 1.6rem;
+	fill: currentcolor;
+}
+
+.imgp--video .imgp__locked-icon svg {
+	width: 2.4rem;
+	height: 2.4rem;
+}
+
+.imgp .imgp__locked-text {
+	max-width: 32rem;
+	font-size: 1rem !important;
+	font-weight: 600;
+	line-height: 1.4 !important;
+}
+
+.imgp--audio .imgp__locked-text {
+	flex: 1 1 12rem;
+}
+
+.imgp__locked-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem 1rem;
+}
+
+.imgp .imgp__locked-button {
+	display: inline-block;
+	padding: 0.55rem 1.1rem !important;
+	border-radius: 0.4rem;
+	background: var(--imgp-accent) !important;
+	color: var(--imgp-on-accent, #fff) !important;
+	font-weight: 600;
+	text-decoration: none !important;
+}
+
+.imgp--video .imgp__locked-button {
+	box-shadow: 0 0 0 1px rgb(255 255 255 / 25%) !important;
+}
+
+.imgp .imgp__locked-login {
+	color: inherit !important;
+	font-size: 0.9rem;
+	text-decoration: underline !important;
+	text-underline-offset: 0.15em;
+}
+
+/* A locked list keeps its titles and loses its links, so it does not invite
+   a click that cannot go anywhere. */
+.imgp-playlist--locked .imgp-playlist__link {
+	cursor: default;
+	opacity: 0.75;
+}

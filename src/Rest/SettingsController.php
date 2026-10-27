@@ -256,6 +256,10 @@ final class SettingsController {
 				? (string) $video['caption_bg']
 				: 'solid';
 			$settings['video']['provider_privacy'] = ! empty( $video['provider_privacy'] );
+			$settings['video']['viewer_mark']      = in_array( $video['viewer_mark'] ?? 'off', array( 'off', 'name', 'email', 'both' ), true )
+				? (string) $video['viewer_mark']
+				: 'off';
+			$settings['video']['viewer_mark_opacity'] = max( 10, min( 80, (int) ( $video['viewer_mark_opacity'] ?? 30 ) ) );
 
 			foreach ( array( 'show_captions', 'show_chapters', 'show_search', 'show_transcript', 'show_skip', 'show_time', 'show_volume', 'show_title', 'focus_mode', 'captions_on', 'provider_bare' ) as $flag ) {
 				$settings['video'][ $flag ] = ! empty( $video[ $flag ] );

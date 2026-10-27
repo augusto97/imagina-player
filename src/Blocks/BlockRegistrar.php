@@ -100,10 +100,28 @@ final class BlockRegistrar {
 						'type'    => 'string',
 						'default' => '',
 					),
-				) + self::anchor_attribute(),
+				) + self::anchor_attribute() + self::access_attributes(),
 				'render_callback' => array( $this, 'render_playlist' ),
 			)
 		);
+	}
+
+	/**
+	 * Who may play a playlist: the same five as a single player.
+	 *
+	 * @return array<string, array{type: string, default: string}>
+	 */
+	private static function access_attributes(): array {
+		$out = array();
+
+		foreach ( array( 'accessRule', 'accessIds', 'accessMessage', 'accessButton', 'accessUrl' ) as $name ) {
+			$out[ $name ] = array(
+				'type'    => 'string',
+				'default' => '',
+			);
+		}
+
+		return $out;
 	}
 
 	/**
@@ -301,6 +319,9 @@ final class BlockRegistrar {
 					'presetValues'   => $values,
 					'video'          => $video,
 					'videoOverrides' => \ImaginaPlayer\Player\Video::override_map(),
+					// Who may play a player: the rules, and which of the
+					// plugins they need are active here.
+					'access'         => \ImaginaPlayer\Player\Access::rules(),
 					'settingsUrl' => esc_url_raw( admin_url( 'admin.php?page=imagina-player' ) ),
 				) + Assets::preview_assets()
 			) . ';',

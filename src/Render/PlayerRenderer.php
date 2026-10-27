@@ -21,6 +21,7 @@ use ImaginaPlayer\Media\Track;
 use ImaginaPlayer\Rest\CaptionController;
 use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Peaks\PeaksToken;
+use ImaginaPlayer\Player\Access;
 use ImaginaPlayer\Player\Attributes;
 use ImaginaPlayer\Player\Layers;
 use ImaginaPlayer\Protection\Vault;
@@ -62,6 +63,21 @@ final class PlayerRenderer {
 
 		Assets::enqueue_frontend();
 
+		/*
+		 * Who may play it. A player that will not play for this visitor is
+		 * drawn without its file — no address, no subtitles, no download —
+		 * and with the offer where the picture would be.
+		 */
+		if ( ! Access::allows( $atts, $post_id ) ) {
+			return $this->render_locked( $track, $atts, $config );
+		}
+
+		// Opened for this visitor in particular: not a page to hand to the
+		// next one from a cache.
+		if ( Access::ANYONE !== (string) $atts['accessRule'] ) {
+			Access::do_not_cache();
+		}
+
 		++self::$instance_count;
 		$id = 'imgp-' . self::$instance_count . '-' . wp_rand( 1000, 9999 );
 
@@ -90,6 +106,20 @@ final class PlayerRenderer {
 		// answers over them. Every reader below takes it rather than going back
 		// to the options table, or two of them could disagree.
 		$video_config = Video::resolve( $atts );
+
+		/*
+		 * The viewer's own name over the picture, when the site asks for it
+		 * and somebody is signed in. Picture-in-picture goes with it: the
+		 * floating window shows the bare video, which is exactly what the
+		 * mark is there to prevent being recorded.
+		 */
+		$viewer = $track->is_video() ? self::viewer_mark_text( $video_config ) : '';
+
+		if ( '' !== $viewer ) {
+			$video_config['show_pip']         = false;
+			$video_config['viewer_mark_text'] = $viewer;
+			Access::do_not_cache();
+		}
 
 		/*
 		 * For a video, the video settings are the authority on which controls
@@ -388,7 +418,7 @@ final class PlayerRenderer {
 			$parts['poster']  = $this->part_poster( $track, $video_settings );
 			$parts['bigplay'] = empty( $video_settings['big_play'] ) ? '' : $this->part_big_play();
 			$parts['video']   = $this->part_video_controls( $config, $atts, $video_config, $track->is_provider() );
-			$parts['mark']    = $this->part_watermark( $atts );
+			$parts['mark']    = $this->part_watermark( $atts ) . $this->part_viewer_mark( $video_config );
 		}
 
 		ob_start();
@@ -547,6 +577,7 @@ final class PlayerRenderer {
 				playsinline
 				<?php echo '' !== $track->poster ? 'poster="' . esc_url( $track->poster ) . '"' : ''; ?>
 				<?php echo $this->download_guards( $track, $config, $video_config ); // phpcs:ignore WordPress.Security.EscapeOutput -- fixed attribute names. ?>
+				<?php echo empty( $video_config['viewer_mark_text'] ) ? '' : 'disablepictureinpicture'; ?>
 			<?php endif; ?>
 		><?php echo $this->text_tracks( $track, $atts ); // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts. ?></<?php echo esc_attr( $tag ); ?>>
 		<?php
@@ -1298,6 +1329,149 @@ final class PlayerRenderer {
 			esc_url( $src ),
 			esc_attr( (string) round( $opacity / 100, 2 ) )
 		);
+	}
+
+	/**
+	 * What the viewer mark says for the person signed in, or nothing.
+	 *
+	 * @param array<string, mixed> $video Effective video settings.
+	 */
+	private static function viewer_mark_text( array $video ): string {
+		$mode = (string) ( $video['viewer_mark'] ?? 'off' );
+
+		if ( 'off' === $mode || ! is_user_logged_in() ) {
+			return '';
+		}
+
+		$user = wp_get_current_user();
+
+		if ( ! $user instanceof \WP_User || ! $user->exists() ) {
+			return '';
+		}
+
+		$name  = trim( (string) $user->display_name );
+		$email = trim( (string) $user->user_email );
+
+		$text = match ( $mode ) {
+			'email' => $email,
+			'both'  => trim( $name . ' · ' . $email, ' ·' ),
+			default => '' !== $name ? $name : $email,
+		};
+
+		/**
+		 * Filter what the viewer mark says.
+		 *
+		 * @param string   $text  The text drawn over the picture.
+		 * @param \WP_User $user  The person signed in.
+		 * @param string   $mode  name, email or both.
+		 */
+		return trim( (string) apply_filters( 'imagina_player_viewer_mark', $text, $user, $mode ) );
+	}
+
+	/**
+	 * The viewer's own name, drifting over the picture.
+	 *
+	 * A deterrent, not a lock: a screen recording keeps it, which is the
+	 * point — a lesson passed around carries the name of whoever recorded it.
+	 * The script moves it every few seconds, so it cannot be cropped out of
+	 * one corner.
+	 *
+	 * @param array<string, mixed> $video Effective video settings.
+	 */
+	private function part_viewer_mark( array $video ): string {
+		$text = (string) ( $video['viewer_mark_text'] ?? '' );
+
+		if ( '' === $text ) {
+			return '';
+		}
+
+		$opacity = max( 10, min( 80, (int) ( $video['viewer_mark_opacity'] ?? 30 ) ) );
+
+		return sprintf(
+			'<div class="imgp__viewer-mark" aria-hidden="true" style="--imgp-vm-opacity:%s">%s</div>',
+			esc_attr( (string) round( $opacity / 100, 2 ) ),
+			esc_html( $text )
+		);
+	}
+
+	/**
+	 * A player this visitor may not play: what it is, and how to get in.
+	 *
+	 * Nothing of the file is printed — no address, no subtitles, no download
+	 * link, no configuration for the script — so there is nothing in the page
+	 * to lift. The poster and the title are: they are what the offer is for.
+	 *
+	 * @param array<string, mixed> $atts   Sanitised attributes.
+	 * @param array<string, mixed> $config Effective settings.
+	 */
+	private function render_locked( Track $track, array $atts, array $config ): string {
+		$is_video = $track->is_video();
+		$url      = Access::offer_url( $atts );
+		$actions  = '';
+
+		if ( '' !== $url ) {
+			$actions .= sprintf(
+				'<a class="imgp__locked-button" href="%s">%s</a>',
+				esc_url( $url ),
+				esc_html( Access::button( $atts ) )
+			);
+		}
+
+		if ( ! is_user_logged_in() ) {
+			$actions .= sprintf(
+				'<a class="imgp__locked-login" href="%s">%s</a>',
+				esc_url( wp_login_url( self::here() ) ),
+				esc_html__( 'Sign in', 'imagina-player' )
+			);
+		}
+
+		$panel = sprintf(
+			'<div class="imgp__locked" role="group" aria-label="%s"><span class="imgp__locked-icon" aria-hidden="true">%s</span><p class="imgp__locked-text">%s</p>%s</div>',
+			esc_attr__( 'Locked', 'imagina-player' ),
+			Icons::get( 'lock' ),
+			esc_html( Access::message( $atts, $is_video ) ),
+			'' === $actions ? '' : '<div class="imgp__locked-actions">' . $actions . '</div>'
+		);
+
+		$style = Config::style_attribute( Config::css_variables( $config ) );
+		$meta  = $this->part_meta( $track, $config );
+
+		if ( $is_video ) {
+			$poster = '' === $track->poster
+				? ''
+				: sprintf(
+					'<div class="imgp__poster" aria-hidden="true"><img src="%s" alt="" decoding="async" /></div>',
+					esc_url( $track->poster )
+				);
+
+			return sprintf(
+				'<div class="imgp imgp--video imgp--locked" style="%s"><div class="imgp__stage" style="--imgp-ratio:%s">%s%s%s</div></div>',
+				esc_attr( $style ),
+				esc_attr( str_replace( ':', ' / ', $track->aspect_ratio ) ),
+				$poster, // phpcs:ignore WordPress.Security.EscapeOutput -- built above from escaped parts.
+				'' === $meta ? '' : '<div class="imgp__top">' . $meta . '</div>', // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in part_meta().
+				$panel // phpcs:ignore WordPress.Security.EscapeOutput -- built above from escaped parts.
+			);
+		}
+
+		$thumb = $config['show_thumbnail'] && '' !== $track->thumbnail ? $this->part_thumb( $track ) : '';
+
+		return sprintf(
+			'<div class="imgp imgp--audio imgp--locked" style="%s"><div class="imgp__bar">%s%s</div>%s</div>',
+			esc_attr( $style ),
+			$thumb, // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in part_thumb().
+			$meta, // phpcs:ignore WordPress.Security.EscapeOutput -- escaped in part_meta().
+			$panel // phpcs:ignore WordPress.Security.EscapeOutput -- built above from escaped parts.
+		);
+	}
+
+	/**
+	 * The address of the page being drawn, to come back to after signing in.
+	 */
+	private static function here(): string {
+		$link = get_permalink();
+
+		return is_string( $link ) && '' !== $link ? $link : home_url( '/' );
 	}
 
 	/**

@@ -146,8 +146,10 @@ if ( ! is_readable( $bundle ) ) {
 	$site_only = array();
 
 	foreach ( array_keys( Settings::video() ) as $setting ) {
-		if ( in_array( $setting, array( 'ratio', 'provider_privacy' ), true ) ) {
-			// The shape is its own field; the privacy domain is a site policy.
+		if ( in_array( $setting, array( 'ratio', 'provider_privacy', 'viewer_mark_opacity' ), true ) ) {
+			// The shape is its own field; the privacy domain is a site policy;
+			// how faint the viewer's name is drawn is the site's house style,
+			// while whether it is drawn at all is the block's to say.
 			continue;
 		}
 

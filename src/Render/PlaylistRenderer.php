@@ -21,6 +21,7 @@ namespace ImaginaPlayer\Render;
 
 use ImaginaPlayer\Media\Track;
 use ImaginaPlayer\Peaks\PeaksRepository;
+use ImaginaPlayer\Player\Access;
 use ImaginaPlayer\Player\Attributes;
 use ImaginaPlayer\Player\Config;
 use ImaginaPlayer\Protection\Vault;
@@ -78,6 +79,17 @@ final class PlaylistRenderer {
 		// runtime swaps in — but they are also links, so they work without it.
 		$first = $items[0];
 
+		/*
+		 * The same rule as a single player, for the whole list. Locked, the
+		 * player draws its offer and the list keeps its titles but not one
+		 * address: every item was a link to its file.
+		 */
+		$access = array_intersect_key(
+			Attributes::sanitize( $atts ),
+			array_flip( array( 'accessRule', 'accessIds', 'accessMessage', 'accessButton', 'accessUrl' ) )
+		);
+		$locked = ! Access::allows( $access );
+
 		$player = $this->player->render(
 			array(
 				'src'          => $first['src'],
@@ -87,7 +99,7 @@ final class PlaylistRenderer {
 				'thumbnail'    => $first['thumbnail'],
 				'poster'       => $first['poster'],
 				'preset'       => (string) ( $atts['preset'] ?? Settings::DEFAULT_PRESET ),
-			)
+			) + $access
 		);
 
 		$tracks     = array_map( array( $this, 'client_track' ), $items );
@@ -107,10 +119,12 @@ final class PlaylistRenderer {
 		ob_start();
 		?>
 		<div
-			class="imgp-playlist imgp-playlist--<?php echo esc_attr( $layout ); ?>"
+			class="imgp-playlist imgp-playlist--<?php echo esc_attr( $layout ); ?><?php echo $locked ? ' imgp-playlist--locked' : ''; ?>"
 			id="<?php echo esc_attr( $id ); ?>"
-			data-imagina-playlist="<?php echo esc_attr( (string) wp_json_encode( $tracks ) ); ?>"
-			data-imagina-playlist-key="<?php echo esc_attr( self::stable_key( $items ) ); ?>"
+			<?php if ( ! $locked ) : ?>
+				data-imagina-playlist="<?php echo esc_attr( (string) wp_json_encode( $tracks ) ); ?>"
+				data-imagina-playlist-key="<?php echo esc_attr( self::stable_key( $items ) ); ?>"
+			<?php endif; ?>
 			<?php if ( '' !== $style ) : ?>
 				style="<?php echo esc_attr( $style ); ?>"
 			<?php endif; ?>
@@ -151,7 +165,11 @@ final class PlaylistRenderer {
 							? '<span class="imgp-playlist__time">' . esc_html( self::clock( $item['duration'] ) ) . '</span>'
 							: '';
 						?>
-						<a class="imgp-playlist__link" href="<?php echo esc_url( $item['src'] ); ?>" data-index="<?php echo esc_attr( (string) $index ); ?>">
+						<?php if ( $locked ) : ?>
+							<span class="imgp-playlist__link is-locked">
+						<?php else : ?>
+							<a class="imgp-playlist__link" href="<?php echo esc_url( $item['src'] ); ?>" data-index="<?php echo esc_attr( (string) $index ); ?>">
+						<?php endif; ?>
 							<?php
 							/*
 							 * Always a cover, a blank one when the item has no
@@ -179,7 +197,7 @@ final class PlaylistRenderer {
 							<?php if ( ! $horizontal ) : ?>
 								<?php echo $time; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped above. ?>
 							<?php endif; ?>
-						</a>
+						<?php echo $locked ? '</span>' : '</a>'; ?>
 					</li>
 				<?php endforeach; ?>
 			</ol>

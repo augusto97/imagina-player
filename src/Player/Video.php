@@ -68,6 +68,7 @@ final class Video {
 		'caption_color'   => 'videoCaptionColor',
 		'control_color'   => 'videoControlColor',
 		'progress_color'  => 'videoProgressColor',
+		'viewer_mark'     => 'videoViewerMark',
 	);
 
 	/**
@@ -110,6 +111,7 @@ final class Video {
 				'caption_size'  => in_array( $settings[ $key ], array( 'small', 'medium', 'large', 'xlarge' ), true ) ? $settings[ $key ] : 'medium',
 				'caption_bg'    => in_array( $settings[ $key ], array( 'solid', 'shadow', 'none' ), true ) ? $settings[ $key ] : 'solid',
 				'poster_fit'    => 'contain' === $settings[ $key ] ? 'contain' : 'cover',
+				'viewer_mark'   => in_array( $settings[ $key ], array( 'off', 'name', 'email', 'both' ), true ) ? $settings[ $key ] : 'off',
 				'chrome_color'  => Settings::sanitize_color( (string) $settings[ $key ], '#000000' ),
 				'caption_color' => Settings::sanitize_color( (string) $settings[ $key ], '#ffffff' ),
 				// `auto` is a real answer here, not an empty one: it means the

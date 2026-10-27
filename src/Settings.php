@@ -228,6 +228,15 @@ final class Settings {
 				 * is why the settings screen says so beside the switch.
 				 */
 				'provider_bare'   => true,
+				/*
+				 * The viewer's own name or email, drifting over the picture.
+				 * Off by default: it is for paid courses, where a screen
+				 * recording passed around carries the name of whoever made
+				 * it. Only ever shown to somebody signed in, and only their
+				 * own.
+				 */
+				'viewer_mark'         => 'off',
+				'viewer_mark_opacity' => 30,
 			),
 			/*
 			 * Where a track's name comes from when the block does not say.

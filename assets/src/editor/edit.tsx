@@ -23,6 +23,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { useSelect } from '@wordpress/data';
 
+import { AccessPanel } from './access-panel';
 import { Swatches, Tristate, TristateList } from './controls';
 import { DynamicSourcePanel } from './dynamic-source';
 import { Preview } from './preview';
@@ -1228,6 +1229,90 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 									) }
 								</div>
 							</BaseControl>
+
+							{ /* The person watching, by name, drifting over the
+							     picture: for lessons that are paid for. */ }
+							<SelectControl
+								__nextHasNoMarginBottom
+								label={ __(
+									'Viewer’s name over the picture',
+									'imagina-player'
+								) }
+								help={ __(
+									'Shown only to somebody signed in, and only their own. It moves every few seconds, so a screen recording carries the name of whoever made it. Picture-in-picture is turned off with it.',
+									'imagina-player'
+								) }
+								value={
+									String(
+										attributes.videoViewerMark ?? ''
+									) as ''
+								}
+								options={ [
+									{
+										value: '',
+										label: sprintf(
+											/* translators: %s: what the site does now. */
+											__(
+												'Use site setting (%s)',
+												'imagina-player'
+											),
+											(
+												{
+													off: __(
+														'off',
+														'imagina-player'
+													),
+													name: __(
+														'name',
+														'imagina-player'
+													),
+													email: __(
+														'email',
+														'imagina-player'
+													),
+													both: __(
+														'name and email',
+														'imagina-player'
+													),
+												} as Record< string, string >
+											 )[
+												String(
+													data.video?.viewer_mark ??
+														'off'
+												)
+											] ?? __( 'off', 'imagina-player' )
+										),
+									},
+									{
+										value: 'off',
+										label: __( 'Off', 'imagina-player' ),
+									},
+									{
+										value: 'name',
+										label: __(
+											'Their name',
+											'imagina-player'
+										),
+									},
+									{
+										value: 'email',
+										label: __(
+											'Their email',
+											'imagina-player'
+										),
+									},
+									{
+										value: 'both',
+										label: __(
+											'Their name and email',
+											'imagina-player'
+										),
+									},
+								] }
+								onChange={ ( value: string ) =>
+									setAttributes( { videoViewerMark: value } )
+								}
+							/>
 
 							{ Boolean( attributes.watermark ) && (
 								<>
@@ -2556,6 +2641,11 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 						{ __( 'Add an overlay', 'imagina-player' ) }
 					</Button>
 				</PanelBody>
+
+				<AccessPanel
+					attributes={ attributes }
+					setAttributes={ setAttributes }
+				/>
 
 				{ isVideo && ! isProvider && (
 					<PanelBody

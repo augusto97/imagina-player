@@ -218,10 +218,20 @@ foreach ( $lines as $line ) {
 	$out[] = $line;
 }
 
-$obsolete = array_diff( array_keys( $known ), array_map(
-	static fn( $l ) => preg_match( '/^msgid "(.*)"$/', $l, $m ) ? $m[1] : "\0",
-	$lines
-) );
+// What the template asks for, keyed the same way as what the file had.
+$wanted  = array();
+$pending = '';
+
+foreach ( $lines as $line ) {
+	if ( preg_match( '/^msgctxt "(.*)"$/', $line, $m ) ) {
+		$pending = $m[1];
+	} elseif ( preg_match( '/^msgid "(.*)"$/', $line, $m ) ) {
+		$wanted[] = ( '' === $pending ? '' : $pending . "\x04" ) . $m[1];
+		$pending  = '';
+	}
+}
+
+$obsolete = array_diff( array_keys( $known ), $wanted );
 
 file_put_contents( $target, implode( "\n", $out ) );
 

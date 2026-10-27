@@ -27,6 +27,7 @@ import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { WaveformNotice } from './waveform-notice';
+import { AccessPanel } from './access-panel';
 import { clock, merge, seconds, toItem } from './playlist-items';
 import type { Item, Selected } from './playlist-items';
 
@@ -257,6 +258,11 @@ export function PlaylistEdit( { attributes, setAttributes }: EditProps ) {
 						{ __( 'Add to the list', 'imagina-player' ) }
 					</Button>
 				</PanelBody>
+
+				<AccessPanel
+					attributes={ attributes }
+					setAttributes={ setAttributes }
+				/>
 
 				<PanelBody title={ __( 'Waveforms', 'imagina-player' ) }>
 					{ /*

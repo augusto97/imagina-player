@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.49.0
+Stable tag: 1.50.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,7 +159,26 @@ downloaded by its address — links expire within minutes and cannot be passed
 around — but it does not decide who may watch. For members only, turn on
 **Require a logged-in user** in Settings → Protection, or decide per visitor with
 the `imagina_player_can_stream` filter. The self-check in the same screen says
-which of these is in force.
+which of these is in force. To decide per player, see the next question.
+
+= Can a player play only for customers or members? =
+
+Yes. Every block and widget has **Who can play it**: anyone signed in, certain
+roles, people who bought a WooCommerce product, members of a WooCommerce
+Memberships plan or a MemberPress membership, or students of a LearnDash course.
+Everybody else sees the poster and the title with your message and a button —
+to the product or the course by default — and nothing of the file: no address,
+no subtitles, no download. Whoever can edit the post always sees the player.
+Anything else can decide through the `imagina_player_can_view` filter.
+
+= Can the video show who is watching it? =
+
+Yes, for paid lessons: **Viewer's name over the picture** in Settings → Video,
+or per block, draws the name or the email of the person signed in, faintly, and
+moves it every few seconds. A screen recording passed around then carries the
+name of whoever made it. Only that person's own name is shown, only when they
+are signed in; picture-in-picture is turned off with it. It deters; it does not
+lock anything.
 
 = Can I stop people downloading my audio? =
 
@@ -176,6 +195,32 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.50.0 =
+Two new features: who can play a player, and the viewer's own name over the
+picture.
+
+* New: **Who can play it**, on every block and Elementor widget and as
+  shortcode attributes (`access_rule`, `access_ids`, `access_message`,
+  `access_button`, `access_url`). A player can play for everyone, anyone signed
+  in, certain roles, people who bought a WooCommerce product, members of a
+  WooCommerce Memberships plan or a MemberPress membership, or students of a
+  LearnDash course. Everybody else sees the poster and the title, a message
+  that suits the rule, a button — to the product or the course by default — and
+  a sign-in link when they are not signed in. Nothing of the file reaches the
+  page: no address, no subtitles, no download, no configuration for the
+  script. A playlist under a rule keeps its titles and loses its links.
+  Whoever can edit the post always sees the player; anything else can decide
+  through the `imagina_player_can_view` filter. A page where a player opened
+  for somebody in particular is kept out of page caches.
+* New: **Viewer's name over the picture**, in Settings → Video and per block
+  or widget: the name, the email or both of the person signed in, drawn
+  faintly over a video and moved every few seconds, so a screen recording of
+  a paid lesson carries the name of whoever made it. Only their own name, only
+  when signed in; picture-in-picture is turned off with it, and the mark is
+  put back if something removes it from the page. The text can be changed
+  through the `imagina_player_viewer_mark` filter.
+* Changed: block and widget settings for the two, translated into Spanish.
 
 = 1.49.0 =
 The block editor and the settings screen, from the editor audit.

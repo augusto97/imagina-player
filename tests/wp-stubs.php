@@ -337,6 +337,43 @@ function remove_query_arg( $keys, $url = '' ) {
 }
 function is_user_logged_in() { return ! empty( $GLOBALS['stub_current_user'] ); }
 function get_current_user_id() { return (int) ( $GLOBALS['stub_current_user'] ?? 0 ); }
+
+if ( ! class_exists( 'WP_User' ) ) {
+	class WP_User {
+		public int $ID = 0;
+		public string $display_name = '';
+		public string $user_email = '';
+		/** @var array<int, string> */
+		public array $roles = array();
+
+		public function __construct( array $data = array() ) {
+			foreach ( $data as $key => $value ) {
+				$this->$key = $value;
+			}
+		}
+
+		public function exists(): bool { return $this->ID > 0; }
+	}
+}
+
+/** Users the tests set up: `$GLOBALS['stub_users'][ id ] = [ display_name, user_email, roles ]`. */
+function get_userdata( $id ) {
+	$data = $GLOBALS['stub_users'][ (int) $id ] ?? null;
+
+	return null === $data ? false : new WP_User( array( 'ID' => (int) $id ) + $data );
+}
+function wp_get_current_user() {
+	$user = get_userdata( get_current_user_id() );
+
+	return $user ?: new WP_User();
+}
+function user_can( $user, $cap, ...$args ) {
+	$id = $user instanceof WP_User ? $user->ID : (int) $user;
+
+	return in_array( $cap . ( isset( $args[0] ) ? ':' . $args[0] : '' ), (array) ( $GLOBALS['stub_user_caps'][ $id ] ?? array() ), true );
+}
+function get_permalink( $post = 0 ) { return 'https://example.test/?p=' . (int) ( $post ?: ( $GLOBALS['stub_current_post'] ?? 0 ) ); }
+function wp_login_url( $redirect = '' ) { return 'https://example.test/wp-login.php' . ( '' === $redirect ? '' : '?redirect_to=' . rawurlencode( $redirect ) ); }
 function wp_update_attachment_metadata( $id, $meta ) { return true; }
 function status_header( $code ) { $GLOBALS['stub_status'] = $code; if ( ! headers_sent() ) { http_response_code( $code ); } }
 function nocache_headers() {}

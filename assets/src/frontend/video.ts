@@ -177,6 +177,7 @@ export class VideoChrome {
 		this.bindSearch();
 		this.bindTranscript();
 		this.bindFocusMode();
+		this.bindViewerMark();
 		this.hardenContextMenu();
 
 		if ( config.hls ) {
@@ -1356,6 +1357,53 @@ export class VideoChrome {
 	 * Deliberately does not resume. Starting a video under somebody because
 	 * they scrolled back is the behaviour everyone complains about.
 	 */
+	/**
+	 * The viewer's name, moved to a new place on the picture every few
+	 * seconds and put back if something takes it away.
+	 *
+	 * Still in one corner it is cropped out of a recording in one step;
+	 * moving, it is in every frame somewhere. Taking it out of the page from
+	 * the browser's tools is possible, and is answered by putting it back —
+	 * which is a deterrent, as the whole feature is, not a lock.
+	 */
+	private bindViewerMark(): void {
+		const mark =
+			this.root.querySelector< HTMLElement >( '.imgp__viewer-mark' );
+		const stage = this.stage;
+
+		if ( ! mark || ! stage ) {
+			return;
+		}
+
+		const place = (): void => {
+			mark.style.setProperty(
+				'--imgp-vm-x',
+				`${ 4 + Math.round( Math.random() * 56 ) }%`
+			);
+			mark.style.setProperty(
+				'--imgp-vm-y',
+				`${ 6 + Math.round( Math.random() * 70 ) }%`
+			);
+		};
+
+		place();
+
+		const timer = window.setInterval( () => {
+			if ( ! mark.isConnected || ! stage.contains( mark ) ) {
+				stage.appendChild( mark );
+			}
+
+			mark.hidden = false;
+			mark.classList.add( 'is-moving' );
+			window.setTimeout( () => {
+				place();
+				mark.classList.remove( 'is-moving' );
+			}, 650 );
+		}, 9000 );
+
+		this.cleanup.push( () => window.clearInterval( timer ) );
+	}
+
 	private bindFocusMode(): void {
 		if ( ! this.config.focus ) {
 			return;

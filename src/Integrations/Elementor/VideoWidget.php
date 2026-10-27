@@ -185,6 +185,22 @@ final class VideoWidget extends PlayerWidget {
 			)
 		);
 		$this->add_control( 'watermark_opacity', array( 'label' => __( 'Opacity (%)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 5, 'max' => 100, 'step' => 5, 'default' => 55 ) );
+		$this->add_control(
+			'viewer_mark',
+			array(
+				'label'       => __( 'Viewer’s name over the picture', 'imagina-player' ),
+				'type'        => Controls_Manager::SELECT,
+				'default'     => '',
+				'options'     => array(
+					''      => __( 'Use site setting', 'imagina-player' ),
+					'off'   => __( 'Off', 'imagina-player' ),
+					'name'  => __( 'Their name', 'imagina-player' ),
+					'email' => __( 'Their email', 'imagina-player' ),
+					'both'  => __( 'Their name and email', 'imagina-player' ),
+				),
+				'description' => __( 'Shown only to somebody signed in, and only their own, moving over the picture so a screen recording carries their name.', 'imagina-player' ),
+			)
+		);
 		$this->end_controls_section();
 
 		$this->start_controls_section(
@@ -234,6 +250,7 @@ final class VideoWidget extends PlayerWidget {
 		$this->end_controls_section();
 
 		$this->layer_controls();
+		$this->access_controls();
 	}
 
 	private static function label( string $attribute, string $fallback ): string {
@@ -313,7 +330,8 @@ final class VideoWidget extends PlayerWidget {
 			'watermarkId'       => $watermark['id'],
 			'watermarkPosition' => (string) ( $settings['watermark_position'] ?? 'top-right' ),
 			'watermarkOpacity'  => max( 5, min( 100, (int) ( $settings['watermark_opacity'] ?? 55 ) ) ),
-		);
+			'videoViewerMark'   => (string) ( $settings['viewer_mark'] ?? '' ),
+		) + self::access_from( $settings );
 	}
 
 	/**

@@ -94,6 +94,8 @@ final class PlaylistWidget extends PlayerWidget {
 		);
 
 		$this->end_controls_section();
+
+		$this->access_controls();
 	}
 
 	public function attributes_from( array $settings ): array {
@@ -129,7 +131,7 @@ final class PlaylistWidget extends PlayerWidget {
 			'heading' => (string) ( $settings['heading'] ?? '' ),
 			'layout'  => PlaylistRenderer::layout( (string) ( $settings['layout'] ?? 'list' ) ),
 			'preset'  => (string) ( $settings['preset'] ?? 'default' ),
-		);
+		) + self::access_from( $settings );
 	}
 
 	public function markup( array $settings ): string {

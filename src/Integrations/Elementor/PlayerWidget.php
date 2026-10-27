@@ -341,6 +341,56 @@ abstract class PlayerWidget extends Widget_Base {
 	 * @param array<string, mixed> $settings
 	 * @return array{src: string, attachmentId: int, sourceField: string}
 	 */
+	/**
+	 * Who may play it: the same rule as the blocks, in a section of its own.
+	 */
+	protected function access_controls(): void {
+		$this->start_controls_section(
+			'access_section',
+			array( 'label' => __( 'Who can play it', 'imagina-player' ) )
+		);
+
+		$rules = array( '' => __( 'Everyone', 'imagina-player' ) );
+
+		foreach ( \ImaginaPlayer\Player\Access::rules() as $key => $rule ) {
+			$rules[ $key ] = $rule['available']
+				? $rule['label']
+				/* translators: %s: the rule's name. */
+				: sprintf( __( '%s — not active', 'imagina-player' ), $rule['label'] );
+		}
+
+		$this->add_control(
+			'access_rule',
+			array(
+				'label'       => __( 'Plays for', 'imagina-player' ),
+				'type'        => Controls_Manager::SELECT,
+				'default'     => '',
+				'options'     => $rules,
+				'description' => __( 'Whoever can edit the page always sees the player. Everybody else who may not play it gets no part of the file: no address, no subtitles, no download.', 'imagina-player' ),
+			)
+		);
+		$this->add_control( 'access_ids', array( 'label' => __( 'Roles or IDs', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'description' => __( 'Separated by commas: role names, or product, plan, membership or course IDs.', 'imagina-player' ), 'condition' => array( 'access_rule!' => array( '', 'logged_in' ) ) ) );
+		$this->add_control( 'access_message', array( 'label' => __( 'Message', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'condition' => array( 'access_rule!' => '' ) ) );
+		$this->add_control( 'access_button', array( 'label' => __( 'Button label', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'condition' => array( 'access_rule!' => '' ) ) );
+		$this->add_control( 'access_url', array( 'label' => __( 'Button links to', 'imagina-player' ), 'type' => Controls_Manager::URL, 'options' => false, 'condition' => array( 'access_rule!' => '' ) ) );
+
+		$this->end_controls_section();
+	}
+
+	/**
+	 * @param array<string, mixed> $settings Widget settings.
+	 * @return array<string, string>
+	 */
+	protected static function access_from( array $settings ): array {
+		return array(
+			'accessRule'    => (string) ( $settings['access_rule'] ?? '' ),
+			'accessIds'     => (string) ( $settings['access_ids'] ?? '' ),
+			'accessMessage' => (string) ( $settings['access_message'] ?? '' ),
+			'accessButton'  => (string) ( $settings['access_button'] ?? '' ),
+			'accessUrl'     => self::url_from( $settings['access_url'] ?? '' ),
+		);
+	}
+
 	protected static function source_from( array $settings ): array {
 		$source = (string) ( $settings['source'] ?? self::SOURCE_LIBRARY );
 		$out    = array(

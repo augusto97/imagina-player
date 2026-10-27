@@ -108,6 +108,7 @@ final class AudioWidget extends PlayerWidget {
 		$this->end_controls_section();
 
 		$this->layer_controls();
+		$this->access_controls();
 	}
 
 	/**
@@ -161,7 +162,7 @@ final class AudioWidget extends PlayerWidget {
 			'borderRadius' => self::number_from( $settings['border_radius'] ?? '', 'px' ),
 			'skipSeconds'  => self::number_from( $settings['skip_seconds'] ?? '' ),
 			'layers'       => self::layers_from( $settings['layers'] ?? array() ),
-		);
+		) + self::access_from( $settings );
 	}
 
 	public function markup( array $settings ): string {

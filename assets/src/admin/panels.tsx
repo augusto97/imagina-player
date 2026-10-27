@@ -1374,6 +1374,64 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 					'imagina-player'
 				) }
 			>
+				<Field
+					label={ __(
+						'Viewer’s name over the picture',
+						'imagina-player'
+					) }
+					help={ __(
+						'For paid lessons. Shown only to somebody signed in, and only their own name or email, moving every few seconds, so a screen recording carries the name of whoever made it. Picture-in-picture is turned off with it. Each block can say otherwise.',
+						'imagina-player'
+					) }
+				>
+					<Select
+						value={ video.viewer_mark ?? 'off' }
+						onChange={ ( value ) => set( { viewer_mark: value } ) }
+						options={ [
+							{
+								value: 'off',
+								label: __( 'Off', 'imagina-player' ),
+							},
+							{
+								value: 'name',
+								label: __( 'Their name', 'imagina-player' ),
+							},
+							{
+								value: 'email',
+								label: __( 'Their email', 'imagina-player' ),
+							},
+							{
+								value: 'both',
+								label: __(
+									'Their name and email',
+									'imagina-player'
+								),
+							},
+						] }
+					/>
+				</Field>
+
+				{ 'off' !== ( video.viewer_mark ?? 'off' ) && (
+					<Field
+						label={ __( 'How faint', 'imagina-player' ) }
+						help={ __(
+							'Opacity of the name. Faint enough not to spoil the picture, strong enough to survive a recording.',
+							'imagina-player'
+						) }
+					>
+						<NumberInput
+							value={ video.viewer_mark_opacity ?? 30 }
+							min={ 10 }
+							max={ 80 }
+							step={ 5 }
+							suffix="%"
+							onChange={ ( value ) =>
+								set( { viewer_mark_opacity: value } )
+							}
+						/>
+					</Field>
+				) }
+
 				<div className="imgpa-toggles">
 					<Toggle
 						label={ __(

@@ -319,6 +319,38 @@ final class Attributes {
 				'type'    => 'array',
 				'default' => array(),
 			),
+
+			/*
+			 * Who may play it, and what the rest are offered instead. Empty is
+			 * everyone. See `Access`.
+			 */
+			'accessRule'    => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'accessIds'     => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'accessMessage' => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'accessButton'  => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'accessUrl'     => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+
+			// The viewer's own name or email over the picture. Empty follows
+			// the site's video settings.
+			'videoViewerMark' => array(
+				'type'    => 'string',
+				'default' => self::INHERIT,
+			),
 		);
 
 		$preset_defaults = Settings::preset_defaults();
@@ -396,6 +428,12 @@ final class Attributes {
 		$out['tracks']      = self::sanitize_tracks( (array) $out['tracks'] );
 		$out['chapters']    = self::sanitize_chapters( (array) $out['chapters'] );
 		$out['layers']      = Layers::sanitize( (array) $out['layers'] );
+
+		$out['accessRule']    = Access::rule( (string) $out['accessRule'] );
+		$out['accessIds']     = implode( ',', Access::ids( (string) $out['accessIds'] ) );
+		$out['accessMessage'] = sanitize_text_field( (string) $out['accessMessage'] );
+		$out['accessButton']  = sanitize_text_field( (string) $out['accessButton'] );
+		$out['accessUrl']     = esc_url_raw( (string) $out['accessUrl'], array( 'http', 'https' ) );
 
 		return $out;
 	}

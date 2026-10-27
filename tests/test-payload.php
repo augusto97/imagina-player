@@ -110,7 +110,11 @@ $budgets = array(
 	 * numbered tracks, and print styles. About one and a half kilobytes on
 	 * the wire.
 	 */
-	'the stylesheet'  => array( $css, 54.0 ),
+	/*
+	 * And to 56.0 in 1.50.0 for two features: the locked player's offer and
+	 * the viewer's name over the picture. Under half a kilobyte on the wire.
+	 */
+	'the stylesheet'  => array( $css, 56.0 ),
 );
 
 foreach ( $budgets as $label => $budget ) {
