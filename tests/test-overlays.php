@@ -189,7 +189,11 @@ setTimeout(function () {
 	// Where the text sits.
 	var box = document.querySelector('[data-layer-index="0"]').getBoundingClientRect();
 	var stage = document.querySelector('.imgp__stage').getBoundingClientRect();
-	out.textTopLeft = box.left - stage.left < 30 && box.top - stage.top < 30;
+	// Below the title over the picture while that is up, rather than on it.
+	var band = document.querySelector('.imgp__top');
+	var edge = band ? band.getBoundingClientRect().bottom : stage.top;
+	out.textTopLeft = box.left - stage.left < 30 && box.top - edge < 30 && box.top >= edge - 1;
+	out.hasTitleBand = !!band;
 	var pre = document.createElement('pre');
 	pre.textContent = 'RESULT:' + JSON.stringify(out);
 	document.body.appendChild(pre);
@@ -234,7 +238,7 @@ check( 'at 55% the image has come, and the rest stay', array( true, false, true,
 check( 'playback never stopped', true === ( $r['stillPlaying'] ?? false ) );
 check( 'pressing a hotspot with no link opens its label', true === ( $r['spotOpen'] ?? false ) );
 check( 'and pressing again closes it', true === ( $r['spotClosed'] ?? false ) );
-check( 'the text at the top left is at the top left', true === ( $r['textTopLeft'] ?? false ) );
+check( 'the text at the top left is at the top left, under the title over the picture', true === ( $r['textTopLeft'] ?? false ) );
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
 exit( $failures ? 1 : 0 );

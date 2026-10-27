@@ -66,6 +66,21 @@ function grantExpired( token: string ): boolean {
 /** How long a refreshed link must play before another refresh is allowed. */
 const SOURCE_REFRESH_GRACE = 60000;
 
+/**
+ * Whether a computed colour is a light one, by its relative luminance.
+ * @param color `rgb()`, `rgba()` or `color(srgb …)`, as browsers compute them.
+ */
+function isLight( color: string ): boolean {
+	const scale = color.startsWith( 'color(' ) ? 1 : 255;
+	const [ r, g, b ] = ( color.match( /[\d.]+/g ) ?? [] ).map( ( v ) => {
+		const c = Number( v ) / scale;
+
+		return c <= 0.03928 ? c / 12.92 : ( ( c + 0.055 ) / 1.055 ) ** 2.4;
+	} );
+
+	return undefined !== b && 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.3;
+}
+
 /** How long the browser may spend downloading and decoding a file. */
 const ANALYZE_TIMEOUT = 30000;
 
@@ -208,6 +223,7 @@ export class Player {
 		this.media.removeAttribute( 'controls' );
 		this.root.classList.add( 'is-enhanced' );
 
+		this.matchPage();
 		this.bindMedia();
 		this.bindControls();
 		this.setupWaveform();
@@ -238,6 +254,26 @@ export class Player {
 		}
 
 		instances.add( this );
+	}
+
+	/**
+	 * The factory colours' dark set, on a dark page.
+	 *
+	 * Read from the text colour the player inherits rather than from the
+	 * background, which is so often an image, a gradient or transparent all
+	 * the way up: a theme that puts light text on its page has a dark page.
+	 * Colours the author chose are written on the element and win over the
+	 * class either way.
+	 */
+	private matchPage(): void {
+		const dark = isLight( window.getComputedStyle( this.root ).color );
+
+		for ( const node of [
+			this.root,
+			this.root.closest( '.imgp-playlist' ),
+		] ) {
+			node?.classList.toggle( 'imgp--on-dark', dark );
+		}
 	}
 
 	/**
@@ -843,9 +879,13 @@ export class Player {
 	private paintTime( time: number, ratio: number ): void {
 		if ( this.currentTimeEl ) {
 			this.currentTimeEl.textContent = formatTime( time );
+
 			// The elapsed badge rides the playhead, the way the waveform players
-			// people are used to behave.
-			this.currentTimeEl.style.left = `${ ratio * 100 }%`;
+			// people are used to behave. A video's clock is text on the bar
+			// and stays where it is.
+			if ( ! this.config.video ) {
+				this.currentTimeEl.style.left = `${ ratio * 100 }%`;
+			}
 		}
 
 		if ( this.seek ) {

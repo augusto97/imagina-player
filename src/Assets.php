@@ -285,6 +285,7 @@ final class Assets {
 				'searchNone' => __( 'Nothing found.', 'imagina-player' ),
 				'speed' => __( 'Speed', 'imagina-player' ),
 				'speedNormal' => __( 'Normal', 'imagina-player' ),
+				'back' => __( 'Back', 'imagina-player' ),
 				'copyLink' => __( 'Copy link to this moment', 'imagina-player' ),
 				'linkCopied' => __( 'Link copied', 'imagina-player' ),
 				/* translators: %s: a time such as 12:40 */

@@ -84,7 +84,17 @@ check( 'renders native controls for the no-JS case', str_contains( $html, '<audi
 check( 'renders the waveform canvas', str_contains( $html, 'class="imgp__wave"' ) );
 check( 'renders an accessible seek slider', str_contains( $html, 'role="slider"' ) );
 check( 'escapes the title', str_contains( $html, '&quot;El camino del amor&quot;' ) );
-check( 'carries CSS custom properties', str_contains( $html, '--imgp-accent:#1f2937' ) );
+check( 'carries CSS custom properties', str_contains( $html, '--imgp-wave-height:60px' ) );
+check( 'but not the factory colours, which the stylesheet holds and changes on a dark page', ! str_contains( $html, '--imgp-accent:' ) && ! str_contains( $html, '--imgp-text:' ) && ! str_contains( $html, '--imgp-on-accent:' ) );
+
+$branded = $renderer->render( array(
+	'src'       => 'https://cdn.example.com/track.mp3',
+	'accent'    => '#ffcc00',
+	'textColor' => '#222222',
+) );
+check( 'a colour the author chose is printed', str_contains( $branded, '--imgp-accent:#ffcc00' ) && str_contains( $branded, '--imgp-text:#222222' ) );
+check( 'with a foreground worked out for it', str_contains( $branded, '--imgp-on-accent:#111111' ) );
+check( 'and the progress keeps its own colour when only the accent changed', str_contains( $branded, '--imgp-wave-progress:#1f2937' ) );
 check( 'mints a peaks token when nothing is cached', str_contains( $html, '&quot;peaksToken&quot;' ) && ! str_contains( $html, '"peaksToken":""' ) );
 
 $empty = $renderer->render( array() );

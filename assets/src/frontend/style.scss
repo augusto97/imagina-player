@@ -10,17 +10,23 @@
 
 	/* Factory colours are deliberately neutral: a fresh install should not arrive
 	   wearing another client's brand. A light waveform that darkens as it plays
-	   reads on any background. */
+	   reads on any background.
+
+	   The words take the page's own text colour. They were a fixed near-black,
+	   which on a dark theme was a title, a transcript and a playlist nobody
+	   could read; the renderer leaves these out of the element's style while
+	   they are the factory's, so this is what applies. */
 	--imgp-accent: #1f2937;
+	--imgp-on-accent: #fff;
 	--imgp-wave: #c9ced6;
 	--imgp-wave-progress: var(--imgp-accent);
-	--imgp-text: #111827;
-	--imgp-meta: #6b7280;
+	--imgp-text: currentcolor;
+	--imgp-meta: color-mix(in srgb, currentcolor 64%, transparent);
 	--imgp-wave-height: 60px;
 	--imgp-reflection: 0.25;
 	--imgp-bar-radius: 0;
 	--imgp-gap: 0.75rem;
-	--imgp-control: #374151;
+	--imgp-control: color-mix(in srgb, currentcolor 84%, transparent);
 	--imgp-sheen: color-mix(in srgb, var(--imgp-accent) 18%, transparent);
 
 	/* The surface a call to action sits on beside audio. Near-black with a
@@ -40,6 +46,16 @@
 	*::after {
 		box-sizing: inherit;
 	}
+}
+
+/* The factory colours on a dark page, which the script recognises by the light
+   text the page gives the player. Colours an author chose are on the element
+   itself and win over these. */
+.imgp.imgp--on-dark,
+.imgp-playlist.imgp--on-dark {
+	--imgp-accent: #e5e7eb;
+	--imgp-on-accent: #111827;
+	--imgp-wave: #4b5563;
 }
 
 .imgp__media {
@@ -63,6 +79,11 @@
 	position: relative;
 	height: var(--imgp-wave-height);
 	width: 100%;
+
+	/* Time runs left to right on a page in any script: the pointer maths and
+	   the waveform are drawn that way, and a mirrored bar under them would
+	   seek to the opposite end. */
+	direction: ltr;
 }
 
 .imgp__wave {
@@ -137,7 +158,7 @@
 	transition: opacity 0.15s ease;
 }
 
-.imgp.is-scrubbing .imgp__time--total {
+.imgp.is-scrubbing .imgp__seek .imgp__time--total {
 	opacity: 0;
 }
 
@@ -261,7 +282,7 @@
 	/* The icons stay together and move as one block when the row wraps. */
 	flex-wrap: nowrap;
 	gap: 0.5rem;
-	margin-left: auto;
+	margin-inline-start: auto;
 
 	/* Shrinkable, unlike before: `0 0 auto` is what made a narrow player overflow
 	   instead of reflowing. */
@@ -457,16 +478,26 @@
 		height: 2.25rem;
 	}
 
-	.imgp__time {
+	.imgp__seek .imgp__time {
 		display: none;
 	}
+}
+
+/* A dark page's bar is dark too, or its light words sit on white. */
+.imgp.imgp--on-dark.is-stuck {
+	background: var(--imgp-bg, #16181d);
 }
 
 /* --- Responsive -------------------------------------------------------- */
 
 @container (max-width: 30rem) {
 
-	.imgp {
+	/* On the rows rather than on the player: a container query styles what
+	   is inside the container, never the container itself, so this sat on
+	   `.imgp` for years and changed nothing. */
+	.imgp__bar,
+	.imgp__row,
+	.imgp__body {
 		--imgp-gap: 0.5rem;
 	}
 
@@ -499,11 +530,13 @@
 	}
 
 	/* With four controls there is no width left for a title worth reading, so
-	   they take a line of their own and the title gets the rest. */
-	.imgp__controls {
+	   they take a line of their own and the title gets the rest. Only with
+	   four: a mute button by itself on a line of its own was an empty band
+	   with an icon at the end of it. */
+	.imgp__bar > .imgp__controls:has(.imgp__skip, .imgp__speed, .imgp__download) {
 		flex-basis: 100%;
 		justify-content: flex-end;
-		margin-left: 0;
+		margin-inline-start: 0;
 	}
 }
 
@@ -537,11 +570,21 @@
 /* Cover art leading, everything else stacked beside it. */
 .imgp--skin-card {
 	display: flex;
+	flex-wrap: wrap;
 	gap: var(--imgp-gap);
 	align-items: center;
 	padding: var(--imgp-gap);
 	border-radius: 0.6rem;
 	background: var(--imgp-bg, color-mix(in srgb, var(--imgp-text) 4%, transparent));
+
+	/* What comes after the cover and the controls — a call to action, the
+	   transcript, the line about resuming — goes underneath, full width. As
+	   flex items beside the cover they squeezed the controls into a column
+	   two hundred pixels wide and the title down to "Tod…". */
+	> :is(.imgp__layers, .imgp__transcript, .imgp__resume) {
+		flex: 1 0 100%;
+		min-width: 0;
+	}
 
 	> .imgp__thumb {
 		flex: 0 0 auto;
@@ -553,8 +596,10 @@
 		}
 	}
 
+	/* From nothing, so a long title shrinks beside the cover rather than
+	   wrapping the whole body under it now that the row may wrap. */
 	.imgp__body {
-		flex: 1 1 auto;
+		flex: 1 1 0;
 		min-width: 0;
 	}
 
@@ -563,27 +608,50 @@
 	}
 }
 
-/* One row: play, cover, title, scrubber, controls. */
+/* One row: play, cover, title, scrubber, controls — genuinely one. The
+   scrubber's `width: 100%` made it a line of its own in a wrapping row, so
+   "compact, one line" was three lines at every width. */
 .imgp__row {
 	display: flex;
 	align-items: center;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 	gap: var(--imgp-gap);
 	row-gap: 0.5rem;
 	min-width: 0;
 
 	.imgp__meta {
-		flex: 1 1 0;
+		flex: 0 1 auto;
+		max-width: 40%;
 		min-width: 0;
 	}
 
 	.imgp__scrubber {
-		flex: 1 1 auto;
+		flex: 1 1 8rem;
+		width: auto;
 		min-width: 4rem;
 	}
 
 	.imgp__controls {
-		margin-left: 0;
+		flex: 0 0 auto;
+		margin-inline-start: 0;
+	}
+}
+
+/* On a phone the bar goes under the rest, at full width. */
+@container (max-width: 30rem) {
+
+	.imgp__row {
+		flex-wrap: wrap;
+	}
+
+	.imgp__row .imgp__meta {
+		flex: 1 1 0;
+		max-width: none;
+	}
+
+	.imgp__row .imgp__scrubber {
+		order: 5;
+		flex-basis: 100%;
 	}
 }
 
@@ -626,9 +694,12 @@
 	}
 }
 
-/* A rounded bar meant to sit inline with body copy. */
+/* A rounded bar meant to sit inline with body copy. The far end has more room
+   than the near one, where the round play button already fills the curve:
+   with as little the seek line ran on under the rounded corner. */
 .imgp--skin-pill {
-	padding: 0.4rem 1rem 0.4rem 0.4rem;
+	padding-block: 0.4rem;
+	padding-inline: 0.4rem 1.35rem;
 	border-radius: 999px;
 	background: var(--imgp-bg, color-mix(in srgb, var(--imgp-text) 6%, transparent));
 
@@ -695,7 +766,7 @@
 	flex: 0 0 auto;
 	display: flex;
 	align-items: center;
-	margin-left: 0.6rem;
+	margin-inline-start: 0.6rem;
 	opacity: 0.85;
 
 	img {
@@ -756,9 +827,14 @@
    detaches as a small card in a corner instead, keeping its own shape, with
    the controls it already had drawn over it. */
 
-.imgp--video.is-stuck {
+/* One width for every corner, and never under fifteen rem. The audio rule
+   for the two corners has as many classes as this one had and came first in
+   the cascade only by luck, so a video in a corner was a 28rem card and one at
+   "bottom" a 46vw one — 179 pixels on a phone, with the full-screen button cut
+   off the end. */
+.imgp.imgp--video.is-stuck {
 	inset: auto 1rem 1rem auto;
-	width: min(22rem, 46vw);
+	width: max(15rem, min(22rem, calc(100vw - 2rem)));
 	padding: 0;
 	overflow: hidden;
 	border-radius: 0.7rem;
@@ -775,14 +851,19 @@
 	inset: auto 1rem 1rem auto;
 }
 
-/* At a third of the width the chrome has to be the controls and nothing else:
-   the title is two words of a sentence, a volume slider is a few pixels wide
-   and unusable, and a play button sized for a full-width picture takes a
-   quarter of the card. */
+/* In a card that size the chrome has to be the controls and nothing else:
+   play, sound, the seek bar, full screen and the way out. The title is two
+   words of a sentence, a volume slider a few pixels wide is unusable, and the
+   rest are a row of icons too small to hit. */
+.imgp--video.is-stuck .imgp__top,
 .imgp--video.is-stuck .imgp__meta,
+.imgp--video.is-stuck .imgp__clock,
+.imgp--video.is-stuck .imgp__logo,
 .imgp--video.is-stuck .imgp__volume-slider,
 .imgp--video.is-stuck .imgp__skip,
-.imgp--video.is-stuck .imgp__speed {
+.imgp--video.is-stuck .imgp__speed,
+.imgp--video.is-stuck .imgp__download,
+.imgp--video.is-stuck .imgp__vbtn:not(.imgp__vbtn--fullscreen) {
 	display: none;
 }
 
@@ -799,11 +880,6 @@
 	gap: 0.35rem;
 }
 
-.imgp--video.is-stuck .imgp__controls {
-	flex: 0 0 auto;
-	margin-left: auto;
-}
-
 .imgp--video.is-stuck .imgp__play {
 	width: 2.1rem !important;
 	height: 2.1rem !important;
@@ -812,10 +888,6 @@
 .imgp--video.is-stuck .imgp__play .imgp__icon {
 	width: 1rem;
 	height: 1rem;
-}
-
-.imgp--video.is-stuck .imgp__time {
-	font-size: 0.7rem;
 }
 
 .imgp--video.is-stuck .imgp__bigplay::before {
@@ -834,7 +906,7 @@
 .imgp.is-stuck .imgp__unstick {
 	position: absolute;
 	top: 0.35rem;
-	right: 0.35rem;
+	inset-inline-end: 0.35rem;
 	z-index: 12;
 	display: inline-flex;
 	align-items: center;
@@ -1106,25 +1178,188 @@
 
 /* --- Chrome (the control bar over the picture) --------------------------- */
 
+/*
+ * Only the bar and the seek line take the pointer. The gradient above them is
+ * part of the picture, and a click there goes through to the picture: at the
+ * height it had on a phone it covered the whole video, and the only place a
+ * tap still played it was a strip fifteen pixels tall along the top.
+ */
 .imgp__chrome {
 	position: absolute;
 	inset: auto 0 0;
 	z-index: 8;
-	padding: 3rem 0.75rem 0.6rem;
+	padding: 2.75rem 0.75rem 0.5rem;
 	background: linear-gradient(to top, var(--imgp-chrome), transparent);
 	opacity: 1;
+	pointer-events: none;
 	transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.imgp__chrome > .imgp__scrubber,
+.imgp__chrome > .imgp__bar {
+	pointer-events: auto;
 }
 
 .imgp--video.is-chrome-idle .imgp__chrome {
 	opacity: 0;
 	transform: translateY(0.5rem);
+}
+
+.imgp--video.is-chrome-idle:not(.imgp--skin-stacked) .imgp__chrome > * {
 	pointer-events: none;
 }
 
+/*
+ * One row, in the order every video player uses: play, skip, sound and the
+ * time on the left; speed, subtitles, the menus and full screen on the right.
+ * The two groups the server prints are dissolved into the row so the order
+ * can be set across them; the row only wraps as a last resort.
+ */
 .imgp--video .imgp__bar {
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	row-gap: 0.25rem;
 	margin-top: 0;
 	color: var(--imgp-on-chrome);
+}
+
+.imgp--video .imgp__controls,
+.imgp--video .imgp__vcontrols {
+	display: contents;
+}
+
+.imgp--video .imgp__bar .imgp__play {
+	order: 1;
+	width: 2.5rem;
+	height: 2.5rem;
+	margin-inline-end: 0.25rem;
+}
+
+.imgp--video .imgp__bar .imgp__play .imgp__icon {
+	width: 1.1rem;
+	height: 1.1rem;
+}
+
+.imgp--video .imgp__skip {
+	order: 2;
+}
+
+.imgp--video .imgp__volume {
+	order: 3;
+}
+
+.imgp--video .imgp__clock {
+	order: 4;
+	margin-inline: 0.4rem;
+}
+
+.imgp--video .imgp__bar .imgp__meta,
+.imgp--video .imgp__spacer {
+	order: 5;
+	flex: 1 1 0;
+	min-width: 0;
+	align-self: stretch;
+}
+
+/* With a title on the bar, the title is what pushes the rest to the end. */
+.imgp--video .imgp__bar .imgp__meta ~ .imgp__spacer {
+	display: none;
+}
+
+.imgp--video .imgp__bar .imgp__meta {
+	justify-content: center;
+	margin-inline: 0.35rem;
+}
+
+.imgp--video .imgp__bar .imgp__title {
+	font-size: 0.9375rem;
+}
+
+.imgp--video .imgp__bar .imgp__artist {
+	font-size: 0.75rem;
+}
+
+/* The rate as a chip, so it reads as a control rather than a stray "1×". */
+.imgp--video .imgp__speed {
+	order: 6;
+	min-width: 2.4rem;
+	font-size: 0.75rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.imgp.imgp--video .imgp__speed {
+	padding: 0.2rem 0.45rem !important;
+	border: 1px solid color-mix(in srgb, var(--imgp-on-chrome) 45%, transparent) !important;
+	border-radius: 999px !important;
+}
+
+.imgp--video .imgp__download {
+	order: 7;
+}
+
+.imgp--video .imgp__vbtn {
+	order: 8;
+}
+
+.imgp--video .imgp__logo {
+	order: 9;
+}
+
+/* The time, as text on the bar. */
+.imgp__clock {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3em;
+	font-size: 0.8125rem;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.imgp .imgp__clock .imgp__time {
+	position: static;
+	padding: 0;
+	background: none;
+	font-size: inherit;
+	transform: none;
+}
+
+.imgp__clock-sep {
+	opacity: 0.6;
+}
+
+/*
+ * The title over the top of the picture, in a gradient that comes and goes
+ * with the controls. Click-through: it is a caption, not a control.
+ */
+.imgp__top {
+	position: absolute;
+	inset: 0 0 auto;
+	z-index: 7;
+	padding: 0.75rem 0.9rem 2.25rem;
+	background: linear-gradient(to bottom, var(--imgp-chrome), transparent);
+	color: var(--imgp-on-chrome);
+	pointer-events: none;
+	transition: opacity 0.25s ease;
+}
+
+.imgp__top .imgp__meta {
+	gap: 0.1rem;
+}
+
+.imgp .imgp__top .imgp__title {
+	font-size: 1.05rem;
+	font-weight: 600;
+}
+
+.imgp .imgp__top .imgp__artist {
+	font-size: 0.8125rem;
+	opacity: 0.85;
+}
+
+.imgp--video.is-chrome-idle .imgp__top,
+.imgp:has(> .imgp__resume) .imgp__top {
+	opacity: 0;
 }
 
 /*
@@ -1181,17 +1416,6 @@
 	color: var(--imgp-on-chrome);
 }
 
-/*
- * The time chips carry their own dark pill, because on an audio player they
- * float over the waveform and need something to sit on. Over a video they sit
- * on the control bar, so the pill follows the bar's colour rather than staying
- * black: on a pale control bar the text had gone dark, correctly, and was then
- * printed on a black pill.
- */
-.imgp--video .imgp__time {
-	background: color-mix(in srgb, var(--imgp-chrome-bg, #000) 72%, transparent);
-}
-
 .imgp--video .imgp__play,
 .imgp--video .imgp__controls button,
 .imgp--video .imgp__controls a {
@@ -1204,9 +1428,6 @@
    nothing on Firefox Android is worse than no button. */
 
 .imgp__vcontrols {
-
-	/* Positioned because the menu hangs off it. */
-	position: relative;
 	display: flex;
 	align-items: center;
 	gap: 0.25rem;
@@ -1266,16 +1487,72 @@
 	background: #000;
 }
 
-/* On a phone the bar has no room for a title as well as the controls. The
-   title is on the page around the video; the controls are not. */
+/* Below about forty rem the row starts to run out: search, quality and
+   picture-in-picture move into the gear's list, which offers whatever the bar
+   is not showing; below thirty-six the volume slider goes too, and the mute
+   button stays. */
+@container (max-width: 40rem) {
+
+	.imgp--video .imgp__vbtn--search,
+	.imgp--video .imgp__vbtn--quality,
+	.imgp--video .imgp__vbtn--pip {
+		display: none;
+	}
+}
+
+@container (max-width: 36rem) {
+
+	.imgp--video .imgp__volume-slider,
+	.imgp--video.imgp--skin-stacked .imgp__bar .imgp__meta {
+		display: none;
+	}
+
+	.imgp--video .imgp__bar .imgp__meta ~ .imgp__spacer {
+		display: block;
+	}
+}
+
+/* On a phone, one row: play, the time, sound, subtitles, the gear and full
+   screen. Skip is a double tap on either side of the picture there, and the
+   rest is in the gear. */
 @container (max-width: 30rem) {
 
-	.imgp--video .imgp__meta {
+	.imgp--video .imgp__skip,
+	.imgp--video .imgp__speed,
+	.imgp--video .imgp__download,
+	.imgp--video .imgp__vbtn--chapters {
 		display: none;
 	}
 
 	.imgp--video .imgp__chrome {
-		padding: 2rem 0.5rem 0.4rem;
+		padding: 2rem 0.5rem 0.35rem;
+	}
+
+	.imgp--video .imgp__bar {
+		flex-wrap: nowrap;
+		gap: 0.15rem;
+	}
+
+	.imgp--video .imgp__bar .imgp__play {
+		width: 2.25rem;
+		height: 2.25rem;
+	}
+
+	.imgp--video .imgp__clock {
+		margin-inline: 0.25rem;
+		font-size: 0.75rem;
+	}
+
+	.imgp--video .imgp__logo img {
+		height: min(var(--imgp-logo-height, 20px), 1.25rem);
+	}
+
+	.imgp__top {
+		padding: 0.55rem 0.65rem 1.75rem;
+	}
+
+	.imgp .imgp__top .imgp__title {
+		font-size: 0.9375rem;
 	}
 
 	.imgp__bigplay::before {
@@ -1289,9 +1566,24 @@
 	}
 }
 
+/* On a touch screen the disc in the middle is the pause button too, shown
+   with the controls: a finger pauses there, and a tap anywhere else only
+   brings the controls up. */
+@media (pointer: coarse) {
+
+	.imgp--video.is-playing:not(.is-chrome-idle) .imgp__bigplay::before {
+		opacity: 0.8;
+	}
+
+	.imgp--video.is-playing:not(.is-chrome-idle) .imgp__bigplay svg {
+		opacity: 1;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 
 	.imgp__chrome,
+	.imgp__top,
 	.imgp__poster,
 	.imgp__bigplay::before {
 		transition: none;
@@ -1323,18 +1615,24 @@
 
 /* --- The shared menu ----------------------------------------------------
    One panel for subtitles and for chapters: they never open together, and a
-   second would only be a second thing to position and keep in step. */
+   second would only be a second thing to position and keep in step.
+
+   It hangs from the bar as a whole, above the seek line, and is never taller
+   than the picture above the bar: the script measures both. It used to hang
+   from the little group of buttons, so on a phone the chapter list ran off
+   the top of the picture and the search panel came out nineteen pixels tall —
+   sixty per cent of a box two rem high. */
 
 .imgp__menu {
 	position: absolute;
-	right: 0;
-	bottom: calc(100% + 0.5rem);
+	inset-inline-end: 0.5rem;
+	bottom: calc(var(--imgp-chrome-h, 4rem) + 0.35rem);
 	z-index: 12;
 	display: flex;
 	flex-direction: column;
 	min-width: 10rem;
-	max-width: min(18rem, 70vw);
-	max-height: 14rem;
+	max-width: min(18rem, calc(100% - 1rem));
+	max-height: max(6rem, calc(var(--imgp-stage-h, 20rem) - var(--imgp-chrome-h, 4rem) - 1rem));
 	overflow-y: auto;
 	padding: 0.25rem;
 	border-radius: 0.5rem;
@@ -1348,6 +1646,7 @@
 
 .imgp__menuitem {
 	display: block;
+	flex: 0 0 auto;
 	width: 100%;
 	padding: 0.45rem 0.6rem;
 	border: 0;
@@ -1357,8 +1656,28 @@
 	font: inherit;
 	font-size: 0.85rem;
 	line-height: 1.35;
-	text-align: left;
+	text-align: start;
 	cursor: pointer;
+}
+
+/* Under the bar of the stacked skin there is no picture to keep clear of, and
+   the picture above it is all the room there is. */
+.imgp--video.imgp--skin-stacked .imgp__menu {
+	bottom: calc(100% + 0.35rem);
+	max-height: max(6rem, calc(var(--imgp-stage-h, 20rem) - 1rem));
+}
+
+/* A sheet across the picture on a phone, rather than a box in its corner. */
+@container (max-width: 30rem) {
+
+	.imgp__menu {
+		inset-inline: 0.5rem;
+		max-width: none;
+	}
+
+	.imgp .imgp__menu--search {
+		width: auto;
+	}
 }
 
 .imgp__menuitem:hover,
@@ -1377,7 +1696,7 @@
 	display: inline-block;
 	width: 0.4rem;
 	height: 0.4rem;
-	margin-right: 0.45rem;
+	margin-inline-end: 0.45rem;
 	border-radius: 50%;
 	background: var(--imgp-accent);
 	vertical-align: 0.1em;
@@ -1426,12 +1745,15 @@
 }
 
 .imgp--video .imgp__media::-webkit-media-text-track-container {
-	transform: translateY(-3rem);
+	transform: translateY(calc(-1 * var(--imgp-chrome-h, 3rem)));
 	transition: transform 0.25s ease;
 }
 
-.imgp--video.is-chrome-idle .imgp__media::-webkit-media-text-track-container {
-	transform: translateY(0);
+/* Nothing to lift them over: the bar has gone, or it was never on the
+   picture. */
+.imgp--video.is-chrome-idle .imgp__media::-webkit-media-text-track-container,
+.imgp--video.imgp--skin-stacked .imgp__media::-webkit-media-text-track-container {
+	transform: none;
 }
 
 /* --- Conversion layers --------------------------------------------------
@@ -1480,8 +1802,14 @@
 	box-shadow:
 		inset 3px 0 0 var(--imgp-accent),
 		inset 0 0 0 1px rgb(255 255 255 / 8%);
-	text-align: left;
+	text-align: start;
 	backdrop-filter: none;
+}
+
+.imgp--audio .imgp__layer:dir(rtl) {
+	box-shadow:
+		inset -3px 0 0 var(--imgp-accent),
+		inset 0 0 0 1px rgb(255 255 255 / 8%);
 }
 
 /* The bar is the one that does not interrupt: a strip along the bottom edge of
@@ -1501,11 +1829,12 @@
 	z-index: auto;
 	display: block;
 	margin-top: var(--imgp-gap);
-	padding: 0.6rem 2.6rem 0.6rem 0.9rem;
+	padding-block: 0.6rem;
+	padding-inline: 0.9rem 2.6rem;
 	border-radius: var(--imgp-radius, 0);
 	background: var(--imgp-accent);
 	color: var(--imgp-on-accent, #fff);
-	text-align: left;
+	text-align: start;
 	backdrop-filter: none;
 }
 
@@ -1540,7 +1869,7 @@
 
 	/* Room for the close button, which sits over the top-right corner and
 	   would otherwise land on top of whatever the action is. */
-	padding-right: 2.25rem;
+	padding-inline-end: 2.25rem;
 }
 
 .imgp__layer-copy {
@@ -1554,7 +1883,7 @@
 .imgp__layer--bar .imgp__layer-copy {
 	flex: 1 1 14rem;
 	align-items: flex-start;
-	text-align: left;
+	text-align: start;
 }
 
 .imgp__layer-action {
@@ -1618,7 +1947,7 @@
 }
 
 .imgp--audio .imgp__layer-fine {
-	text-align: left;
+	text-align: start;
 }
 
 .imgp__layer-error {
@@ -1728,7 +2057,7 @@
 .imgp__layer-close {
 	position: absolute;
 	top: 0.5rem;
-	right: 0.5rem;
+	inset-inline-end: 0.5rem;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -1843,16 +2172,24 @@
 	}
 
 	.imgp__layer--bar .imgp__layer-button {
-		margin-left: 0;
+		margin-inline-start: 0;
 	}
 }
 
 /* --- Playlists ----------------------------------------------------------
    The list is rendered as links to the files, so it works before any of the
    runtime does: clicking a track plays it. The runtime catches the click and
-   hands it to the player already on the page instead. */
+   hands it to the player already on the page instead.
+
+   The list is outside the player, so it carries the same factory colours as
+   the player does — the renderer writes the preset's own over them — and
+   takes its words from the page's text colour. */
 
 .imgp-playlist {
+	--imgp-accent: #1f2937;
+	--imgp-text: currentcolor;
+	--imgp-meta: color-mix(in srgb, currentcolor 64%, transparent);
+
 	display: grid;
 	gap: var(--imgp-gap, 0.75rem);
 	container-type: inline-size;
@@ -1862,7 +2199,7 @@
 	margin: 0;
 	font-size: 1.05rem;
 	font-weight: 600;
-	color: var(--imgp-text, #111827);
+	color: var(--imgp-text);
 }
 
 .imgp-playlist__items {
@@ -1871,10 +2208,13 @@
 	list-style: none;
 	display: grid;
 	gap: 2px;
+	counter-reset: imgp-track;
 }
 
+/* Two columns on a phone rather than one column of covers each the width of
+   the screen — eight tracks were nearly three thousand pixels tall. */
 .imgp-playlist--grid .imgp-playlist__items {
-	grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(min(11rem, calc(50% - 0.375rem)), 1fr));
 	gap: 0.75rem;
 }
 
@@ -1890,9 +2230,28 @@
 	width: 100%;
 	padding: 0.5rem 0.6rem;
 	border-radius: 0.4rem;
-	color: var(--imgp-text, #111827);
+	color: var(--imgp-text);
 	text-decoration: none;
 	box-shadow: none;
+}
+
+/* Track numbers, as an album's list has them; the one playing shows a play
+   mark in the accent instead. */
+.imgp-playlist--list .imgp-playlist__link::before {
+	counter-increment: imgp-track;
+	content: counter(imgp-track);
+	flex: 0 0 1.5em;
+	font-size: 0.8rem;
+	font-variant-numeric: tabular-nums;
+	text-align: end;
+	opacity: 0.6;
+}
+
+.imgp-playlist--list .imgp-playlist__item.is-current .imgp-playlist__link::before {
+	content: "\25B8";
+	color: var(--imgp-accent);
+	font-size: 1rem;
+	opacity: 1;
 }
 
 .imgp-playlist--grid .imgp-playlist__link {
@@ -1906,15 +2265,20 @@
 	background: color-mix(in srgb, var(--imgp-accent) 10%, transparent);
 }
 
-/* The current track is marked by weight and a bar, not by colour alone. */
+/* The current track is marked by weight, a bar and a tint, not by colour
+   alone. */
 .imgp-playlist__item.is-current .imgp-playlist__link {
-	background: color-mix(in srgb, var(--imgp-accent) 14%, transparent);
-	box-shadow: inset 3px 0 0 var(--imgp-accent);
+	background: color-mix(in srgb, var(--imgp-accent) 18%, transparent);
+	box-shadow: inset 4px 0 0 var(--imgp-accent);
 	font-weight: 600;
 }
 
+.imgp-playlist__item.is-current .imgp-playlist__link:dir(rtl) {
+	box-shadow: inset -4px 0 0 var(--imgp-accent);
+}
+
 .imgp-playlist--grid .imgp-playlist__item.is-current .imgp-playlist__link {
-	box-shadow: inset 0 -3px 0 var(--imgp-accent);
+	box-shadow: inset 0 0 0 2px var(--imgp-accent);
 }
 
 .imgp-playlist__art {
@@ -1952,7 +2316,7 @@
 
 .imgp-playlist__artist {
 	font-size: 0.8rem;
-	color: var(--imgp-meta, #6b7280);
+	color: var(--imgp-meta);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -1962,7 +2326,7 @@
 	flex: 0 0 auto;
 	font-size: 0.8rem;
 	font-variant-numeric: tabular-nums;
-	color: var(--imgp-meta, #6b7280);
+	color: var(--imgp-meta);
 }
 
 .imgp-playlist--grid .imgp-playlist__time {
@@ -1990,11 +2354,18 @@
    renders every skin under a stylesheet built out of what themes really ship
    and checks that none of it gets through. */
 
-.imgp button,
-.imgp input,
-.imgp iframe,
+/*
+ * None of it reaches into a shortcode layer: what is in there is another
+ * plugin's markup, styled by that plugin, and flattening its buttons and links
+ * along with ours turned a row of timestamp pills into running text. `:where()`
+ * keeps the exclusion from adding to the selector's weight, so every rule
+ * below that restates one of ours still outranks this.
+ */
+.imgp button:where(:not(.imgp__layer-shortcode *)),
+.imgp input:where(:not(.imgp__layer-shortcode *)),
+.imgp iframe:where(:not(.imgp__layer-shortcode *)),
 .imgp canvas,
-.imgp img {
+.imgp img:where(:not(.imgp__layer-shortcode *)) {
 	min-width: 0 !important;
 	min-height: 0 !important;
 	box-shadow: none !important;
@@ -2020,7 +2391,7 @@
    background on it is a background over the video — and the handful that do
    carry one say so again below. Restating them costs a few lines and removes
    the whole question of whose selector is more specific. */
-.imgp button {
+.imgp button:where(:not(.imgp__layer-shortcode *)) {
 	margin: 0 !important;
 	padding: 0 !important;
 	border: 0 !important;
@@ -2041,7 +2412,7 @@
  * bottom. The typeface still flows in from the site, deliberately — it is the
  * spacing and the scale that are the player's own.
  */
-.imgp p {
+.imgp p:where(:not(.imgp__layer-shortcode *)) {
 	margin: 0 !important;
 	padding: 0 !important;
 }
@@ -2077,7 +2448,7 @@
 
 /* The download control is an anchor, not a button, so `a { color: #d6336c;
    text-decoration: underline }` reaches it and nothing above does. */
-.imgp a {
+.imgp a:where(:not(.imgp__layer-shortcode *)) {
 	color: inherit !important;
 	text-decoration: none !important;
 	box-shadow: none !important;
@@ -2141,7 +2512,10 @@
 .imgp .imgp__play {
 	border-radius: 50% !important;
 	background-color: var(--imgp-accent) !important;
-	color: #fff !important;
+
+	/* The accent's own foreground: white on a pale accent was a white play
+	   icon on a pale disc. */
+	color: var(--imgp-on-accent, #fff) !important;
 }
 
 .imgp .imgp__vbtn,
@@ -2175,6 +2549,9 @@
 
 .imgp .imgp__layer--bar .imgp__layer-close {
 	background-color: rgb(0 0 0 / 12%) !important;
+
+	/* The bar's colour, which is worked out from the accent behind it. */
+	color: inherit !important;
 }
 
 /* The one button with padding of its own, restated so the blanket reset above
@@ -2197,7 +2574,7 @@
 
 /* The volume slider is an `<input type="range">`, which themes dress up as a
    form field: a border, a background and forty-eight pixels of height. */
-.imgp input {
+.imgp input:where(:not(.imgp__layer-shortcode *)) {
 	margin: 0 !important;
 	padding: 0 !important;
 	border: 0 !important;
@@ -2282,6 +2659,116 @@
 	background-color: transparent !important;
 }
 
+/* The transcript's search box is an input too, and the reset above took its
+   padding and its border: a box nobody could see the edges of. */
+.imgp .imgp__transcript-search {
+	padding: 0.45rem 0.6rem !important;
+	border: 1px solid color-mix(in srgb, currentcolor 25%, transparent) !important;
+	border-radius: 0.4rem !important;
+}
+
+/*
+ * The list beside a playlist and the timestamp buttons in the text are outside
+ * the player, so nothing above reached them: a theme's numbered, indented,
+ * underlined lists and its pink forty-eight-pixel buttons came straight
+ * through. The same treatment, for the same few properties.
+ */
+.imgp-playlist .imgp-playlist__items,
+.imgp-playlist .imgp-playlist__item {
+	margin: 0 !important;
+	padding: 0 !important;
+	list-style: none !important;
+	background: none !important;
+}
+
+.imgp-playlist .imgp-playlist__item::before,
+.imgp-playlist .imgp-playlist__item::marker {
+	content: none !important;
+}
+
+.imgp-playlist .imgp-playlist__link {
+	color: var(--imgp-text) !important;
+	text-decoration: none !important;
+	box-shadow: none !important;
+	border: 0 !important;
+}
+
+.imgp-playlist .imgp-playlist__item.is-current .imgp-playlist__link {
+	box-shadow: inset 4px 0 0 var(--imgp-accent) !important;
+}
+
+.imgp-playlist .imgp-playlist__item.is-current .imgp-playlist__link:dir(rtl) {
+	box-shadow: inset -4px 0 0 var(--imgp-accent) !important;
+}
+
+.imgp-playlist.imgp-playlist--grid .imgp-playlist__item.is-current .imgp-playlist__link,
+.imgp-playlist.imgp-playlist--rail .imgp-playlist__item.is-current .imgp-playlist__link,
+.imgp-playlist.imgp-playlist--slider .imgp-playlist__item.is-current .imgp-playlist__link {
+	box-shadow: inset 0 0 0 2px var(--imgp-accent) !important;
+}
+
+.imgp-playlist button.imgp-playlist__nav {
+	min-width: 0 !important;
+	min-height: 0 !important;
+	width: 2.2rem !important;
+	height: 2.2rem !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	border-radius: 50% !important;
+	background-color: rgb(20 20 20 / 85%) !important;
+	background-image: none !important;
+	color: #fff !important;
+}
+
+button.imgp-time {
+	min-width: 0 !important;
+	min-height: 0 !important;
+	margin: 0 !important;
+	padding: 0.05em 0.55em !important;
+	border: 0 !important;
+	border-radius: 999px !important;
+	background-color: color-mix(in srgb, currentcolor 11%, transparent) !important;
+	background-image: none !important;
+	box-shadow: none !important;
+	color: inherit !important;
+	font-family: inherit !important;
+	font-size: 0.92em !important;
+	font-weight: inherit !important;
+	line-height: 1.5 !important;
+	letter-spacing: normal !important;
+	text-transform: none !important;
+	text-decoration: none !important;
+}
+
+button.imgp-time:hover,
+button.imgp-time:focus-visible {
+	background-color: color-mix(in srgb, currentcolor 19%, transparent) !important;
+}
+
+/*
+ * Forty-four pixels to press on a touch screen, without making anything bigger
+ * to look at: the icons stay their size and an invisible square around each
+ * takes the finger. Mute, skip and speed were twenty-six pixels, the buttons
+ * on a video's bar thirty-two, the way out of a following player twenty-eight.
+ */
+@media (pointer: coarse) {
+
+	.imgp :is(.imgp__mute, .imgp__skip, .imgp__speed, .imgp__download, .imgp__vbtn, .imgp__resume-restart, .imgp__resume-close) {
+		position: relative;
+	}
+
+	.imgp :is(.imgp__mute, .imgp__skip, .imgp__speed, .imgp__download, .imgp__vbtn, .imgp__resume-restart, .imgp__resume-close, .imgp__layer-close, .imgp__unstick)::after {
+		content: "";
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: max(100%, 2.75rem);
+		height: max(100%, 2.75rem);
+		transform: translate(-50%, -50%);
+	}
+}
+
 /* --- The still that follows the pointer on the seek bar -----------------
    Built by the browser only when a storyboard is configured and a pointer
    has actually touched the bar, so a page pays nothing for a feature
@@ -2322,6 +2809,7 @@
 	background: linear-gradient(to top, rgb(0 0 0 / 55%), transparent);
 }
 
+.imgp--video.imgp--skin-minimal .imgp__top,
 .imgp--video.imgp--skin-minimal .imgp__meta,
 .imgp--video.imgp--skin-minimal .imgp__skip,
 .imgp--video.imgp--skin-minimal .imgp__speed,
@@ -2329,12 +2817,12 @@
 	display: none;
 }
 
-.imgp--video.imgp--skin-minimal .imgp__play {
+.imgp--video.imgp--skin-minimal .imgp__bar .imgp__play {
 	width: 2.2rem;
 	height: 2.2rem;
 }
 
-.imgp--video.imgp--skin-minimal .imgp__play .imgp__icon {
+.imgp--video.imgp--skin-minimal .imgp__bar .imgp__play .imgp__icon {
 	width: 1rem;
 	height: 1rem;
 }
@@ -2349,21 +2837,22 @@
 	overflow: hidden;
 }
 
-/* Outside the stage, so it needs the positioning the theater bar got from
-   sitting on the picture. */
+/* Outside the stage, so it needs none of the positioning the theater bar
+   got from sitting on the picture — only enough to hang a menu from. */
 .imgp--video.imgp--skin-stacked .imgp__chrome {
-	position: static;
+	position: relative;
 	inset: auto;
 	padding: 0.45rem 0.7rem 0.6rem;
 	background: none;
 	opacity: 1;
+	pointer-events: auto;
 }
 
 /* The whole point of it: the bar is outside the picture, so the rule that
    fades the chrome during playback must not apply. */
 .imgp--video.imgp--skin-stacked.is-chrome-idle .imgp__chrome {
 	opacity: 1;
-	pointer-events: auto;
+	transform: none;
 }
 
 .imgp--video.imgp--skin-stacked .imgp__stage {
@@ -2419,9 +2908,11 @@
    picture and it closes the same way. */
 
 .imgp__menu--search {
-	width: min(24rem, 80vw);
-	max-height: 60%;
+	width: min(24rem, calc(100% - 1rem));
 	padding: 0.5rem;
+
+	/* The results scroll, the box stays put. */
+	overflow: hidden;
 }
 
 .imgp__search-input {
@@ -2449,20 +2940,22 @@
 .imgp__search-results {
 	display: flex;
 	flex-direction: column;
-	max-height: 14rem;
+	flex: 1 1 auto;
+	min-height: 0;
 	margin-top: 0.4rem;
 	overflow-y: auto;
 }
 
 .imgp__search-hit {
 	display: flex;
+	flex: 0 0 auto;
 	gap: 0.5rem;
 	align-items: baseline;
 	padding: 0.4rem 0.35rem;
 	border-radius: 0.3rem;
 	color: inherit;
 	font-size: 0.85rem;
-	text-align: left;
+	text-align: start;
 	cursor: pointer;
 }
 
@@ -2583,7 +3076,7 @@
 }
 
 .imgp__resume-close {
-	margin-left: auto;
+	margin-inline-start: auto;
 	font-size: 1rem;
 	line-height: 1;
 	opacity: 0.7;
@@ -2598,7 +3091,7 @@
 .imgp--video .imgp__resume {
 	position: absolute;
 	top: 0.6rem;
-	left: 0.6rem;
+	inset-inline-start: 0.6rem;
 	z-index: 11;
 	max-width: calc(100% - 1.2rem);
 	margin: 0;
@@ -2613,13 +3106,23 @@
 	display: none;
 }
 
+/* Out of the way while a menu or the chapter tip is up: on a phone all three
+   wanted the top of the same small picture. */
+.imgp--video.has-menu .imgp__resume,
+.imgp--video:has(.imgp__chapter-tip:not([hidden])) .imgp__resume {
+	opacity: 0;
+	pointer-events: none;
+}
+
 /* --- A word over the picture ----------------------------------------------
    "Link copied", and gone. */
 
 .imgp__toast {
 	position: absolute;
 	left: 50%;
-	bottom: 4.2rem;
+
+	/* Just above the bar, however tall the bar is. */
+	bottom: calc(var(--imgp-chrome-h, 3.6rem) + 0.6rem);
 	z-index: 13;
 	max-width: 90%;
 	padding: 0.4rem 0.8rem;
@@ -2635,6 +3138,20 @@
 	pointer-events: none;
 }
 
+.imgp--skin-stacked .imgp__toast {
+	bottom: 0.75rem;
+}
+
+/* On a small picture the line lands on the big play button: the button
+   steps aside for the second it is up. */
+@container (max-width: 30rem) {
+
+	.imgp__stage:has(.imgp__toast) .imgp__bigplay::before,
+	.imgp__stage:has(.imgp__toast) .imgp__bigplay svg {
+		opacity: 0;
+	}
+}
+
 /* --- Timestamp buttons ---------------------------------------------------
    Written into the text by `[imagina_time]`, outside any player, so they
    cannot lean on the player's own variables. A pill that reads as a time. */
@@ -2646,7 +3163,9 @@
 	padding: 0.05em 0.55em;
 	border: 0;
 	border-radius: 999px;
-	background: rgb(31 41 55 / 10%);
+
+	/* From the text around it, so it reads on a dark page as on a light one. */
+	background: color-mix(in srgb, currentcolor 11%, transparent);
 	color: inherit;
 	font: inherit;
 	font-size: 0.92em;
@@ -2658,7 +3177,7 @@
 
 .imgp-time:hover,
 .imgp-time:focus-visible {
-	background: rgb(31 41 55 / 18%);
+	background: color-mix(in srgb, currentcolor 19%, transparent);
 }
 
 /* --- Decorations over the picture -----------------------------------------
@@ -2673,25 +3192,99 @@
 	padding: 0;
 	background: none;
 	color: inherit;
-	text-align: left;
+	text-align: start;
 	backdrop-filter: none;
+	transition: top 0.25s ease, bottom 0.25s ease;
+
+	/* Clear of the title over the top and the bar along the bottom while they
+	   are showing, and back to the edge once they fade. */
+	--imgp-decor-top: max(0.75rem, calc(var(--imgp-top-h, 0px) + 0.25rem));
+	--imgp-decor-bottom: calc(var(--imgp-chrome-h, 2.85rem) + 0.75rem);
+
+	/* The middle of what the bar leaves of the picture. */
+	--imgp-decor-middle: calc(50% - (var(--imgp-decor-bottom) - 0.75rem) / 2);
 }
 
-.imgp__layer--at-top-left { top: 0.75rem; left: 0.75rem; }
-.imgp__layer--at-top { top: 0.75rem; left: 50%; transform: translateX(-50%); text-align: center; }
-.imgp__layer--at-top-right { top: 0.75rem; right: 0.75rem; text-align: right; }
-.imgp__layer--at-left { top: 50%; left: 0.75rem; transform: translateY(-50%); }
-.imgp__layer--at-center { top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-.imgp__layer--at-right { top: 50%; right: 0.75rem; transform: translateY(-50%); text-align: right; }
-.imgp__layer--at-bottom-left { bottom: 3.6rem; left: 0.75rem; }
-.imgp__layer--at-bottom { bottom: 3.6rem; left: 50%; transform: translateX(-50%); text-align: center; }
-.imgp__layer--at-bottom-right { bottom: 3.6rem; right: 0.75rem; text-align: right; }
+.imgp--video.is-chrome-idle .imgp__layer--decor,
+.imgp--video.imgp--skin-stacked .imgp__layer--decor {
+	--imgp-decor-bottom: 0.75rem;
+}
 
-/* Under the bar rather than on it once the controls have gone away. */
-.imgp--video.is-idle .imgp__layer--at-bottom-left,
-.imgp--video.is-idle .imgp__layer--at-bottom,
-.imgp--video.is-idle .imgp__layer--at-bottom-right {
-	bottom: 0.75rem;
+.imgp--video.is-chrome-idle .imgp__layer--decor,
+.imgp--video.imgp--skin-minimal .imgp__layer--decor,
+.imgp:has(> .imgp__resume) .imgp__layer--decor {
+	--imgp-decor-top: 0.75rem;
+}
+
+/*
+ * The middle column is centred with automatic margins, not with `left: 50%`:
+ * a box placed at the half-way line can only grow into the half that is left,
+ * so every centred caption was capped at half the picture whatever its own
+ * limit said.
+ */
+.imgp__layer--at-top,
+.imgp__layer--at-center,
+.imgp__layer--at-bottom {
+	left: 0;
+	right: 0;
+	width: fit-content;
+	margin-inline: auto;
+	text-align: center;
+}
+
+.imgp__layer--at-top-left {
+	top: var(--imgp-decor-top);
+	left: 0.75rem;
+}
+
+.imgp__layer--at-top {
+	top: var(--imgp-decor-top);
+}
+
+.imgp__layer--at-top-right {
+	top: var(--imgp-decor-top);
+	right: 0.75rem;
+	text-align: right;
+}
+
+.imgp__layer--at-left {
+	top: var(--imgp-decor-middle);
+	left: 0.75rem;
+	transform: translateY(-50%);
+}
+
+.imgp__layer--at-center {
+	top: var(--imgp-decor-middle);
+	transform: translateY(-50%);
+}
+
+.imgp__layer--at-right {
+	top: var(--imgp-decor-middle);
+	right: 0.75rem;
+	transform: translateY(-50%);
+	text-align: right;
+}
+
+.imgp__layer--at-bottom-left {
+	bottom: var(--imgp-decor-bottom);
+	left: 0.75rem;
+}
+
+.imgp__layer--at-bottom {
+	bottom: var(--imgp-decor-bottom);
+}
+
+.imgp__layer--at-bottom-right {
+	bottom: var(--imgp-decor-bottom);
+	right: 0.75rem;
+	text-align: right;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.imgp__layer--decor {
+		transition: none;
+	}
 }
 
 .imgp__layer-link {
@@ -2726,7 +3319,7 @@
 
 .imgp__layer--text .imgp__layer-close {
 	top: 0.15rem;
-	right: 0.15rem;
+	inset-inline-end: 0.15rem;
 }
 
 /* A picture over the picture, as a share of its width. */
@@ -2772,12 +3365,21 @@
 }
 
 @keyframes imgp-pulse {
-	0% { box-shadow: 0 0 0 3px rgb(255 255 255 / 85%), 0 0 0 3px rgb(255 255 255 / 45%); }
-	100% { box-shadow: 0 0 0 3px rgb(255 255 255 / 85%), 0 0 0 14px rgb(255 255 255 / 0%); }
+
+	0% {
+		box-shadow: 0 0 0 3px rgb(255 255 255 / 85%), 0 0 0 3px rgb(255 255 255 / 45%);
+	}
+
+	100% {
+		box-shadow: 0 0 0 3px rgb(255 255 255 / 85%), 0 0 0 14px rgb(255 255 255 / 0%);
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.imgp__hotspot-dot { animation: none; }
+
+	.imgp__hotspot-dot {
+		animation: none;
+	}
 }
 
 .imgp__hotspot-label {
@@ -2786,7 +3388,7 @@
 	left: 50%;
 	z-index: 1;
 	width: max-content;
-	max-width: 14rem;
+	max-width: min(14rem, 60cqw);
 	padding: 0.4rem 0.65rem;
 	border-radius: 0.4rem;
 	background: rgb(20 20 20 / 92%);
@@ -2802,6 +3404,33 @@
 
 .imgp__hotspot-label:empty {
 	display: none;
+}
+
+/* Near the top the label opens underneath, and near a side it opens away from
+   that side, so it is never cut off by the edge of the picture. */
+.imgp__hotspot--below .imgp__hotspot-label {
+	top: calc(100% + 0.55rem);
+	bottom: auto;
+}
+
+.imgp__hotspot--left .imgp__hotspot-label {
+	left: -0.4rem;
+	text-align: left;
+	transform: none;
+}
+
+.imgp__hotspot--right .imgp__hotspot-label {
+	right: -0.4rem;
+	left: auto;
+	text-align: right;
+	transform: none;
+}
+
+/* An open label goes over the other decorations, not under the next one. */
+.imgp__layer--hotspot:hover,
+.imgp__layer--hotspot:focus-within,
+.imgp__layer--hotspot.is-open {
+	z-index: 11;
 }
 
 .imgp__layer--hotspot .imgp__layer-link:hover .imgp__hotspot-label,
@@ -2822,18 +3451,27 @@
 	opacity: 0.85;
 }
 
-/* Another plugin's output: a light card, so its own styles read. */
+/* Another plugin's output: a light card, so its own styles read. Never taller
+   than the picture leaves room for: on a phone a form taller than the video
+   was cut off at both ends, its close button with it. */
 .imgp__layer--shortcode {
 	max-width: min(90%, 32rem);
 	color: inherit;
 }
 
 .imgp__layer-shortcode {
+	max-height: max(5rem, calc(var(--imgp-stage-h, 20rem) - var(--imgp-chrome-h, 3rem) - 2.25rem));
+	overflow: auto;
 	padding: 1rem;
 	border-radius: 0.6rem;
 	background: rgb(255 255 255 / 96%);
 	color: #111;
-	text-align: left;
+	text-align: start;
+	overscroll-behavior: contain;
+}
+
+.imgp--audio .imgp__layer-shortcode {
+	max-height: none;
 }
 
 /* Beside audio there is no picture to sit on: back into the flow. */
@@ -2841,8 +3479,9 @@
 	inset: auto;
 	width: auto;
 	max-width: none;
+	margin-inline: 0;
 	transform: none;
-	text-align: left;
+	text-align: start;
 }
 
 .imgp--audio .imgp__layer--hotspot {
@@ -2876,7 +3515,7 @@
 	display: inline-block;
 	width: 0.45em;
 	height: 0.45em;
-	margin-right: 0.6em;
+	margin-inline-end: 0.6em;
 	border-right: 2px solid currentcolor;
 	border-bottom: 2px solid currentcolor;
 	transform: translateY(-0.15em) rotate(-45deg);
@@ -2911,7 +3550,7 @@
 }
 
 .imgp__transcript-count:not(:empty) {
-	margin-left: 0.35rem;
+	margin-inline-start: 0.35rem;
 	padding: 0 0.45rem;
 	border-radius: 999px;
 	background: color-mix(in srgb, currentcolor 12%, transparent);
@@ -2982,7 +3621,7 @@
 	color: inherit;
 	font: inherit;
 	line-height: 1.4;
-	text-align: left;
+	text-align: start;
 	cursor: pointer;
 }
 
@@ -2998,6 +3637,10 @@
 .imgp__cue.is-current {
 	background: color-mix(in srgb, var(--imgp-accent) 16%, transparent);
 	box-shadow: inset 3px 0 0 var(--imgp-accent);
+}
+
+.imgp__cue.is-current:dir(rtl) {
+	box-shadow: inset -3px 0 0 var(--imgp-accent);
 }
 
 .imgp__cue-at {
@@ -3020,7 +3663,7 @@
    words. */
 .imgp__layer--decor .imgp__layer-close {
 	top: -0.55rem;
-	right: -0.55rem;
+	inset-inline-end: -0.55rem;
 	width: 1.6rem;
 	height: 1.6rem;
 	border-radius: 50%;
@@ -3039,7 +3682,32 @@
 	width: 3rem;
 	height: 3rem;
 	border-radius: 0.35rem;
-	background: color-mix(in srgb, var(--imgp-accent, #1f2937) 18%, transparent);
+	background: color-mix(in srgb, var(--imgp-accent) 18%, transparent);
+}
+
+/* A track with no cover gets a note in its place. */
+.imgp-playlist__cover--blank:not(.imgp-playlist__cover--video)::before {
+	content: "\266A";
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	color: var(--imgp-accent);
+	font-size: 1.15rem;
+	line-height: 1;
+	opacity: 0.75;
+}
+
+/* A video with no still is a dark frame, so the white play mark on it shows:
+   on a pale tint of the accent it was all but invisible. */
+.imgp-playlist .imgp-playlist__cover--blank.imgp-playlist__cover--video {
+	background: #1f2329;
+}
+
+.imgp-playlist--grid .imgp-playlist__cover--blank {
+	width: 100%;
+	height: auto;
+	aspect-ratio: 1;
 }
 
 .imgp-playlist__cover--video::after {
@@ -3065,7 +3733,7 @@
    about the picture's height. Flex rather than grid so the list wraps under
    the picture by itself once the two no longer fit — the picture keeps at
    least thirty-two rem, below which a video's bar wraps its controls into
-   rows — with no query on a container the element cannot see. */
+   rows. */
 .imgp-playlist--side {
 	display: flex;
 	flex-wrap: wrap;
@@ -3086,7 +3754,17 @@
 	min-width: 0;
 	max-height: var(--imgp-side-height, 26rem);
 	overflow: hidden auto;
-	padding-right: 0.2rem;
+	padding-inline-end: 0.2rem;
+}
+
+/* Once it has wrapped under the picture it is a list on the page, not a box
+   that scrolls inside the page with no sign that it does. */
+@container (max-width: 46rem) {
+
+	.imgp-playlist--side .imgp-playlist__items {
+		max-height: none;
+		overflow: visible;
+	}
 }
 
 .imgp-playlist--side .imgp-playlist__cover,
@@ -3125,8 +3803,12 @@
 	scroll-snap-align: start;
 }
 
+.imgp-playlist--slider {
+	--imgp-card: min(15rem, 44cqw);
+}
+
 .imgp-playlist--slider .imgp-playlist__item {
-	flex-basis: min(15rem, 44cqw);
+	flex-basis: var(--imgp-card);
 }
 
 .imgp-playlist--rail .imgp-playlist__link,
@@ -3144,7 +3826,7 @@
 	height: auto;
 	overflow: hidden;
 	border-radius: 0.35rem;
-	background: color-mix(in srgb, var(--imgp-accent, #1f2937) 18%, transparent);
+	background: color-mix(in srgb, var(--imgp-accent) 18%, transparent);
 }
 
 .imgp-playlist--rail .imgp-playlist__art,
@@ -3162,7 +3844,7 @@
 .imgp-playlist--rail .imgp-playlist__cover .imgp-playlist__time,
 .imgp-playlist--slider .imgp-playlist__cover .imgp-playlist__time {
 	position: absolute;
-	right: 0.3rem;
+	inset-inline-end: 0.3rem;
 	bottom: 0.3rem;
 	padding: 0.05rem 0.35rem;
 	border-radius: 0.25rem;
@@ -3185,10 +3867,13 @@
 	box-shadow: inset 0 0 0 2px var(--imgp-accent);
 }
 
-/* The slider's arrows, over the ends of the row. */
+/* The slider's arrows, over the ends of the row and level with the middle of
+   the pictures — worked out from the card's width, which sets the picture's
+   height, rather than a share of a strip whose height changes with how many
+   lines the titles take. */
 .imgp-playlist__nav {
 	position: absolute;
-	top: 30%;
+	top: calc(0.35rem + (var(--imgp-card, 15rem) - 0.7rem) * 0.28125 - 1.1rem);
 	z-index: 2;
 	display: inline-flex;
 	align-items: center;
@@ -3220,11 +3905,17 @@
 }
 
 .imgp-playlist__nav--prev {
-	left: -0.6rem;
+	inset-inline-start: -0.6rem;
 }
 
 .imgp-playlist__nav--next {
-	right: -0.6rem;
+	inset-inline-end: -0.6rem;
+}
+
+/* Right to left the previous card is on the right, and its arrow points
+   there. */
+.imgp-playlist__nav:dir(rtl) .imgp__icon {
+	transform: scaleX(-1);
 }
 
 /* The strip holds the row and its arrows, so the arrows sit over the row's
@@ -3234,6 +3925,50 @@
 	min-width: 0;
 }
 
-.imgp-playlist__nav {
-	top: 30%;
+/* --- On paper ---------------------------------------------------------------
+   A printed page gets the picture and the words: the poster of a video, the
+   waveform and title of a recording. None of the controls, which only ever
+   printed as a dark band of icons nobody can press. */
+
+@media print {
+
+	.imgp__chrome,
+	.imgp__bigplay,
+	.imgp__layers,
+	.imgp__unstick,
+	.imgp__resume,
+	.imgp__toast,
+	.imgp__play,
+	.imgp__controls,
+	.imgp__seek .imgp__time,
+	.imgp__transcript-tools,
+	.imgp-playlist__nav {
+		display: none !important;
+	}
+
+	.imgp.is-stuck {
+		position: static !important;
+		width: auto !important;
+		box-shadow: none !important;
+	}
+
+	.imgp--video .imgp__poster {
+		opacity: 1 !important;
+	}
+
+	.imgp .imgp__top {
+		opacity: 1 !important;
+		background: rgb(255 255 255 / 85%);
+		color: #000;
+	}
+
+	.imgp .imgp__top .imgp__title,
+	.imgp .imgp__top .imgp__artist {
+		color: #000;
+	}
+
+	.imgp__transcript-body {
+		max-height: none !important;
+		overflow: visible !important;
+	}
 }

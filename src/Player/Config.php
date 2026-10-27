@@ -18,6 +18,24 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Config {
 
 	/**
+	 * The factory colours, by the property each one paints.
+	 *
+	 * A player still wearing one of these is not printed with it: the
+	 * stylesheet holds the same value and changes it when the page behind the
+	 * player is dark, and a value written into the element's own style would
+	 * win over that every time. That is how a fresh install's dark-grey play
+	 * button and near-black title ended up invisible on every dark theme.
+	 */
+	public const FACTORY = array(
+		'--imgp-accent'        => '#1f2937',
+		'--imgp-wave'          => '#c9ced6',
+		'--imgp-wave-progress' => '#1f2937',
+		'--imgp-text'          => '#111827',
+		'--imgp-meta'          => '#6b7280',
+		'--imgp-control'       => '#374151',
+	);
+
+	/**
 	 * Merge a preset with instance overrides.
 	 *
 	 * @param array<string, mixed> $atts Sanitised attributes.
@@ -90,7 +108,44 @@ final class Config {
 			$vars['--imgp-bg'] = (string) $config['background'];
 		}
 
+		$factory = static fn ( string $name ): bool => isset( $vars[ $name ] )
+			&& strtolower( trim( $vars[ $name ] ) ) === self::FACTORY[ $name ];
+
+		/*
+		 * The played part of the waveform follows the accent only when both
+		 * are the factory's: a site that chose a yellow accent and left the
+		 * progress alone keeps the dark progress it has always had.
+		 */
+		$plain_accent = $factory( '--imgp-accent' );
+
+		foreach ( array_keys( self::FACTORY ) as $name ) {
+			if ( '--imgp-wave-progress' === $name && ! $plain_accent ) {
+				continue;
+			}
+
+			if ( $factory( $name ) ) {
+				unset( $vars[ $name ] );
+			}
+		}
+
+		if ( $plain_accent ) {
+			unset( $vars['--imgp-on-accent'] );
+		}
+
 		return $vars;
+	}
+
+	/**
+	 * The colours a list or a timestamp outside the player shares with it.
+	 *
+	 * @param array<string, mixed> $config Effective settings.
+	 * @return array<string, string>
+	 */
+	public static function shared_variables( array $config ): array {
+		return array_intersect_key(
+			self::css_variables( $config ),
+			array_flip( array( '--imgp-accent', '--imgp-on-accent', '--imgp-text', '--imgp-meta' ) )
+		);
 	}
 
 	/**

@@ -22,6 +22,7 @@ namespace ImaginaPlayer\Render;
 use ImaginaPlayer\Media\Track;
 use ImaginaPlayer\Peaks\PeaksRepository;
 use ImaginaPlayer\Player\Attributes;
+use ImaginaPlayer\Player\Config;
 use ImaginaPlayer\Protection\Vault;
 use ImaginaPlayer\Settings;
 
@@ -92,6 +93,17 @@ final class PlaylistRenderer {
 		$tracks     = array_map( array( $this, 'client_track' ), $items );
 		$horizontal = in_array( $layout, self::HORIZONTAL, true );
 
+		/*
+		 * The list is outside the player, so the player's colours never
+		 * reached it: the highlight on the current track was drawn from an
+		 * accent that was not defined there, and came out as nothing at all.
+		 */
+		$style = Config::style_attribute(
+			Config::shared_variables(
+				Config::resolve( Attributes::sanitize( array( 'preset' => (string) ( $atts['preset'] ?? Settings::DEFAULT_PRESET ) ) ) )
+			)
+		);
+
 		ob_start();
 		?>
 		<div
@@ -99,6 +111,9 @@ final class PlaylistRenderer {
 			id="<?php echo esc_attr( $id ); ?>"
 			data-imagina-playlist="<?php echo esc_attr( (string) wp_json_encode( $tracks ) ); ?>"
 			data-imagina-playlist-key="<?php echo esc_attr( self::stable_key( $items ) ); ?>"
+			<?php if ( '' !== $style ) : ?>
+				style="<?php echo esc_attr( $style ); ?>"
+			<?php endif; ?>
 		>
 			<?php if ( '' !== $heading ) : ?>
 				<h3 class="imgp-playlist__heading"><?php echo esc_html( $heading ); ?></h3>
@@ -137,16 +152,22 @@ final class PlaylistRenderer {
 							: '';
 						?>
 						<a class="imgp-playlist__link" href="<?php echo esc_url( $item['src'] ); ?>" data-index="<?php echo esc_attr( (string) $index ); ?>">
-							<?php if ( '' !== $item['thumbnail'] || $item['video'] ) : ?>
-								<span class="imgp-playlist__cover<?php echo '' === $item['thumbnail'] ? ' imgp-playlist__cover--blank' : ''; ?><?php echo $item['video'] ? ' imgp-playlist__cover--video' : ''; ?>">
-									<?php if ( '' !== $item['thumbnail'] ) : ?>
-										<img class="imgp-playlist__art" src="<?php echo esc_url( $item['thumbnail'] ); ?>" alt="" loading="lazy" decoding="async" width="64" height="64" />
-									<?php endif; ?>
-									<?php if ( $horizontal ) : ?>
-										<?php echo $time; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped above. ?>
-									<?php endif; ?>
-								</span>
-							<?php endif; ?>
+							<?php
+							/*
+							 * Always a cover, a blank one when the item has no
+							 * picture. Without it an item with no cover sat flush
+							 * against the edge in a column of indented ones, and
+							 * left a hole in a grid.
+							 */
+							?>
+							<span class="imgp-playlist__cover<?php echo '' === $item['thumbnail'] ? ' imgp-playlist__cover--blank' : ''; ?><?php echo $item['video'] ? ' imgp-playlist__cover--video' : ''; ?>">
+								<?php if ( '' !== $item['thumbnail'] ) : ?>
+									<img class="imgp-playlist__art" src="<?php echo esc_url( $item['thumbnail'] ); ?>" alt="" loading="lazy" decoding="async" width="64" height="64" />
+								<?php endif; ?>
+								<?php if ( $horizontal ) : ?>
+									<?php echo $time; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped above. ?>
+								<?php endif; ?>
+							</span>
 
 							<span class="imgp-playlist__text">
 								<span class="imgp-playlist__title"><?php echo esc_html( $item['title'] ); ?></span>
@@ -155,7 +176,7 @@ final class PlaylistRenderer {
 								<?php endif; ?>
 							</span>
 
-							<?php if ( ! $horizontal || '' === $item['thumbnail'] && ! $item['video'] ) : ?>
+							<?php if ( ! $horizontal ) : ?>
 								<?php echo $time; // phpcs:ignore WordPress.Security.EscapeOutput -- escaped above. ?>
 							<?php endif; ?>
 						</a>

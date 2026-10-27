@@ -339,7 +339,7 @@ check( 'and the list closes', true === ( $r['menuClosedAfterPick'] ?? false ) );
 echo '## The gear' . PHP_EOL;
 check( 'the gear is shown', true === ( $r['gearShown'] ?? false ) );
 check( 'it offers speed and a link', array( 'Speed · 1.5×', 'Copy link to this moment' ) === ( $r['gearItems'] ?? array() ), wp_json_encode( $r['gearItems'] ?? null ) );
-check( 'speed opens the list in the same panel', 7 === (int) ( $r['gearSpeedList'] ?? 0 ) && true === ( $r['gearSpeedStillOpen'] ?? false ), wp_json_encode( array( $r['gearSpeedList'] ?? null, $r['gearSpeedStillOpen'] ?? null ) ) );
+check( 'speed opens the list in the same panel, with a way back above the seven speeds', 8 === (int) ( $r['gearSpeedList'] ?? 0 ) && true === ( $r['gearSpeedStillOpen'] ?? false ), wp_json_encode( array( $r['gearSpeedList'] ?? null, $r['gearSpeedStillOpen'] ?? null ) ) );
 check( 'copying writes the address with the second and the player', is_string( $r['copied'] ?? null ) && str_contains( (string) $r['copied'], 't=77' ) && str_contains( (string) $r['copied'], 'player=intro' ) && ! str_contains( (string) $r['copied'], '#' ), (string) ( $r['copied'] ?? 'null' ) );
 check( 'and says so', 'Link copied' === ( $r['toast'] ?? '' ), (string) ( $r['toast'] ?? '' ) );
 

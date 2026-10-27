@@ -302,10 +302,21 @@ final class PlayerRenderer {
 			 * from the block at all. On `auto` it is the accent.
 			 */
 			$progress = (string) $video_config['progress_color'];
+			$accent   = (string) $config['accent'];
 
-			$vars['--imgp-progress'] = 'auto' === $progress
-				? (string) $config['accent']
-				: $progress;
+			/*
+			 * Except the factory accent, a dark slate chosen for a light page:
+			 * as the played part of a line on a dark bar it could hardly be
+			 * told from the part still to play. It takes the bar's own
+			 * foreground instead.
+			 */
+			if ( 'auto' === $progress ) {
+				$progress = Config::FACTORY['--imgp-accent'] === strtolower( trim( $accent ) )
+					? $vars['--imgp-on-chrome']
+					: $accent;
+			}
+
+			$vars['--imgp-progress'] = $progress;
 
 			$vars['--imgp-on-progress'] = Config::readable_on( $vars['--imgp-progress'] );
 		}
@@ -322,13 +333,22 @@ final class PlayerRenderer {
 			// A video always gets a scrubber. A skin that hides it was designed for
 			// a bar of audio controls, and a video without a seek bar is broken.
 			'scrubber' => $track->is_video() || Skins::has_scrubber( $skin )
-				? $this->part_scrubber( $track, $config, $skin )
+				? $this->part_scrubber( $track, $config, $skin, ! $track->is_video() )
 				: '',
+			/*
+			 * A video's time is text on the bar, the way every video player
+			 * shows it. Two dark pills riding the seek line covered its first
+			 * and last chapter notches and the playhead itself; they stay on
+			 * audio, where they float over a waveform with room around it.
+			 */
+			'clock'    => $track->is_video() && $config['show_time'] ? $this->part_clock( $track ) : '',
 			'thumb'    => $config['show_thumbnail'] && '' !== $track->thumbnail ? $this->part_thumb( $track ) : '',
 			'play'     => $this->part_play(),
 			'meta'     => $this->part_meta( $track, $config ),
-			'controls' => $this->part_controls( $track, $config ),
-			'logo'     => $this->part_logo(),
+			// The brand mark goes inside the group of controls, so that on a
+			// phone, where the group takes a line of its own, the mark goes
+			// with it instead of wrapping onto a third line by itself.
+			'controls' => $this->part_controls( $track, $config, $this->part_logo() ),
 			// Only when the player may detach. A floating player a reader
 			// cannot dismiss is the thing everybody hates about floating
 			// players; without this the only way out is to scroll back.
@@ -390,15 +410,6 @@ final class PlayerRenderer {
 			}
 
 			if ( 'theater' === $layout ) {
-				$chrome = sprintf(
-					'<div class="imgp__chrome">%s<div class="imgp__bar">%s%s%s%s</div></div>',
-					$parts['scrubber'], // phpcs:ignore WordPress.Security.EscapeOutput
-					$parts['play'], // phpcs:ignore WordPress.Security.EscapeOutput
-					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
-					$parts['controls'], // phpcs:ignore WordPress.Security.EscapeOutput
-					$parts['video'] . $parts['logo'] // phpcs:ignore WordPress.Security.EscapeOutput
-				);
-
 				/*
 				 * The stacked skin puts the bar under the picture instead of on
 				 * it, and that is a difference in where the markup goes rather
@@ -408,12 +419,35 @@ final class PlayerRenderer {
 				 */
 				$outside = 'stacked' === $skin;
 
+				/*
+				 * The title goes over the top of the picture, in a gradient
+				 * that comes and goes with the controls, as on every video
+				 * site. On the bar it shared a row with a dozen buttons and
+				 * was down to "Clase 3: el…" at most widths. The stacked skin
+				 * draws nothing over the picture, which is its whole point, so
+				 * there it keeps its place on the bar.
+				 */
+				$top = ! $outside && '' !== $parts['meta']
+					? '<div class="imgp__top">' . $parts['meta'] . '</div>'
+					: '';
+
+				$chrome = sprintf(
+					'<div class="imgp__chrome">%s<div class="imgp__bar">%s%s%s%s<span class="imgp__spacer" aria-hidden="true"></span>%s</div></div>',
+					$parts['scrubber'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['play'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['controls'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['clock'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$outside ? $parts['meta'] : '', // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['video'] // phpcs:ignore WordPress.Security.EscapeOutput
+				);
+
 				printf(
-					'<div class="imgp__stage" style="--imgp-ratio:%s">%s%s%s%s%s</div>%s',
+					'<div class="imgp__stage" style="--imgp-ratio:%s">%s%s%s%s%s%s</div>%s',
 					esc_attr( str_replace( ':', ' / ', $track->aspect_ratio ) ),
 					$parts['media'], // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
 					$parts['poster'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['bigplay'], // phpcs:ignore WordPress.Security.EscapeOutput
+					$top, // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['mark'] . $parts['layers'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$outside ? '' : $chrome, // phpcs:ignore WordPress.Security.EscapeOutput
 					$outside ? $chrome : '' // phpcs:ignore WordPress.Security.EscapeOutput
@@ -425,7 +459,7 @@ final class PlayerRenderer {
 					$parts['scrubber'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['play'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
-					$parts['controls'] . $parts['logo'] // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['controls'] // phpcs:ignore WordPress.Security.EscapeOutput
 				);
 			} elseif ( 'inline' === $layout ) {
 				printf(
@@ -434,7 +468,7 @@ final class PlayerRenderer {
 					$parts['thumb'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['scrubber'], // phpcs:ignore WordPress.Security.EscapeOutput
-					$parts['controls'] . $parts['logo'] // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['controls'] // phpcs:ignore WordPress.Security.EscapeOutput
 				);
 			} else {
 				printf(
@@ -443,7 +477,7 @@ final class PlayerRenderer {
 					$parts['thumb'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['play'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
-					$parts['controls'] . $parts['logo'] // phpcs:ignore WordPress.Security.EscapeOutput
+					$parts['controls'] // phpcs:ignore WordPress.Security.EscapeOutput
 				);
 			}
 
@@ -621,7 +655,7 @@ final class PlayerRenderer {
 	 *
 	 * @param array<string, mixed> $config Effective settings.
 	 */
-	private function part_scrubber( Track $track, array $config, string $skin ): string {
+	private function part_scrubber( Track $track, array $config, string $skin, bool $pills = true ): string {
 		// No waveform over a video: it would mean downloading and decoding the
 		// audio of a file the visitor may never play, to draw a picture nobody
 		// looks at while watching one.
@@ -650,7 +684,7 @@ final class PlayerRenderer {
 				aria-valuenow="0"
 				aria-valuetext="<?php esc_attr_e( 'Not started', 'imagina-player' ); ?>"
 			>
-				<?php if ( $config['show_time'] ) : ?>
+				<?php if ( $pills && $config['show_time'] ) : ?>
 					<span class="imgp__time imgp__time--current">0:00</span>
 					<span class="imgp__time imgp__time--total"><?php echo esc_html( $this->format_time( $track->duration ) ); ?></span>
 				<?php endif; ?>
@@ -659,6 +693,16 @@ final class PlayerRenderer {
 		<?php
 
 		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Elapsed and total time as one line of text, for the bar of a video.
+	 */
+	private function part_clock( Track $track ): string {
+		return sprintf(
+			'<span class="imgp__clock"><span class="imgp__time imgp__time--current">0:00</span><span class="imgp__clock-sep" aria-hidden="true">/</span><span class="imgp__time imgp__time--total">%s</span></span>',
+			esc_html( $this->format_time( $track->duration ) )
+		);
 	}
 
 	private function part_thumb( Track $track ): string {
@@ -1006,6 +1050,21 @@ final class PlayerRenderer {
 
 		if ( 'hotspot' === $type ) {
 			$style = sprintf( '--imgp-x:%d%%;--imgp-y:%d%%', (int) $layer['x'], (int) $layer['y'] );
+
+			/*
+			 * Which way the label opens. Centred above the dot it was cut off
+			 * by the edge of the picture for a spot near a side, and for a spot
+			 * near the top it opened above the picture, where nothing shows.
+			 */
+			if ( (int) $layer['y'] < 25 ) {
+				$classes[] = 'imgp__hotspot--below';
+			}
+
+			if ( (int) $layer['x'] < 20 ) {
+				$classes[] = 'imgp__hotspot--left';
+			} elseif ( (int) $layer['x'] > 80 ) {
+				$classes[] = 'imgp__hotspot--right';
+			}
 		} else {
 			$classes[] = 'imgp__layer--at-' . (string) $layer['position'];
 		}
@@ -1339,8 +1398,9 @@ final class PlayerRenderer {
 	 * Skip, speed, download and volume — everything that sits to the trailing side.
 	 *
 	 * @param array<string, mixed> $config Effective settings.
+	 * @param string               $logo   The brand mark, already escaped.
 	 */
-	private function part_controls( Track $track, array $config ): string {
+	private function part_controls( Track $track, array $config, string $logo = '' ): string {
 		ob_start();
 		?>
 		<div class="imgp__controls">
@@ -1398,6 +1458,8 @@ final class PlayerRenderer {
 					/>
 				</div>
 			<?php endif; ?>
+
+			<?php echo $logo; // phpcs:ignore WordPress.Security.EscapeOutput -- built by part_logo(), which escapes. ?>
 		</div>
 		<?php
 

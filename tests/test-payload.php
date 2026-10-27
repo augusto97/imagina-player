@@ -58,7 +58,14 @@ $budgets = array(
 	 * The sticky player and the visitor-side waveform measurement left the
 	 * core for chunks of their own in the same release.
 	 */
-	'the video chunk' => array( $video, 18.0 ),
+	/*
+	 * And to 19.0 in 1.48.0, for the one-row bar on a phone: the bar's and
+	 * the picture's heights measured so subtitles, menus and the toast clear
+	 * the controls, the gear offering whatever the narrow bar cannot show,
+	 * and a tap on a playing picture that brings the controls back instead
+	 * of pausing.
+	 */
+	'the video chunk' => array( $video, 19.0 ),
 	'the HLS glue'    => array( $glue, 6.0 ),
 	'the layer chunk' => array( $layers, 8.0 ),
 	'the playlist'    => array( $playlist, 6.0 ),
@@ -94,8 +101,16 @@ $budgets = array(
 	 * sandboxed frame — so it carries the playlist even where there is
 	 * none. Splitting it is the next saving worth making, once the preview
 	 * can inline a chunk's stylesheet as it inlines its script.
+	 *
+	 * And to 54.0 in 1.48.0, the largest single step, for the visual audit:
+	 * the one-row video bar with its title over the picture and its menus
+	 * fitted to the picture, the factory colours' dark set, logical
+	 * properties for right-to-left pages, forty-four-pixel touch targets,
+	 * the theme defence extended to the playlist and the timestamp buttons,
+	 * numbered tracks, and print styles. About one and a half kilobytes on
+	 * the wire.
 	 */
-	'the stylesheet'  => array( $css, 42.0 ),
+	'the stylesheet'  => array( $css, 54.0 ),
 );
 
 foreach ( $budgets as $label => $budget ) {
@@ -133,9 +148,9 @@ $compressed = array(
 	// Tightened from 6.5 in 1.19.0. Today's stylesheet compresses to 5.7 KB,
 	// and the raw budget above has now been raised twice; this is the half of
 	// the pair that has to hold.
-	// Raised to 6.5 in 1.43.0, 7.5 in 1.44.0 and 8.0 in 1.45.0, with the raw
-	// budget above; see there for what to do about it.
-	'the stylesheet'  => array( $css, 8.0 ),
+	// Raised to 6.5 in 1.43.0, 7.5 in 1.44.0, 8.0 in 1.45.0 and 10.0 in
+	// 1.48.0, with the raw budget above; see there for what to do about it.
+	'the stylesheet'  => array( $css, 10.0 ),
 );
 
 foreach ( $compressed as $label => $budget ) {

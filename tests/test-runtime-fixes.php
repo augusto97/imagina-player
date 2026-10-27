@@ -211,7 +211,8 @@ function tap(el, x, y) {
 	out.gearExpanded = gear.getAttribute('aria-expanded');
 	out.speedCollapsed = speed.getAttribute('aria-expanded');
 	key(document.activeElement || document.body, 'ArrowDown');
-	out.arrowMoved = document.activeElement && document.activeElement.textContent;
+	var gearItems = menu.querySelectorAll('.imgp__menuitem');
+	out.arrowMoved = document.activeElement && gearItems[1] === document.activeElement ? document.activeElement.textContent : null;
 	key(document.activeElement || document.body, 'Escape');
 	out.closedByEscape = menu.hidden;
 	out.focusBackOnGear = document.activeElement === gear;
@@ -360,7 +361,7 @@ check( 'the speed button opens its list', true === ( $r['speedOpen'] ?? false ) 
 check( 'pressing the gear then swaps the gear’s list in, in one press', true === ( $r['gearSwapped'] ?? false ) );
 check( 'which says it is open', 'true' === ( $r['gearExpanded'] ?? '' ) );
 check( 'while the speed button says it is not', 'false' === ( $r['speedCollapsed'] ?? '' ) );
-check( 'the arrows walk the list', is_string( $r['arrowMoved'] ?? null ) && str_contains( (string) $r['arrowMoved'], 'Copy link' ), (string) ( $r['arrowMoved'] ?? 'null' ) );
+check( 'the arrows walk the list', is_string( $r['arrowMoved'] ?? null ), (string) ( $r['arrowMoved'] ?? 'null' ) );
 check( 'Escape closes it', true === ( $r['closedByEscape'] ?? false ) );
 check( 'and hands focus back to the gear', true === ( $r['focusBackOnGear'] ?? false ) );
 

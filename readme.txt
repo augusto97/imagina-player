@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.47.0
+Stable tag: 1.48.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -176,6 +176,88 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.48.0 =
+The visual audit: how the player looks on a phone, on a dark theme, beside a
+theme's own styles and right to left.
+
+* Changed: a video's bar is one row. On a phone it holds play, the time, sound,
+  subtitles, the gear and full screen; skip is a double tap on either side of
+  the picture, and chapters, search, quality, picture-in-picture, speed and
+  the download are in the gear, under their own names. On a wider player the
+  volume slider, search, quality and picture-in-picture move into the gear
+  only when the row runs out of room. The bar used to wrap into three ragged
+  rows on a phone and cover the whole picture.
+* Changed: a video's title and artist sit over the top of the picture, in a
+  band that comes and goes with the controls. On the bar they shared a row
+  with a dozen buttons and were cut to a word or two. The stacked skin, which
+  draws nothing over the picture, keeps them on its bar.
+* Changed: a video's time is text on the bar, "0:12 / 3:40", instead of two
+  dark pills on the seek line that covered the playhead and the first and last
+  chapter notches. Audio keeps the pills that ride its waveform.
+* Changed: a click on the dark gradient above a video's bar goes through to
+  the picture. On a phone that gradient covered nearly all of it.
+* Fixed: on a phone, a tap on a playing video paused it, including the tap
+  meant to bring the controls back. A tap now shows or hides the controls; a
+  tap on the round button in the middle, shown with the controls, pauses.
+* Fixed: a video started with a tap kept its controls up for as long as it
+  played, and so did one whose button had been tapped at all: the controls
+  only faded after the mouse had moved. They fade on a phone as on a computer.
+* Fixed: menus were cut off by the picture on a phone, and the search panel
+  came out nineteen pixels tall with its results out of reach. Menus hang
+  from the bar, are never taller than the picture above it, and on a phone
+  are a sheet across the picture. The speed list opened from the gear has a
+  way back to the gear.
+* Fixed: subtitles were drawn on top of the controls while they were showing.
+  They are lifted by the bar's real height, and not at all under the stacked
+  skin, whose bar is not on the picture.
+* Fixed: on a dark theme the title, the transcript and the playlist were
+  near-black on near-black, and the play button a dark disc on a dark page.
+  The words now take the page's own text colour, and on a dark page the
+  factory colours change to a light play button, a dark icon and a waveform
+  that reads. Colours an author chose are never changed.
+* Fixed: a video's played line, on the factory colours, was a dark slate on a
+  dark bar and could hardly be seen. It takes the bar's own foreground.
+* Fixed: a pale accent gave a white play icon on a pale disc and a white close
+  button on a pale bar.
+* Fixed: the card skin with a call to action, an email gate, an action bar or
+  the transcript squeezed the controls into a column beside the cover; those
+  go underneath, full width.
+* Fixed: "Compact, one line" and "Pill" were three lines at every width. They
+  are one line, and wrap the seek line underneath only on a phone.
+* Fixed: a centred caption over the picture was held to half its width; a
+  shortcode card was taller than a phone's picture and lost its close button;
+  a hotspot's label was cut off at the edges, and opened above the picture for
+  a spot near the top; captions along the bottom sat on the bar and stayed
+  there after it faded, because the rule that moved them named a class the
+  player never set.
+* Fixed: the floating video card was 179 pixels wide at "bottom" on a phone,
+  with its full-screen button cut off, and a different width in each corner.
+  It is one width everywhere, never under fifteen rem, with play, sound, the
+  seek line and full screen.
+* Fixed: a theme's list numbers, indents and underlined links reached the
+  playlist, and its filled buttons the slider's arrows and the timestamp
+  buttons. A shortcode's own buttons and links inside an overlay are no
+  longer flattened by the player's defences.
+* Fixed: the transcript's search box had lost its border and padding to the
+  same defences.
+* Changed: a list's tracks are numbered, the one playing is marked with a play
+  sign and a stronger tint, and a track without a cover gets a blank one, so
+  the column stays aligned and the grid has no holes. The grid is two columns
+  on a phone. A video without a still is a dark frame with a visible play sign.
+* Changed: the "beside" playlist drops its scroll box once it has wrapped under
+  the picture; the slider's arrows sit level with the middle of the pictures.
+* Changed: forty-four-pixel touch targets on touch screens, without making any
+  icon bigger; the speed is a chip; the "resume from" line steps aside while a
+  menu or the chapter tip is up, and "Link copied" moves the big button aside
+  on a small picture.
+* Changed: right-to-left pages get the player's margins, alignment and the
+  current-item marks on the right side; the seek line still runs left to
+  right.
+* Changed: printed pages show the poster or the waveform and the title, not the
+  controls.
+* Fixed: on a phone, a single mute button no longer gets a line of its own, and
+  the brand mark stays on the line with the controls.
 
 = 1.47.0 =
 The security findings of the audit. None was a door anyone could walk

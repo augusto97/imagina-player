@@ -52,6 +52,9 @@ const SPEED_CHOICES = [ 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2 ];
 /** How long "Link copied" stays on the picture. */
 const TOAST_FOR = 1800;
 
+/** How far from the middle of the big button a finger still means it. */
+const DISC_REACH = 48;
+
 /**
  * Whether a key pressed on this element is that element's, not the player's.
  *
@@ -161,6 +164,7 @@ export class VideoChrome {
 
 		this.bindBigPlay();
 		this.bindState();
+		this.bindMeasure();
 		this.bindChromeVisibility();
 		this.bindFullscreen();
 		this.bindPictureInPicture();
@@ -284,10 +288,90 @@ export class VideoChrome {
 			return;
 		}
 
+		let finger = false;
+		let shown = false;
+
+		this.on( button, 'pointerdown', ( event: PointerEvent ) => {
+			finger = 'touch' === event.pointerType;
+			shown = ! this.root.classList.contains( 'is-chrome-idle' );
+		} );
+
 		this.on( button, 'click', ( event: MouseEvent ) => {
 			event.preventDefault();
+
+			/*
+			 * The button covers the whole picture, so on a phone every tap on
+			 * a playing video paused it — the tap meant to bring the controls
+			 * back included. While it plays, a finger pauses only on the disc
+			 * in the middle, and only when the controls were already up to
+			 * show it; anywhere else the tap is for the controls.
+			 */
+			if ( finger && ! this.media.paused ) {
+				const box = button.getBoundingClientRect();
+				const off = Math.hypot(
+					event.clientX - ( box.left + box.width / 2 ),
+					event.clientY - ( box.top + box.height / 2 )
+				);
+
+				finger = false;
+
+				if ( ! shown || off > DISC_REACH ) {
+					return;
+				}
+			}
+
 			this.host.toggle();
 		} );
+	}
+
+	/**
+	 * Sizes the stylesheet cannot know: how tall the bar is, how tall the
+	 * picture is, and how tall the title over it.
+	 *
+	 * Subtitles are lifted by the bar's height and menus fit the picture by
+	 * it; both were fixed numbers, so the words sat on the controls and a
+	 * menu on a phone ran off the top of the picture.
+	 */
+	private bindMeasure(): void {
+		const chrome =
+			this.root.querySelector< HTMLElement >( '.imgp__chrome' );
+
+		if ( ! chrome || 'undefined' === typeof ResizeObserver ) {
+			return;
+		}
+
+		const from =
+			chrome.querySelector< HTMLElement >( '.imgp__scrubber' ) ?? chrome;
+		const top = this.root.querySelector< HTMLElement >( '.imgp__top' );
+		const style = this.root.style;
+
+		const measure = (): void => {
+			style.setProperty(
+				'--imgp-chrome-h',
+				`${ Math.round(
+					chrome.getBoundingClientRect().bottom -
+						from.getBoundingClientRect().top
+				) }px`
+			);
+
+			if ( this.stage ) {
+				style.setProperty(
+					'--imgp-stage-h',
+					`${ this.stage.clientHeight }px`
+				);
+			}
+
+			if ( top ) {
+				style.setProperty( '--imgp-top-h', `${ top.offsetHeight }px` );
+			}
+		};
+
+		const observer = new ResizeObserver( measure );
+
+		observer.observe( this.root );
+		observer.observe( chrome );
+		measure();
+		this.cleanup.push( () => observer.disconnect() );
 	}
 
 	/**
@@ -331,14 +415,18 @@ export class VideoChrome {
 			this.showChrome();
 		};
 
-		for ( const type of [
-			'pointermove',
-			'pointerdown',
-			'focusin',
-			'play',
-			'pause',
-		] ) {
+		for ( const type of [ 'pointermove', 'pointerdown', 'focusin' ] ) {
 			this.on( this.root, type, wake );
+		}
+
+		/*
+		 * On the media, not the player: media events do not bubble, so these
+		 * two never reached the listener on the player at all. With a mouse
+		 * nobody noticed — moving it starts the countdown — but a video
+		 * started with a tap kept its controls up for as long as it played.
+		 */
+		for ( const type of [ 'play', 'pause' ] ) {
+			this.on( this.media, type, wake );
 		}
 
 		this.on( this.root, 'pointerleave', ( event: PointerEvent ) => {
@@ -368,9 +456,19 @@ export class VideoChrome {
 		}
 
 		this.idleTimer = window.setTimeout( () => {
+			const active = this.root.ownerDocument.activeElement;
+
+			/*
+			 * Kept up while the keyboard is in the controls — focus a person
+			 * can see. A tap or a click leaves focus on what was pressed too,
+			 * and counting that kept the controls up for good on every phone
+			 * once anything had been touched.
+			 */
 			if (
 				this.menuOwner ||
-				this.root.contains( this.root.ownerDocument.activeElement )
+				( active &&
+					this.root.contains( active ) &&
+					active.matches( ':focus-visible' ) )
 			) {
 				return;
 			}
@@ -751,6 +849,7 @@ export class VideoChrome {
 	private showMenu( menu: HTMLElement, opener: HTMLElement | null ): void {
 		menu.hidden = false;
 		this.menuOwner = opener;
+		this.root.classList.add( 'has-menu' );
 		opener?.setAttribute( 'aria-expanded', 'true' );
 		this.showChrome();
 
@@ -878,12 +977,26 @@ export class VideoChrome {
 
 		this.menuOwner = null;
 
+		if ( ! keep ) {
+			this.root.classList.remove( 'has-menu' );
+		}
+
 		if ( owner && owner !== keep ) {
 			owner.setAttribute( 'aria-expanded', 'false' );
 		}
 
+		/*
+		 * Back to the gear when the list came from a button the narrow bar
+		 * does not show: focus on something that is not drawn goes nowhere,
+		 * and the page's own focus with it.
+		 */
 		if ( returnFocus ) {
-			owner?.focus();
+			( owner && ! owner.getClientRects().length
+				? this.root.querySelector< HTMLElement >(
+						'.imgp__vbtn--settings'
+				  )
+				: owner
+			)?.focus();
 		}
 	}
 
@@ -1519,6 +1632,9 @@ export class VideoChrome {
 
 	private settingsItems(): MenuItem[] {
 		const items: MenuItem[] = [];
+		const settings = this.root.querySelector< HTMLElement >(
+			'.imgp__vbtn--settings'
+		);
 
 		// Only when the author left the speed control on: the gear does not
 		// bring back a control that was switched off.
@@ -1531,7 +1647,62 @@ export class VideoChrome {
 				action: true,
 				keepOpen: true,
 				onPick: () =>
-					this.openMenu( this.speedItems(), this.menuOwner, true ),
+					this.openMenu(
+						[
+							// The way back to the gear's own list, as a
+							// settings menu's second level has.
+							{
+								label: `‹ ${ this.i18n( 'back', 'Back' ) }`,
+								active: false,
+								action: true,
+								keepOpen: true,
+								onPick: () =>
+									this.openMenu(
+										this.settingsItems(),
+										settings,
+										true
+									),
+							},
+							...this.speedItems(),
+						],
+						settings,
+						true
+					),
+			} );
+		}
+
+		/*
+		 * Whatever the bar has but cannot show at this width — chapters,
+		 * search, quality, picture-in-picture and the download on a phone —
+		 * is offered here under its own name, and does what its button would.
+		 * Hidden by the width, not switched off: a button the author turned
+		 * off is not on the bar at all.
+		 */
+		for ( const button of this.root.querySelectorAll< HTMLElement >(
+			'.imgp__vbtn, .imgp__download'
+		) ) {
+			if (
+				button.hidden ||
+				button.classList.contains( 'imgp__vbtn--settings' ) ||
+				button.getClientRects().length
+			) {
+				continue;
+			}
+
+			items.push( {
+				label: button.getAttribute( 'aria-label' ) ?? '',
+				active: false,
+				action: true,
+				keepOpen: true,
+				onPick: () => {
+					// A button that does something rather than open a list
+					// leaves the gear's list up behind it; put it away.
+					button.click();
+
+					if ( this.menuOwner === settings ) {
+						this.closeMenu( true );
+					}
+				},
 			} );
 		}
 
