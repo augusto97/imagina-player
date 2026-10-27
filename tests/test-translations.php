@@ -40,14 +40,20 @@ function read_po( string $file ): array {
 	$current = array( 'msgid' => null, 'plural' => '', 'msgstr' => array(), 'refs' => array() );
 	$pending = array();
 	$field   = '';
+	$context = '';
 
 	$unescape = static function ( string $v ): string {
 		return str_replace( array( '\\n', '\\t', '\\"', '\\\\' ), array( "\n", "\t", '"', '\\' ), $v );
 	};
 
+	// A context goes in front of the msgid, joined as the MO format joins
+	// them, so an entry for a block's title is not the same entry as the
+	// same words in a panel.
 	$flush = static function () use ( &$entries, &$current ): void {
 		if ( null !== $current['msgid'] && '' !== $current['msgid'] ) {
-			$entries[ $current['msgid'] ] = array(
+			$key = ( $current['context'] ?? '' ) === '' ? $current['msgid'] : $current['context'] . "\x04" . $current['msgid'];
+
+			$entries[ $key ] = array(
 				'plural' => $current['plural'],
 				'msgstr' => $current['msgstr'],
 				'refs'   => $current['refs'],
@@ -77,9 +83,17 @@ function read_po( string $file ): array {
 			continue;
 		}
 
+		if ( preg_match( '/^msgctxt\s+"(.*)"$/', $line, $m ) ) {
+			$flush();
+			$context = $unescape( $m[1] );
+			continue;
+		}
+
 		if ( preg_match( '/^msgid\s+"(.*)"$/', $line, $m ) ) {
 			$flush();
-			$current['msgid'] = $unescape( $m[1] );
+			$current['msgid']   = $unescape( $m[1] );
+			$current['context'] = $context;
+			$context            = '';
 			$current['refs']  = $pending;
 			$pending          = array();
 			$field            = 'msgid';

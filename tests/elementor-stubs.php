@@ -21,6 +21,7 @@ class Controls_Manager {
 	const MEDIA    = 'media';
 	const URL      = 'url';
 	const REPEATER = 'repeater';
+	const HIDDEN   = 'hidden';
 }
 
 class Repeater {

@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.48.0
+Stable tag: 1.49.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -176,6 +176,65 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.49.0 =
+The block editor and the settings screen, from the editor audit.
+
+* Fixed: "Site: on" and "Site: off" in the block's inspector were read from
+  the factory's defaults, so a site that had turned the download button on
+  was told it was off, and the preset the block had chosen was ignored. They
+  now come from the block's own preset, and for a video from the site's video
+  settings, which the video rows had never shown at all.
+* Fixed: settings about behaviour offered "Show" and "Hide" — "Hide YouTube's
+  interface: Show" meant hiding it. They say On and Off.
+* Fixed: the video "Shape" showed 16:9 for a block that follows the site, and
+  once changed could never go back. It has "Use site setting", naming the
+  site's shape.
+* New: a watermark can be set from the block and the Elementor widget — an
+  image, a corner and an opacity. It was in the player and reachable only
+  from a shortcode.
+* Fixed: the editor's preview could never show subtitles, so its transcript
+  was always empty and its subtitles button did nothing. Subtitle files of
+  this site are written into the preview; one on another site is named in a
+  note under it.
+* Fixed: a video from YouTube or Vimeo offered search, the transcript and
+  picture-in-picture, which cannot work there, and an MP4 offered to hide
+  YouTube's interface. Each is shown only where it does something.
+* Fixed: an overlay the site would leave out — a call to action with no
+  address, a caption with no words, an image with no image — appeared in the
+  list and never on the page. Each says what it needs, on the overlay.
+* Changed: the audio block offers text, image and shortcode overlays as what
+  they are beside audio, under the player, and no longer a spot to press on a
+  picture it does not have. The email gate has a thank-you message, and
+  "Can be closed" explains what it means for each kind.
+* Changed: replacing a video's file says that the old subtitles, chapters,
+  poster and storyboard are still there, with a button to clear them; a
+  YouTube or Vimeo address drops subtitle files it cannot use. The video
+  block's replace accepts only video.
+* Changed: the playlist block keeps what was typed when tracks are edited in
+  the media library, keeps addresses added by hand, adds new picks at the
+  end, and takes the files' lengths. It has a preset, per-track artist and
+  cover, tracks added by address, and a length for those.
+* Changed: the editor's preview shows that it is loading, and says why it
+  failed with a way to try again. It no longer reloads for a class name or an
+  alignment.
+* Changed: "Hide the controls after" is in seconds everywhere. The labels for
+  the floating player and for remembering the position read the same in the
+  block, the settings and Elementor. The poster's choices are named the same
+  everywhere.
+* Changed: the settings screen's Video panel puts every control under
+  Controls, behaviour under Behaviour, and keeps "Keeping the file" for the
+  download button. Saving says what the site changed — a path that is not a
+  program, a number out of range, a colour that is not one — and why a save
+  failed. A number field can be cleared to type a new number.
+* Changed: deleting a preset asks first and says that its blocks will use the
+  default. A default preset that went missing comes back in the brand colours.
+* Changed: captured addresses are shown in the site's time zone; the export
+  says its times are UTC.
+* Fixed: block names, descriptions and keywords were never translatable; they
+  are now, and translated into Spanish. The playlist block says what it does
+  today, and all three blocks have an example in the inserter.
+* Fixed: the focus ring of the inspector's On/Off segments was cut off.
 
 = 1.48.0 =
 The visual audit: how the player looks on a phone, on a dark theme, beside a

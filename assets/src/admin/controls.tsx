@@ -6,8 +6,8 @@
  * and the WordPress components carry that look with them.
  */
 
-import { useId } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { useId, useState } from '@wordpress/element';
+import { __, sprintf } from '@wordpress/i18n';
 import type { ReactNode } from 'react';
 
 interface FieldProps {
@@ -102,19 +102,68 @@ export function NumberInput( {
 	step = 1,
 	suffix,
 }: NumberProps ) {
+	/*
+	 * What is being typed, while it is being typed. The field used to hand
+	 * every keystroke straight to the number, so clearing it to type a new one
+	 * stored zero — and "Bars per waveform" came back from the server as the
+	 * smallest it allows.
+	 */
+	const [ typed, setTyped ] = useState< string | null >( null );
+	const shown = typed ?? String( value );
+	const number = Number( shown );
+	const outside =
+		'' !== shown.trim() &&
+		( Number.isNaN( number ) ||
+			( undefined !== min && number < min ) ||
+			( undefined !== max && number > max ) );
+
+	const clamp = ( n: number ): number =>
+		Math.min( max ?? n, Math.max( min ?? n, n ) );
+
 	return (
 		<span className="imgpa-number">
 			<input
 				type="number"
-				value={ value }
+				value={ shown }
 				min={ min }
 				max={ max }
 				step={ step }
-				onChange={ ( event ) =>
-					onChange( Number( event.target.value ) )
-				}
+				aria-invalid={ outside || undefined }
+				onChange={ ( event ) => {
+					const raw = event.target.value;
+
+					setTyped( raw );
+
+					if (
+						'' !== raw.trim() &&
+						! Number.isNaN( Number( raw ) )
+					) {
+						onChange( Number( raw ) );
+					}
+				} }
+				// Left empty or out of range, it goes back to a number the
+				// site will keep, where the person can see it.
+				onBlur={ () => {
+					if ( '' === shown.trim() || Number.isNaN( number ) ) {
+						onChange( value );
+					} else if ( outside ) {
+						onChange( clamp( number ) );
+					}
+
+					setTyped( null );
+				} }
 			/>
 			{ suffix && <em>{ suffix }</em> }
+			{ outside && undefined !== min && undefined !== max && (
+				<span className="imgpa-number__hint">
+					{ sprintf(
+						/* translators: 1: the smallest value, 2: the largest. */
+						__( 'Between %1$s and %2$s.', 'imagina-player' ),
+						String( min ),
+						String( max )
+					) }
+				</span>
+			) }
 		</span>
 	);
 }

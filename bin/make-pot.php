@@ -130,6 +130,50 @@ foreach ( sources( $root ) as $file ) {
 	}
 }
 
+/*
+ * What a block's own `block.json` says: its title, description and keywords.
+ * WordPress translates these itself when the block is registered, under the
+ * contexts below, but only if the translation has them — and the template
+ * never did, so the inserter named and described every block in English on a
+ * Spanish site.
+ */
+foreach ( (array) glob( $root . '/blocks/*/block.json' ) as $json ) {
+	$block    = json_decode( (string) file_get_contents( (string) $json ), true );
+	$relative = ltrim( str_replace( $root, '', (string) $json ), '/' );
+
+	if ( ! is_array( $block ) ) {
+		continue;
+	}
+
+	$fields = array(
+		'block title'       => array( (string) ( $block['title'] ?? '' ) ),
+		'block description' => array( (string) ( $block['description'] ?? '' ) ),
+		'block keyword'     => array_map( 'strval', (array) ( $block['keywords'] ?? array() ) ),
+	);
+
+	foreach ( $fields as $context => $values ) {
+		foreach ( $values as $value ) {
+			if ( '' === $value ) {
+				continue;
+			}
+
+			$key = $context . "\x04" . $value . "\x04";
+
+			if ( ! isset( $entries[ $key ] ) ) {
+				$entries[ $key ] = array(
+					'msgid'   => $value,
+					'plural'  => '',
+					'context' => $context,
+					'comment' => '',
+					'places'  => array(),
+				);
+			}
+
+			$entries[ $key ]['places'][] = $relative;
+		}
+	}
+}
+
 ksort( $entries );
 
 $version = '1.0.0';
@@ -158,6 +202,10 @@ foreach ( $entries as $entry ) {
 
 	foreach ( array_unique( $entry['places'] ) as $place ) {
 		$out .= '#: ' . $place . "\n";
+	}
+
+	if ( '' !== ( $entry['context'] ?? '' ) ) {
+		$out .= 'msgctxt "' . po_escape( $entry['context'] ) . "\"\n";
 	}
 
 	$out .= 'msgid "' . po_escape( $entry['msgid'] ) . "\"\n";

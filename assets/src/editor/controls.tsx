@@ -25,6 +25,12 @@ interface TristateProps {
 	/** What the site's own setting is, shown on the inherit segment. */
 	siteValue?: boolean;
 	help?: string;
+	/**
+	 * On and Off rather than Show and Hide, for a setting that is about how
+	 * the player behaves rather than whether something is on screen. "Hide"
+	 * on "Hide YouTube's interface" meant showing it.
+	 */
+	onOff?: boolean;
 }
 
 export function Tristate( {
@@ -33,6 +39,7 @@ export function Tristate( {
 	onChange,
 	siteValue,
 	help,
+	onOff = false,
 }: TristateProps ) {
 	const current = INHERIT === value || undefined === value ? INHERIT : value;
 	/*
@@ -50,8 +57,18 @@ export function Tristate( {
 
 	const options: Array< { value: string; label: string } > = [
 		{ value: INHERIT, label: inheritLabel },
-		{ value: 'yes', label: __( 'Show', 'imagina-player' ) },
-		{ value: 'no', label: __( 'Hide', 'imagina-player' ) },
+		{
+			value: 'yes',
+			label: onOff
+				? __( 'On', 'imagina-player' )
+				: __( 'Show', 'imagina-player' ),
+		},
+		{
+			value: 'no',
+			label: onOff
+				? __( 'Off', 'imagina-player' )
+				: __( 'Hide', 'imagina-player' ),
+		},
 	];
 
 	return (
@@ -88,6 +105,8 @@ interface TristateListProps {
 	onChange: ( attribute: string, value: string ) => void;
 	/** Site defaults, keyed by attribute, so each row can say what it inherits. */
 	site?: Record< string, boolean >;
+	/** On and Off rather than Show and Hide; see `Tristate`. */
+	onOff?: boolean;
 }
 
 /**
@@ -97,12 +116,14 @@ interface TristateListProps {
  * @param root0.values
  * @param root0.onChange
  * @param root0.site
+ * @param root0.onOff
  */
 export function TristateList( {
 	items,
 	values,
 	onChange,
 	site,
+	onOff = false,
 }: TristateListProps ) {
 	return (
 		<div className="imgp-editor__tri-list">
@@ -112,6 +133,7 @@ export function TristateList( {
 					label={ label }
 					value={ String( values[ attribute ] ?? INHERIT ) }
 					siteValue={ site?.[ attribute ] }
+					onOff={ onOff }
 					onChange={ ( value ) => onChange( attribute, value ) }
 				/>
 			) ) }

@@ -1,5 +1,5 @@
 import { useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 import {
 	Card,
@@ -96,6 +96,27 @@ export function PresetsPanel( { settings, onChange }: Props ) {
 	};
 
 	const remove = (): void => {
+		/*
+		 * Asked first, and said what follows: a block that chose this preset
+		 * does not break, it quietly takes the default instead, which is
+		 * easy to miss until a page looks different.
+		 */
+		// eslint-disable-next-line no-alert -- a one-line yes or no, before something that cannot be undone from here.
+		const sure = window.confirm(
+			sprintf(
+				/* translators: %s: the preset's name. */
+				__(
+					'Delete “%s”? Blocks that use it will use the default preset instead. This takes effect when you save.',
+					'imagina-player'
+				),
+				settings.presets[ active ]?.label ?? active
+			)
+		);
+
+		if ( ! sure ) {
+			return;
+		}
+
 		const next = { ...settings.presets };
 
 		delete next[ active ];
@@ -236,6 +257,12 @@ export function PresetsPanel( { settings, onChange }: Props ) {
 
 					{ 'controls' === tab && (
 						<>
+							<p className="imgpa-hint">
+								{ __(
+									'These are the controls of an audio player. A video has its own, under Video, whatever preset it uses.',
+									'imagina-player'
+								) }
+							</p>
 							<Field
 								label={ __( 'Skin', 'imagina-player' ) }
 								help={
@@ -427,11 +454,11 @@ export function PresetsPanel( { settings, onChange }: Props ) {
 							<div className="imgpa-toggles">
 								<Toggle
 									label={ __(
-										'Stick to the bottom while playing',
+										'Stick to the edge while scrolling',
 										'imagina-player'
 									) }
 									help={ __(
-										'The player follows the reader when it scrolls out of view.',
+										'The player follows the reader when it scrolls out of view while playing: a bar at the edge of the screen for audio, a small card in a corner for a video.',
 										'imagina-player'
 									) }
 									checked={ preset.sticky }
@@ -441,11 +468,11 @@ export function PresetsPanel( { settings, onChange }: Props ) {
 								/>
 								<Toggle
 									label={ __(
-										'Remember playback position',
+										'Remember where they left off',
 										'imagina-player'
 									) }
 									help={ __(
-										'Each listener resumes where they left off.',
+										'Each listener or viewer comes back to where they stopped.',
 										'imagina-player'
 									) }
 									checked={ preset.remember_position }

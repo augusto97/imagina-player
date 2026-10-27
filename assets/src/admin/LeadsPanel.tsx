@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import { dateI18n } from '@wordpress/date';
 
 import { deleteLead, downloadLeads, listLeads } from './api';
 import type { Lead } from './api';
@@ -176,7 +177,7 @@ export function LeadsPanel() {
 			{ ! loading && 0 === rows.length && (
 				<Notice tone="info">
 					{ __(
-						'Nothing yet. Add an email gate to a player under Calls to action in the block, and addresses will appear here.',
+						'Nothing yet. Add an email gate to a player under “Overlays and calls to action” in the block, and addresses will appear here.',
 						'imagina-player'
 					) }
 				</Notice>
@@ -227,7 +228,21 @@ export function LeadsPanel() {
 											'—'
 										) }
 									</td>
-									<td>{ row.created_at }</td>
+									<td>
+										{ /* Stored in UTC; shown in the
+										     site's own time zone, as the
+										     rest of the admin is. */ }
+										{ row.created_at
+											? dateI18n(
+													'Y-m-d H:i',
+													`${ row.created_at.replace(
+														' ',
+														'T'
+													) }Z`,
+													undefined
+											  )
+											: '—' }
+									</td>
 									<td>
 										<button
 											type="button"

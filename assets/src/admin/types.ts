@@ -33,6 +33,8 @@ export interface Preset {
 }
 
 export interface SettingsPayload {
+	/** Only after saving: what was saved differently from how it was sent. */
+	adjusted?: string[];
 	presets: Record< string, Preset >;
 	peaks: {
 		resolution: number;
@@ -93,6 +95,7 @@ export interface SettingsPayload {
 		show_chapters: boolean;
 		/** A box that finds the moment a word is said. */
 		show_search: boolean;
+		show_transcript: boolean;
 		show_skip: boolean;
 		show_time: boolean;
 		show_volume: boolean;

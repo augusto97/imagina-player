@@ -23,7 +23,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { useSelect } from '@wordpress/data';
 
-import { Swatches, TristateList } from './controls';
+import { Swatches, Tristate, TristateList } from './controls';
 import { DynamicSourcePanel } from './dynamic-source';
 import { Preview } from './preview';
 import {
@@ -35,6 +35,8 @@ import {
 import { SourceStatus, SourceWarning } from './source-notice';
 import { WaveformNotice } from './waveform-notice';
 import type { EditorData } from './types';
+import { layerGap } from './layer-rules';
+import type { LayerGap } from './layer-rules';
 
 /** A subtitle track or a chapter, as the block stores it. */
 type ListItem = Record< string, string | number | boolean >;
@@ -46,7 +48,7 @@ type Attributes = Record<
 
 interface EditProps {
 	attributes: Attributes;
-	setAttributes: ( next: Partial< Attributes > ) => void;
+	setAttributes: ( next: Record< string, unknown > ) => void;
 	/** Which block this is; the video one is video whatever the file says. */
 	name?: string;
 }
@@ -63,7 +65,7 @@ const BEHAVIOUR = [ 'sticky', 'remember_position' ];
 /** Which controls a video shows. */
 const VIDEO_CONTROLS = [
 	[ 'videoBigPlay', __( 'Play button over the picture', 'imagina-player' ) ],
-	[ 'videoTitle', __( 'Title on the bar', 'imagina-player' ) ],
+	[ 'videoTitle', __( 'Title and artist', 'imagina-player' ) ],
 	[ 'videoTime', __( 'Elapsed and total time', 'imagina-player' ) ],
 	[ 'videoSkip', __( 'Skip back and forward', 'imagina-player' ) ],
 	[ 'videoVolume', __( 'Volume', 'imagina-player' ) ],
@@ -87,9 +89,20 @@ const VIDEO_PLAYBACK = [
 	],
 	[
 		'videoProviderBare',
-		__( 'Hide YouTube’s own interface', 'imagina-player' ),
+		__( 'Hide the provider’s own interface', 'imagina-player' ),
 	],
 ] as const;
+
+/*
+ * Controls that do nothing for a video YouTube or Vimeo serves: search and
+ * the transcript read subtitle files this site holds, and picture-in-picture
+ * needs a video element of our own. Offering them there was a switch that
+ * did nothing.
+ */
+const NOT_FOR_PROVIDERS = [ 'videoSearch', 'videoTranscript', 'videoPip' ];
+
+/** And the other way round: only a provider has an interface to hide. */
+const ONLY_FOR_PROVIDERS = [ 'videoProviderBare' ];
 
 /** Settings that belong with the subtitles rather than with the buttons. */
 const VIDEO_SUBTITLES = [
@@ -114,8 +127,58 @@ function editorData(): EditorData {
 			frontendJs: '',
 			frameCss: '',
 			restUrl: '',
+			assetUrl: '',
+			frontendChunks: [],
 		}
 	);
+}
+
+/**
+ * What the block's own preset says, falling back to the default preset and
+ * then to the factory's, so "Site: on" means what this block will do.
+ * @param data
+ * @param preset
+ */
+function presetSays(
+	data: EditorData,
+	preset: string
+): Record< string, string | number | boolean > {
+	return (
+		data.presetValues?.[ preset ] ??
+		data.presetValues?.default ??
+		data.presetShape
+	);
+}
+
+/**
+ * A colour a picker can open on: a value that is a colour, or the fallback.
+ * @param value
+ * @param fallback
+ */
+function colour( value: unknown, fallback: string ): string {
+	return 'string' === typeof value && /^#[0-9a-f]{6}$/i.test( value )
+		? value
+		: fallback;
+}
+
+/**
+ * The site's answer for each video attribute, from the site's video settings.
+ * @param data
+ */
+function videoSays( data: EditorData ): Record< string, boolean > {
+	const site: Record< string, boolean > = {};
+
+	for ( const [ key, attribute ] of Object.entries(
+		data.videoOverrides ?? {}
+	) ) {
+		const value = data.video?.[ key ];
+
+		if ( 'boolean' === typeof value ) {
+			site[ attribute ] = value;
+		}
+	}
+
+	return site;
 }
 
 /**
@@ -136,7 +199,19 @@ function visibilityToggles(
 		.map( ( [ key, attribute ] ) => ( { key, attribute } ) );
 }
 
-function humanise( key: string ): string {
+function humanise( key: string, isVideo = false ): string {
+	if ( 'sticky' === key ) {
+		return isVideo
+			? __( 'Keep playing in a corner while scrolling', 'imagina-player' )
+			: __( 'Stick to the edge while scrolling', 'imagina-player' );
+	}
+
+	if ( 'remember_position' === key ) {
+		return isVideo
+			? __( 'Remember where the viewer left off', 'imagina-player' )
+			: __( 'Remember where the listener left off', 'imagina-player' );
+	}
+
 	const labels: Record< string, string > = {
 		show_artist: __( 'Show artist', 'imagina-player' ),
 		show_title: __( 'Show title', 'imagina-player' ),
@@ -146,8 +221,6 @@ function humanise( key: string ): string {
 		show_download: __( 'Show download button', 'imagina-player' ),
 		show_speed: __( 'Show speed control', 'imagina-player' ),
 		show_skip: __( 'Show skip buttons', 'imagina-player' ),
-		sticky: __( 'Stick to the bottom while playing', 'imagina-player' ),
-		remember_position: __( 'Remember playback position', 'imagina-player' ),
 	};
 
 	return labels[ key ] ?? key.replace( /_/g, ' ' );
@@ -178,6 +251,24 @@ const LAYER_TYPES: Array< { value: string; label: string } > = [
 
 /** The kinds that decorate rather than ask: they never stop playback. */
 const DECOR_KINDS = [ 'text', 'image', 'hotspot', 'shortcode' ];
+
+/*
+ * Beside audio there is no picture: a text, an image and a shortcode go into
+ * the flow under the player, and a spot to press has nothing to sit on.
+ */
+const AUDIO_LAYER_TYPES: Array< { value: string; label: string } > =
+	LAYER_TYPES.filter( ( { value } ) => 'hotspot' !== value ).map(
+		( type ) => {
+			const plain: Record< string, string > = {
+				text: __( 'Text under the player', 'imagina-player' ),
+				image: __( 'Image under the player', 'imagina-player' ),
+			};
+
+			return plain[ type.value ]
+				? { value: type.value, label: plain[ type.value ] }
+				: type;
+		}
+	);
 
 /**
  * Where a decoration goes when the author has not said.
@@ -212,16 +303,64 @@ const POSITIONS: Array< { value: string; label: string } > = [
 	{ value: 'bottom-right', label: __( 'Bottom right', 'imagina-player' ) },
 ];
 
-/*
- * Three answers, not two: a switch would force every block to freeze today's
- * site setting into itself, so changing the site later would leave old posts
- * behind. "Use site setting" is the default and stays live.
- */
-const TRISTATE: Array< { value: string; label: string } > = [
-	{ value: INHERIT, label: __( 'Use site setting', 'imagina-player' ) },
-	{ value: 'yes', label: __( 'Show', 'imagina-player' ) },
-	{ value: 'no', label: __( 'Hide', 'imagina-player' ) },
+/** The four corners a mark can sit in. */
+const CORNERS: Array< { value: string; label: string } > = [
+	{ value: 'top-left', label: __( 'Top left', 'imagina-player' ) },
+	{ value: 'top-right', label: __( 'Top right', 'imagina-player' ) },
+	{ value: 'bottom-left', label: __( 'Bottom left', 'imagina-player' ) },
+	{ value: 'bottom-right', label: __( 'Bottom right', 'imagina-player' ) },
 ];
+
+/**
+ * Why the server would leave a layer out, in the author's words, or nothing.
+ * @param layer
+ */
+function layerProblem( layer: ListItem ): string {
+	const messages: Record< LayerGap, string > = {
+		'': '',
+		words: __(
+			'Needs a headline or some text to appear.',
+			'imagina-player'
+		),
+		image: __( 'Needs an image to appear.', 'imagina-player' ),
+		label: __(
+			'Needs a label, some text or a link to appear.',
+			'imagina-player'
+		),
+		shortcode: __(
+			'Needs a shortcode, in brackets, to appear.',
+			'imagina-player'
+		),
+		url: __(
+			'Needs an address for its button to appear.',
+			'imagina-player'
+		),
+	};
+
+	return messages[ layerGap( layer ) ];
+}
+
+/**
+ * When an overlay can be closed, what that means for this kind.
+ * @param kind
+ */
+function closeHelp( kind: string ): string {
+	if ( 'email' === kind ) {
+		return __(
+			'Without this, the email gate has to be answered to carry on.',
+			'imagina-player'
+		);
+	}
+
+	if ( 'cta' === kind ) {
+		return __(
+			'One that appears part-way through can always be closed, so the video is never stuck behind it. This decides it for one at the end.',
+			'imagina-player'
+		);
+	}
+
+	return __( 'Adds a small × to put it away.', 'imagina-player' );
+}
 
 const RATIOS: Array< { value: string; label: string } > = [
 	{ value: '16:9', label: __( 'Widescreen (16:9)', 'imagina-player' ) },
@@ -255,6 +394,41 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 
 	/** The video is somebody else's to serve, which narrows what we can offer. */
 	const isProvider = [ 'youtube', 'vimeo' ].includes( identify( src ).kind );
+
+	// What "Site" means for this block: its own preset, and the site's video
+	// settings.
+	const presetValues = presetSays( data, preset );
+	const videoSite = videoSays( data );
+
+	/*
+	 * After a different file is put in, the subtitles, chapters, poster and
+	 * storyboard of the old one are still on the block. Kept, since a new cut
+	 * of the same lesson wants them, but said, with a way to clear them.
+	 */
+	const [ replaced, setReplaced ] = useState( false );
+
+	const replaceWith = ( next: { src: string; attachmentId: number } ) => {
+		const provider = [ 'youtube', 'vimeo' ].includes(
+			identify( next.src ).kind
+		);
+
+		setAttributes( {
+			...next,
+			// A provider's video cannot carry our subtitle files, and the
+			// panel that lists them is not shown for one, so they could never
+			// be removed.
+			...( provider ? { tracks: [] } : {} ),
+		} );
+
+		setReplaced(
+			( attributes.tracks as ListItem[] | undefined )?.length ||
+				( attributes.chapters as ListItem[] | undefined )?.length ||
+				Boolean( attributes.poster ) ||
+				Boolean( attributes.storyboard )
+				? true
+				: false
+		);
+	};
 
 	const tracks = ( attributes.tracks ?? [] ) as ListItem[];
 	const chapters = ( attributes.chapters ?? [] ) as ListItem[];
@@ -398,20 +572,22 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 				<MediaReplaceFlow
 					mediaId={ Number( attributes.attachmentId ?? 0 ) }
 					mediaURL={ src }
-					accept="audio/*,video/*"
-					allowedTypes={ [ 'audio', 'video' ] }
+					accept={ isVideoBlock ? 'video/*' : 'audio/*,video/*' }
+					allowedTypes={
+						isVideoBlock ? [ 'video' ] : [ 'audio', 'video' ]
+					}
 					onSelect={ ( media: {
 						id?: number;
 						url?: string;
 						title?: string;
 					} ) =>
-						setAttributes( {
+						replaceWith( {
 							src: media.url ?? '',
 							attachmentId: media.id ?? 0,
 						} )
 					}
 					onSelectURL={ ( url: string ) =>
-						setAttributes( { src: url, attachmentId: 0 } )
+						replaceWith( { src: url, attachmentId: 0 } )
 					}
 				/>
 			</BlockControls>
@@ -445,6 +621,36 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					*/ }
 					<SourceStatus src={ src } />
 					<SourceWarning src={ src } isVideoBlock={ isVideoBlock } />
+
+					{ replaced && (
+						<Notice
+							status="info"
+							onRemove={ () => setReplaced( false ) }
+						>
+							<p>
+								{ __(
+									'The file changed. The subtitles, chapters, poster and storyboard of the previous one are still on this block.',
+									'imagina-player'
+								) }
+							</p>
+							<Button
+								variant="secondary"
+								onClick={ () => {
+									setAttributes( {
+										tracks: [],
+										chapters: [],
+										poster: '',
+										posterId: 0,
+										storyboard: '',
+										storyboardId: 0,
+									} );
+									setReplaced( false );
+								} }
+							>
+								{ __( 'Clear them', 'imagina-player' ) }
+							</Button>
+						</Notice>
+					) }
 
 					{ resolved.posterReason && (
 						<Notice
@@ -721,10 +927,17 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 						__nextHasNoMarginBottom
 						id="imgp-download"
 						label={ __( 'Download file', 'imagina-player' ) }
-						help={ __(
-							'Optional. Defaults to the audio file itself.',
-							'imagina-player'
-						) }
+						help={
+							isVideo
+								? __(
+										'Optional. Defaults to the video file itself.',
+										'imagina-player'
+								  )
+								: __(
+										'Optional. Defaults to the audio file itself.',
+										'imagina-player'
+								  )
+						}
 					>
 						<div className="imgp-editor__media-picker">
 							{ downloadUrl && (
@@ -869,10 +1082,23 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 									'The player holds this shape before the video loads, so the page does not jump when it arrives.',
 									'imagina-player'
 								) }
-								value={ String(
-									attributes.aspectRatio ?? '16:9'
-								) }
-								options={ RATIOS }
+								value={ String( attributes.aspectRatio ?? '' ) }
+								options={ [
+									{
+										value: '',
+										label: sprintf(
+											/* translators: %s: the site's shape, as in 16:9. */
+											__(
+												'Use site setting (%s)',
+												'imagina-player'
+											),
+											String(
+												data.video?.ratio ?? '16:9'
+											)
+										),
+									},
+									...RATIOS,
+								] }
 								onChange={ ( value: string ) =>
 									setAttributes( { aspectRatio: value } )
 								}
@@ -880,10 +1106,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 
 							<SelectControl
 								__nextHasNoMarginBottom
-								label={ __(
-									'Poster fills the box',
-									'imagina-player'
-								) }
+								label={ __( 'Poster', 'imagina-player' ) }
 								help={ __(
 									'Crop to fill, or show the whole image and let the black show through.',
 									'imagina-player'
@@ -920,6 +1143,131 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 									setAttributes( { videoPosterFit: value } )
 								}
 							/>
+
+							{ /* A mark in a corner of the picture, the whole way
+							     through. It was in the schema and drawn by the
+							     renderer, with no way to set it but a
+							     shortcode. */ }
+							<BaseControl
+								__nextHasNoMarginBottom
+								id="imgp-watermark"
+								label={ __( 'Watermark', 'imagina-player' ) }
+								help={ __(
+									'A logo in a corner of the picture. It makes a copy traceable; it does not stop one being made.',
+									'imagina-player'
+								) }
+							>
+								<div className="imgp-editor__media-picker">
+									{ Boolean( attributes.watermark ) && (
+										<img
+											className="imgp-editor__thumb"
+											src={ String(
+												attributes.watermark
+											) }
+											alt=""
+										/>
+									) }
+									<MediaUploadCheck>
+										<MediaUpload
+											allowedTypes={ [ 'image' ] }
+											value={ Number(
+												attributes.watermarkId ?? 0
+											) }
+											onSelect={ ( media: {
+												id?: number;
+												url?: string;
+												sizes?: Record<
+													string,
+													{ url?: string }
+												>;
+											} ) =>
+												setAttributes( {
+													watermark:
+														media.sizes?.medium
+															?.url ??
+														media.url ??
+														'',
+													watermarkId: media.id ?? 0,
+												} )
+											}
+											render={ ( {
+												open,
+											}: {
+												open: () => void;
+											} ) => (
+												<Button
+													variant="secondary"
+													onClick={ open }
+												>
+													{ attributes.watermark
+														? __(
+																'Replace',
+																'imagina-player'
+														  )
+														: __(
+																'Choose an image',
+																'imagina-player'
+														  ) }
+												</Button>
+											) }
+										/>
+									</MediaUploadCheck>
+									{ Boolean( attributes.watermark ) && (
+										<Button
+											variant="tertiary"
+											isDestructive
+											onClick={ () =>
+												setAttributes( {
+													watermark: '',
+													watermarkId: 0,
+												} )
+											}
+										>
+											{ __( 'Remove', 'imagina-player' ) }
+										</Button>
+									) }
+								</div>
+							</BaseControl>
+
+							{ Boolean( attributes.watermark ) && (
+								<>
+									<SelectControl
+										__nextHasNoMarginBottom
+										label={ __(
+											'Watermark corner',
+											'imagina-player'
+										) }
+										value={ String(
+											attributes.watermarkPosition ??
+												'top-right'
+										) }
+										options={ CORNERS }
+										onChange={ ( value: string ) =>
+											setAttributes( {
+												watermarkPosition: value,
+											} )
+										}
+									/>
+									<RangeControl
+										__nextHasNoMarginBottom
+										label={ __(
+											'Watermark opacity (%)',
+											'imagina-player'
+										) }
+										min={ 5 }
+										max={ 100 }
+										step={ 5 }
+										value={ Number(
+											attributes.watermarkOpacity ?? 55
+										) }
+										onChange={ ( value?: number ) =>
+											setAttributes( {
+												watermarkOpacity: value ?? 55,
+											} )
+										}
+									/>
+								</>
+							) }
 						</>
 					) }
 
@@ -961,70 +1309,121 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					</p>
 
 					<Swatches
-						items={ (
-							[
+						items={
+							/*
+							 * Each starts on the colour this block will
+							 * actually get — its preset's, or the site's
+							 * video settings — so the picker opens on
+							 * what is there rather than on the factory's.
+							 */
+							(
 								[
-									'accent',
-									__( 'Accent', 'imagina-player' ),
-									'#1f2937',
-								],
-								[
-									'waveColor',
-									__( 'Waveform', 'imagina-player' ),
-									'#c9ced6',
-								],
-								[
-									'waveProgress',
-									__( 'Played portion', 'imagina-player' ),
-									'#1f2937',
-								],
-								[
-									'videoChromeColor',
-									__( 'Control bar', 'imagina-player' ),
-									'#000000',
-								],
-								[
-									'videoControlColor',
-									__( 'Buttons and times', 'imagina-player' ),
-									'#ffffff',
-								],
-								[
-									'videoProgressColor',
-									__( 'Played portion', 'imagina-player' ),
-									'#1f2937',
-								],
-								[
-									'videoCaptionColor',
-									__( 'Subtitles', 'imagina-player' ),
-									'#ffffff',
-								],
-								[
-									'controlColor',
-									__( 'Buttons', 'imagina-player' ),
-									'#374151',
-								],
-								[
-									'textColor',
-									__( 'Title', 'imagina-player' ),
-									'#111827',
-								],
-								[
-									'metaColor',
-									__( 'Artist', 'imagina-player' ),
-									'#6b7280',
-								],
-							] as const
-						 ).filter(
-							( [ attribute ] ) =>
-								/*
-								 * One list, filtered by the shared rule, so a
-								 * colour cannot appear on a block where it
-								 * paints nothing — and cannot be forgotten on
-								 * one where it does.
-								 */
-								colourApplies( attribute, isVideo ) &&
-								( isVideo || ! attribute.startsWith( 'video' ) )
-						) }
+									[
+										'accent',
+										__( 'Accent', 'imagina-player' ),
+										colour(
+											presetValues.accent,
+											'#1f2937'
+										),
+									],
+									[
+										'waveColor',
+										__( 'Waveform', 'imagina-player' ),
+										colour(
+											presetValues.wave_color,
+											'#c9ced6'
+										),
+									],
+									[
+										'waveProgress',
+										__(
+											'Played portion',
+											'imagina-player'
+										),
+										colour(
+											presetValues.wave_progress,
+											'#1f2937'
+										),
+									],
+									[
+										'videoChromeColor',
+										__( 'Control bar', 'imagina-player' ),
+										colour(
+											data.video?.chrome_color,
+											'#000000'
+										),
+									],
+									[
+										'videoControlColor',
+										__(
+											'Buttons and times',
+											'imagina-player'
+										),
+										colour(
+											data.video?.control_color,
+											'#ffffff'
+										),
+									],
+									[
+										'videoProgressColor',
+										__(
+											'Played portion',
+											'imagina-player'
+										),
+										colour(
+											data.video?.progress_color,
+											colour(
+												presetValues.accent,
+												'#ffffff'
+											)
+										),
+									],
+									[
+										'videoCaptionColor',
+										__( 'Subtitles', 'imagina-player' ),
+										colour(
+											data.video?.caption_color,
+											'#ffffff'
+										),
+									],
+									[
+										'controlColor',
+										__( 'Buttons', 'imagina-player' ),
+										colour(
+											presetValues.control_color,
+											'#374151'
+										),
+									],
+									[
+										'textColor',
+										__( 'Title', 'imagina-player' ),
+										colour(
+											presetValues.text_color,
+											'#111827'
+										),
+									],
+									[
+										'metaColor',
+										__( 'Artist', 'imagina-player' ),
+										colour(
+											presetValues.meta_color,
+											'#6b7280'
+										),
+									],
+								] as const
+							 ).filter(
+								( [ attribute ] ) =>
+									/*
+									 * One list, filtered by the shared rule, so a
+									 * colour cannot appear on a block where it
+									 * paints nothing — and cannot be forgotten on
+									 * one where it does.
+									 */
+									colourApplies( attribute, isVideo ) &&
+									( isVideo ||
+										! attribute.startsWith( 'video' ) )
+							)
+						}
 						values={ attributes }
 						onChange={ ( attribute: string, value: string ) =>
 							setAttributes( { [ attribute ]: value } )
@@ -1037,16 +1436,26 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					initialOpen={ false }
 				>
 					<p className="imgp-editor__note">
-						{ __(
-							'Which controls this player shows. Left on Site, each one follows the setting for the whole site.',
-							'imagina-player'
-						) }
+						{ isVideo
+							? __(
+									'Which controls this player shows. Left on Site, each one follows the video settings for the whole site, and says what those are.',
+									'imagina-player'
+							  )
+							: __(
+									'Which controls this player shows. Left on Site, each one follows this block’s preset, and says what that is.',
+									'imagina-player'
+							  ) }
 					</p>
 
 					{ isVideo ? (
 						<TristateList
-							items={ VIDEO_CONTROLS }
+							items={ VIDEO_CONTROLS.filter(
+								( [ attribute ] ) =>
+									! isProvider ||
+									! NOT_FOR_PROVIDERS.includes( attribute )
+							) }
 							values={ attributes }
+							site={ videoSite }
 							onChange={ ( attribute, value ) =>
 								setAttributes( { [ attribute ]: value } )
 							}
@@ -1068,7 +1477,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								visibilityToggles( data ).map(
 									( { key, attribute } ) => [
 										attribute,
-										Boolean( data.presetShape[ key ] ),
+										Boolean( presetValues[ key ] ),
 									]
 								)
 							) }
@@ -1191,20 +1600,51 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								__nextHasNoMarginBottom
 								type="number"
 								min={ 0 }
-								step={ 100 }
+								step={ 0.5 }
 								label={ __(
-									'Hide the controls after (ms)',
+									'Hide the controls after (seconds)',
 									'imagina-player'
 								) }
-								help={ __(
-									'While the video plays and nobody moves. Empty uses the site setting; zero keeps them up.',
-									'imagina-player'
+								help={ sprintf(
+									/* translators: %s: the site's setting, in seconds. */
+									__(
+										'While the video plays and nobody moves. Empty uses the site setting (%s s); zero keeps them up.',
+										'imagina-player'
+									),
+									String(
+										Number(
+											data.video?.hide_after ?? 2600
+										) / 1000
+									)
 								) }
-								value={ String(
-									attributes.videoHideAfter ?? ''
-								) }
+								// Seconds here, as on the settings screen; the
+								// block still stores milliseconds.
+								value={
+									'' ===
+									String( attributes.videoHideAfter ?? '' )
+										? ''
+										: String(
+												Number(
+													attributes.videoHideAfter
+												) / 1000
+										  )
+								}
 								onChange={ ( value: string ) =>
-									setAttributes( { videoHideAfter: value } )
+									setAttributes( {
+										videoHideAfter:
+											'' === value.trim()
+												? ''
+												: String(
+														Math.max(
+															0,
+															Math.round(
+																Number(
+																	value
+																) * 1000
+															)
+														) || 0
+												  ),
+									} )
 								}
 							/>
 						</>
@@ -1222,9 +1662,23 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							)
 							.map(
 								( { key, attribute } ) =>
-									[ attribute, humanise( key ) ] as const
+									[
+										attribute,
+										humanise( key, isVideo ),
+									] as const
 							) }
 						values={ attributes }
+						onOff
+						site={ Object.fromEntries(
+							visibilityToggles( data )
+								.filter( ( { key } ) =>
+									BEHAVIOUR.includes( key )
+								)
+								.map( ( { key, attribute } ) => [
+									attribute,
+									Boolean( presetValues[ key ] ),
+								] )
+						) }
 						onChange={ ( attribute, value ) =>
 							setAttributes( { [ attribute ]: value } )
 						}
@@ -1232,8 +1686,14 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 
 					{ isVideo && (
 						<TristateList
-							items={ VIDEO_PLAYBACK }
+							items={ VIDEO_PLAYBACK.filter(
+								( [ attribute ] ) =>
+									isProvider ||
+									! ONLY_FOR_PROVIDERS.includes( attribute )
+							) }
 							values={ attributes }
+							onOff
+							site={ videoSite }
 							onChange={ ( attribute, value ) =>
 								setAttributes( { [ attribute ]: value } )
 							}
@@ -1469,6 +1929,8 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 						<TristateList
 							items={ VIDEO_SUBTITLES }
 							values={ attributes }
+							onOff
+							site={ videoSite }
 							onChange={ ( attribute, value ) =>
 								setAttributes( { [ attribute ]: value } )
 							}
@@ -1617,19 +2079,35 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					initialOpen={ false }
 				>
 					<p className="imgp-editor__hint">
-						{ __(
-							'Appears part-way through. A call to action and an email gate stop playback until answered or closed; a bar, a text, an image, a hotspot and a shortcode sit alongside it.',
-							'imagina-player'
-						) }
+						{ isVideo
+							? __(
+									'Appears part-way through. A call to action and an email gate stop playback until answered or closed; a bar, a text, an image, a hotspot and a shortcode sit alongside it.',
+									'imagina-player'
+							  )
+							: __(
+									'Appears part-way through, under the player. A call to action and an email gate stop playback until answered or closed; a bar, a text, an image and a shortcode sit alongside it.',
+									'imagina-player'
+							  ) }
 					</p>
 
 					{ layers.map( ( layer, index ) => (
 						<div className="imgp-editor__row" key={ index }>
+							{ layerProblem( layer ) && (
+								<Notice
+									status="warning"
+									isDismissible={ false }
+									className="imgp-editor__layer-notice"
+								>
+									{ layerProblem( layer ) }
+								</Notice>
+							) }
 							<SelectControl
 								__nextHasNoMarginBottom
 								label={ __( 'Kind', 'imagina-player' ) }
 								value={ String( layer.type ?? 'cta' ) }
-								options={ LAYER_TYPES }
+								options={
+									isVideo ? LAYER_TYPES : AUDIO_LAYER_TYPES
+								}
 								onChange={ ( value: string ) =>
 									/*
 									 * Changing the kind changes when it makes
@@ -1747,7 +2225,11 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 													),
 												} )
 											}
-											render={ ( { open } ) => (
+											render={ ( {
+												open,
+											}: {
+												open: () => void;
+											} ) => (
 												<Button
 													variant="secondary"
 													onClick={ open }
@@ -1834,26 +2316,30 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								</>
 							) }
 
-							{ ( 'text' === layer.type ||
-								'image' === layer.type ||
-								'shortcode' === layer.type ) && (
-								<SelectControl
-									__nextHasNoMarginBottom
-									label={ __( 'Position', 'imagina-player' ) }
-									value={ String(
-										layer.position ??
-											defaultPosition(
-												String( layer.type ?? '' )
-											)
-									) }
-									options={ POSITIONS }
-									onChange={ ( value: string ) =>
-										patchLayer( index, {
-											position: value,
-										} )
-									}
-								/>
-							) }
+							{ isVideo &&
+								( 'text' === layer.type ||
+									'image' === layer.type ||
+									'shortcode' === layer.type ) && (
+									<SelectControl
+										__nextHasNoMarginBottom
+										label={ __(
+											'Position',
+											'imagina-player'
+										) }
+										value={ String(
+											layer.position ??
+												defaultPosition(
+													String( layer.type ?? '' )
+												)
+										) }
+										options={ POSITIONS }
+										onChange={ ( value: string ) =>
+											patchLayer( index, {
+												position: value,
+											} )
+										}
+									/>
+								) }
 
 							{ 'shortcode' !== layer.type && (
 								<>
@@ -1946,6 +2432,29 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 												} )
 											}
 										/>
+										<TextControl
+											__nextHasNoMarginBottom
+											label={ __(
+												'Thank-you message',
+												'imagina-player'
+											) }
+											help={ __(
+												'Shown once the address is in, before playback carries on.',
+												'imagina-player'
+											) }
+											placeholder={ __(
+												'Thank you.',
+												'imagina-player'
+											) }
+											value={ String(
+												layer.thanks ?? ''
+											) }
+											onChange={ ( value: string ) =>
+												patchLayer( index, {
+													thanks: value,
+												} )
+											}
+										/>
 									</>
 								) : (
 									<>
@@ -1988,21 +2497,24 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 									</>
 								) ) }
 
-							<ToggleControl
-								__nextHasNoMarginBottom
-								label={ __(
-									'Can be closed',
-									'imagina-player'
-								) }
-								help={ __(
-									'Without this, an email gate has to be answered to carry on.',
-									'imagina-player'
-								) }
-								checked={ Boolean( layer.skip ) }
-								onChange={ ( value: boolean ) =>
-									patchLayer( index, { skip: value } )
-								}
-							/>
+							{ /* A bar can always be closed; there is nothing to
+							     decide for one. */ }
+							{ 'bar' !== layer.type && (
+								<ToggleControl
+									__nextHasNoMarginBottom
+									label={ __(
+										'Can be closed',
+										'imagina-player'
+									) }
+									help={ closeHelp(
+										String( layer.type ?? 'cta' )
+									) }
+									checked={ Boolean( layer.skip ) }
+									onChange={ ( value: boolean ) =>
+										patchLayer( index, { skip: value } )
+									}
+								/>
+							) }
 
 							<Button
 								variant="tertiary"
@@ -2053,8 +2565,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 						{ /* Not offered for a provider: the file is not on this
 						     site, so there is nothing here to withhold. */ }
 						{ ! isProvider && (
-							<SelectControl
-								__nextHasNoMarginBottom
+							<Tristate
 								label={ __(
 									'Block the browser download',
 									'imagina-player'
@@ -2066,7 +2577,8 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								value={ String(
 									attributes.videoBlockDownload ?? INHERIT
 								) }
-								options={ TRISTATE }
+								onOff
+								siteValue={ videoSite.videoBlockDownload }
 								onChange={ ( value: string ) =>
 									setAttributes( {
 										videoBlockDownload: value,

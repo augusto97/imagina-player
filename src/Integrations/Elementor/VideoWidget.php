@@ -78,7 +78,7 @@ final class VideoWidget extends PlayerWidget {
 			)
 		);
 
-		$ratios = array( '' => __( 'Use preset', 'imagina-player' ) );
+		$ratios = array( '' => __( 'Use site setting', 'imagina-player' ) );
 
 		foreach ( self::RATIOS as $ratio ) {
 			$ratios[ $ratio ] = $ratio;
@@ -115,18 +115,24 @@ final class VideoWidget extends PlayerWidget {
 			'behaviour_section',
 			array( 'label' => __( 'Behaviour', 'imagina-player' ) )
 		);
-		$this->add_control( 'hide_after', array( 'label' => __( 'Hide the controls after (ms of stillness)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 0, 'max' => 20000, 'default' => '' ) );
+		/*
+		 * In seconds, as on the settings screen and in the block. The old
+		 * control took milliseconds; it stays, hidden, so a page saved with
+		 * it keeps its answer until somebody sets this one.
+		 */
+		$this->add_control( 'hide_after_seconds', array( 'label' => __( 'Hide the controls after (seconds)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 0, 'max' => 20, 'step' => 0.5, 'default' => '', 'description' => __( 'Empty uses the site setting; zero keeps them up.', 'imagina-player' ) ) );
+		$this->add_control( 'hide_after', array( 'type' => Controls_Manager::HIDDEN, 'default' => '' ) );
 		$this->add_control( 'skip_seconds', array( 'label' => __( 'Skip by (seconds)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 1, 'max' => 120, 'default' => '' ) );
 		$this->add_control(
 			'poster_fit',
 			array(
-				'label'   => __( 'Poster fit', 'imagina-player' ),
+				'label'   => __( 'Poster', 'imagina-player' ),
 				'type'    => Controls_Manager::SELECT,
 				'default' => '',
 				'options' => array(
-					''        => __( 'Use preset', 'imagina-player' ),
-					'cover'   => __( 'Fill the frame', 'imagina-player' ),
-					'contain' => __( 'Show the whole picture', 'imagina-player' ),
+					''        => __( 'Use site setting', 'imagina-player' ),
+					'cover'   => __( 'Crop to fill', 'imagina-player' ),
+					'contain' => __( 'Show all of it', 'imagina-player' ),
 				),
 			)
 		);
@@ -137,7 +143,7 @@ final class VideoWidget extends PlayerWidget {
 				'type'    => Controls_Manager::SELECT,
 				'default' => '',
 				'options' => array(
-					''       => __( 'Use preset', 'imagina-player' ),
+					''       => __( 'Use site setting', 'imagina-player' ),
 					'small'  => __( 'Small', 'imagina-player' ),
 					'medium' => __( 'Medium', 'imagina-player' ),
 					'large'  => __( 'Large', 'imagina-player' ),
@@ -145,6 +151,40 @@ final class VideoWidget extends PlayerWidget {
 				),
 			)
 		);
+		$this->end_controls_section();
+
+		/*
+		 * A mark in a corner of the picture. The block and the shortcode had
+		 * it; the widget did not.
+		 */
+		$this->start_controls_section(
+			'watermark_section',
+			array( 'label' => __( 'Watermark', 'imagina-player' ) )
+		);
+		$this->add_control(
+			'watermark',
+			array(
+				'label'       => __( 'Image', 'imagina-player' ),
+				'type'        => Controls_Manager::MEDIA,
+				'media_types' => array( 'image' ),
+				'description' => __( 'A logo in a corner of the picture. It makes a copy traceable; it does not stop one being made.', 'imagina-player' ),
+			)
+		);
+		$this->add_control(
+			'watermark_position',
+			array(
+				'label'   => __( 'Corner', 'imagina-player' ),
+				'type'    => Controls_Manager::SELECT,
+				'default' => 'top-right',
+				'options' => array(
+					'top-left'     => __( 'Top left', 'imagina-player' ),
+					'top-right'    => __( 'Top right', 'imagina-player' ),
+					'bottom-left'  => __( 'Bottom left', 'imagina-player' ),
+					'bottom-right' => __( 'Bottom right', 'imagina-player' ),
+				),
+			)
+		);
+		$this->add_control( 'watermark_opacity', array( 'label' => __( 'Opacity (%)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 5, 'max' => 100, 'step' => 5, 'default' => 55 ) );
 		$this->end_controls_section();
 
 		$this->start_controls_section(
@@ -240,7 +280,14 @@ final class VideoWidget extends PlayerWidget {
 	}
 
 	public function attributes_from( array $settings ): array {
-		$poster = self::image_from( $settings['poster'] ?? null );
+		$poster    = self::image_from( $settings['poster'] ?? null );
+		$watermark = self::image_from( $settings['watermark'] ?? null );
+
+		// Seconds when set, the old milliseconds otherwise.
+		$seconds    = $settings['hide_after_seconds'] ?? '';
+		$hide_after = '' === $seconds || null === $seconds
+			? self::number_from( $settings['hide_after'] ?? '' )
+			: (string) max( 0, (int) round( (float) $seconds * 1000 ) );
 
 		return self::source_from( $settings ) + self::tristates_from( $settings, array_keys( self::SWITCHES ) ) + array(
 			'title'            => (string) ( $settings['title'] ?? '' ),
@@ -255,13 +302,17 @@ final class VideoWidget extends PlayerWidget {
 			'skin'             => (string) ( $settings['skin'] ?? '' ),
 			'accent'           => (string) ( $settings['accent'] ?? '' ),
 			'borderRadius'     => self::number_from( $settings['border_radius'] ?? '', 'px' ),
-			'videoHideAfter'   => self::number_from( $settings['hide_after'] ?? '' ),
+			'videoHideAfter'   => $hide_after,
 			'skipSeconds'      => self::number_from( $settings['skip_seconds'] ?? '' ),
 			'videoPosterFit'   => (string) ( $settings['poster_fit'] ?? '' ),
 			'videoCaptionSize' => (string) ( $settings['caption_size'] ?? '' ),
 			'tracks'           => self::tracks_from( $settings['tracks'] ?? array() ),
 			'chapters'         => self::chapters_from( $settings['chapters'] ?? array() ),
 			'layers'           => self::layers_from( $settings['layers'] ?? array() ),
+			'watermark'         => $watermark['url'],
+			'watermarkId'       => $watermark['id'],
+			'watermarkPosition' => (string) ( $settings['watermark_position'] ?? 'top-right' ),
+			'watermarkOpacity'  => max( 5, min( 100, (int) ( $settings['watermark_opacity'] ?? 55 ) ) ),
 		);
 	}
 

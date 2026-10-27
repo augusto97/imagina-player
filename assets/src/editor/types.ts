@@ -5,6 +5,15 @@ export interface EditorData {
 	videoSkins: Record< string, string >;
 	overrides: Record< string, string >;
 	presetShape: Record< string, string | number | boolean >;
+	/** What each preset actually says, by preset key. */
+	presetValues?: Record<
+		string,
+		Record< string, string | number | boolean >
+	>;
+	/** The site's video settings, by setting key. */
+	video?: Record< string, string | number | boolean >;
+	/** Video setting key => the block attribute that overrides it. */
+	videoOverrides?: Record< string, string >;
 	settingsUrl: string;
 	frontendCss: string;
 	frontendJs: string;

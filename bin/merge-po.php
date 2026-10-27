@@ -52,20 +52,24 @@ function existing_translations( string $file ): array {
 
 	$out     = array();
 	$msgid   = null;
+	$context = '';
 	$msgstr  = array();
 	$field   = '';
 
-	$flush = static function () use ( &$out, &$msgid, &$msgstr ): void {
+	// Keyed by context and msgid together: a block's title and a heading in
+	// a panel may be the same words and want different translations.
+	$flush = static function () use ( &$out, &$msgid, &$msgstr, &$context ): void {
 		if ( null !== $msgid && '' !== $msgid ) {
 			$kept = array_filter( $msgstr, static fn( $s ) => '' !== $s );
 
 			if ( array() !== $kept ) {
-				$out[ $msgid ] = $msgstr;
+				$out[ ( '' === $context ? '' : $context . "\x04" ) . $msgid ] = $msgstr;
 			}
 		}
 
-		$msgid  = null;
-		$msgstr = array();
+		$msgid   = null;
+		$context = '';
+		$msgstr  = array();
 	};
 
 	foreach ( file( $file, FILE_IGNORE_NEW_LINES ) as $line ) {
@@ -79,8 +83,17 @@ function existing_translations( string $file ): array {
 			continue;
 		}
 
-		if ( preg_match( '/^msgid\s+"(.*)"$/', $line, $m ) ) {
+		if ( preg_match( '/^msgctxt\s+"(.*)"$/', $line, $m ) ) {
 			$flush();
+			$context = $m[1];
+			continue;
+		}
+
+		if ( preg_match( '/^msgid\s+"(.*)"$/', $line, $m ) ) {
+			if ( null !== $msgid ) {
+				$flush();
+			}
+
 			$msgid = $m[1];
 			$field = 'msgid';
 			continue;
@@ -126,6 +139,7 @@ if ( is_readable( $target ) ) {
 $lines   = preg_split( '/\R/', (string) file_get_contents( $template ) );
 $out     = array();
 $msgid   = null;
+$context = '';
 $plural  = false;
 $new     = 0;
 $kept    = 0;
@@ -133,6 +147,17 @@ $in_head = true;
 $swallow = false;
 
 foreach ( $lines as $line ) {
+	// An entry ends at a blank line, and its context with it.
+	if ( '' === trim( $line ) ) {
+		$context = '';
+	}
+
+	if ( preg_match( '/^msgctxt "(.*)"$/', $line, $m ) ) {
+		$context = $m[1];
+		$out[]   = $line;
+		continue;
+	}
+
 	if ( preg_match( '/^msgid "(.*)"$/', $line, $m ) ) {
 		$msgid  = $m[1];
 		$plural = false;
@@ -175,7 +200,7 @@ foreach ( $lines as $line ) {
 
 	if ( preg_match( '/^msgstr(?:\[(\d+)\])? ""$/', $line, $m ) ) {
 		$index = isset( $m[1] ) && '' !== $m[1] ? (int) $m[1] : 0;
-		$have  = $known[ (string) $msgid ][ $index ] ?? '';
+		$have  = $known[ ( '' === $context ? '' : $context . "\x04" ) . (string) $msgid ][ $index ] ?? '';
 
 		if ( '' === $have ) {
 			$new++;

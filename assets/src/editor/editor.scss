@@ -100,6 +100,29 @@
 	text-align: center;
 	border: 1px dashed #ddd;
 	border-radius: 4px;
+
+	p {
+		margin: 0 0 12px;
+	}
+}
+
+/* Something to look at while the first answer is on its way, instead of a
+   blank strip that reads as the block being broken. */
+.imgp-editor__preview-loading {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 120px;
+	color: #757575;
+	border: 1px dashed #ddd;
+	border-radius: 4px;
+}
+
+.imgp-editor__preview-note {
+	margin: 6px 0 0;
+	color: #757575;
+	font-size: 12px;
 }
 
 /* The playlist block edits an order, so the editor shows the order. */
@@ -190,8 +213,9 @@
 
 .imgp-editor__tri {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	gap: 8px;
+	gap: 4px 8px;
 	padding: 4px 6px;
 	border-radius: 4px;
 }
@@ -210,14 +234,17 @@
 	line-height: 1.4;
 }
 
+/* Not clipped: `overflow: hidden` cut off the focus ring of every segment,
+   so a keyboard user could not see which one they were on. The corners are
+   rounded on the end segments instead. */
 .imgp-editor__tri-options {
 	flex: 0 0 auto;
 	display: inline-flex;
 	border: 1px solid #ddd;
 	border-radius: 4px;
-	overflow: hidden;
 	background: #fff;
 }
+
 
 .imgp-editor__tri-option {
 	padding: 3px 7px;
@@ -231,8 +258,20 @@
 	cursor: pointer;
 }
 
+.imgp-editor__tri-option:first-child {
+	border-radius: 3px 0 0 3px;
+}
+
 .imgp-editor__tri-option:last-child {
 	border-right: 0;
+	border-radius: 0 3px 3px 0;
+}
+
+.imgp-editor__tri-option:focus-visible {
+	position: relative;
+	z-index: 1;
+	outline: 2px solid var(--wp-admin-theme-color, #007cba);
+	outline-offset: 1px;
 }
 
 .imgp-editor__tri-option:hover {
@@ -310,4 +349,22 @@
 	color: #757575;
 	font-size: 12px;
 	line-height: 1.5;
+}
+
+/* Why an overlay will not appear, on the overlay itself. */
+.imgp-editor__layer-notice {
+	margin: 0 0 8px;
+}
+
+/* One track's own fields, opened from its row. */
+.imgp-playlist-editor__details {
+	display: grid;
+	grid-column: 1 / -1;
+	gap: 8px;
+	padding: 8px 0 4px;
+}
+
+.imgp-playlist-editor__art--blank {
+	display: block;
+	background: #f0f0f1;
 }

@@ -2,11 +2,11 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "imagina/playlist",
-	"version": "1.48.0",
+	"version": "1.49.0",
 	"title": "Imagina Playlist",
 	"category": "media",
-	"icon": "playlist-audio",
-	"description": "Several tracks in one player, as a list or a grid.",
+	"icon": "list-view",
+	"description": "Several tracks or videos in one player: a list, a grid of covers, or a video with its lessons beside it, under it or in a slider.",
 	"keywords": [ "playlist", "album", "series", "course", "podcast" ],
 	"textdomain": "imagina-player",
 	"usesContext": [ "postId" ],
@@ -20,6 +20,16 @@
 		},
 		"interactivity": {
 			"clientNavigation": false
+		}
+	},
+	"example": {
+		"attributes": {
+			"heading": "Season one",
+			"items": [
+				{ "src": "https://example.com/one.mp3", "title": "One: Where it starts" },
+				{ "src": "https://example.com/two.mp3", "title": "Two: The long middle" },
+				{ "src": "https://example.com/three.mp3", "title": "Three: How it ends" }
+			]
 		}
 	},
 	"editorScript": "imagina-player-editor",

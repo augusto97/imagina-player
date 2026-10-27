@@ -259,13 +259,32 @@ final class BlockRegistrar {
 	 */
 	public function enqueue_editor_data(): void {
 		$presets = array();
+		$values  = array();
+
+		/*
+		 * What each preset actually says, not the factory's defaults: the
+		 * inspector marks every row "Site: on" or "Site: off", and reading the
+		 * factory told a site that had turned the download button on that it
+		 * was off — and ignored the preset the block had picked.
+		 */
+		$shown = array_flip(
+			array_merge(
+				array_keys( Attributes::override_map() ),
+				array( 'label' )
+			)
+		);
 
 		foreach ( Settings::presets() as $key => $preset ) {
 			$presets[] = array(
 				'value' => $key,
 				'label' => (string) $preset['label'],
 			);
+
+			$values[ $key ] = array_intersect_key( (array) $preset, $shown );
 		}
+
+		// The video half, which is the site's settings rather than a preset's.
+		$video = array_intersect_key( Settings::video(), \ImaginaPlayer\Player\Video::override_map() + array( 'ratio' => '' ) );
 
 		wp_add_inline_script(
 			Assets::EDITOR_HANDLE,
@@ -277,8 +296,11 @@ final class BlockRegistrar {
 					// above all arrange a waveform and a row of transport
 					// buttons, which is not what a video needs.
 					'videoSkins'  => \ImaginaPlayer\Player\Skins::video(),
-					'overrides'   => Attributes::override_map(),
-					'presetShape' => Settings::preset_defaults(),
+					'overrides'      => Attributes::override_map(),
+					'presetShape'    => Settings::preset_defaults(),
+					'presetValues'   => $values,
+					'video'          => $video,
+					'videoOverrides' => \ImaginaPlayer\Player\Video::override_map(),
 					'settingsUrl' => esc_url_raw( admin_url( 'admin.php?page=imagina-player' ) ),
 				) + Assets::preview_assets()
 			) . ';',

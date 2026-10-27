@@ -1020,3 +1020,26 @@
 	line-height: 1.6;
 	resize: vertical;
 }
+
+/* What the site saved differently from what was typed, said under the bar
+   rather than hidden behind "Saved." */
+.imgpa-adjusted {
+	margin: 0 0 16px;
+	padding: 10px 14px 10px 32px;
+	border-left: 3px solid #dba617;
+	border-radius: 4px;
+	background: #fcf9e8;
+	color: #3c434a;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.imgpa-number input[aria-invalid="true"] {
+	border-color: #d63638;
+}
+
+.imgpa-number__hint {
+	margin-left: 8px;
+	color: #d63638;
+	font-size: 12px;
+}

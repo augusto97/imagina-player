@@ -12,14 +12,25 @@
  */
 
 import { useEffect, useRef, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { Button, Spinner } from '@wordpress/components';
 
 import { inlineAssets } from '../shared/frame-assets';
 import {
 	FRAME_HEIGHT_SCRIPT,
 	listenForFrameHeight,
 } from '../shared/frame-height';
+
+/** Attributes drawn by the editor around the frame, not by the player in it. */
+const WRAPPER_ONLY = [
+	'className',
+	'align',
+	'anchor',
+	'style',
+	'lock',
+	'metadata',
+];
 
 interface EditorAssets {
 	frontendCss: string;
@@ -68,13 +79,24 @@ export function Preview( {
 	refresh = 0,
 }: PreviewProps ) {
 	const [ doc, setDoc ] = useState( '' );
-	const [ failed, setFailed ] = useState( false );
+	const [ failed, setFailed ] = useState( '' );
+	const [ attempt, setAttempt ] = useState( 0 );
+	const [ linked, setLinked ] = useState( 0 );
 	const [ height, setHeight ] = useState( 150 );
 	const frame = useRef< HTMLIFrameElement | null >( null );
 
-	// Only what the rendered player actually depends on: typing into an unrelated
-	// field should not re-request the preview.
-	const signature = JSON.stringify( attributes );
+	/*
+	 * Only what the rendered player actually depends on. The wrapper's own
+	 * attributes — a class, an alignment, an anchor, spacing — are drawn by
+	 * the editor around the frame, and re-rendering the player for each
+	 * keystroke in one of them was a request and a reload for nothing.
+	 */
+	const relevant = Object.fromEntries(
+		Object.entries( attributes ).filter(
+			( [ key ] ) => ! WRAPPER_ONLY.includes( key )
+		)
+	);
+	const signature = JSON.stringify( relevant );
 
 	useEffect( () => {
 		let cancelled = false;
@@ -83,7 +105,7 @@ export function Preview( {
 			apiFetch( {
 				path: '/imagina-player/v1/preview',
 				method: 'POST',
-				data: { attributes, postId },
+				data: { attributes: relevant, postId },
 			} )
 				.then( async ( result ) => {
 					/*
@@ -102,8 +124,9 @@ export function Preview( {
 						return;
 					}
 
-					const { html, resolved } = result as {
+					const { html, resolved, linkedCaptions } = result as {
 						html: string;
+						linkedCaptions?: number;
 						resolved?: {
 							title: string;
 							artist: string;
@@ -126,7 +149,8 @@ export function Preview( {
 					 */
 					const markup = html;
 
-					setFailed( false );
+					setFailed( '' );
+					setLinked( Number( linkedCaptions ?? 0 ) );
 					setDoc(
 						`<!doctype html><html><head><meta charset="utf-8">
 						${ inlined.head }
@@ -139,9 +163,15 @@ export function Preview( {
 						</body></html>`
 					);
 				} )
-				.catch( () => {
+				.catch( ( error: { message?: string } ) => {
 					if ( ! cancelled ) {
-						setFailed( true );
+						setFailed(
+							error?.message ||
+								__(
+									'No answer from the site.',
+									'imagina-player'
+								)
+						);
 					}
 				} );
 		}, 300 );
@@ -155,6 +185,7 @@ export function Preview( {
 		signature,
 		postId,
 		refresh,
+		attempt,
 		assets.frontendCss,
 		assets.frontendJs,
 		assets.frameCss,
@@ -179,13 +210,37 @@ export function Preview( {
 	if ( failed ) {
 		return (
 			<div className="imgp-editor__preview imgp-editor__preview--failed">
-				{ __( 'The preview could not be loaded.', 'imagina-player' ) }
+				<p>
+					{ sprintf(
+						/* translators: %s: the reason the site gave. */
+						__(
+							'The preview could not be loaded: %s',
+							'imagina-player'
+						),
+						failed
+					) }
+				</p>
+				<Button
+					variant="secondary"
+					onClick={ () => {
+						setFailed( '' );
+						setAttempt( ( n ) => n + 1 );
+					} }
+				>
+					{ __( 'Try again', 'imagina-player' ) }
+				</Button>
 			</div>
 		);
 	}
 
 	return (
 		<div className="imgp-editor__preview">
+			{ ! doc && (
+				<div className="imgp-editor__preview-loading">
+					<Spinner />
+					{ __( 'Loading the preview…', 'imagina-player' ) }
+				</div>
+			) }
 			<iframe
 				ref={ frame }
 				title={ __( 'Player preview', 'imagina-player' ) }
@@ -197,7 +252,22 @@ export function Preview( {
 				// renderer ever lets something through unescaped.
 				sandbox="allow-scripts"
 				scrolling="no"
+				hidden={ ! doc }
 			/>
+			{ linked > 0 && (
+				<p className="imgp-editor__preview-note">
+					{ sprintf(
+						/* translators: %d: how many subtitle files. */
+						_n(
+							'%d subtitle file is on another site, so it is not shown in this preview. It works on the published page.',
+							'%d subtitle files are on another site, so they are not shown in this preview. They work on the published page.',
+							linked,
+							'imagina-player'
+						),
+						linked
+					) }
+				</p>
+			) }
 		</div>
 	);
 }

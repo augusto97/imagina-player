@@ -1,5 +1,5 @@
 import { useEffect, useState } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 import { loadSettings, saveSettings } from './api';
 import {
@@ -43,6 +43,8 @@ export function App() {
 	const [ dirty, setDirty ] = useState( false );
 	const [ saving, setSaving ] = useState( false );
 	const [ message, setMessage ] = useState( '' );
+	// What the site saved differently from what was on screen, and why.
+	const [ adjusted, setAdjusted ] = useState< string[] >( [] );
 	const [ error, setError ] = useState( '' );
 
 	useEffect( () => {
@@ -77,6 +79,7 @@ export function App() {
 		);
 		setDirty( true );
 		setMessage( '' );
+		setAdjusted( [] );
 	};
 
 	const save = async (): Promise< void > => {
@@ -104,10 +107,31 @@ export function App() {
 
 			setSettings( saved );
 			setDirty( false );
-			setMessage( __( 'Saved.', 'imagina-player' ) );
-		} catch {
+			setAdjusted( saved.adjusted ?? [] );
+			setMessage(
+				saved.adjusted?.length
+					? __( 'Saved, with changes:', 'imagina-player' )
+					: __( 'Saved.', 'imagina-player' )
+			);
+		} catch ( failure ) {
+			/*
+			 * The site's own reason when it gave one — an expired session, a
+			 * security plugin, a full disk — rather than the same sentence for
+			 * every failure.
+			 */
+			const reason = ( failure as { message?: string } )?.message;
+
 			setError(
-				__( 'The settings could not be saved.', 'imagina-player' )
+				reason
+					? sprintf(
+							/* translators: %s: the reason the site gave. */
+							__(
+								'The settings could not be saved: %s',
+								'imagina-player'
+							),
+							reason
+					  )
+					: __( 'The settings could not be saved.', 'imagina-player' )
 			);
 		} finally {
 			setSaving( false );
@@ -169,6 +193,14 @@ export function App() {
 					</button>
 				</div>
 			</header>
+
+			{ adjusted.length > 0 && (
+				<ul className="imgpa-adjusted" role="status">
+					{ adjusted.map( ( line ) => (
+						<li key={ line }>{ line }</li>
+					) ) }
+				</ul>
+			) }
 
 			<div className="imgpa-body">
 				<nav

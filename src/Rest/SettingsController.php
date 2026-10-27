@@ -158,6 +158,19 @@ final class SettingsController {
 		$incoming = $request->get_json_params();
 		$settings = Settings::all();
 
+		/*
+		 * What was saved differently from how it was sent, in words. Every
+		 * value below is checked and some are corrected — a path that is not
+		 * a program, a number out of range, a colour that is not one — and the
+		 * screen used to say "Saved." over a value it had just changed.
+		 */
+		$adjusted = array();
+		$note     = static function ( bool $changed, string $message ) use ( &$adjusted ): void {
+			if ( $changed ) {
+				$adjusted[] = $message;
+			}
+		};
+
 		if ( isset( $incoming['presets'] ) && is_array( $incoming['presets'] ) ) {
 			$presets = array();
 
@@ -172,9 +185,11 @@ final class SettingsController {
 			}
 
 			// The default preset is what every unconfigured block falls back to;
-			// losing it would leave those blocks with nothing to resolve.
+			// losing it would leave those blocks with nothing to resolve. It
+			// comes back in the site's brand colours, as a new preset does,
+			// rather than in the factory's grey.
 			if ( ! isset( $presets[ Settings::DEFAULT_PRESET ] ) ) {
-				$presets[ Settings::DEFAULT_PRESET ] = Settings::preset_defaults();
+				$presets[ Settings::DEFAULT_PRESET ] = Settings::sanitize_preset( Settings::preset_from_branding() );
 			}
 
 			$settings['presets'] = $presets;
@@ -188,6 +203,19 @@ final class SettingsController {
 			$settings['peaks']['client_fallback']   = ! empty( $peaks['client_fallback'] );
 			$settings['peaks']['ffmpeg_path']       = Settings::sanitize_binary_path( (string) ( $peaks['ffmpeg_path'] ?? '' ) );
 			$settings['peaks']['max_client_bytes']  = max( 1, min( 200, (int) ( $peaks['max_client_mb'] ?? 25 ) ) ) * MB_IN_BYTES;
+
+			$note(
+				'' !== trim( (string) ( $peaks['ffmpeg_path'] ?? '' ) ) && '' === $settings['peaks']['ffmpeg_path'],
+				__( 'The ffmpeg path was cleared: it has to be the full path to a program on the server, such as /usr/bin/ffmpeg.', 'imagina-player' )
+			);
+			$note(
+				(int) ( $peaks['resolution'] ?? 400 ) !== (int) $settings['peaks']['resolution'],
+				__( 'Bars per waveform was kept between 32 and 2000.', 'imagina-player' )
+			);
+			$note(
+				(int) ( $peaks['max_client_mb'] ?? 25 ) * MB_IN_BYTES !== (int) $settings['peaks']['max_client_bytes'],
+				__( 'The largest file a browser measures was kept between 1 and 200 MB.', 'imagina-player' )
+			);
 		}
 
 		if ( isset( $incoming['metadata'] ) && is_array( $incoming['metadata'] ) ) {
@@ -210,6 +238,11 @@ final class SettingsController {
 			// Zero is a real answer here — "never hide them" — so it is clamped
 			// rather than treated as unset.
 			$settings['video']['hide_after']      = max( 0, min( 20000, (int) ( $video['hide_after'] ?? 2600 ) ) );
+
+			$note(
+				(int) ( $video['hide_after'] ?? 2600 ) !== (int) $settings['video']['hide_after'],
+				__( 'Hide the controls after was kept between 0 and 20 seconds.', 'imagina-player' )
+			);
 			$settings['video']['show_pip']        = ! empty( $video['show_pip'] );
 			$settings['video']['show_fullscreen'] = ! empty( $video['show_fullscreen'] );
 			$settings['video']['show_speed']      = ! empty( $video['show_speed'] );
@@ -230,6 +263,17 @@ final class SettingsController {
 
 			$settings['video']['chrome_color']    = Settings::sanitize_color( (string) ( $video['chrome_color'] ?? '' ), '#000000' );
 			$settings['video']['caption_color']   = Settings::sanitize_color( (string) ( $video['caption_color'] ?? '' ), '#ffffff' );
+
+			foreach ( array( 'chrome_color', 'caption_color' ) as $key ) {
+				$note(
+					'' !== trim( (string) ( $video[ $key ] ?? '' ) ) && '' === Settings::sanitize_color( (string) $video[ $key ], '' ),
+					sprintf(
+						/* translators: %s: what was typed. */
+						__( '“%s” is not a colour, so a video colour was set back to its default.', 'imagina-player' ),
+						(string) ( $video[ $key ] ?? '' )
+					)
+				);
+			}
 
 			/*
 			 * `auto` is a value in its own right for these two — the icons
@@ -253,6 +297,11 @@ final class SettingsController {
 			$settings['protection']['bind_to_user']  = ! empty( $protection['bind_to_user'] );
 			$settings['protection']['bind_to_ip']    = ! empty( $protection['bind_to_ip'] );
 			$settings['protection']['ttl']           = max( HOUR_IN_SECONDS, min( WEEK_IN_SECONDS, (int) ( $protection['ttl'] ?? DAY_IN_SECONDS ) ) );
+
+			$note(
+				(int) ( $protection['ttl'] ?? DAY_IN_SECONDS ) !== (int) $settings['protection']['ttl'],
+				__( 'How long a link lasts was kept between one hour and one week.', 'imagina-player' )
+			);
 			$settings['protection']['delivery']      = in_array( $protection['delivery'] ?? 'php', array( 'php', 'xaccel', 'xsendfile' ), true )
 				? (string) $protection['delivery']
 				: 'php';
@@ -282,6 +331,15 @@ final class SettingsController {
 					(string) ( $branding[ $key ] ?? '' ),
 					(string) $current[ $key ]
 				);
+
+				$note(
+					'' !== trim( (string) ( $branding[ $key ] ?? '' ) ) && '' === Settings::sanitize_color( (string) $branding[ $key ], '' ),
+					sprintf(
+						/* translators: %s: what was typed. */
+						__( '“%s” is not a colour, so a brand colour was left as it was.', 'imagina-player' ),
+						(string) ( $branding[ $key ] ?? '' )
+					)
+				);
 			}
 
 			$settings['branding']['logo']        = esc_url_raw( (string) ( $branding['logo'] ?? '' ), array( 'http', 'https' ) );
@@ -291,7 +349,7 @@ final class SettingsController {
 
 		Settings::update( $settings );
 
-		return new WP_REST_Response( $this->payload(), 200 );
+		return new WP_REST_Response( $this->payload() + array( 'adjusted' => array_values( array_unique( $adjusted ) ) ), 200 );
 	}
 
 	/**
@@ -438,11 +496,22 @@ final class SettingsController {
 			 * shortcodes with arbitrary attributes without saving anything.
 			 */
 			PlayerRenderer::allow_shortcodes( current_user_can( 'unfiltered_html' ) );
+			PlayerRenderer::inline_captions( true );
 
 			// A block previewing a real file gets that file's real waveform. It
 			// used to get the demo one, which told the author their waveform was
 			// working when it was not — they only found out on the front end.
-			return $this->preview_response( $attributes, null, false, $post_id );
+			$response = $this->preview_response( $attributes, null, false, $post_id );
+
+			// Subtitles from another site cannot be shown inside the preview's
+			// frame; the editor says so rather than leave a blank transcript.
+			$data                    = (array) $response->get_data();
+			$data['linkedCaptions'] = PlayerRenderer::linked_captions();
+			$response->set_data( $data );
+
+			PlayerRenderer::inline_captions( false );
+
+			return $response;
 		}
 
 		if ( 'video' === $request->get_param( 'medium' ) ) {

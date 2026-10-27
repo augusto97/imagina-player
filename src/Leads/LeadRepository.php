@@ -208,7 +208,8 @@ final class LeadRepository {
 		}
 		// phpcs:enable
 
-		$out = array( array( 'email', 'list', 'source', 'captured' ) );
+		// Stored in UTC, and said so: a spreadsheet has no way to know.
+		$out = array( array( 'email', 'list', 'source', 'captured (UTC)' ) );
 
 		foreach ( is_array( $rows ) ? $rows : array() as $row ) {
 			$out[] = array_map( array( self::class, 'csv_cell' ), array_values( $row ) );

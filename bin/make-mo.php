@@ -28,8 +28,9 @@ if ( '' === $source || ! is_readable( $source ) ) {
  */
 function parse_po( string $file ): array {
 	$entries = array();
-	$current = array( 'msgid' => null, 'plural' => '', 'msgstr' => array(), 'refs' => array() );
+	$current = array( 'msgid' => null, 'context' => '', 'plural' => '', 'msgstr' => array(), 'refs' => array() );
 	$field   = '';
+	$context = '';
 
 	/*
 	 * `#:` lines sit above the `msgid` they describe, and reading a `msgid`
@@ -44,13 +45,19 @@ function parse_po( string $file ): array {
 				? $current['msgid']
 				: $current['msgid'] . "\0" . $current['plural'];
 
+			// The MO format's own way of carrying a context: before the msgid,
+			// joined by an EOT byte.
+			if ( '' !== $current['context'] ) {
+				$key = $current['context'] . "\x04" . $key;
+			}
+
 			$entries[ $key ] = array(
 				'msgstr' => $current['msgstr'],
 				'refs'   => $current['refs'],
 			);
 		}
 
-		$current = array( 'msgid' => null, 'plural' => '', 'msgstr' => array(), 'refs' => array() );
+		$current = array( 'msgid' => null, 'context' => '', 'plural' => '', 'msgstr' => array(), 'refs' => array() );
 	};
 
 	foreach ( file( $file, FILE_IGNORE_NEW_LINES ) as $line ) {
@@ -75,9 +82,17 @@ function parse_po( string $file ): array {
 			continue;
 		}
 
+		if ( preg_match( '/^msgctxt\s+"(.*)"$/', $line, $m ) ) {
+			$flush();
+			$context = unescape_po( $m[1] );
+			continue;
+		}
+
 		if ( preg_match( '/^msgid\s+"(.*)"$/', $line, $m ) ) {
 			$flush();
-			$current['msgid'] = unescape_po( $m[1] );
+			$current['msgid']   = unescape_po( $m[1] );
+			$current['context'] = $context;
+			$context            = '';
 			$current['refs']  = $pending;
 			$pending          = array();
 			$field            = 'msgid';

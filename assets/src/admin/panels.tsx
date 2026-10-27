@@ -1178,7 +1178,7 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 				<Field
 					label={ __( 'Poster', 'imagina-player' ) }
 					help={ __(
-						'Crop fills the box and cuts the edges. Fit shows the whole image and lets the black show through.',
+						'Crop to fill cuts the edges to fill the box. Show all of it shows the whole image and lets the black show through.',
 						'imagina-player'
 					) }
 				>
@@ -1192,10 +1192,7 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 							},
 							{
 								value: 'contain',
-								label: __(
-									'Fit whole image',
-									'imagina-player'
-								),
+								label: __( 'Show all of it', 'imagina-player' ),
 							},
 						] }
 					/>
@@ -1220,7 +1217,7 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 			<Card
 				title={ __( 'Controls', 'imagina-player' ) }
 				description={ __(
-					'What appears on the bar over the video, and how long it stays.',
+					'What appears on the bar over the video, and how long it stays. On a phone the bar keeps play, the time, sound, subtitles, the gear and full screen, and offers the rest in the gear.',
 					'imagina-player'
 				) }
 			>
@@ -1245,39 +1242,7 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 
 				<div className="imgpa-toggles">
 					<Toggle
-						label={ __( 'Full screen', 'imagina-player' ) }
-						checked={ video.show_fullscreen }
-						onChange={ ( value ) =>
-							set( { show_fullscreen: value } )
-						}
-					/>
-					<Toggle
-						label={ __( 'Picture in picture', 'imagina-player' ) }
-						help={ __(
-							'The button only appears where the browser supports it.',
-							'imagina-player'
-						) }
-						checked={ video.show_pip }
-						onChange={ ( value ) => set( { show_pip: value } ) }
-					/>
-					<Toggle
-						label={ __( 'Playback speed', 'imagina-player' ) }
-						checked={ video.show_speed }
-						onChange={ ( value ) => set( { show_speed: value } ) }
-					/>
-				</div>
-			</Card>
-
-			<Card
-				title={ __( 'Keeping the file', 'imagina-player' ) }
-				description={ __(
-					'What stops a visitor walking off with the video itself.',
-					'imagina-player'
-				) }
-			>
-				<div className="imgpa-toggles">
-					<Toggle
-						label={ __( 'Title on the bar', 'imagina-player' ) }
+						label={ __( 'Title and artist', 'imagina-player' ) }
 						checked={ Boolean( video.show_title ) }
 						onChange={ ( value ) => set( { show_title: value } ) }
 					/>
@@ -1301,6 +1266,11 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 						label={ __( 'Volume', 'imagina-player' ) }
 						checked={ Boolean( video.show_volume ) }
 						onChange={ ( value ) => set( { show_volume: value } ) }
+					/>
+					<Toggle
+						label={ __( 'Playback speed', 'imagina-player' ) }
+						checked={ video.show_speed }
+						onChange={ ( value ) => set( { show_speed: value } ) }
 					/>
 					<Toggle
 						label={ __( 'Subtitles button', 'imagina-player' ) }
@@ -1344,6 +1314,33 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 						}
 					/>
 					<Toggle
+						label={ __( 'Full screen', 'imagina-player' ) }
+						checked={ video.show_fullscreen }
+						onChange={ ( value ) =>
+							set( { show_fullscreen: value } )
+						}
+					/>
+					<Toggle
+						label={ __( 'Picture in picture', 'imagina-player' ) }
+						help={ __(
+							'The button only appears where the browser supports it.',
+							'imagina-player'
+						) }
+						checked={ video.show_pip }
+						onChange={ ( value ) => set( { show_pip: value } ) }
+					/>
+				</div>
+			</Card>
+
+			<Card
+				title={ __( 'Behaviour', 'imagina-player' ) }
+				description={ __(
+					'How a video behaves, rather than what it shows.',
+					'imagina-player'
+				) }
+			>
+				<div className="imgpa-toggles">
+					<Toggle
 						label={ __(
 							'Subtitles on from the start',
 							'imagina-player'
@@ -1367,6 +1364,17 @@ export function VideoPanel( { settings, onChange }: PanelProps ) {
 						checked={ Boolean( video.focus_mode ) }
 						onChange={ ( value ) => set( { focus_mode: value } ) }
 					/>
+				</div>
+			</Card>
+
+			<Card
+				title={ __( 'Keeping the file', 'imagina-player' ) }
+				description={ __(
+					'What stops a visitor walking off with the video itself.',
+					'imagina-player'
+				) }
+			>
+				<div className="imgpa-toggles">
 					<Toggle
 						label={ __(
 							'Take away the browser download button',

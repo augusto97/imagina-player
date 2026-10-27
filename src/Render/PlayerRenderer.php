@@ -576,10 +576,23 @@ final class PlayerRenderer {
 				continue;
 			}
 
+			$src = esc_url( CaptionController::track_url( (string) $subtitle['src'] ) );
+
+			if ( self::$inline_captions ) {
+				$vtt = Captions::read( (string) $subtitle['src'] );
+
+				if ( null === $vtt ) {
+					++self::$linked_captions;
+				} else {
+					// A file of this site's, read and converted by Captions.
+					$src = esc_url( Captions::data_uri( $vtt ), array( 'data' ) );
+				}
+			}
+
 			$html .= sprintf(
 				'<track kind="%s" src="%s" srclang="%s" label="%s"%s />',
 				esc_attr( (string) $subtitle['kind'] ),
-				esc_url( CaptionController::track_url( (string) $subtitle['src'] ) ),
+				$src,
 				esc_attr( (string) $subtitle['srclang'] ),
 				esc_attr( (string) $subtitle['label'] ),
 				empty( $subtitle['default'] ) ? '' : ' default'
@@ -1038,6 +1051,28 @@ final class PlayerRenderer {
 
 	public static function allow_shortcodes( bool $allowed ): void {
 		self::$shortcodes = $allowed;
+	}
+
+	/**
+	 * Whether subtitle files are written into the page rather than linked.
+	 *
+	 * Only for the editor's preview, which runs in a sandboxed frame with no
+	 * origin of its own: a `<track>` there may not load a file from the site,
+	 * so the preview's transcript was always empty and its subtitles button
+	 * did nothing, which read as subtitles being broken.
+	 */
+	private static bool $inline_captions = false;
+
+	/** How many subtitle files could not be written in, since the last reset. */
+	private static int $linked_captions = 0;
+
+	public static function inline_captions( bool $inline ): void {
+		self::$inline_captions = $inline;
+		self::$linked_captions = 0;
+	}
+
+	public static function linked_captions(): int {
+		return self::$linked_captions;
 	}
 
 	private function part_decor( array $layer, string $id, int $index ): string {
