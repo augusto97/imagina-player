@@ -380,7 +380,9 @@ final class Attributes {
 		$out['artist']      = sanitize_text_field( (string) $out['artist'] );
 		$out['preset']      = sanitize_key( (string) $out['preset'] ) ?: Settings::DEFAULT_PRESET;
 		$out['className']   = trim( preg_replace( '/[^A-Za-z0-9 _-]/', '', (string) $out['className'] ) ?? '' );
-		$out['startTime']   = max( 0.0, (float) $out['startTime'] );
+		// `start_time="1:30"` in a shortcode is a minute and a half, as it is
+		// for a chapter; the plain cast made it one second.
+		$out['startTime']   = max( 0.0, self::to_seconds( $input['startTime'] ?? $out['startTime'] ) );
 		$out['poster']      = self::sanitize_media_url( (string) $out['poster'] );
 		// The one address that was not on this list. It reaches fetch() and a
 		// CSS url() in every visitor's browser, so it gets the same treatment.

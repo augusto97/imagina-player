@@ -98,6 +98,7 @@ final class PlaylistRenderer {
 			class="imgp-playlist imgp-playlist--<?php echo esc_attr( $layout ); ?>"
 			id="<?php echo esc_attr( $id ); ?>"
 			data-imagina-playlist="<?php echo esc_attr( (string) wp_json_encode( $tracks ) ); ?>"
+			data-imagina-playlist-key="<?php echo esc_attr( self::stable_key( $items ) ); ?>"
 		>
 			<?php if ( '' !== $heading ) : ?>
 				<h3 class="imgp-playlist__heading"><?php echo esc_html( $heading ); ?></h3>
@@ -185,6 +186,7 @@ final class PlaylistRenderer {
 		$record = '' === $key ? null : $this->peaks->get( $key );
 
 		$track = array(
+			'layerKey'    => substr( md5( (string) $item['stableKey'] ), 0, 12 ),
 			'src'         => $item['src'],
 			'title'       => $item['title'],
 			'artist'      => $item['artist'],
@@ -244,11 +246,32 @@ final class PlaylistRenderer {
 				'providerId'   => null !== $track->provider ? $track->provider->id : '',
 				'providerHash' => null !== $track->provider ? $track->provider->hash : '',
 				'peaksKey'     => $track->peaks_key(),
+				'stableKey'    => $track->stable_key(),
 				// A picture for the list: the author's, else the poster or cover.
 				'thumbnail'    => '' !== $item['thumbnail'] ? $item['thumbnail'] : ( '' !== $track->poster ? $track->poster : $track->thumbnail ),
 				'duration'     => $duration,
 			)
 		);
+	}
+
+	/**
+	 * A name for this list that survives a page load.
+	 *
+	 * The last track a listener played is remembered against it. The DOM id
+	 * is minted fresh on every render, so keyed on that the memory never
+	 * matched anything; the tracks themselves do not change between loads.
+	 *
+	 * @param array<int, array<string, mixed>> $items Resolved items.
+	 */
+	public static function stable_key( array $items ): string {
+		$names = array_map(
+			static fn( array $item ): string => (int) ( $item['id'] ?? 0 ) > 0
+				? 'att_' . (int) $item['id']
+				: (string) ( function_exists( 'remove_query_arg' ) ? remove_query_arg( array( 'imgpt', 'imagina_media' ), (string) $item['src'] ) : $item['src'] ),
+			$items
+		);
+
+		return substr( md5( implode( '|', $names ) ), 0, 12 );
 	}
 
 	/**
@@ -321,8 +344,13 @@ final class PlaylistRenderer {
 
 	private static function clock( float $seconds ): string {
 		$whole   = (int) round( $seconds );
-		$minutes = intdiv( $whole, 60 );
+		$hours   = intdiv( $whole, 3600 );
+		$minutes = intdiv( $whole % 3600, 60 );
 
-		return sprintf( '%d:%02d', $minutes, $whole % 60 );
+		// A lecture of an hour and a quarter reads `1:15:00`, as it does on the
+		// player itself — not `75:00`.
+		return $hours > 0
+			? sprintf( '%d:%02d:%02d', $hours, $minutes, $whole % 60 )
+			: sprintf( '%d:%02d', $minutes, $whole % 60 );
 	}
 }

@@ -107,7 +107,10 @@ final class PlayerRenderer {
 		$classes = array(
 			'imgp',
 			'imgp--skin-' . $skin,
-			$track->thumbnail && $config['show_thumbnail'] ? 'imgp--has-thumb' : '',
+			// Audio only: a video's picture is its poster, and the cover was
+			// never printed for one, so the class promised a thumbnail that
+			// was not there.
+			! $track->is_video() && $track->thumbnail && $config['show_thumbnail'] ? 'imgp--has-thumb' : '',
 			$config['sticky'] ? 'imgp--sticky' : '',
 			$config['sticky'] ? 'imgp--stick-' . $config['sticky_position'] : '',
 			$track->is_video() ? 'imgp--video' : 'imgp--audio',
@@ -152,7 +155,7 @@ final class PlayerRenderer {
 			 * gate twice was never kept once, and the browser's storage filled
 			 * with keys that could not match anything again.
 			 */
-			'layerKey'    => '' === $track->src ? '' : substr( md5( $track->src ), 0, 12 ),
+			'layerKey'    => '' === $track->stable_key() ? '' : substr( md5( $track->stable_key() ), 0, 12 ),
 			'peaksToken'  => $peaks_payload['token'],
 			'canCompute'  => $peaks_payload['can_compute'],
 			// Non-zero when the file is served through a signed link, which can
@@ -175,7 +178,8 @@ final class PlayerRenderer {
 					'type'  => (string) $layer['type'],
 					'at'    => (int) $layer['at'],
 					'until' => (int) ( $layer['until'] ?? 0 ),
-					'skip'  => (bool) $layer['skip'],
+					// As closable as the button says: see `part_layer()`.
+					'skip'  => (bool) $layer['skip'] || ( 'cta' === $layer['type'] && (int) $layer['at'] < 100 ),
 					'list'  => (string) ( $layer['list'] ?? '' ),
 				),
 				(array) $atts['layers']
@@ -548,7 +552,14 @@ final class PlayerRenderer {
 			);
 		}
 
-		$chapters = Captions::chapters_vtt( (array) ( $atts['chapters'] ?? array() ), $track->duration );
+		/*
+		 * Chapters are drawn by the video chrome — markers, segments, a menu.
+		 * An audio player has none of that, so a chapter track on it was a
+		 * file the browser fetched and nothing read.
+		 */
+		$chapters = $track->is_video()
+			? Captions::chapters_vtt( (array) ( $atts['chapters'] ?? array() ), $track->duration )
+			: '';
 
 		if ( '' !== $chapters ) {
 			/*
@@ -941,7 +952,17 @@ final class PlayerRenderer {
 				</div>
 			</div>
 
-			<?php if ( ! empty( $layer['skip'] ) || 'bar' === $type ) : ?>
+			<?php
+			/*
+			 * Only an email gate can insist on an answer. A call to action
+			 * part-way through that cannot be closed covered the picture and
+			 * its controls for good — there was no way back to the video — so
+			 * one before the end is always closable. At the end there is
+			 * nothing left to go back to, and "cannot be closed" is honoured.
+			 */
+			$closable = ! empty( $layer['skip'] ) || 'bar' === $type || ( 'cta' === $type && (int) $layer['at'] < 100 );
+			?>
+			<?php if ( $closable ) : ?>
 				<button type="button" class="imgp__layer-close" aria-label="<?php esc_attr_e( 'Close', 'imagina-player' ); ?>">
 					<?php echo Icons::get( 'close' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG. ?>
 				</button>
@@ -1047,12 +1068,15 @@ final class PlayerRenderer {
 	 */
 	private function part_transcript(): string {
 		return sprintf(
-			'<details class="imgp__transcript"><summary class="imgp__transcript-summary">%s</summary>'
-			. '<div class="imgp__transcript-panel"><input type="search" class="imgp__transcript-search" placeholder="%s" aria-label="%s" />'
-			. '<p class="imgp__transcript-note" hidden></p><div class="imgp__transcript-body" role="list"></div></div></details>',
+			'<details class="imgp__transcript"><summary class="imgp__transcript-summary">%s <span class="imgp__transcript-count"></span></summary>'
+			. '<div class="imgp__transcript-panel"><div class="imgp__transcript-tools">'
+			. '<input type="search" class="imgp__transcript-search" placeholder="%s" aria-label="%s" />'
+			. '<label class="imgp__transcript-follow"><input type="checkbox" checked /> %s</label></div>'
+			. '<p class="imgp__transcript-note" role="status" hidden></p><ol class="imgp__transcript-body"></ol></div></details>',
 			esc_html__( 'Transcript', 'imagina-player' ),
 			esc_attr__( 'Search the transcript', 'imagina-player' ),
-			esc_attr__( 'Search the transcript', 'imagina-player' )
+			esc_attr__( 'Search the transcript', 'imagina-player' ),
+			esc_html__( 'Follow the video', 'imagina-player' )
 		);
 	}
 

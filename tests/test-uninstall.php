@@ -86,6 +86,21 @@ foreach ( array_reverse( tree( $vault ) ) as $entry ) {
 @rmdir( $vault );
 @rmdir( $uploads );
 
+echo PHP_EOL . '# A network: every site, not only the main one' . PHP_EOL;
+
+/*
+ * In its own process, because the script declares functions and can only be
+ * loaded once per run.
+ */
+$probe = sprintf(
+	'require %s; define( "WP_UNINSTALL_PLUGIN", true ); $GLOBALS["stub_uploads_dir"] = sys_get_temp_dir() . "/imgp-ms-" . getmypid(); $GLOBALS["stub_sites"] = array( 1, 2, 5 ); $GLOBALS["stub_deleted_options"] = array(); require %s; echo json_encode( array( "switches" => $GLOBALS["stub_blog_switches"] ?? array() ) );',
+	var_export( __DIR__ . '/bootstrap.php', true ),
+	var_export( dirname( __DIR__ ) . '/uninstall.php', true )
+);
+$ran = json_decode( (string) shell_exec( 'php -r ' . escapeshellarg( $probe ) . ' 2>&1' ), true );
+
+check( 'each site of the network is cleaned in turn', array( 1, 2, 5 ) === ( $ran['switches'] ?? null ), wp_json_encode( $ran ) );
+
 echo PHP_EOL;
 if ( $failures > 0 ) {
 	echo "{$failures} check(s) failed." . PHP_EOL;

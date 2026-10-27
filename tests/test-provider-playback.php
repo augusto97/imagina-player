@@ -251,6 +251,16 @@ setTimeout(function () {
 				 */
 				document.querySelector('.imgp__play').click();
 
+				/*
+				 * Playing, whatever the two presses did: the second player on
+				 * this page starts by itself and pauses this one, so which way
+				 * a press toggles depends on timing. The clock is only read
+				 * while something plays, which is the point of what follows.
+				 */
+				if (!root.classList.contains('is-playing')) {
+					document.querySelector('.imgp__play').click();
+				}
+
 				window.setTimeout(function () {
 					window.__calls.length = 0;
 					window.__ytState.time = window.__ytState.duration - 0.1;

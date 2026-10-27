@@ -357,6 +357,7 @@ final class SettingsController {
 		}
 
 		VimeoThumbnail::forget( $provider );
+		VimeoThumbnail::wait_for_answers();
 
 		return new WP_REST_Response( VimeoThumbnail::status( $provider ), 200 );
 	}
@@ -365,6 +366,10 @@ final class SettingsController {
 	 * Render a player with a candidate preset, without saving anything.
 	 */
 	public function preview( WP_REST_Request $request ): WP_REST_Response {
+		// The author is waiting for this picture, and is told why when there
+		// is none; a visitor's page never waits for Vimeo.
+		VimeoThumbnail::wait_for_answers();
+
 		$attributes = $request->get_param( 'attributes' );
 
 		// Two callers, two shapes. The block sends its own attributes and wants to

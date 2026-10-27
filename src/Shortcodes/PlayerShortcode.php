@@ -31,6 +31,9 @@ final class PlayerShortcode {
 	/** `field="video_url"` reads more naturally than `source_field`. */
 	private const FIELD_ALIAS = 'field';
 
+	/** `class="…"` is what every other shortcode takes; `class_name` nobody guesses. */
+	private const CLASS_ALIAS = 'class';
+
 	public function hooks(): void {
 		add_shortcode( self::TAG, array( $this, 'render' ) );
 	}
@@ -52,6 +55,7 @@ final class PlayerShortcode {
 		}
 
 		$defaults[ self::FIELD_ALIAS ] = null;
+		$defaults[ self::CLASS_ALIAS ] = null;
 
 		$atts = shortcode_atts( $defaults, array_change_key_case( $atts, CASE_LOWER ), self::TAG );
 
@@ -75,6 +79,10 @@ final class PlayerShortcode {
 
 		if ( empty( $mapped['sourceField'] ) && ! empty( $atts[ self::FIELD_ALIAS ] ) ) {
 			$mapped['sourceField'] = $atts[ self::FIELD_ALIAS ];
+		}
+
+		if ( empty( $mapped['className'] ) && ! empty( $atts[ self::CLASS_ALIAS ] ) ) {
+			$mapped['className'] = $atts[ self::CLASS_ALIAS ];
 		}
 
 		$renderer = new PlayerRenderer();

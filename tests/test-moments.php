@@ -70,7 +70,9 @@ echo PHP_EOL . '# The block wrapper names itself' . PHP_EOL;
 
 check( 'no anchor, no id', array( 'class' => 'imgp-block' ) === BlockRegistrar::wrapper_attributes( array() ) );
 check( 'the HTML anchor becomes the id', 'intro' === ( BlockRegistrar::wrapper_attributes( array( 'anchor' => 'intro' ) )['id'] ?? '' ) );
-check( 'and cannot break out of the attribute', 'xonclickalert1' === ( BlockRegistrar::wrapper_attributes( array( 'anchor' => 'x" onclick="alert(1)' ) )['id'] ?? '' ) );
+check( 'and cannot break out of the attribute', ! preg_match( '/[\s"\'<>]/', (string) ( BlockRegistrar::wrapper_attributes( array( 'anchor' => 'x" onclick="alert(1)' ) )['id'] ?? '"' ) ) );
+check( 'while keeping what an id may hold that a class may not', 'sección:2.parte' === ( BlockRegistrar::wrapper_attributes( array( 'anchor' => 'sección:2.parte' ) )['id'] ?? '' ) );
+check( 'the anchor is declared to the editor as a saved attribute', array( 'type' => 'string', 'default' => '' ) === ( BlockRegistrar::block_attributes()['anchor'] ?? null ) );
 
 echo PHP_EOL . '# What the server puts in the bar' . PHP_EOL;
 
@@ -145,7 +147,7 @@ $first = $renderer->render(
 $second = $renderer->render( array( 'src' => 'https://cdn.example.com/other.mp4', 'title' => 'Second' ) );
 
 // The key the first player will look under: md5 of its source, twelve characters.
-$layer_key = substr( md5( 'https://cdn.example.com/clip.mp4' ), 0, 12 );
+$layer_key = substr( md5( 'url_' . md5( 'https://cdn.example.com/clip.mp4' ) ), 0, 12 );
 
 $button = ( new TimeShortcode() )->render( array( 'at' => '1:35', 'player' => 'intro' ), 'Jump' );
 
@@ -251,6 +253,13 @@ setTimeout(function () {
 		out.copied = window.__copied;
 		out.toast = first.querySelector('.imgp__toast') ? first.querySelector('.imgp__toast').textContent : '';
 
+		// Start over: back to the beginning and forgotten.
+		var restart = first.querySelector('.imgp__resume-restart');
+		if (restart) { restart.click(); }
+		out.restarted = Math.round(media1.currentTime);
+		out.forgotten = window.localStorage.getItem('imagina-player:position:' + 'KEY') === null;
+		out.chipGone = !first.querySelector('.imgp__resume');
+
 		// The timestamp button: seeks the player it names and starts it.
 		var jumpButton = document.querySelector('.imgp-time');
 		jumpButton.click();
@@ -258,13 +267,6 @@ setTimeout(function () {
 		setTimeout(function () {
 			out.jumped = Math.round(media1.currentTime);
 			out.jumpLeftSecondAlone = Math.round(media2.currentTime);
-
-			// Start over: back to the beginning and forgotten.
-			var restart = first.querySelector('.imgp__resume-restart');
-			if (restart) { restart.click(); }
-			out.restarted = Math.round(media1.currentTime);
-			out.forgotten = window.localStorage.getItem('imagina-player:position:' + 'KEY') === null;
-			out.chipGone = !first.querySelector('.imgp__resume');
 
 			var pre = document.createElement('pre');
 			pre.textContent = 'RESULT:' + JSON.stringify(out);

@@ -193,6 +193,13 @@ abstract class PlayerWidget extends Widget_Base {
 			array(
 				'label'       => __( 'Accent colour', 'imagina-player' ),
 				'type'        => Controls_Manager::COLOR,
+				/*
+				 * Solid colours only. Elementor's picker otherwise offers
+				 * transparency and returns `rgba()`, which the player's colour
+				 * filter does not take — the choice was dropped without a
+				 * word and the preset's colour shown instead.
+				 */
+				'alpha'       => false,
 				'description' => __( 'Leave empty to use the preset’s.', 'imagina-player' ),
 			)
 		);
@@ -271,7 +278,10 @@ abstract class PlayerWidget extends Widget_Base {
 				),
 			)
 		);
-		$repeater->add_control( 'at', array( 'label' => __( 'Show at (percent of playback)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 0, 'max' => 100, 'default' => 100 ) );
+		// Empty by default: each kind then appears when it naturally would — a
+		// decoration from the start, a call to action at the end. A fixed 100
+		// left a logo or a caption invisible until the video had finished.
+		$repeater->add_control( 'at', array( 'label' => __( 'Show at (percent of playback)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 0, 'max' => 100, 'default' => '', 'description' => __( 'Empty: from the start for text, images, hotspots and shortcodes; at the end for a call to action.', 'imagina-player' ) ) );
 		$repeater->add_control( 'until', array( 'label' => __( 'Hide again at (percent of playback, 0 for never)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 0, 'max' => 100, 'default' => 0 ) );
 		$repeater->add_control( 'shortcode', array( 'label' => __( 'Shortcode', 'imagina-player' ), 'type' => Controls_Manager::TEXT, 'placeholder' => '[contact-form-7 id="12"]', 'description' => __( 'Any shortcode another plugin provides. It runs when the page is shown.', 'imagina-player' ), 'condition' => array( 'type' => 'shortcode' ) ) );
 		$repeater->add_control( 'image', array( 'label' => __( 'Image', 'imagina-player' ), 'type' => Controls_Manager::MEDIA, 'media_types' => array( 'image' ), 'dynamic' => array( 'active' => true ), 'condition' => array( 'type' => 'image' ) ) );
@@ -433,7 +443,7 @@ abstract class PlayerWidget extends Widget_Base {
 
 			$image = self::image_from( $row['image'] ?? null );
 
-			$out[] = array(
+			$layer = array(
 				'type'      => (string) ( $row['type'] ?? 'cta' ),
 				'at'        => (int) ( $row['at'] ?? 100 ),
 				'until'     => (int) ( $row['until'] ?? 0 ),
@@ -454,6 +464,13 @@ abstract class PlayerWidget extends Widget_Base {
 				'y'         => (int) ( $row['y'] ?? 50 ),
 				'shortcode' => (string) ( $row['shortcode'] ?? '' ),
 			);
+
+			// Left empty, the kind decides when it appears (see `Layers::sanitize`).
+			if ( ! isset( $row['at'] ) || '' === $row['at'] || null === $row['at'] ) {
+				unset( $layer['at'] );
+			}
+
+			$out[] = $layer;
 		}
 
 		return $out;

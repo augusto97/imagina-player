@@ -96,6 +96,7 @@ final class Dashboard {
 			array(),
 			$asset['version']
 		);
+		wp_style_add_data( self::HANDLE, 'rtl', 'replace' );
 
 		wp_set_script_translations( self::HANDLE, 'imagina-player', \ImaginaPlayer\PATH . 'languages' );
 

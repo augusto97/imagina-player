@@ -123,27 +123,39 @@ function youtubeId( host: string, url: URL ): string {
 	return '';
 }
 
+/**
+ * Every shape of Vimeo address that names one video — the same table the
+ * server reads (`Provider::VIMEO_PATHS`), so the editor and the page agree on
+ * what a pasted address is.
+ */
+const VIMEO_PATHS = [
+	/^\/(\d{6,12})(?:\/([A-Za-z0-9]{6,20}))?\/?$/,
+	/^\/video\/(\d{6,12})\/?$/,
+	/^\/channels\/[^/]+\/(\d{6,12})\/?$/,
+	/^\/groups\/[^/]+\/videos\/(\d{6,12})\/?$/,
+	/^\/(?:showcase|album)\/\d+\/video\/(\d{6,12})\/?$/,
+	/^\/ondemand\/[^/]+\/(\d{6,12})\/?$/,
+	/^\/manage\/videos\/(\d{6,12})(?:\/([A-Za-z0-9]{6,20}))?\/?$/,
+];
+
 function vimeo( url: URL ): Source {
-	const nothing: Source = { kind: 'unknown', id: '', hash: '' };
-	const segments = url.pathname.split( '/' ).filter( Boolean );
+	for ( const pattern of VIMEO_PATHS ) {
+		const match = url.pathname.match( pattern );
 
-	if ( 'video' === segments[ 0 ] && segments[ 1 ] ) {
-		segments.shift();
+		if ( ! match ) {
+			continue;
+		}
+
+		const hash = match[ 2 ] ?? url.searchParams.get( 'h' ) ?? '';
+
+		return {
+			kind: 'vimeo',
+			id: match[ 1 ],
+			hash: /^[A-Za-z0-9]{6,20}$/.test( hash ) ? hash : '',
+		};
 	}
 
-	const id = segments[ 0 ] ?? '';
-
-	if ( ! /^[0-9]{6,12}$/.test( id ) ) {
-		return nothing;
-	}
-
-	const hash = segments[ 1 ] ?? '';
-
-	return {
-		kind: 'vimeo',
-		id,
-		hash: /^[A-Za-z0-9]{6,20}$/.test( hash ) ? hash : '',
-	};
+	return { kind: 'unknown', id: '', hash: '' };
 }
 
 /**

@@ -51,8 +51,83 @@ final class VimeoThumbnail {
 	/** Hosts Vimeo actually serves pictures from. */
 	private const PICTURE_HOSTS = array( 'i.vimeocdn.com', 'vimeocdn.com', 'i.vimeocdn.net' );
 
+	/** The cron hook a missing picture is fetched on, away from any visitor. */
+	public const FETCH_HOOK = 'imagina_player_vimeo_thumbnail';
+
+	/**
+	 * Whether a render may wait for Vimeo.
+	 *
+	 * Only the editor's preview, where the author is waiting for exactly this
+	 * answer and is shown the reason when there is none. A visitor's page
+	 * never waits: it used to, up to two requests of five seconds each per
+	 * Vimeo player on a host that could not reach Vimeo, every five minutes.
+	 */
+	private static bool $wait = false;
+
+	public static function hooks(): void {
+		add_action( self::FETCH_HOOK, array( self::class, 'fetch_later' ), 10, 2 );
+	}
+
+	/**
+	 * Let renders in this request wait for Vimeo — for the editor's preview.
+	 */
+	public static function wait_for_answers( bool $wait = true ): void {
+		self::$wait = $wait;
+	}
+
 	public static function get( Provider $provider ): string {
 		return self::status( $provider )['url'];
+	}
+
+	/**
+	 * The picture for a page being rendered, without waiting for Vimeo.
+	 *
+	 * What is remembered is used; when nothing is, the question is put to a
+	 * scheduled event and the page goes out without a poster this once — the
+	 * still the player draws from the provider's frame is behind it anyway.
+	 */
+	public static function for_render( Provider $provider ): string {
+		if ( self::$wait ) {
+			return self::get( $provider );
+		}
+
+		if ( 'vimeo' !== $provider->name || '' === $provider->id ) {
+			return '';
+		}
+
+		$cached = get_transient( self::key( $provider ) );
+
+		if ( is_array( $cached ) && isset( $cached['url'] ) ) {
+			return (string) $cached['url'];
+		}
+
+		if ( is_string( $cached ) && '' !== $cached ) {
+			return $cached;
+		}
+
+		$args = array( $provider->id, $provider->hash );
+
+		if ( function_exists( 'wp_next_scheduled' ) && ! wp_next_scheduled( self::FETCH_HOOK, $args ) ) {
+			wp_schedule_single_event( time(), self::FETCH_HOOK, $args );
+		}
+
+		return '';
+	}
+
+	/**
+	 * The scheduled half of `for_render()`.
+	 *
+	 * @param mixed $id   Vimeo's number for the video.
+	 * @param mixed $hash Its unlisted hash, or empty.
+	 */
+	public static function fetch_later( $id, $hash = '' ): void {
+		$provider = new Provider( 'vimeo', (string) $id, (string) $hash );
+
+		if ( 1 !== preg_match( '/^\d{6,12}$/', $provider->id ) ) {
+			return;
+		}
+
+		self::status( $provider );
 	}
 
 	/**

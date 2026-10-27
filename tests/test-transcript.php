@@ -34,7 +34,9 @@ $mp3  = $renderer->render( array( 'src' => 'https://cdn.example.com/talk.mp3', '
 
 check( 'off by default', ! str_contains( $off, 'imgp__transcript' ) );
 check( 'printed when the block asks', str_contains( $on, '<details class="imgp__transcript">' ) );
-check( 'closed, with a summary to open it', str_contains( $on, '<summary class="imgp__transcript-summary">Transcript</summary>' ) && ! str_contains( $on, '<details class="imgp__transcript" open' ) );
+check( 'closed, with a summary to open it', str_contains( $on, '<summary class="imgp__transcript-summary">Transcript <span class="imgp__transcript-count"></span></summary>' ) && ! str_contains( $on, '<details class="imgp__transcript" open' ) );
+check( 'with a switch to follow the video, on', str_contains( $on, '<label class="imgp__transcript-follow"><input type="checkbox" checked />' ) );
+check( 'and the lines in an ordered list', str_contains( $on, '<ol class="imgp__transcript-body"></ol>' ) );
 check( 'with a search box', str_contains( $on, 'class="imgp__transcript-search"' ) );
 check( 'under the picture, not in it', strpos( $on, 'imgp__transcript' ) > strpos( $on, '</div>', strpos( $on, 'imgp__stage' ) ) );
 check( 'not without subtitles to read', ! str_contains( $bare, 'imgp__transcript' ) );
@@ -133,7 +135,11 @@ setTimeout(function () {
 		var input = document.querySelector('.imgp__transcript-search');
 		input.value = 'pagina';
 		input.dispatchEvent(new Event('input', { bubbles: true }));
-		out.shownAfterSearch = Array.prototype.filter.call(document.querySelectorAll('.imgp__cue'), function (r) { return !r.hidden; }).length;
+		out.shownAfterSearch = Array.prototype.filter.call(document.querySelectorAll('.imgp__transcript-body > li'), function (r) { return !r.hidden; }).length;
+		out.marked = Array.prototype.map.call(document.querySelectorAll('.imgp__cue-match'), function (m) { return m.textContent; });
+		out.count = document.querySelector('.imgp__transcript-count').textContent;
+		out.currentMarked = !!document.querySelector('.imgp__cue[aria-current="true"]');
+		out.rowsAreButtonsInItems = Array.prototype.every.call(document.querySelectorAll('.imgp__cue'), function (b) { return b.tagName === 'BUTTON' && b.parentElement.tagName === 'LI' && !b.hasAttribute('role'); });
 		input.value = 'zzz';
 		input.dispatchEvent(new Event('input', { bubbles: true }));
 		out.noneNote = document.querySelector('.imgp__transcript-note').textContent;
@@ -180,6 +186,10 @@ check( 'at 0:45 the second line is the current one', '0:40' === ( $r['currentAt4
 check( 'pressing a line moves the video there', 90 === (int) ( $r['clickedTo'] ?? -1 ), (string) ( $r['clickedTo'] ?? '?' ) );
 check( 'typing narrows the list, accents or not', 2 === (int) ( $r['shownAfterSearch'] ?? 0 ), (string) ( $r['shownAfterSearch'] ?? '?' ) );
 check( 'and a word nobody said says so', 'Nada' === ( $r['noneNote'] ?? '' ), (string) ( $r['noneNote'] ?? '' ) );
+check( 'the word found is marked where it is said, with its accent', array( 'página', 'página' ) === ( $r['marked'] ?? null ), wp_json_encode( $r['marked'] ?? null ) );
+check( 'the summary says how many lines there are', '3' === ( $r['count'] ?? '' ), (string) ( $r['count'] ?? '' ) );
+check( 'the line being said is announced as current', true === ( $r['currentMarked'] ?? false ) );
+check( 'each line is a button inside a list item, keeping its role', true === ( $r['rowsAreButtonsInItems'] ?? false ) );
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
 exit( $failures ? 1 : 0 );

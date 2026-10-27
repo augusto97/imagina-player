@@ -173,7 +173,8 @@ check(
 
 echo PHP_EOL . '# And on the front end' . PHP_EOL;
 
-$peaks  = (string) file_get_contents( $root . '/assets/src/frontend/peaks.ts' );
+// The visitor-side measurement lives in its own chunk now.
+$peaks  = (string) file_get_contents( $root . '/assets/src/frontend/compute.ts' );
 $player = (string) file_get_contents( $root . '/assets/src/frontend/player.ts' );
 
 /*
@@ -189,7 +190,7 @@ check(
 
 check(
 	'and a forbidden answer is recognised as one',
-	str_contains( $peaks, '403 === response.status' )
+	str_contains( $peaks, '403 === status' )
 );
 
 check(

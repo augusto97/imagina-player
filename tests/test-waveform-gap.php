@@ -200,7 +200,7 @@ check(
 );
 check(
 	'the visitor-side cap is untouched',
-	str_contains( (string) file_get_contents( $plugin . 'assets/src/frontend/peaks.ts' ), 'too-large' ),
+	str_contains( (string) file_get_contents( $plugin . 'assets/src/frontend/compute.ts' ), "return 'too-large'" ),
 	'nobody browsing a page should download ninety megabytes for a picture'
 );
 

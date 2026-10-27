@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.45.0
+Stable tag: 1.46.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -167,6 +167,84 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.46.0 =
+This release fixes what an audit of the whole plugin found; the security
+findings follow in 1.47.0.
+
+* Fixed: the plugin says it runs on PHP 8.0 and used a PHP 8.1 feature in two
+  classes, so on PHP 8.0 the first player on any page was a fatal error.
+* Fixed: the "HTML anchor" of all three blocks was lost on saving, so
+  timestamp buttons and `?player=` links could only name a block written by
+  hand. An anchor also keeps accented letters, colons and dots now.
+* Fixed: keys pressed on a video's scrub bar acted twice — a left arrow went
+  back fifteen seconds, space played and paused at once and left the player
+  showing an error. Space on the transcript's heading plays the video no
+  longer; it opens the transcript.
+* Fixed: on a phone a tap showed the controls and the end of the same tap
+  hid them again. A tap now shows hidden controls and hides shown ones.
+* Fixed: a player moved in the page by a page builder — tabs, accordions,
+  sliders — was taken apart and never rebuilt.
+* Fixed: a floating player never went back when the reader scrolled up to it,
+  and left an empty gap behind when it was removed.
+* Fixed: the remembered position was saved from the animation loop, which a
+  browser stops in a background tab, so a listener who switched tabs came
+  back to where they switched. It is saved on each new second, on pause and
+  when the page is hidden or closed.
+* Fixed: "Resume from" said one thing while the playhead was elsewhere when
+  the block had a start time, and offered positions past the end of the file.
+  A remembered position now wins over the start time, a link to a moment
+  wins over both, and a position at the end is forgotten.
+* Fixed: a browser refusing to autoplay, or a play interrupted by a pause, put
+  the player in its error state.
+* Fixed: remembered state — position, closed overlays, a playlist's last
+  track — was keyed on things that change between page loads: a protected
+  file's signed address and a playlist's random id. It is keyed on the track
+  and the list now.
+* Fixed: Vimeo addresses from a channel, group, showcase, album or On Demand
+  were taken for audio files, and an unlisted video pasted from Vimeo's own
+  embed code (`player.vimeo.com/video/…?h=…`) lost its hash and would not play.
+* Fixed: a page with a Vimeo video waited for Vimeo while it was being built —
+  up to ten seconds on a host that cannot reach it. The picture is fetched in
+  the background now; the editor's preview still asks and explains.
+* Fixed: the bar's menus could not be used from the keyboard. The arrows walk
+  the list, Escape closes it and returns to its button, a second button swaps
+  its own list in, and the search box closes like the others.
+* Fixed: focus mode paused a video playing in picture-in-picture.
+* Fixed: a protected HLS stream could not renew its signed address, and three
+  short network drops over a long lecture ended it for good. Its quality menu
+  could open and close in the same click.
+* Fixed: the total time stayed "--:--" on a player enhanced after its file had
+  loaded; YouTube's buffering spinner could stay on a paused video; YouTube's
+  clock was polled four times a second while nothing played.
+* Fixed: a double tap on a YouTube or Vimeo video before it was ready built
+  two players in one box.
+* Fixed: in a playlist, "loop" restarted the track while the list moved on to
+  the next. The player's end setting now applies to the list: loop starts the
+  list again, reset goes back to the first track.
+* Fixed: a call to action part-way through that could not be closed covered
+  the video for good; one before the end is always closable. An overlay set to
+  appear at the start no longer takes focus as the page loads.
+* Fixed: the slider's arrows did nothing on a right-to-left site, and moved by
+  most of a width, leaving a card cut in half. They move by whole cards now,
+  and right-to-left sites get their mirrored stylesheet.
+* Fixed: the transcript's lines were announced as list items rather than
+  buttons; it waited a fixed second for a slow subtitle file instead of for
+  the file. It now marks the words found, says how many lines there are, and
+  can stop following the video.
+* Fixed: measuring a waveform in a visitor's browser could use most of a
+  gigabyte of memory for a long file. It decodes in windows now, like the
+  editor, and is only downloaded by the visitor who needs it.
+* Fixed: `[imagina_player class="…"]` was ignored; `start_time="1:30"` was
+  read as one second; `[imagina_time at="00:00"]` printed nothing; a playlist
+  printed an hour and a quarter as "75:00"; a stream did not borrow the cover
+  as its poster; an SRT given as `/wp-content/uploads/…` was refused; a
+  block's class was applied twice; uninstalling on a network left every site
+  but the main one behind; Elementor's transparent colours were dropped
+  without a word, and its image, text and hotspot overlays appeared only at
+  the end of the video.
+* Changed: the floating player and the in-browser waveform measurement are
+  chunks of their own, fetched only by players that use them.
 
 = 1.45.0 =
 * Added: three layouts for a playlist of videos, beside the list and the

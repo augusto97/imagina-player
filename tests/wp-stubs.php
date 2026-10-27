@@ -96,7 +96,15 @@ function delete_transient( $k ) { unset( $GLOBALS['stub_transients'][ $k ] ); re
 function wp_cache_get( $k, $g = '' ) { return false; }
 function wp_cache_set( $k, $v, $g = '', $e = 0 ) { return true; }
 function wp_cache_delete( $k, $g = '' ) { return true; }
-function wp_schedule_single_event( $t, $h, $a = array() ) { return true; }
+function wp_schedule_single_event( $t, $h, $a = array() ) { $GLOBALS['stub_scheduled'][] = array( $h, $a ); return true; }
+if ( ! function_exists( 'wp_next_scheduled' ) ) {
+	function wp_next_scheduled( $hook, $args = array() ) {
+		foreach ( $GLOBALS['stub_scheduled'] ?? array() as $event ) {
+			if ( $event[0] === $hook && $event[1] === $args ) { return time(); }
+		}
+		return false;
+	}
+}
 /*
  * Translation is normally the identity, because almost every test is about
  * what the code does rather than what language it says it in. A test that is
@@ -197,7 +205,13 @@ function wp_register_script( ...$a ) {}
 function wp_register_style( ...$a ) {}
 function wp_enqueue_script( ...$a ) {}
 function wp_enqueue_style( ...$a ) {}
-function wp_add_inline_script( ...$a ) {}
+function wp_add_inline_script( ...$a ) { $GLOBALS['stub_inline_scripts'][] = $a; }
+if ( ! function_exists( 'wp_style_add_data' ) ) {
+	function wp_style_add_data( $handle, $key, $value ) { $GLOBALS['stub_style_data'][ $handle ][ $key ] = $value; return true; }
+}
+if ( ! function_exists( 'wp_script_is' ) ) {
+	function wp_script_is( $handle, $status = 'enqueued' ) { return ! empty( $GLOBALS['stub_script_status'][ $handle ][ $status ] ); }
+}
 function wp_set_script_translations( ...$a ) {}
 function register_block_type( ...$a ) {}
 function get_block_wrapper_attributes( $extra = array() ) { return 'class="wp-block-imagina-audio-player ' . ( $extra['class'] ?? '' ) . '"'; }
@@ -311,6 +325,15 @@ function add_query_arg( $args, $url = '' ) {
 		$pairs[] = $key . '=' . $value;
 	}
 	return $url . $separator . implode( '&', $pairs );
+}
+function remove_query_arg( $keys, $url = '' ) {
+	$parts = explode( '?', (string) $url, 2 );
+	if ( ! isset( $parts[1] ) ) { return $url; }
+	[ $query, $fragment ] = array_pad( explode( '#', $parts[1], 2 ), 2, null );
+	parse_str( $query, $args );
+	foreach ( (array) $keys as $key ) { unset( $args[ $key ] ); }
+	$rebuilt = http_build_query( $args );
+	return $parts[0] . ( '' === $rebuilt ? '' : '?' . $rebuilt ) . ( null === $fragment ? '' : '#' . $fragment );
 }
 function is_user_logged_in() { return ! empty( $GLOBALS['stub_current_user'] ); }
 function get_current_user_id() { return (int) ( $GLOBALS['stub_current_user'] ?? 0 ); }
@@ -682,4 +705,11 @@ if ( ! function_exists( 'get_queried_object_id' ) ) {
 }
 if ( ! function_exists( 'is_protected_meta' ) ) {
 	function is_protected_meta( $key, $type = '' ) { return str_starts_with( (string) $key, '_' ); }
+}
+
+if ( ! function_exists( 'is_multisite' ) ) {
+	function is_multisite() { return ! empty( $GLOBALS['stub_sites'] ); }
+	function get_sites( $args = array() ) { return $GLOBALS['stub_sites'] ?? array(); }
+	function switch_to_blog( $id ) { $GLOBALS['stub_blog_switches'][] = (int) $id; $GLOBALS['stub_current_blog'] = (int) $id; return true; }
+	function restore_current_blog() { $GLOBALS['stub_current_blog'] = 1; return true; }
 }

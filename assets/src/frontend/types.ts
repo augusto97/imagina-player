@@ -145,6 +145,8 @@ export interface TrackChange {
 	protectedId?: number;
 	/** A video's still, shown until it starts. */
 	poster?: string;
+	/** What this track's remembered state is keyed on; stable across loads. */
+	layerKey?: string;
 	/** Set for a video a provider serves, which is switched by name. */
 	provider?: string;
 	providerId?: string;

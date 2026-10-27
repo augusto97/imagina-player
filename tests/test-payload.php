@@ -51,7 +51,14 @@ $budgets = array(
 	 * video pays for this chunk, and the core it is kept out of is the
 	 * figure the readme claims.
 	 */
-	'the video chunk' => array( $video, 16.0 ),
+	/*
+	 * And to 18.0 in 1.46.0, for keyboard access to the bar's menus — the
+	 * arrows walk a list, Escape hands focus back, a second button swaps
+	 * its list in — and the controls that a tap shows and hides on a phone.
+	 * The sticky player and the visitor-side waveform measurement left the
+	 * core for chunks of their own in the same release.
+	 */
+	'the video chunk' => array( $video, 18.0 ),
 	'the HLS glue'    => array( $glue, 6.0 ),
 	'the layer chunk' => array( $layers, 8.0 ),
 	'the playlist'    => array( $playlist, 6.0 ),

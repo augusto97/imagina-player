@@ -202,9 +202,23 @@ abstract class ProviderMedia extends EventTarget implements PlayerMedia {
 		return this.src;
 	}
 
+	/** The frame being built, so two presses before it is ready build one. */
+	private mounting: Promise< void > | null = null;
+
 	async play(): Promise< void > {
 		if ( ! this.ready ) {
-			await this.mount();
+			/*
+			 * A double tap on the big play button, autoplay and a click, a
+			 * playlist loading the next item while the first is still being
+			 * built: each called `mount()` again, put a second provider player
+			 * in the same box and orphaned the first mid-handshake.
+			 */
+			this.mounting ??= this.mount().catch( ( error: unknown ) => {
+				this.mounting = null;
+				throw error;
+			} );
+
+			await this.mounting;
 		}
 
 		this.command( 'play' );
@@ -549,18 +563,27 @@ class YouTubeMedia extends ProviderMedia {
 					onApiChange: () => this.apiChanged(),
 					onReady: () => {
 						this.flush();
-						this.watch();
+						this.tick();
 						resolve();
 					},
 					onStateChange: ( event: YT.OnStateChangeEvent ) => {
 						// 0 ended, 1 playing, 2 paused, 3 buffering.
 						if ( 0 === event.data ) {
+							this.sync();
+							this.stopWatching();
 							this.finish();
 						} else if ( 1 === event.data ) {
+							this.watch();
 							this.setPaused( false );
 						} else if ( 2 === event.data ) {
+							// Where it stopped, without deciding anything
+							// from it: this pause may be the one the end
+							// guard below just asked for.
+							this.sync();
+							this.stopWatching();
 							this.setPaused( true );
 						} else if ( 3 === event.data ) {
+							this.watch();
 							this.emit( 'waiting' );
 						}
 					},
@@ -577,18 +600,40 @@ class YouTubeMedia extends ProviderMedia {
 	 */
 	private watch(): void {
 		window.clearInterval( this.timer );
+		this.timer = window.setInterval( () => this.tick(), POLL_MS );
+	}
 
-		this.timer = window.setInterval( () => {
-			if ( ! this.player ) {
-				return;
-			}
+	/**
+	 * Only while something is moving. The clock was asked four times a second
+	 * for the life of the page, paused or not — for a video in a sidebar that
+	 * nobody pressed, that is a timer firing all day.
+	 */
+	private stopWatching(): void {
+		window.clearInterval( this.timer );
+		this.timer = 0;
+	}
 
-			const at = this.player.getCurrentTime() || 0;
-			const total = this.player.getDuration() || 0;
+	private tick(): void {
+		this.sync();
 
-			this.report( at, total );
-			this.stopBeforeTheEnd( at, total );
-		}, POLL_MS );
+		if ( this.player ) {
+			this.stopBeforeTheEnd(
+				this.player.getCurrentTime() || 0,
+				this.player.getDuration() || 0
+			);
+		}
+	}
+
+	/** Read the provider's clock into this stand-in, and nothing else. */
+	private sync(): void {
+		if ( ! this.player ) {
+			return;
+		}
+
+		this.report(
+			this.player.getCurrentTime() || 0,
+			this.player.getDuration() || 0
+		);
 	}
 
 	/**
@@ -628,6 +673,10 @@ class YouTubeMedia extends ProviderMedia {
 			return;
 		}
 
+		// Marked first: the pause asked for here is reported back, and must
+		// not be read as another moment to end.
+		this.isEnded = true;
+		this.stopWatching();
 		this.player.pauseVideo();
 		this.report( total, total );
 		this.finish();
@@ -799,9 +848,15 @@ class VimeoMedia extends ProviderMedia {
 
 		const mountPoint = document.createElement( 'div' );
 
+		const api = window.Vimeo;
+
+		if ( ! api?.Player ) {
+			throw new Error( 'vimeo-api-missing' );
+		}
+
 		this.frameHost().replaceChildren( mountPoint );
 
-		const player = new window.Vimeo.Player( mountPoint, {
+		const player = new api.Player( mountPoint, {
 			id: Number( this.config.providerId ?? 0 ),
 			h: this.config.providerHash || undefined,
 			controls: false,

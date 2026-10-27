@@ -92,6 +92,8 @@ export function jump(
 	withPlayer: WithPlayer
 ): void {
 	withPlayer( root, ( player ) => {
+		// Where the link or button says beats where the viewer last stopped.
+		player.dismissResume();
 		player.seekTo( seconds );
 
 		if ( ! ( player.media.duration > 0 ) ) {

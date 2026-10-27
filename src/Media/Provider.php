@@ -58,10 +58,10 @@ final class Provider {
 
 	public function __construct(
 		/** `youtube`, `vimeo`, or an empty string for a plain file. */
-		public readonly string $name = '',
-		public readonly string $id = '',
+		public string $name = '',
+		public string $id = '',
 		/** Vimeo's unlisted-video hash, which is part of the address. */
-		public readonly string $hash = ''
+		public string $hash = ''
 	) {}
 
 	public function exists(): bool {
@@ -115,7 +115,7 @@ final class Provider {
 
 		return 'youtube' === $name
 			? self::youtube( $host, $path, $query )
-			: self::vimeo( $path );
+			: self::vimeo( $path, $query );
 	}
 
 	/**
@@ -154,32 +154,57 @@ final class Provider {
 			: new self();
 	}
 
-	private static function vimeo( string $path ): self {
-		$segments = array_values( array_filter( explode( '/', $path ) ) );
+	/**
+	 * Every shape of Vimeo address that names one video.
+	 *
+	 * A table rather than a chain of branches, because the branches missed
+	 * shapes without anybody noticing: a video found through a channel, a
+	 * group, a showcase or an album has its number at the end of a longer
+	 * path, and was taken for a plain file and handed to an audio element.
+	 * The first group is the video's number; the second, where there is one,
+	 * is the hash of an unlisted video.
+	 *
+	 * @var string[]
+	 */
+	private const VIMEO_PATHS = array(
+		'#^/(\d{6,12})(?:/([A-Za-z0-9]{6,20}))?/?$#',
+		'#^/video/(\d{6,12})/?$#',
+		'#^/channels/[^/]+/(\d{6,12})/?$#',
+		'#^/groups/[^/]+/videos/(\d{6,12})/?$#',
+		'#^/(?:showcase|album)/\d+/video/(\d{6,12})/?$#',
+		'#^/ondemand/[^/]+/(\d{6,12})/?$#',
+		'#^/manage/videos/(\d{6,12})(?:/([A-Za-z0-9]{6,20}))?/?$#',
+	);
 
-		// player.vimeo.com/video/ID
-		if ( isset( $segments[1] ) && 'video' === $segments[0] ) {
-			array_shift( $segments );
+	/**
+	 * @param array<string, mixed> $query Parsed query string.
+	 */
+	private static function vimeo( string $path, array $query = array() ): self {
+		foreach ( self::VIMEO_PATHS as $pattern ) {
+			if ( 1 !== preg_match( $pattern, $path, $match ) ) {
+				continue;
+			}
+
+			/*
+			 * An unlisted video's hash is in the path on vimeo.com and in
+			 * `?h=` on the player's own address — which is the form the
+			 * "Embed" button hands out, so it is the one most often pasted.
+			 * The embed will not load without it.
+			 */
+			$hash = (string) ( $match[2] ?? '' );
+
+			if ( '' === $hash && isset( $query['h'] ) && is_string( $query['h'] ) ) {
+				$hash = $query['h'];
+			}
+
+			if ( 1 !== preg_match( '/^[A-Za-z0-9]{6,20}$/', $hash ) ) {
+				$hash = '';
+			}
+
+			return new self( 'vimeo', $match[1], $hash );
 		}
 
-		$id = (string) ( $segments[0] ?? '' );
-
-		if ( 1 !== preg_match( '/^[0-9]{6,12}$/', $id ) ) {
-			return new self();
-		}
-
-		/*
-		 * vimeo.com/ID/HASH is an unlisted video. The hash is not a secret in
-		 * any useful sense — it is in the address the author pasted — but the
-		 * embed will not load without it.
-		 */
-		$hash = (string) ( $segments[1] ?? '' );
-
-		if ( 1 !== preg_match( '/^[A-Za-z0-9]{6,20}$/', $hash ) ) {
-			$hash = '';
-		}
-
-		return new self( 'vimeo', $id, $hash );
+		return new self();
 	}
 
 	/**
@@ -217,7 +242,10 @@ final class Provider {
 		}
 
 		if ( 'vimeo' === $this->name ) {
-			return 'https://player.vimeo.com/video/' . rawurlencode( $this->id );
+			$url = 'https://player.vimeo.com/video/' . rawurlencode( $this->id );
+
+			// An unlisted video answers "private" to its address without it.
+			return '' === $this->hash ? $url : $url . '?h=' . rawurlencode( $this->hash );
 		}
 
 		return '';

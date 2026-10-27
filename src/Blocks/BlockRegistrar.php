@@ -100,7 +100,7 @@ final class BlockRegistrar {
 						'type'    => 'string',
 						'default' => '',
 					),
-				),
+				) + self::anchor_attribute(),
 				'render_callback' => array( $this, 'render_playlist' ),
 			)
 		);
@@ -135,13 +135,28 @@ final class BlockRegistrar {
 	 */
 	public static function wrapper_attributes( array $attributes ): array {
 		$wrapper = array( 'class' => 'imgp-block' );
-		$anchor  = sanitize_html_class( (string) ( $attributes['anchor'] ?? '' ) );
+		$anchor  = self::anchor( (string) ( $attributes['anchor'] ?? '' ) );
 
 		if ( '' !== $anchor ) {
 			$wrapper['id'] = $anchor;
 		}
 
 		return $wrapper;
+	}
+
+	/**
+	 * An anchor as the editor's own field allows it.
+	 *
+	 * `sanitize_html_class()` was used, and it is a class filter: it drops an
+	 * accented letter, a colon or a dot, all valid in an id, so the printed
+	 * id stopped matching the one the author typed and their own links to it
+	 * broke. The editor takes out spaces and `#`; this does the same, plus
+	 * the characters that have no business in an attribute at all.
+	 */
+	public static function anchor( string $anchor ): string {
+		$anchor = (string) preg_replace( '/[\s#"\'<>`]+/u', '', $anchor );
+
+		return function_exists( 'mb_substr' ) ? mb_substr( $anchor, 0, 128 ) : substr( $anchor, 0, 128 );
 	}
 
 	/**
@@ -174,15 +189,43 @@ final class BlockRegistrar {
 			};
 		}
 
-		return $attributes;
+		return $attributes + self::anchor_attribute();
+	}
+
+	/**
+	 * The anchor, declared rather than left to `supports.anchor`.
+	 *
+	 * Left to the support, the editor defines `anchor` as read from the
+	 * saved HTML's `id` — and a dynamic block saves no HTML, so whatever the
+	 * author typed in "HTML anchor" was gone after saving. Declared with a
+	 * type, the editor keeps this definition and writes the value into the
+	 * block comment like any other attribute.
+	 *
+	 * @return array<string, array<string, string>>
+	 */
+	public static function anchor_attribute(): array {
+		return array(
+			'anchor' => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+		);
 	}
 
 	/**
 	 * @param array<string, mixed> $attributes Block attributes.
+	 * @param string               $content    Inner content; these blocks have none.
+	 * @param mixed                $block      The block instance, for its context.
 	 */
 	public function render( array $attributes, string $content = '', mixed $block = null ): string {
 		$renderer = new PlayerRenderer();
-		$html     = $renderer->render( $attributes );
+		/*
+		 * The block's own class goes on the block's wrapper, where
+		 * `get_block_wrapper_attributes()` puts it. Passed on as well, the
+		 * player carried it a second time, and a theme rule written for the
+		 * class — a margin, a border — applied twice, one box inside another.
+		 */
+		$html = $renderer->render( array_diff_key( $attributes, array( 'className' => true ) ), self::context_post_id( $block ) );
 
 		if ( '' === $html ) {
 			return '';
@@ -191,6 +234,23 @@ final class BlockRegistrar {
 		$wrapper = get_block_wrapper_attributes( self::wrapper_attributes( $attributes ) );
 
 		return sprintf( '<div %s>%s</div>', $wrapper, $html );
+	}
+
+	/**
+	 * The post a block is rendered for, from its context.
+	 *
+	 * Inside a Query Loop or a template the global post is not always the
+	 * one the block belongs to; the context is. A source read from a custom
+	 * field has to come from the right post.
+	 *
+	 * @param mixed $block The block instance, when WordPress passed one.
+	 */
+	private static function context_post_id( mixed $block ): ?int {
+		if ( is_object( $block ) && isset( $block->context ) && is_array( $block->context ) && ! empty( $block->context['postId'] ) ) {
+			return (int) $block->context['postId'];
+		}
+
+		return null;
 	}
 
 	/**

@@ -1,10 +1,4 @@
-import {
-	computePeaks,
-	decodePeaks,
-	rememberPeaks,
-	sharedPeaks,
-	storePeaks,
-} from './peaks';
+import { decodePeaks, rememberPeaks, sharedPeaks, storePeaks } from './peaks';
 import type {
 	MediaCapabilities,
 	PlayerConfig,
@@ -31,6 +25,46 @@ const SPEEDS = [ 1, 1.25, 1.5, 2, 0.75 ];
 const RESUME_WORTH = 5;
 
 const STORAGE_PREFIX = 'imagina-player:position:';
+
+/**
+ * A refusal from `play()` that is not the file's fault.
+ *
+ * `AbortError` is a play interrupted by a pause or a new source a moment
+ * later; `NotAllowedError` is the browser declining to start sound without a
+ * gesture. Both were taken for a broken file, and the player put itself in
+ * its error state over a video that was perfectly fine.
+ * @param error
+ */
+function isBenignRefusal( error: unknown ): boolean {
+	const name = ( error as { name?: string } | null )?.name ?? '';
+
+	return 'AbortError' === name || 'NotAllowedError' === name;
+}
+
+/**
+ * Whether the grant to store a waveform has run out.
+ *
+ * A page held in a full-page cache outlives the week the grant lasts; past
+ * that, measuring the file in the visitor's browser only ends in a refusal
+ * when the result is sent. The grant says when it expires in its own
+ * payload, so that is checked first and the work is not done.
+ * @param token
+ */
+function grantExpired( token: string ): boolean {
+	try {
+		const payload = token.split( '.' )[ 0 ] ?? '';
+		const claims = JSON.parse(
+			atob( payload.replace( /-/g, '+' ).replace( /_/g, '/' ) )
+		) as { exp?: number };
+
+		return 'number' === typeof claims.exp && claims.exp * 1000 < Date.now();
+	} catch {
+		return false;
+	}
+}
+
+/** How long a refreshed link must play before another refresh is allowed. */
+const SOURCE_REFRESH_GRACE = 60000;
 
 /** How long the browser may spend downloading and decoding a file. */
 const ANALYZE_TIMEOUT = 30000;
@@ -72,12 +106,8 @@ export class Player {
 
 	private resizeObserver: ResizeObserver | null = null;
 
-	private stickyPlaceholder: HTMLElement | null = null;
-
-	private stickyObserver: IntersectionObserver | null = null;
-
-	/** Set once the reader has sent a floating player away. */
-	private stickyDismissed = false;
+	/** The floating behaviour, once its chunk has arrived. */
+	private sticky: { destroy: () => void } | null = null;
 
 	private scrubbing = false;
 
@@ -106,10 +136,20 @@ export class Player {
 		destroy: () => void;
 		/** True when the chrome took the click: it opened a menu instead. */
 		pickSpeed?: () => boolean;
+		/** True when a stream took the new address itself. */
+		replaceSource?: ( url: string ) => boolean;
 	} | null = null;
 
 	/** Takes down the "resume from" offer, while it is showing. */
 	private resumeHide: ( () => void ) | null = null;
+
+	/** The position restored from memory this load, or zero. */
+	private resumedAt = 0;
+
+	/** The last whole second written to storage, so it is not written twice. */
+	private lastSaved = -1;
+
+	private unbindPositionSaving: ( () => void ) | null = null;
 
 	/** Set once the layer chunk has loaded; absent unless one was configured. */
 	private layers: { destroy: () => void } | null = null;
@@ -165,14 +205,22 @@ export class Player {
 		this.bindMedia();
 		this.bindControls();
 		this.setupWaveform();
-		this.restorePosition();
 
-		if ( this.config.startTime > 0 ) {
+		/*
+		 * A remembered position wins over the block's start time: the author
+		 * chose where everybody starts, the viewer chose where they stopped,
+		 * and the second is the more specific. Both used to be applied in
+		 * turn, so the playhead sat at the start time while the chip said it
+		 * was resuming somewhere else.
+		 */
+		if ( ! this.restorePosition() && this.config.startTime > 0 ) {
 			this.seekTo( this.config.startTime );
 		}
 
+		this.bindPositionSaving();
+
 		if ( this.config.sticky ) {
-			this.setupSticky();
+			void this.setupSticky();
 		}
 
 		if ( this.config.video ) {
@@ -233,6 +281,7 @@ export class Player {
 					seekTo: ( seconds: number ) => this.seekTo( seconds ),
 					setSpeed: ( rate: number ) => this.setSpeed( rate ),
 					speed: () => this.media.playbackRate || 1,
+					refreshSource: () => void this.recoverSource(),
 				},
 				config
 			);
@@ -259,9 +308,16 @@ export class Player {
 		media.addEventListener( 'waiting', () =>
 			this.root.classList.add( 'is-buffering' )
 		);
-		media.addEventListener( 'playing', () =>
-			this.root.classList.remove( 'is-buffering' )
-		);
+		/*
+		 * Not only `playing`. A YouTube video sought while paused reports
+		 * buffering and then simply pauses again, and the spinner stayed on
+		 * a video that was not loading anything.
+		 */
+		for ( const type of [ 'playing', 'pause', 'seeked', 'canplay' ] ) {
+			media.addEventListener( type, () =>
+				this.root.classList.remove( 'is-buffering' )
+			);
+		}
 		media.addEventListener( 'error', () => {
 			void this.recoverSource();
 		} );
@@ -269,6 +325,13 @@ export class Player {
 		if ( this.config.duration > 0 && this.totalTimeEl ) {
 			this.totalTimeEl.textContent = formatTime( this.config.duration );
 		}
+
+		/*
+		 * A player built after its file had already loaded — a lazily
+		 * enhanced one, scrolled to after the browser fetched the metadata —
+		 * never hears `loadedmetadata`, and its total stayed at "--:--".
+		 */
+		this.onDurationKnown();
 	}
 
 	private bindControls(): void {
@@ -534,7 +597,25 @@ export class Player {
 			// Fall through to client-side computation.
 		}
 
-		if ( ! this.config.canCompute || ! this.config.peaksToken ) {
+		if (
+			! this.config.canCompute ||
+			! this.config.peaksToken ||
+			grantExpired( this.config.peaksToken )
+		) {
+			return null;
+		}
+
+		let computePeaks: typeof import('./compute').computePeaks;
+
+		try {
+			( { computePeaks } = await import(
+				/* webpackChunkName: "imagina-compute" */ './compute'
+			) );
+		} catch {
+			return null;
+		}
+
+		if ( this.destroyed ) {
 			return null;
 		}
 
@@ -564,6 +645,8 @@ export class Player {
 					'the browser was not allowed to read this file, so it cannot measure it. It is on another domain that does not permit cross-origin reads. Generate the waveform from the block editor instead — that route goes through this site.',
 				timeout:
 					'reading this file took too long, so no waveform was measured.',
+				'unknown-size':
+					'the server did not say how big this file is, so it was not downloaded to be measured. Generate the waveform on the server or from the block editor.',
 			};
 
 			const why = said[ computed ];
@@ -585,123 +668,36 @@ export class Player {
 		return computed.peaks;
 	}
 
-	private setupSticky(): void {
+	/**
+	 * The floating player, from its own chunk — only a player set to follow
+	 * the reader ever fetches it.
+	 */
+	private async setupSticky(): Promise< void > {
 		if ( typeof IntersectionObserver === 'undefined' ) {
 			return;
 		}
 
-		const unstick =
-			this.root.querySelector< HTMLButtonElement >( '.imgp__unstick' );
+		try {
+			const { Sticky } = await import(
+				/* webpackChunkName: "imagina-sticky" */ './sticky'
+			);
 
-		unstick?.addEventListener( 'click', () => {
-			/*
-			 * For the rest of this page view. Sending it back only for it to
-			 * return on the next scroll is not dismissing it, and a floating
-			 * player that cannot be got rid of is the thing people actually
-			 * dislike about floating players.
-			 */
-			this.stickyDismissed = true;
-			this.setStuck( false );
-		} );
+			if ( this.destroyed ) {
+				return;
+			}
 
-		this.stickyObserver = new IntersectionObserver(
-			( entries ) => {
-				const entry = entries[ 0 ];
-
-				if ( ! entry ) {
-					return;
-				}
-
-				void entry;
-				this.reviewSticky();
-			},
-			{ threshold: 0 }
-		);
-
-		this.stickyObserver.observe( this.root );
-
-		/*
-		 * Playing and pausing have to be asked as well. An observer only fires
-		 * when the intersection *changes*, so a player that is already out of
-		 * view when playback starts — the listener carried on from a playlist,
-		 * or a keyboard shortcut, or an autoplaying video scrolled past before
-		 * it began — would never be reconsidered, and would sit off-screen
-		 * playing to nobody.
-		 */
-		const review = (): void => this.reviewSticky();
-
-		this.media.addEventListener( 'play', review );
-		this.media.addEventListener( 'pause', review );
-	}
-
-	/**
-	 * Decide whether the player should be following the reader.
-	 *
-	 * Only while something is actually playing: a paused player pinning itself
-	 * to the corner because somebody scrolled past it is an advert.
-	 */
-	private reviewSticky(): void {
-		if ( this.stickyDismissed || this.media.paused ) {
-			this.setStuck( false );
-
-			return;
+			this.sticky = new Sticky( {
+				root: this.root,
+				media: this.media,
+				element: this.element,
+				changed: () => {
+					this.waveform?.resize();
+					this.render();
+				},
+			} );
+		} catch {
+			// The player stays where it is, which is where it was anyway.
 		}
-
-		/*
-		 * Measured here rather than remembered from the observer. The observer
-		 * reports *changes*, so a player that was already off screen when the
-		 * page loaded has never been reported at all, and a remembered "it is
-		 * visible" would be wrong from the start — an autoplaying video below
-		 * the fold, or a listener carrying on from a playlist, would play to
-		 * nobody. Asking is one layout read on an event that is rare.
-		 */
-		const box = this.stuckBox();
-
-		this.setStuck(
-			box.bottom <= 0 ||
-				box.top >=
-					( window.innerHeight ||
-						document.documentElement.clientHeight )
-		);
-	}
-
-	/**
-	 * Where the player sits, or where it would sit if it were not floating.
-	 *
-	 * Once it has detached its own rectangle is the floating card, which is
-	 * always on screen — so asking it whether it is visible would always say
-	 * yes and it would snap back the moment it left.
-	 */
-	private stuckBox(): DOMRect {
-		return ( this.stickyPlaceholder ?? this.root ).getBoundingClientRect();
-	}
-
-	private setStuck( stuck: boolean ): void {
-		if ( stuck === this.root.classList.contains( 'is-stuck' ) ) {
-			return;
-		}
-
-		if ( stuck ) {
-			// Measured before the class lands, because the class is what makes
-			// the player small: reading it afterwards holds open the gap of the
-			// floating card rather than of the player that left.
-			const height = this.root.offsetHeight;
-
-			this.stickyPlaceholder = document.createElement( 'div' );
-			this.stickyPlaceholder.className = 'imgp__sticky-placeholder';
-			this.stickyPlaceholder.style.height = `${ height }px`;
-			// The player leaves the flow either way, so the gap it left behind has
-			// to be held open regardless of where it docks.
-			this.root.after( this.stickyPlaceholder );
-			this.root.classList.add( 'is-stuck' );
-		} else {
-			this.stickyPlaceholder?.remove();
-			this.stickyPlaceholder = null;
-			this.root.classList.remove( 'is-stuck' );
-		}
-
-		this.waveform?.resize();
-		this.render();
 	}
 
 	private onDurationKnown(): void {
@@ -709,6 +705,25 @@ export class Player {
 
 		if ( this.totalTimeEl && duration > 0 ) {
 			this.totalTimeEl.textContent = formatTime( duration );
+		}
+
+		/*
+		 * A remembered position at the very end, or past it — the file was
+		 * replaced by a shorter one — is not somewhere to resume: playing
+		 * from it ends at once and starts again from nothing, under a chip
+		 * claiming otherwise. Forgotten, and the start time applies.
+		 */
+		if (
+			this.resumedAt > 0 &&
+			duration > 0 &&
+			this.resumedAt >= duration - RESUME_WORTH
+		) {
+			this.resumedAt = 0;
+			this.clearPosition();
+			this.hideResume();
+			this.seekTo(
+				this.config.startTime > 0 ? this.config.startTime : 0
+			);
 		}
 
 		this.render();
@@ -720,7 +735,6 @@ export class Player {
 		}
 
 		this.render();
-		this.savePosition();
 	} );
 
 	private onPlay(): void {
@@ -749,15 +763,33 @@ export class Player {
 			'aria-label',
 			this.runtime.i18n.play ?? 'Play'
 		);
-
-		if ( this.root.classList.contains( 'is-stuck' ) ) {
-			this.setStuck( false );
-		}
 	}
+
+	/**
+	 * What happens at the end of a track: `reset`, `loop` or `stop`.
+	 *
+	 * Read by a playlist, which decides the end of a list for itself.
+	 */
+	get endBehaviour(): string {
+		return this.config.onEnd;
+	}
+
+	/**
+	 * Set by a playlist that owns what happens at the end of each track. A
+	 * player looping its track while the list moved on to the next one
+	 * started a play the next track's load interrupted at once.
+	 */
+	endHandledElsewhere = false;
 
 	private onEnded(): void {
 		this.root.classList.remove( 'is-playing' );
 		this.clearPosition();
+
+		if ( this.endHandledElsewhere ) {
+			this.render();
+
+			return;
+		}
 
 		if ( 'loop' === this.config.onEnd ) {
 			this.seekTo( 0 );
@@ -771,7 +803,6 @@ export class Player {
 			this.seekTo( 0 );
 		}
 
-		this.setStuck( false );
 		this.render();
 	}
 
@@ -865,11 +896,18 @@ export class Player {
 		}`;
 	}
 
-	private restorePosition(): void {
+	/**
+	 * Go back to where this viewer stopped, if they stopped somewhere.
+	 *
+	 * @return Whether a position was restored.
+	 */
+	private restorePosition(): boolean {
 		this.hideResume();
+		this.resumedAt = 0;
+		this.lastSaved = -1;
 
 		if ( ! this.config.remember ) {
-			return;
+			return false;
 		}
 
 		try {
@@ -877,16 +915,103 @@ export class Player {
 				window.localStorage.getItem( this.storageKey() ) ?? 0
 			);
 
-			if ( stored > 0 ) {
-				this.seekTo( stored );
+			if ( ! ( stored >= RESUME_WORTH ) ) {
+				return false;
 			}
 
-			if ( stored >= RESUME_WORTH ) {
-				this.offerResume( stored );
+			const duration = this.duration();
+
+			// Known to be at the end already: not a place to resume.
+			if ( duration > 0 && stored >= duration - RESUME_WORTH ) {
+				this.clearPosition();
+
+				return false;
 			}
+
+			this.resumedAt = stored;
+			this.lastSaved = Math.floor( stored );
+			this.seekTo( stored );
+			this.offerResume( stored );
+
+			return true;
 		} catch {
 			// Storage can be unavailable in private mode; the player still works.
+			return false;
 		}
+	}
+
+	/**
+	 * Keep the position as playback moves, and when the visitor leaves.
+	 *
+	 * It used to be written from the animation-frame loop, which a browser
+	 * stops in a background tab — so a listener who switched tabs for half
+	 * an hour came back to where they switched — and four times a second
+	 * while visible, whether or not the second had changed. Now on each new
+	 * second, on pause, and when the page is hidden or closed.
+	 */
+	private bindPositionSaving(): void {
+		if ( ! this.config.remember ) {
+			return;
+		}
+
+		const save = (): void => this.savePosition();
+		const leaving = (): void => {
+			if ( 'hidden' === document.visibilityState ) {
+				this.savePosition( true );
+			}
+		};
+		const closing = (): void => this.savePosition( true );
+
+		this.media.addEventListener( 'timeupdate', save );
+		this.media.addEventListener( 'pause', closing );
+		document.addEventListener( 'visibilitychange', leaving );
+		window.addEventListener( 'pagehide', closing );
+
+		this.unbindPositionSaving = () => {
+			this.media.removeEventListener( 'timeupdate', save );
+			this.media.removeEventListener( 'pause', closing );
+			document.removeEventListener( 'visibilitychange', leaving );
+			window.removeEventListener( 'pagehide', closing );
+		};
+	}
+
+	private savePosition( force = false ): void {
+		if ( ! this.config.remember || this.scrubbing ) {
+			return;
+		}
+
+		const second = Math.floor( this.media.currentTime );
+
+		if (
+			second < RESUME_WORTH ||
+			( ! force && second === this.lastSaved )
+		) {
+			return;
+		}
+
+		// The end is not a position worth keeping; `ended` clears it.
+		const duration = this.duration();
+
+		if ( duration > 0 && second >= duration - 1 ) {
+			return;
+		}
+
+		this.lastSaved = second;
+
+		try {
+			window.localStorage.setItem( this.storageKey(), String( second ) );
+		} catch {
+			// Ignored.
+		}
+	}
+
+	/**
+	 * Take the "resume from" offer down — for a link to a moment, which says
+	 * where to be more precisely than a memory does.
+	 */
+	dismissResume(): void {
+		this.resumedAt = 0;
+		this.hideResume();
 	}
 
 	/**
@@ -899,7 +1024,13 @@ export class Player {
 	private offerResume( seconds: number ): void {
 		import( /* webpackChunkName: "imagina-resume" */ './resume' )
 			.then( ( { offerResume } ) => {
-				if ( this.destroyed || this.media.currentTime > seconds + 1 ) {
+				// Gone before it arrived: the viewer, or a link, already
+				// moved the playhead somewhere else.
+				if (
+					this.destroyed ||
+					this.resumedAt !== seconds ||
+					Math.abs( this.media.currentTime - seconds ) > 1
+				) {
 					return;
 				}
 
@@ -925,22 +1056,9 @@ export class Player {
 		this.resumeHide = null;
 	}
 
-	private savePosition(): void {
-		if ( ! this.config.remember || this.media.currentTime < 5 ) {
-			return;
-		}
-
-		try {
-			window.localStorage.setItem(
-				this.storageKey(),
-				String( Math.floor( this.media.currentTime ) )
-			);
-		} catch {
-			// Ignored.
-		}
-	}
-
 	private clearPosition(): void {
+		this.lastSaved = -1;
+
 		try {
 			window.localStorage.removeItem( this.storageKey() );
 		} catch {
@@ -980,8 +1098,10 @@ export class Player {
 
 	toggle(): void {
 		if ( this.media.paused ) {
-			void this.media.play().catch( () => {
-				void this.recoverSource();
+			void this.media.play().catch( ( error: unknown ) => {
+				if ( ! isBenignRefusal( error ) ) {
+					void this.recoverSource();
+				}
 			} );
 		} else {
 			this.media.pause();
@@ -1035,6 +1155,24 @@ export class Player {
 			}
 
 			this.root.classList.remove( 'has-error' );
+
+			/*
+			 * A link lasts minutes and a lecture lasts hours, so a long session
+			 * expires more than once. The one-refresh guard stops a loop on a
+			 * link that is refused outright; once the new one has played for a
+			 * while, the next expiry deserves a refresh of its own.
+			 */
+			window.setTimeout( () => {
+				this.sourceRefreshed = false;
+			}, SOURCE_REFRESH_GRACE );
+
+			// A stream is fed by hls.js through a MediaSource; handing the
+			// element the manifest's address would play nothing in any browser
+			// but Safari. The stream takes the new address itself.
+			if ( this.video?.replaceSource?.( data.url ) ) {
+				return true;
+			}
+
 			this.media.src = data.url;
 			// Only a real element reloads. A provider link is not ours to sign
 			// and never expires, so there is nothing here for a stand-in to do.
@@ -1163,8 +1301,13 @@ export class Player {
 			this.root.classList.remove( 'is-started' );
 		}
 
+		// What the viewer closes or reaches on this track is remembered
+		// against this track, not the one the page opened with.
+		if ( track.layerKey ) {
+			this.config.layerKey = track.layerKey;
+		}
+
 		if ( track.provider && this.standIn?.load ) {
-			this.config.layerKey = track.providerId ?? '';
 			this.standIn.load(
 				track.providerId ?? '',
 				track.providerHash ?? '',
@@ -1196,8 +1339,10 @@ export class Player {
 		this.restorePosition();
 
 		if ( play ) {
-			void this.media.play().catch( () => {
-				void this.recoverSource();
+			void this.media.play().catch( ( error: unknown ) => {
+				if ( ! isBenignRefusal( error ) ) {
+					void this.recoverSource();
+				}
 			} );
 		}
 	}
@@ -1205,9 +1350,10 @@ export class Player {
 	destroy(): void {
 		this.destroyed = true;
 		this.hideResume();
+		this.unbindPositionSaving?.();
+		this.sticky?.destroy();
 		this.layers?.destroy();
 		this.resizeObserver?.disconnect();
-		this.stickyObserver?.disconnect();
 		this.video?.destroy();
 		// A provider stand-in holds an iframe and a polling timer; neither
 		// went away with the player before this.

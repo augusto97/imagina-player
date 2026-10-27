@@ -109,10 +109,10 @@ final class TimeShortcode {
 			return max( 0.0, $hours * 3600 + $minutes * 60 + $rest );
 		}
 
-		if ( str_contains( $value, ':' ) ) {
-			$total = Attributes::to_seconds( $value );
-
-			return $total > 0 || '0:00' === $value ? $total : null;
+		// Any clock made of digits is a time, `00:00` and `0:00:00` included —
+		// the start of a video is a moment people link to.
+		if ( 1 === preg_match( '/^\d+(?::\d{1,2}){1,2}(?:\.\d+)?$/', $value ) ) {
+			return Attributes::to_seconds( $value );
 		}
 
 		return null;

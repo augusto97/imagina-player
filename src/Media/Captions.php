@@ -155,6 +155,20 @@ final class Captions {
 		// otherwise fail here for half its visitors.
 		$strip = static fn( string $value ): string => (string) preg_replace( '#^https?://#', '', $value );
 
+		/*
+		 * A relative address — `/wp-content/uploads/x.srt`, or `//host/…` —
+		 * is accepted by the attribute filter and works for a VTT, which is
+		 * linked directly. An SRT comes through here, and without a host it
+		 * matched nothing and was refused.
+		 */
+		if ( str_starts_with( $url, '//' ) ) {
+			$url = 'https:' . $url;
+		} elseif ( str_starts_with( $url, '/' ) ) {
+			$host = (string) wp_parse_url( $baseurl, PHP_URL_HOST );
+			$port = wp_parse_url( $baseurl, PHP_URL_PORT );
+			$url  = 'https://' . $host . ( $port ? ':' . $port : '' ) . $url;
+		}
+
 		$plain = $strip( (string) strtok( $url, '?' ) );
 		$base  = $strip( $baseurl );
 

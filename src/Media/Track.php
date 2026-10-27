@@ -19,18 +19,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Track {
 
 	public function __construct(
-		public readonly string $src = '',
-		public readonly int $attachment_id = 0,
-		public readonly string $mime = '',
-		public readonly string $title = '',
-		public readonly string $artist = '',
-		public readonly string $thumbnail = '',
-		public readonly float $duration = 0.0,
-		public readonly string $download_url = '',
-		public readonly string $poster = '',
-		public readonly string $aspect_ratio = '16:9',
+		public string $src = '',
+		public int $attachment_id = 0,
+		public string $mime = '',
+		public string $title = '',
+		public string $artist = '',
+		public string $thumbnail = '',
+		public float $duration = 0.0,
+		public string $download_url = '',
+		public string $poster = '',
+		public string $aspect_ratio = '16:9',
 		/** Set when the video lives on YouTube or Vimeo rather than here. */
-		public readonly ?Provider $provider = null
+		public ?Provider $provider = null
 	) {}
 
 	public function is_playable(): bool {
@@ -53,6 +53,35 @@ final class Track {
 		}
 
 		return 'url_' . md5( $this->src );
+	}
+
+	/**
+	 * A name for this track that is the same on every page load.
+	 *
+	 * What a visitor's browser remembers against a track — where they
+	 * stopped, which call to action they closed — has to be keyed on
+	 * something that does not change. The address does change for a
+	 * protected file: it carries a signature that is re-minted every few
+	 * minutes, so a key built from it matched nothing on the next visit.
+	 */
+	public function stable_key(): string {
+		if ( $this->attachment_id > 0 ) {
+			return 'att_' . $this->attachment_id;
+		}
+
+		if ( null !== $this->provider && $this->provider->exists() ) {
+			return $this->provider->name . '_' . $this->provider->id;
+		}
+
+		if ( '' === $this->src ) {
+			return '';
+		}
+
+		$url = function_exists( 'remove_query_arg' )
+			? (string) remove_query_arg( array( 'imgpt', 'imagina_media' ), $this->src )
+			: $this->src;
+
+		return 'url_' . md5( $url );
 	}
 
 	public function is_video(): bool {
@@ -198,7 +227,11 @@ final class Track {
 
 		// A video with no poster of its own borrows the cover art. Better than
 		// a black rectangle, and it is the image the author already chose.
-		if ( '' === $poster && str_starts_with( $mime, 'video/' ) ) {
+		$stream = in_array( $mime, array( 'application/vnd.apple.mpegurl', 'application/x-mpegurl' ), true )
+			|| 'm3u8' === strtolower( pathinfo( (string) wp_parse_url( $src, PHP_URL_PATH ), PATHINFO_EXTENSION ) );
+
+		// A stream is as much a video as a file is, and was left black.
+		if ( '' === $poster && ( str_starts_with( $mime, 'video/' ) || $stream ) ) {
 			$poster = $thumbnail;
 		}
 
@@ -209,7 +242,7 @@ final class Track {
 		 */
 		if ( '' === $poster && $provider->exists() ) {
 			$poster = 'vimeo' === $provider->name
-				? VimeoThumbnail::get( $provider )
+				? VimeoThumbnail::for_render( $provider )
 				: $provider->thumbnail_url();
 		}
 

@@ -76,6 +76,8 @@ final class Plugin {
 			'elementor'   => new ElementorIntegration(),
 		);
 
+		\ImaginaPlayer\Media\Providers\VimeoThumbnail::hooks();
+
 		foreach ( $this->services as $service ) {
 			if ( method_exists( $service, 'hooks' ) ) {
 				$service->hooks();

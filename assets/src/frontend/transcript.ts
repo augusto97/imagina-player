@@ -37,6 +37,48 @@ function stamp( seconds: number ): string {
 }
 
 /**
+ * Write a line into `target`, with what was searched for marked.
+ *
+ * Text nodes and a `<mark>`, never markup: the line is subtitle text, which
+ * is whatever the file said.
+ *
+ * @param target Where the line goes.
+ * @param text   The line.
+ * @param needle What was typed, already folded; empty for none.
+ */
+function paint( target: HTMLElement, text: string, needle: string ): void {
+	target.textContent = '';
+
+	const plain = text.normalize( 'NFC' );
+	const folded = fold( plain );
+
+	// Folding keeps one character per character for ordinary text; where it
+	// does not, the positions cannot be trusted and the line goes unmarked.
+	const at =
+		needle && folded.length === plain.length
+			? folded.indexOf( needle )
+			: -1;
+
+	if ( at < 0 ) {
+		target.textContent = plain;
+
+		return;
+	}
+
+	const doc = target.ownerDocument;
+	const mark = doc.createElement( 'mark' );
+
+	mark.className = 'imgp__cue-match';
+	mark.textContent = plain.slice( at, at + needle.length );
+
+	target.append(
+		doc.createTextNode( plain.slice( 0, at ) ),
+		mark,
+		doc.createTextNode( plain.slice( at + needle.length ) )
+	);
+}
+
+/**
  * Fill the panel and keep it in step with playback.
  *
  * @param host
@@ -55,6 +97,12 @@ export function mount( host: Host, panel: HTMLElement ): () => void {
 		'.imgp__transcript-search'
 	);
 	const note = panel.querySelector< HTMLElement >( '.imgp__transcript-note' );
+	const count = panel.querySelector< HTMLElement >(
+		'.imgp__transcript-count'
+	);
+	const follow = panel.querySelector< HTMLInputElement >(
+		'.imgp__transcript-follow input'
+	);
 
 	let hits: Hit[] = [];
 	let rows: HTMLButtonElement[] = [];
@@ -75,6 +123,10 @@ export function mount( host: Host, panel: HTMLElement ): () => void {
 		rows = [];
 		current = -1;
 
+		if ( count ) {
+			count.textContent = hits.length > 0 ? String( hits.length ) : '';
+		}
+
 		if ( 0 === hits.length ) {
 			say(
 				host.i18n.searchEmpty ??
@@ -87,11 +139,16 @@ export function mount( host: Host, panel: HTMLElement ): () => void {
 		say( '' );
 
 		for ( const hit of hits ) {
+			/*
+			 * A button inside a list item. The button used to carry
+			 * `role="listitem"` itself, which takes away what it is: a screen
+			 * reader announced "list item" and nothing to press.
+			 */
+			const item = doc.createElement( 'li' );
 			const row = doc.createElement( 'button' );
 
 			row.type = 'button';
 			row.className = 'imgp__cue';
-			row.setAttribute( 'role', 'listitem' );
 
 			const when = doc.createElement( 'span' );
 
@@ -112,24 +169,36 @@ export function mount( host: Host, panel: HTMLElement ): () => void {
 				}
 			} );
 
-			body.appendChild( row );
+			item.appendChild( row );
+			body.appendChild( item );
 			rows.push( row );
 		}
 
 		filter();
-		follow();
+		keepUp();
 	};
 
 	const filter = (): void => {
-		const needle = fold( ( input?.value ?? '' ).trim() );
+		const typed = ( input?.value ?? '' ).trim();
+		const needle =
+			typed.length >= 2 ? fold( typed.normalize( 'NFC' ) ) : '';
 		let shown = 0;
 
 		rows.forEach( ( row, index ) => {
 			const hit = hits[ index ];
 			const match =
-				needle.length < 2 || fold( hit?.text ?? '' ).includes( needle );
+				! needle || fold( hit?.text ?? '' ).includes( needle );
+			const item = row.parentElement;
 
-			row.hidden = ! match;
+			if ( item ) {
+				item.hidden = ! match;
+			}
+
+			const said = row.querySelector< HTMLElement >( '.imgp__cue-said' );
+
+			if ( said && hit ) {
+				paint( said, hit.text, match ? needle : '' );
+			}
 
 			if ( match ) {
 				shown++;
@@ -141,8 +210,8 @@ export function mount( host: Host, panel: HTMLElement ): () => void {
 		}
 	};
 
-	/** Mark the line being said, and keep it in view. */
-	const follow = (): void => {
+	/** Mark the line being said, and keep it in view when asked to. */
+	const keepUp = (): void => {
 		const now = host.media.currentTime;
 		let index = -1;
 
@@ -159,6 +228,7 @@ export function mount( host: Host, panel: HTMLElement ): () => void {
 		}
 
 		rows[ current ]?.classList.remove( 'is-current' );
+		rows[ current ]?.removeAttribute( 'aria-current' );
 		current = index;
 
 		const row = rows[ index ];
@@ -168,8 +238,16 @@ export function mount( host: Host, panel: HTMLElement ): () => void {
 		}
 
 		row.classList.add( 'is-current' );
+		row.setAttribute( 'aria-current', 'true' );
 
-		if ( ! hovering && ! row.hidden && ! panel.hidden ) {
+		const wanted = follow ? follow.checked : true;
+
+		if (
+			wanted &&
+			! hovering &&
+			! row.parentElement?.hidden &&
+			( panel as HTMLDetailsElement ).open
+		) {
 			// Kept inside the list rather than the page: `scrollIntoView`
 			// would drag the whole page to the line.
 			const top =
@@ -179,16 +257,21 @@ export function mount( host: Host, panel: HTMLElement ): () => void {
 		}
 	};
 
-	/*
-	 * A file that had not arrived when the panel opened has usually arrived a
-	 * moment later, so an empty build asks again once, briefly.
-	 */
 	build();
 
-	let retry = 0;
+	/*
+	 * A subtitle file that had not arrived when the panel opened arrives a
+	 * moment later, and announces it on its `<track>` element. A fixed retry
+	 * after a second and a bit left a slow file's panel saying "not loaded
+	 * yet" for good.
+	 */
+	const tracks = Array.from(
+		host.element.querySelectorAll< HTMLTrackElement >( 'track' )
+	).filter( ( track ) => 'chapters' !== track.kind );
+	const rebuild = (): void => build();
 
-	if ( 0 === hits.length ) {
-		retry = window.setTimeout( build, 1200 );
+	for ( const track of tracks ) {
+		track.addEventListener( 'load', rebuild );
 	}
 
 	const enter = (): void => {
@@ -201,15 +284,18 @@ export function mount( host: Host, panel: HTMLElement ): () => void {
 	input?.addEventListener( 'input', filter );
 	body.addEventListener( 'pointerenter', enter );
 	body.addEventListener( 'pointerleave', leave );
-	host.media.addEventListener( 'timeupdate', follow );
-	host.media.addEventListener( 'seeked', follow );
+	host.media.addEventListener( 'timeupdate', keepUp );
+	host.media.addEventListener( 'seeked', keepUp );
 
 	return () => {
-		window.clearTimeout( retry );
+		for ( const track of tracks ) {
+			track.removeEventListener( 'load', rebuild );
+		}
+
 		input?.removeEventListener( 'input', filter );
 		body.removeEventListener( 'pointerenter', enter );
 		body.removeEventListener( 'pointerleave', leave );
-		host.media.removeEventListener( 'timeupdate', follow );
-		host.media.removeEventListener( 'seeked', follow );
+		host.media.removeEventListener( 'timeupdate', keepUp );
+		host.media.removeEventListener( 'seeked', keepUp );
 	};
 }

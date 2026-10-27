@@ -35,34 +35,6 @@ if ( ! defined( 'ImaginaPlayer\\VERSION' ) ) {
 	define( 'ImaginaPlayer\\VERSION', '0' );
 }
 
-if ( class_exists( 'ImaginaPlayer\\Protection\\Vault' ) ) {
-	$protected = get_posts(
-		array(
-			'post_type'      => 'attachment',
-			'post_status'    => 'any',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-			'meta_key'       => '_imagina_protected', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- uninstall, runs once.
-			'meta_value'     => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- as above.
-		)
-	);
-
-	foreach ( $protected as $attachment_id ) {
-		ImaginaPlayer\Protection\Vault::unprotect( (int) $attachment_id );
-	}
-}
-
-/*
- * The vault directory itself, once nothing is left in it. Seen on a real
- * site: every file had been moved back and an empty tree stayed behind, with
- * the deny rules still in it — a folder nobody can open, for nothing. Only
- * the guard files this plugin wrote and empty folders are removed; a file of
- * any other kind, however it got there, stops the removal at that level.
- */
-if ( class_exists( 'ImaginaPlayer\\Protection\\Vault' ) ) {
-	imagina_player_remove_empty_vault( ImaginaPlayer\Protection\Vault::base_dir() );
-}
-
 /**
  * Remove a directory tree that holds nothing but guard files.
  *
@@ -123,41 +95,91 @@ function imagina_player_remove_empty_vault( string $dir ): bool {
 	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- own directory, uninstall.
 	return @rmdir( $dir );
 }
-delete_post_meta_by_key( '_imagina_protected' );
 
-// Options, including the ones earlier versions used.
-foreach ( array(
-	'imagina_player_settings',
-	'imagina_player_version',
-	'imagina_player_schema',
-	'imagina_player_peaks_db_version',
-	'imagina_player_leads_db',
-) as $option ) {
-	delete_option( $option );
-}
-
-// Waveforms cached against attachments.
-delete_post_meta_by_key( '_imagina_player_peaks' );
-
-// Waveforms cached against external URLs, and the captured addresses.
-foreach ( array( 'imagina_player_peaks', 'imagina_player_leads' ) as $table ) {
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- own tables, fixed names.
-	$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . $table );
-}
-
-/*
- * Transients, by prefix. There is no core call for "every transient starting
- * with", and waiting for them to expire leaves rows behind for up to a month.
+/**
+ * Everything this plugin keeps for one site.
+ *
+ * A function so a network install can run it for every site. Run once, at
+ * the network's main site, it left every other site's options, tables,
+ * waveforms and captured addresses behind.
  */
-foreach ( array( 'imgp_vimeo_thumb_', 'imagina_peaks_queued_', 'imagina_peaks_lock_', 'imagina_peaks_running_', 'imgp_lead_' ) as $prefix ) {
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall, runs once.
-	$wpdb->query(
-		$wpdb->prepare(
-			"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
-			$wpdb->esc_like( '_transient_' . $prefix ) . '%',
-			$wpdb->esc_like( '_transient_timeout_' . $prefix ) . '%'
-		)
-	);
+function imagina_player_uninstall_site(): void {
+	global $wpdb;
+
+	if ( class_exists( 'ImaginaPlayer\\Protection\\Vault' ) ) {
+		$protected = get_posts(
+			array(
+				'post_type'      => 'attachment',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+				'meta_key'       => '_imagina_protected', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- uninstall, runs once.
+				'meta_value'     => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- as above.
+			)
+		);
+
+		foreach ( $protected as $attachment_id ) {
+			ImaginaPlayer\Protection\Vault::unprotect( (int) $attachment_id );
+		}
+	}
+
+	/*
+	 * The vault directory itself, once nothing is left in it. Seen on a real
+	 * site: every file had been moved back and an empty tree stayed behind, with
+	 * the deny rules still in it — a folder nobody can open, for nothing. Only
+	 * the guard files this plugin wrote and empty folders are removed; a file of
+	 * any other kind, however it got there, stops the removal at that level.
+	 */
+	if ( class_exists( 'ImaginaPlayer\\Protection\\Vault' ) ) {
+		imagina_player_remove_empty_vault( ImaginaPlayer\Protection\Vault::base_dir() );
+	}
+
+	delete_post_meta_by_key( '_imagina_protected' );
+
+	// Options, including the ones earlier versions used.
+	foreach ( array(
+		'imagina_player_settings',
+		'imagina_player_version',
+		'imagina_player_schema',
+		'imagina_player_peaks_db_version',
+		'imagina_player_leads_db',
+	) as $option ) {
+		delete_option( $option );
+	}
+
+	// Waveforms cached against attachments.
+	delete_post_meta_by_key( '_imagina_player_peaks' );
+
+	// Waveforms cached against external URLs, and the captured addresses.
+	foreach ( array( 'imagina_player_peaks', 'imagina_player_leads' ) as $table ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- own tables, fixed names.
+		$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . $table );
+	}
+
+	/*
+	 * Transients, by prefix. There is no core call for "every transient starting
+	 * with", and waiting for them to expire leaves rows behind for up to a month.
+	 */
+	foreach ( array( 'imgp_vimeo_thumb_', 'imagina_peaks_queued_', 'imagina_peaks_lock_', 'imagina_peaks_running_', 'imgp_lead_' ) as $prefix ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall, runs once.
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+				$wpdb->esc_like( '_transient_' . $prefix ) . '%',
+				$wpdb->esc_like( '_transient_timeout_' . $prefix ) . '%'
+			)
+		);
+	}
+
+	wp_clear_scheduled_hook( 'imagina_player_generate_peaks' );
 }
 
-wp_clear_scheduled_hook( 'imagina_player_generate_peaks' );
+if ( is_multisite() && function_exists( 'get_sites' ) ) {
+	foreach ( get_sites( array( 'fields' => 'ids', 'number' => 0 ) ) as $site_id ) {
+		switch_to_blog( (int) $site_id );
+		imagina_player_uninstall_site();
+		restore_current_blog();
+	}
+} else {
+	imagina_player_uninstall_site();
+}

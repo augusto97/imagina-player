@@ -67,6 +67,13 @@ export class LayerStack {
 
 	private readonly cleanup: Array< () => void > = [];
 
+	/** Whether this player has been played this visit. */
+	private engaged = false;
+
+	private destroyed = false;
+
+	private thanksTimer = 0;
+
 	constructor( host: LayerHost ) {
 		this.host = host;
 		this.specs = ( host.config.layers ?? [] ) as LayerSpec[];
@@ -112,6 +119,15 @@ export class LayerStack {
 			this.host.media.addEventListener( event, watch );
 		}
 
+		const engage = (): void => {
+			this.engaged = true;
+		};
+
+		this.host.media.addEventListener( 'play', engage );
+		this.cleanup.push( () =>
+			this.host.media.removeEventListener( 'play', engage )
+		);
+
 		this.cleanup.push( () => {
 			for ( const event of EVENTS ) {
 				this.host.media.removeEventListener( event, watch );
@@ -124,6 +140,9 @@ export class LayerStack {
 	}
 
 	destroy(): void {
+		this.destroyed = true;
+		window.clearTimeout( this.thanksTimer );
+
 		for ( const off of this.cleanup ) {
 			off();
 		}
@@ -225,11 +244,24 @@ export class LayerStack {
 			this.host.media.pause();
 			this.host.root.classList.add( 'has-modal-layer' );
 
-			element
-				.querySelector< HTMLElement >(
-					'input, a.imgp__layer-button, button'
-				)
-				?.focus();
+			/*
+			 * Focus moves to the question only when the person is already
+			 * here: playing, or with focus inside the player. A gate set at
+			 * the very start used to take focus as the page loaded — and the
+			 * browser scrolled the page down to it.
+			 */
+			const doc = this.host.root.ownerDocument;
+
+			if (
+				this.engaged ||
+				this.host.root.contains( doc.activeElement )
+			) {
+				element
+					.querySelector< HTMLElement >(
+						'input, a.imgp__layer-button, button'
+					)
+					?.focus( { preventScroll: true } );
+			}
 		}
 	}
 
@@ -443,7 +475,12 @@ export class LayerStack {
 		// The gate lets go by itself once the thank-you has been read, and the
 		// video picks up where it stopped. Making someone find a close button
 		// after they have just given you their address is a poor thank-you.
-		window.setTimeout( () => {
+		this.thanksTimer = window.setTimeout( () => {
+			// Taken off the page meanwhile: nothing to start.
+			if ( this.destroyed ) {
+				return;
+			}
+
 			this.hide( index );
 			void this.host.media.play().catch( () => undefined );
 		}, THANKS_MS );

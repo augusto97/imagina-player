@@ -42,6 +42,8 @@ interface Host {
 	/** The core's own rate change, so the audio-style button stays in step. */
 	setSpeed: ( rate: number ) => void;
 	speed: () => number;
+	/** Ask for a fresh signed address, when a stream reports its own expired. */
+	refreshSource?: () => void;
 }
 
 /** What the speed list offers. */
@@ -50,10 +52,52 @@ const SPEED_CHOICES = [ 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2 ];
 /** How long "Link copied" stays on the picture. */
 const TOAST_FOR = 1800;
 
+/**
+ * Whether a key pressed on this element is that element's, not the player's.
+ *
+ * One rule for every place a key can land. The scrub bar handles its own
+ * arrows and space — and both it and the player acted, so a left arrow sought
+ * fifteen seconds and space played and paused in the same instant. A
+ * `<summary>` opens on space; a link or a button activates on Enter; a menu
+ * walks its list with the arrows; a form inside an overlay, or another
+ * plugin's output, is typed into.
+ * @param target
+ * @param key
+ */
+function ownsKey( target: HTMLElement | null, key: string ): boolean {
+	if ( ! target ) {
+		return false;
+	}
+
+	if (
+		target.isContentEditable ||
+		/^(INPUT|TEXTAREA|SELECT)$/.test( target.tagName )
+	) {
+		return true;
+	}
+
+	if (
+		target.closest(
+			'[role="slider"], [role="menu"], .imgp__menu, .imgp__layer, .imgp__transcript'
+		)
+	) {
+		return true;
+	}
+
+	return (
+		( ' ' === key || 'Enter' === key ) &&
+		!! target.closest(
+			'button, a[href], summary, [role="button"], [role^="menuitem"]'
+		)
+	);
+}
+
 interface MenuItem {
 	label: string;
 	active: boolean;
 	onPick: () => void;
+	/** An action rather than one of a set of choices: no checked state. */
+	action?: boolean;
 	/** Leave the menu open after picking: the item opened another list in it. */
 	keepOpen?: boolean;
 }
@@ -93,8 +137,18 @@ export class VideoChrome {
 	/** Removes the menu's outside-click and Escape listeners, when one is open. */
 	private dismissMenu: ( () => void ) | null = null;
 
+	/** The button whose list is in the panel, while one is open. */
+	private menuOwner: HTMLElement | null = null;
+
 	/** Set only when hls.js took over playback; Safari never gets one. */
-	private hls: { destroy: () => void } | null = null;
+	private hls: {
+		destroy: () => void;
+		replaceSource: ( url: string ) => void;
+	} | null = null;
+
+	private toastTimer = 0;
+
+	private destroyed = false;
 
 	constructor( host: Host, config: VideoConfig ) {
 		this.host = host;
@@ -151,8 +205,15 @@ export class VideoChrome {
 				root: this.root,
 				media: element,
 				i18n: this.host.i18n,
-				menu: ( items ) => this.openMenu( items ),
+				menu: ( items, opener ) => this.openMenu( items, opener ),
+				expired: () => this.host.refreshSource?.(),
 			} );
+
+			if ( this.destroyed ) {
+				stream.destroy();
+
+				return;
+			}
 
 			if ( await stream.attach( element.currentSrc || element.src ) ) {
 				this.hls = stream;
@@ -164,8 +225,26 @@ export class VideoChrome {
 		}
 	}
 
+	/**
+	 * Hand a stream a fresh signed address, when one is playing.
+	 *
+	 * @return Whether there was a stream to take it.
+	 * @param url
+	 */
+	replaceSource( url: string ): boolean {
+		if ( ! this.hls ) {
+			return false;
+		}
+
+		this.hls.replaceSource( url );
+
+		return true;
+	}
+
 	destroy(): void {
+		this.destroyed = true;
 		window.clearTimeout( this.idleTimer );
+		window.clearTimeout( this.toastTimer );
 		this.dismissMenu?.();
 		this.hls?.destroy();
 
@@ -233,33 +312,23 @@ export class VideoChrome {
 	 * keyboard is inside them, or a keyboard user would lose their place.
 	 */
 	private bindChromeVisibility(): void {
-		const wake = (): void => {
-			window.clearTimeout( this.idleTimer );
-			this.root.classList.remove( 'is-chrome-idle' );
-
-			if ( this.media.paused ) {
-				return;
-			}
-
+		const wake = ( event: Event ): void => {
 			/*
-			 * Zero means the controls stay up for good — the setting's help
-			 * text, the block's help text and the default's comment all say
-			 * so, and this handed zero to setTimeout, which hid them on the
-			 * first frame instead.
+			 * A finger is not a pointer that hovers. Its `pointerdown` used to
+			 * show the controls, and the tap handler — on `pointerup` of the
+			 * same touch — then toggled them straight back off: on a phone the
+			 * controls flashed and vanished on every tap. Touch is decided by
+			 * the tap handler alone.
 			 */
-			if ( this.config.hideAfter <= 0 ) {
+			if (
+				event instanceof PointerEvent &&
+				'touch' === event.pointerType &&
+				( 'pointerdown' === event.type || 'pointermove' === event.type )
+			) {
 				return;
 			}
 
-			this.idleTimer = window.setTimeout( () => {
-				if (
-					this.root.contains( this.root.ownerDocument.activeElement )
-				) {
-					return;
-				}
-
-				this.root.classList.add( 'is-chrome-idle' );
-			}, this.config.hideAfter );
+			this.showChrome();
 		};
 
 		for ( const type of [
@@ -272,11 +341,58 @@ export class VideoChrome {
 			this.on( this.root, type, wake );
 		}
 
-		this.on( this.root, 'pointerleave', () => {
-			if ( ! this.media.paused && this.config.hideAfter > 0 ) {
-				this.root.classList.add( 'is-chrome-idle' );
+		this.on( this.root, 'pointerleave', ( event: PointerEvent ) => {
+			if ( 'touch' !== event.pointerType ) {
+				this.hideChrome();
 			}
 		} );
+	}
+
+	/**
+	 * Bring the controls up, and set them to fade again after a while.
+	 */
+	private showChrome(): void {
+		window.clearTimeout( this.idleTimer );
+		this.root.classList.remove( 'is-chrome-idle' );
+
+		if ( this.media.paused ) {
+			return;
+		}
+
+		/*
+		 * Zero means the controls stay up for good — the setting's help text,
+		 * the block's help text and the default's comment all say so.
+		 */
+		if ( this.config.hideAfter <= 0 ) {
+			return;
+		}
+
+		this.idleTimer = window.setTimeout( () => {
+			if (
+				this.menuOwner ||
+				this.root.contains( this.root.ownerDocument.activeElement )
+			) {
+				return;
+			}
+
+			this.root.classList.add( 'is-chrome-idle' );
+		}, this.config.hideAfter );
+	}
+
+	/**
+	 * Let the controls fade now — while playing, and never with a menu open.
+	 */
+	private hideChrome(): void {
+		if (
+			this.media.paused ||
+			this.config.hideAfter <= 0 ||
+			this.menuOwner
+		) {
+			return;
+		}
+
+		window.clearTimeout( this.idleTimer );
+		this.root.classList.add( 'is-chrome-idle' );
 	}
 
 	private bindFullscreen(): void {
@@ -314,15 +430,29 @@ export class VideoChrome {
 
 		button.hidden = false;
 
+		const doc = document as Document & {
+			webkitFullscreenElement?: Element | null;
+			webkitExitFullscreen?: () => void;
+		};
+		const current = (): Element | null =>
+			doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+		const leave = (): void => {
+			if ( doc.exitFullscreen ) {
+				void doc.exitFullscreen().catch( () => undefined );
+			} else {
+				doc.webkitExitFullscreen?.();
+			}
+		};
+
 		this.on( button, 'click', () => {
-			if ( document.fullscreenElement === this.root ) {
-				void document.exitFullscreen();
+			if ( current() === this.root ) {
+				leave();
 
 				return;
 			}
 
-			if ( document.fullscreenElement ) {
-				void document.exitFullscreen();
+			if ( current() ) {
+				leave();
 			}
 
 			if ( element.requestFullscreen ) {
@@ -334,12 +464,27 @@ export class VideoChrome {
 			}
 		} );
 
-		this.on( document, 'fullscreenchange', () => {
-			this.root.classList.toggle(
-				'is-fullscreen',
-				document.fullscreenElement === this.root
+		const sync = (): void => {
+			const on = current() === this.root;
+
+			this.root.classList.toggle( 'is-fullscreen', on );
+			button.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+		};
+
+		// Safari before 16.4 announces only the prefixed event, so the
+		// player never knew it was full screen there.
+		this.on( document, 'fullscreenchange', sync );
+		this.on( document, 'webkitfullscreenchange', sync );
+
+		// The iPhone's own full screen, on the element.
+		if ( media ) {
+			this.on( media, 'webkitbeginfullscreen', () =>
+				this.root.classList.add( 'is-fullscreen' )
 			);
-		} );
+			this.on( media, 'webkitendfullscreen', () =>
+				this.root.classList.remove( 'is-fullscreen' )
+			);
+		}
 	}
 
 	private bindPictureInPicture(): void {
@@ -375,6 +520,14 @@ export class VideoChrome {
 
 			void element.requestPictureInPicture().catch( () => undefined );
 		} );
+
+		const sync = ( on: boolean ): void => {
+			this.root.classList.toggle( 'is-pip', on );
+			button.setAttribute( 'aria-pressed', on ? 'true' : 'false' );
+		};
+
+		this.on( element, 'enterpictureinpicture', () => sync( true ) );
+		this.on( element, 'leavepictureinpicture', () => sync( false ) );
 	}
 
 	/**
@@ -387,18 +540,13 @@ export class VideoChrome {
 	 */
 	private bindKeyboard(): void {
 		this.on( this.root, 'keydown', ( event: KeyboardEvent ) => {
-			const target = event.target as HTMLElement | null;
-
 			if (
-				target &&
-				( target.isContentEditable ||
-					/^(INPUT|TEXTAREA|SELECT)$/.test( target.tagName ) )
+				event.defaultPrevented ||
+				event.ctrlKey ||
+				event.metaKey ||
+				event.altKey ||
+				ownsKey( event.target as HTMLElement | null, event.key )
 			) {
-				return;
-			}
-
-			// The space bar on a focused button is that button's business.
-			if ( ' ' === event.key && target instanceof HTMLButtonElement ) {
 				return;
 			}
 
@@ -503,7 +651,12 @@ export class VideoChrome {
 			}
 
 			this.lastTap = now;
-			this.root.classList.toggle( 'is-chrome-idle' );
+
+			if ( this.root.classList.contains( 'is-chrome-idle' ) ) {
+				this.showChrome();
+			} else {
+				this.hideChrome();
+			}
 		} );
 	}
 
@@ -515,9 +668,14 @@ export class VideoChrome {
 	 * offered — and because two menus that never open together do not need two
 	 * containers.
 	 * @param items
+	 * @param opener
 	 * @param replace Swap the list in the open panel rather than toggling it.
 	 */
-	private openMenu( items: MenuItem[], replace = false ): void {
+	private openMenu(
+		items: MenuItem[],
+		opener: HTMLElement | null,
+		replace = false
+	): void {
 		const menu = this.root.querySelector< HTMLElement >( '.imgp__menu' );
 
 		if ( ! menu ) {
@@ -525,90 +683,208 @@ export class VideoChrome {
 		}
 
 		if ( ! menu.hidden ) {
-			// Pressing the button again closes what it opened — unless this
-			// is one list giving way to another inside the same panel.
-			if ( ! replace ) {
-				this.closeMenu();
+			/*
+			 * The same button again closes what it opened. A different button
+			 * swaps its own list in: it used to only close the open one, so
+			 * reaching the gear with the speed list up took two presses.
+			 */
+			if ( ! replace && opener === this.menuOwner ) {
+				this.closeMenu( true );
 
 				return;
 			}
 
-			this.dismissMenu?.();
-			this.dismissMenu = null;
+			this.releaseMenu( false, replace ? opener : null );
 		}
 
 		menu.classList.remove( 'imgp__menu--search' );
 		menu.textContent = '';
 
+		const doc = this.root.ownerDocument;
+		let first: HTMLButtonElement | null = null;
+		let checked: HTMLButtonElement | null = null;
+
 		for ( const item of items ) {
-			const button = this.root.ownerDocument.createElement( 'button' );
+			const button = doc.createElement( 'button' );
 
 			button.type = 'button';
 			button.className = 'imgp__menuitem';
-			button.setAttribute( 'role', 'menuitemradio' );
-			button.setAttribute(
-				'aria-checked',
-				item.active ? 'true' : 'false'
-			);
+			button.tabIndex = -1;
+
+			if ( item.action ) {
+				button.setAttribute( 'role', 'menuitem' );
+			} else {
+				button.setAttribute( 'role', 'menuitemradio' );
+				button.setAttribute(
+					'aria-checked',
+					item.active ? 'true' : 'false'
+				);
+			}
+
 			button.textContent = item.label;
 
 			button.addEventListener( 'click', () => {
 				item.onPick();
 
 				if ( ! item.keepOpen ) {
-					this.closeMenu();
+					this.closeMenu( true );
 				}
 			} );
 
 			menu.appendChild( button );
+			first ??= button;
+
+			if ( item.active && ! item.action ) {
+				checked ??= button;
+			}
 		}
 
-		menu.hidden = false;
-		menu.querySelector< HTMLButtonElement >( 'button' )?.focus();
+		this.showMenu( menu, opener );
+		( checked ?? first )?.focus();
+	}
 
-		// One dismissal path for a click anywhere else and for Escape, removed
-		// as soon as it fires so these never pile up.
-		const dismiss = ( event: Event ): void => {
-			if ( event instanceof KeyboardEvent && 'Escape' !== event.key ) {
+	/**
+	 * Put the panel up for a button, and arm the ways of putting it away.
+	 * @param menu
+	 * @param opener
+	 */
+	private showMenu( menu: HTMLElement, opener: HTMLElement | null ): void {
+		menu.hidden = false;
+		this.menuOwner = opener;
+		opener?.setAttribute( 'aria-expanded', 'true' );
+		this.showChrome();
+
+		const doc = this.root.ownerDocument;
+
+		/*
+		 * Escape closes and hands focus back to the button; the arrows walk the
+		 * list, as a menu's do. Before, Escape dropped focus on the page
+		 * itself, and the controls then faded because nothing inside the
+		 * player had focus any more.
+		 */
+		const onKey = ( event: KeyboardEvent ): void => {
+			if ( 'Escape' === event.key ) {
+				event.preventDefault();
+				this.closeMenu( true );
+
 				return;
 			}
 
-			// The bar's own buttons toggle their menus themselves; closing
-			// on the way down would only have the click reopen it.
+			if ( ! menu.contains( event.target as Node | null ) ) {
+				return;
+			}
+
+			const items = Array.from(
+				menu.querySelectorAll< HTMLElement >( '.imgp__menuitem' )
+			);
+
+			if ( 0 === items.length ) {
+				return;
+			}
+
+			const index = items.indexOf( doc.activeElement as HTMLElement );
+			let next = -1;
+
+			switch ( event.key ) {
+				case 'ArrowDown':
+					next = ( index + 1 ) % items.length;
+					break;
+				case 'ArrowUp':
+					next = ( index - 1 + items.length ) % items.length;
+					break;
+				case 'Home':
+					next = 0;
+					break;
+				case 'End':
+					next = items.length - 1;
+					break;
+			}
+
+			if ( next >= 0 ) {
+				event.preventDefault();
+				items[ next ].focus();
+			}
+		};
+
+		const onPointer = ( event: PointerEvent ): void => {
+			const target = event.target as HTMLElement | null;
+
 			if (
-				event instanceof PointerEvent &&
-				( event.target as HTMLElement | null )?.closest(
-					'.imgp__vcontrols, .imgp__speed'
-				)
+				! target ||
+				menu.contains( target ) ||
+				this.menuOwner?.contains( target ) ||
+				// Another bar button opens its own list with its click.
+				target.closest( '.imgp__vbtn, .imgp__speed' )
 			) {
 				return;
 			}
 
-			this.closeMenu();
+			this.closeMenu( false );
 		};
+
+		// Tabbing out of the list is leaving it.
+		const onFocusOut = ( event: FocusEvent ): void => {
+			const next = event.relatedTarget as Node | null;
+
+			if (
+				next &&
+				! menu.contains( next ) &&
+				! this.menuOwner?.contains( next )
+			) {
+				this.closeMenu( false );
+			}
+		};
+
+		doc.addEventListener( 'keydown', onKey );
+		doc.addEventListener( 'pointerdown', onPointer );
+		menu.addEventListener( 'focusout', onFocusOut );
 
 		this.dismissMenu = () => {
-			this.root.ownerDocument.removeEventListener(
-				'pointerdown',
-				dismiss
-			);
-			this.root.ownerDocument.removeEventListener( 'keydown', dismiss );
+			doc.removeEventListener( 'keydown', onKey );
+			doc.removeEventListener( 'pointerdown', onPointer );
+			menu.removeEventListener( 'focusout', onFocusOut );
 		};
-
-		this.root.ownerDocument.addEventListener( 'pointerdown', dismiss );
-		this.root.ownerDocument.addEventListener( 'keydown', dismiss );
 	}
 
-	private closeMenu(): void {
+	/**
+	 * Put the panel away.
+	 * @param returnFocus Hand focus back to the button that opened it.
+	 */
+	private closeMenu( returnFocus = false ): void {
 		const menu = this.root.querySelector< HTMLElement >( '.imgp__menu' );
 
 		if ( menu ) {
 			menu.hidden = true;
 			menu.textContent = '';
+			menu.classList.remove( 'imgp__menu--search' );
 		}
 
+		this.releaseMenu( returnFocus );
+	}
+
+	/**
+	 * Disarm the panel's listeners and let go of the button that owned it.
+	 * @param returnFocus Hand focus back to that button.
+	 * @param keep        A button that stays the owner (a list swapped in place).
+	 */
+	private releaseMenu(
+		returnFocus = false,
+		keep: HTMLElement | null = null
+	): void {
 		this.dismissMenu?.();
 		this.dismissMenu = null;
+
+		const owner = this.menuOwner;
+
+		this.menuOwner = null;
+
+		if ( owner && owner !== keep ) {
+			owner.setAttribute( 'aria-expanded', 'false' );
+		}
+
+		if ( returnFocus ) {
+			owner?.focus();
+		}
 	}
 
 	/**
@@ -669,26 +945,32 @@ export class VideoChrome {
 		this.on( button, 'click', () => {
 			const off = this.i18n( 'captionsOff', 'Off' );
 
-			this.openMenu( [
-				{
-					label: off,
-					active: ! tracks.some(
-						( track ) => 'showing' === track.mode
-					),
-					onPick: () => {
-						this.showTrack( tracks, null );
-						this.remember( '' );
+			this.openMenu(
+				[
+					{
+						label: off,
+						active: ! tracks.some(
+							( track ) => 'showing' === track.mode
+						),
+						onPick: () => {
+							this.showTrack( tracks, null );
+							this.remember( '' );
+						},
 					},
-				},
-				...tracks.map( ( track ) => ( {
-					label: track.label || track.language || off,
-					active: 'showing' === track.mode,
-					onPick: () => {
-						this.showTrack( tracks, track.language || track.label );
-						this.remember( track.language || track.label );
-					},
-				} ) ),
-			] );
+					...tracks.map( ( track ) => ( {
+						label: track.label || track.language || off,
+						active: 'showing' === track.mode,
+						onPick: () => {
+							this.showTrack(
+								tracks,
+								track.language || track.label
+							);
+							this.remember( track.language || track.label );
+						},
+					} ) ),
+				],
+				button
+			);
 		} );
 	}
 
@@ -753,24 +1035,27 @@ export class VideoChrome {
 			const off = this.i18n( 'captionsOff', 'Off' );
 			const current = media.captionTrack ?? '';
 
-			this.openMenu( [
-				{
-					label: off,
-					active: '' === current,
-					onPick: () => {
-						pick( '' );
-						this.remember( '' );
+			this.openMenu(
+				[
+					{
+						label: off,
+						active: '' === current,
+						onPick: () => {
+							pick( '' );
+							this.remember( '' );
+						},
 					},
-				},
-				...list.map( ( track ) => ( {
-					label: track.label,
-					active: track.code === current,
-					onPick: () => {
-						pick( track.code );
-						this.remember( track.code );
-					},
-				} ) ),
-			] );
+					...list.map( ( track ) => ( {
+						label: track.label,
+						active: track.code === current,
+						onPick: () => {
+							pick( track.code );
+							this.remember( track.code );
+						},
+					} ) ),
+				],
+				button
+			);
 		} );
 	}
 
@@ -964,6 +1249,24 @@ export class VideoChrome {
 		}
 
 		const stop = (): void => {
+			/*
+			 * Picture-in-picture exists to leave the tab or scroll away while
+			 * the video goes on; full screen moves the player out of the page.
+			 * Neither is "nobody is watching".
+			 */
+			const pip = (
+				document as Document & {
+					pictureInPictureElement?: Element | null;
+				}
+			 ).pictureInPictureElement;
+
+			if (
+				( this.element && pip === this.element ) ||
+				document.fullscreenElement === this.root
+			) {
+				return;
+			}
+
 			if ( ! this.media.paused ) {
 				this.media.pause();
 			}
@@ -1056,8 +1359,11 @@ export class VideoChrome {
 					}
 				}
 
-				this.openSearch( hits ?? [], find, () =>
-					collect ? collect( element ) : []
+				this.openSearch(
+					hits ?? [],
+					find,
+					() => ( collect ? collect( element ) : [] ),
+					button
 				);
 			} )();
 		} );
@@ -1074,11 +1380,13 @@ export class VideoChrome {
 	 * @param find      The matcher from the search chunk.
 	 * @param recollect Reads the cues again, for a subtitle file that had not
 	 *                  arrived yet when the box opened.
+	 * @param opener
 	 */
 	private openSearch(
 		initial: import('./search').Hit[],
 		find: typeof import('./search').search,
-		recollect: () => import('./search').Hit[]
+		recollect: () => import('./search').Hit[],
+		opener: HTMLElement
 	): void {
 		let hits = initial;
 		const menu = this.root.querySelector< HTMLElement >( '.imgp__menu' );
@@ -1088,9 +1396,13 @@ export class VideoChrome {
 		}
 
 		if ( ! menu.hidden ) {
-			this.closeMenu();
+			if ( opener === this.menuOwner ) {
+				this.closeMenu( true );
 
-			return;
+				return;
+			}
+
+			this.releaseMenu();
 		}
 
 		const doc = this.root.ownerDocument;
@@ -1171,7 +1483,7 @@ export class VideoChrome {
 				row.append( when, said );
 				row.addEventListener( 'click', () => {
 					this.host.seekTo( hit.at );
-					this.closeMenu();
+					this.closeMenu( true );
 				} );
 
 				list.appendChild( row );
@@ -1180,15 +1492,10 @@ export class VideoChrome {
 
 		input.addEventListener( 'input', render );
 		menu.append( input, note, list );
-		menu.hidden = false;
+		// The same ways out as every other list: Escape, a click elsewhere,
+		// tabbing away. It used to close only from its own button.
+		this.showMenu( menu, opener );
 		input.focus();
-
-		this.dismissMenu = () => {
-			menu.hidden = true;
-			menu.textContent = '';
-			menu.classList.remove( 'imgp__menu--search' );
-			this.dismissMenu = null;
-		};
 	}
 
 	/**
@@ -1206,7 +1513,7 @@ export class VideoChrome {
 		button.hidden = false;
 
 		this.on( button, 'click', () => {
-			this.openMenu( this.settingsItems() );
+			this.openMenu( this.settingsItems(), button );
 		} );
 	}
 
@@ -1221,14 +1528,17 @@ export class VideoChrome {
 					this.host.speed()
 				) }`,
 				active: false,
+				action: true,
 				keepOpen: true,
-				onPick: () => this.openMenu( this.speedItems(), true ),
+				onPick: () =>
+					this.openMenu( this.speedItems(), this.menuOwner, true ),
 			} );
 		}
 
 		items.push( {
 			label: this.i18n( 'copyLink', 'Copy link to this moment' ),
 			active: false,
+			action: true,
 			onPick: () => void this.copyMomentLink(),
 		} );
 
@@ -1262,7 +1572,10 @@ export class VideoChrome {
 			return false;
 		}
 
-		this.openMenu( this.speedItems() );
+		this.openMenu(
+			this.speedItems(),
+			this.root.querySelector< HTMLElement >( '.imgp__speed' )
+		);
 
 		return true;
 	}
@@ -1315,11 +1628,16 @@ export class VideoChrome {
 		toast.textContent = text;
 		( this.stage ?? this.root ).appendChild( toast );
 
-		window.setTimeout( () => toast.remove(), TOAST_FOR );
+		window.clearTimeout( this.toastTimer );
+		this.toastTimer = window.setTimeout( () => toast.remove(), TOAST_FOR );
 	}
 
 	private bindChapters(): void {
-		const chapters = this.config.chapters ?? [];
+		// In order of time whatever order they were written in: which one is
+		// "current" is read from the next one along.
+		const chapters = [ ...( this.config.chapters ?? [] ) ].sort(
+			( a, b ) => a.start - b.start
+		);
 
 		if ( 0 === chapters.length ) {
 			return;
@@ -1352,7 +1670,8 @@ export class VideoChrome {
 							( ! next || now < next.start ),
 						onPick: () => this.host.seekTo( chapter.start ),
 					};
-				} )
+				} ),
+				button
 			);
 		} );
 	}
@@ -1453,6 +1772,11 @@ export class VideoChrome {
 				/* webpackChunkName: "imagina-transcript" */ './transcript'
 			)
 				.then( ( { mount } ) => {
+					// Arrived after the player was taken down: nothing to fill.
+					if ( this.destroyed ) {
+						return;
+					}
+
 					this.cleanup.push(
 						mount(
 							{

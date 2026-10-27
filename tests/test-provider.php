@@ -44,6 +44,14 @@ $good = array(
 	'https://vimeo.com/123456789'                            => array( 'vimeo', '123456789' ),
 	'https://player.vimeo.com/video/123456789'               => array( 'vimeo', '123456789' ),
 	'https://vimeo.com/123456789/abc123def4'                 => array( 'vimeo', '123456789' ),
+	// Found through a channel, a group, a showcase, an album, On Demand.
+	'https://vimeo.com/channels/staffpicks/123456789'        => array( 'vimeo', '123456789' ),
+	'https://vimeo.com/groups/motion/videos/123456789'       => array( 'vimeo', '123456789' ),
+	'https://vimeo.com/showcase/9876543/video/123456789'     => array( 'vimeo', '123456789' ),
+	'https://vimeo.com/album/9876543/video/123456789'        => array( 'vimeo', '123456789' ),
+	'https://vimeo.com/ondemand/somefilm/123456789'          => array( 'vimeo', '123456789' ),
+	'https://vimeo.com/manage/videos/123456789'              => array( 'vimeo', '123456789' ),
+	'https://player.vimeo.com/video/123456789?h=abc123def4'  => array( 'vimeo', '123456789' ),
 );
 
 foreach ( $good as $url => $expected ) {
@@ -60,6 +68,15 @@ check(
 	'and keeps an unlisted Vimeo hash, without which the embed will not load',
 	'abc123def4' === Provider::detect( 'https://vimeo.com/123456789/abc123def4' )->hash
 );
+check(
+	'including from ?h= on the player\'s own address, the form the Embed button hands out',
+	'abc123def4' === Provider::detect( 'https://player.vimeo.com/video/123456789?h=abc123def4' )->hash
+);
+check(
+	'and the frame is asked for with it',
+	'https://player.vimeo.com/video/123456789?h=abc123def4' === Provider::detect( 'https://vimeo.com/123456789/abc123def4' )->embed_url()
+);
+check( 'a hash that is not one is not kept', '' === Provider::detect( 'https://player.vimeo.com/video/123456789?h=<script>' )->hash );
 
 echo PHP_EOL . '# Addresses that are not' . PHP_EOL;
 
@@ -75,6 +92,8 @@ $bad = array(
 	'https://www.youtube.com/watch?v=short'                => 'an identifier of the wrong length',
 	'https://www.youtube.com/watch?v=has+a+plus+in+it'     => 'an identifier with characters YouTube does not issue',
 	'https://vimeo.com/channels/staffpicks'                => 'a Vimeo channel',
+	'https://vimeo.com/showcase/9876543'                   => 'a Vimeo showcase',
+	'https://vimeo.com/event/123456789'                    => 'a Vimeo live event',
 	'javascript:alert(1)'                                  => 'a javascript: URL',
 	'//www.youtube.com/watch?v=dQw4w9WgXcQ'                => 'no scheme at all',
 	'https://cdn.example.com/clip.mp4'                     => 'an ordinary file',
@@ -495,6 +514,29 @@ check( 'so is asking Vimeo again', isset( $poster_route['permission_callback'] )
 $GLOBALS['stub_caps'] = array();
 check( 'and neither to anyone else', false === call_user_func( $preview_route['permission_callback'] ) && false === call_user_func( $poster_route['permission_callback'] ) );
 unset( $GLOBALS['stub_caps'] );
+
+echo PHP_EOL . '# A visitor’s page never waits for Vimeo' . PHP_EOL;
+
+$fresh = Provider::detect( 'https://vimeo.com/111222333' );
+delete_transient( 'imgp_vimeo_thumb_' . md5( '111222333|' ) );
+$GLOBALS['stub_remote_gets'] = 0;
+$GLOBALS['stub_scheduled']   = array();
+ImaginaPlayer\Media\Providers\VimeoThumbnail::wait_for_answers( false );
+
+$page = ( new PlayerRenderer() )->render( array( 'src' => 'https://vimeo.com/111222333' ) );
+
+check( 'rendering a Vimeo video with nothing remembered asks nobody', 0 === $GLOBALS['stub_remote_gets'], (string) $GLOBALS['stub_remote_gets'] );
+check( 'and leaves the question to a scheduled event', array( array( 'imagina_player_vimeo_thumbnail', array( '111222333', '' ) ) ) === $GLOBALS['stub_scheduled'], json_encode( $GLOBALS['stub_scheduled'] ) );
+( new PlayerRenderer() )->render( array( 'src' => 'https://vimeo.com/111222333' ) );
+check( 'once, however many players show it', 1 === count( $GLOBALS['stub_scheduled'] ) );
+check( 'the page still renders as a video', str_contains( $page, 'imgp--video' ) );
+
+ImaginaPlayer\Media\Providers\VimeoThumbnail::fetch_later( '111222333', '' );
+check( 'the event asks Vimeo', $GLOBALS['stub_remote_gets'] >= 1 );
+$next = ( new PlayerRenderer() )->render( array( 'src' => 'https://vimeo.com/111222333' ) );
+check( 'and the next render uses what it was told', str_contains( $next, $picture ), substr( $next, 0, 200 ) );
+ImaginaPlayer\Media\Providers\VimeoThumbnail::fetch_later( 'not-a-number', '' );
+check( 'an event with a malformed number does nothing', true );
 
 $editor_bundle = (string) file_get_contents( dirname( __DIR__ ) . '/build/editor.js' );
 check( 'the editor shows the reason and offers to ask again', str_contains( $editor_bundle, 'provider/poster' ) && str_contains( $editor_bundle, 'Ask Vimeo again' ) && str_contains( $editor_bundle, 'posterReason' ) );

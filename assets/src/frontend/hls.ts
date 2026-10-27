@@ -28,11 +28,14 @@ type Params = Array< [ string, string ] >;
 export interface HlsHost {
 	root: HTMLElement;
 	media: HTMLVideoElement;
-	/** Opens the shared control-bar panel. */
+	/** Opens the shared control-bar panel, for the button that asked. */
 	menu: (
-		items: Array< { label: string; active: boolean; onPick: () => void } >
+		items: Array< { label: string; active: boolean; onPick: () => void } >,
+		opener: HTMLElement | null
 	) => void;
 	i18n: Record< string, string >;
+	/** The stream was refused: its signed address has run out. */
+	expired?: () => void;
 }
 
 export function canPlayNatively( media: HTMLVideoElement ): boolean {
@@ -106,6 +109,15 @@ export class HlsStream {
 
 	private levels: Level[] = [];
 
+	/** The credentials segments are signed with, and the manifest they came from. */
+	private signing: { params: Params; manifest: string } = {
+		params: [],
+		manifest: '',
+	};
+
+	/** Whether the quality button has its listener; it is wired once. */
+	private qualityBound = false;
+
 	constructor( host: HlsHost ) {
 		this.host = host;
 	}
@@ -128,7 +140,7 @@ export class HlsStream {
 			return false;
 		}
 
-		const params = signature( src );
+		this.signing = { params: signature( src ), manifest: src };
 
 		this.hls = new HlsCtor( {
 			// The browser's own bandwidth estimate is better than a guess, and
@@ -136,7 +148,11 @@ export class HlsStream {
 			// for a player 400 pixels wide.
 			capLevelToPlayerSize: true,
 			xhrSetup: ( xhr: XMLHttpRequest, url: string ) => {
-				xhr.open( 'GET', sign( url, params, src ), true );
+				xhr.open(
+					'GET',
+					sign( url, this.signing.params, this.signing.manifest ),
+					true
+				);
 			},
 		} );
 
@@ -148,12 +164,39 @@ export class HlsStream {
 			}
 		);
 
-		// A network or media error mid-stream is recoverable and common — a
-		// dropped segment on a phone changing cell. Only give up on the third.
+		/*
+		 * A network or media error mid-stream is recoverable and common — a
+		 * dropped segment on a phone changing cell. Only give up on the third
+		 * in a row: a segment arriving resets the count, or three drops spread
+		 * over an hour-long lecture ended the stream for good.
+		 */
 		let recoveries = 0;
+
+		this.hls.on( HlsCtor.Events.FRAG_LOADED, () => {
+			recoveries = 0;
+		} );
 
 		this.hls.on( HlsCtor.Events.ERROR, ( _event, data: ErrorData ) => {
 			if ( ! data.fatal || ! this.hls ) {
+				return;
+			}
+
+			/*
+			 * Refused rather than lost: a signed address that has run out. Not
+			 * worth retrying — the same address will be refused again — so the
+			 * player is asked for a fresh one, which comes back through
+			 * `replaceSource()`.
+			 */
+			const status = ( data.response as { code?: number } | undefined )
+				?.code;
+
+			if (
+				HlsCtor.ErrorTypes.NETWORK_ERROR === data.type &&
+				( 401 === status || 403 === status || 410 === status ) &&
+				this.host.expired
+			) {
+				this.host.expired();
+
 				return;
 			}
 
@@ -197,38 +240,76 @@ export class HlsStream {
 
 		button.hidden = false;
 
+		/*
+		 * Once. The manifest is parsed again after a recovery, and each parse
+		 * added another listener: the first opened the menu and the second
+		 * closed it in the same click.
+		 */
+		if ( this.qualityBound ) {
+			return;
+		}
+
+		this.qualityBound = true;
+
 		button.addEventListener( 'click', () => {
 			const auto = this.host.i18n.qualityAuto ?? 'Auto';
 			const current = this.hls?.currentLevel ?? -1;
 
-			this.host.menu( [
-				{
-					label: auto,
-					active: -1 === current,
-					onPick: () => {
-						if ( this.hls ) {
-							this.hls.currentLevel = -1;
-						}
-					},
-				},
-				// Highest first: a person opening this menu is usually reaching
-				// for the best picture, not the worst.
-				...this.levels
-					.map( ( level, index ) => ( { level, index } ) )
-					.sort( ( a, b ) => b.level.height - a.level.height )
-					.map( ( { level, index } ) => ( {
-						label: level.height
-							? level.height + 'p'
-							: Math.round( level.bitrate / 1000 ) + ' kbps',
-						active: current === index,
+			this.host.menu(
+				[
+					{
+						label: auto,
+						active: -1 === current,
 						onPick: () => {
 							if ( this.hls ) {
-								this.hls.currentLevel = index;
+								this.hls.currentLevel = -1;
 							}
 						},
-					} ) ),
-			] );
+					},
+					// Highest first: a person opening this menu is usually reaching
+					// for the best picture, not the worst.
+					...this.levels
+						.map( ( level, index ) => ( { level, index } ) )
+						.sort( ( a, b ) => b.level.height - a.level.height )
+						.map( ( { level, index } ) => ( {
+							label: level.height
+								? level.height + 'p'
+								: Math.round( level.bitrate / 1000 ) + ' kbps',
+							active: current === index,
+							onPick: () => {
+								if ( this.hls ) {
+									this.hls.currentLevel = index;
+								}
+							},
+						} ) ),
+				],
+				button
+			);
 		} );
+	}
+
+	/**
+	 * Carry on from the same moment at a fresh signed address.
+	 * @param url
+	 */
+	replaceSource( url: string ): void {
+		if ( ! this.hls ) {
+			return;
+		}
+
+		const at = this.host.media.currentTime;
+		const playing = ! this.host.media.paused;
+		const params = signature( url );
+
+		// The segments are signed from the manifest's own credentials, so the
+		// new ones have to replace the old in what `xhrSetup` reads.
+		this.signing = { params, manifest: url };
+		this.hls.loadSource( url );
+		this.hls.startLoad( at );
+
+		if ( playing ) {
+			void this.host.media.play().catch( () => undefined );
+		}
 	}
 
 	destroy(): void {

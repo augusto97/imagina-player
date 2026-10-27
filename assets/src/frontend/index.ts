@@ -12,6 +12,9 @@ const initialised = new WeakSet< HTMLElement >();
 /** Players by root element, so a playlist can find the one it belongs to. */
 const players = new WeakMap< HTMLElement, Player >();
 
+/** Playlists by root element, so one that leaves the page can be let go. */
+const playlists = new WeakMap< HTMLElement, { destroy: () => void } >();
+
 function runtime(): RuntimeData {
 	return (
 		window.imaginaPlayer ?? {
@@ -182,7 +185,11 @@ function wire( root: HTMLElement ): void {
 	 */
 	withPlayer( host, ( player ) => {
 		import( /* webpackChunkName: "imagina-playlist" */ './playlist' )
-			.then( ( { Playlist } ) => new Playlist( root, player, tracks ) )
+			.then( ( { Playlist } ) => {
+				if ( root.isConnected ) {
+					playlists.set( root, new Playlist( root, player, tracks ) );
+				}
+			} )
 			.catch( () => undefined );
 	} );
 }
@@ -225,6 +232,16 @@ function moments(): Promise< typeof import('./moments') > {
 }
 
 function bindMoments(): void {
+	/*
+	 * Fetched ahead when the page has timestamp buttons. The press then runs
+	 * the seek and the play in the same task as the click: Safari before
+	 * 16.4 forgets that a person pressed something once a fetch has come
+	 * back in between, and refused to start the sound.
+	 */
+	if ( document.querySelector( '[data-imgp-time]' ) ) {
+		moments().catch( () => undefined );
+	}
+
 	if ( /[?#&]t=/.test( window.location.search + window.location.hash ) ) {
 		moments()
 			.then( ( m ) => m.followDeepLink( withPlayer ) )
@@ -247,6 +264,53 @@ function bindMoments(): void {
 			.then( ( m ) => m.pressTimestamp( button, withPlayer ) )
 			.catch( () => undefined );
 	} );
+}
+
+/**
+ * Tear down the players inside a node that has left the page.
+ *
+ * Unless it has not left: moving an element is a removal and an insertion,
+ * and page builders move them all the time — tabs, accordions, sliders, a
+ * header that becomes sticky. By the time this runs a moved player is back in
+ * the document, and destroying it left a working-looking player that did
+ * nothing. A player that really did leave is forgotten entirely, so that if
+ * it is ever put back it is built again from scratch.
+ * @param node
+ */
+function forget( node: HTMLElement ): void {
+	const roots = [
+		...( node.matches( SELECTOR ) ? [ node ] : [] ),
+		...Array.from( node.querySelectorAll< HTMLElement >( SELECTOR ) ),
+	];
+
+	for ( const root of roots ) {
+		if ( root.isConnected ) {
+			continue;
+		}
+
+		players.get( root )?.destroy();
+		players.delete( root );
+		waiting.delete( root );
+		initialised.delete( root );
+		observer?.unobserve( root );
+	}
+
+	const lists = [
+		...( node.matches( PLAYLIST_SELECTOR ) ? [ node ] : [] ),
+		...Array.from(
+			node.querySelectorAll< HTMLElement >( PLAYLIST_SELECTOR )
+		),
+	];
+
+	for ( const list of lists ) {
+		if ( list.isConnected ) {
+			continue;
+		}
+
+		playlists.get( list )?.destroy();
+		playlists.delete( list );
+		initialised.delete( list );
+	}
 }
 
 function boot(): void {
@@ -286,16 +350,7 @@ function boot(): void {
 						continue;
 					}
 
-					const gone = node.matches( SELECTOR )
-						? [ node ]
-						: Array.from(
-								node.querySelectorAll< HTMLElement >( SELECTOR )
-						  );
-
-					for ( const root of gone ) {
-						players.get( root )?.destroy();
-						players.delete( root );
-					}
+					forget( node );
 				}
 			}
 		} ).observe( document.body, { childList: true, subtree: true } );

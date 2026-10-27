@@ -103,9 +103,27 @@ export class Playlist {
 	 * player ends up playing to an empty room all night.
 	 */
 	private bindAdvance(): void {
+		/*
+		 * The list decides what happens at the end of each track. The player's
+		 * own end setting now speaks for the whole list: "loop" starts it
+		 * again from the top, "reset" goes back to the first track without
+		 * playing, "stop" leaves the last one where it finished.
+		 */
+		this.player.endHandledElsewhere = true;
+
 		const ended = (): void => {
 			if ( this.current + 1 < this.tracks.length ) {
 				this.play( this.current + 1 );
+
+				return;
+			}
+
+			const behaviour = this.player.endBehaviour;
+
+			if ( 'loop' === behaviour ) {
+				this.play( 0 );
+			} else if ( 'reset' === behaviour ) {
+				this.play( 0, false );
 			}
 		};
 
@@ -182,10 +200,14 @@ export class Playlist {
 			return;
 		}
 
-		list.scrollTo( {
-			left: item.offsetLeft - list.clientWidth / 2 + item.offsetWidth / 2,
-			behavior: 'smooth',
-		} );
+		// Measured on screen rather than from `offsetLeft`, which reads the
+		// wrong way round in a right-to-left list.
+		const box = list.getBoundingClientRect();
+		const rect = item.getBoundingClientRect();
+		const centre =
+			rect.left + rect.width / 2 - ( box.left + box.width / 2 );
+
+		list.scrollBy( { left: centre, behavior: 'smooth' } );
 	}
 
 	/**
@@ -205,19 +227,71 @@ export class Playlist {
 			return;
 		}
 
+		/*
+		 * Right to left, `scrollLeft` starts at zero and goes negative, so the
+		 * distance travelled is its size and "forward" is towards the left.
+		 * Read as left to right, the back arrow was disabled for good and the
+		 * forward one scrolled the wrong way into nothing.
+		 */
+		const rtl = (): boolean =>
+			'rtl' === window.getComputedStyle( list ).direction;
+
 		const review = (): void => {
 			const overflow = list.scrollWidth > list.clientWidth + 1;
+			const travelled = Math.abs( list.scrollLeft );
 
 			prev.hidden = ! overflow;
 			next.hidden = ! overflow;
-			prev.disabled = list.scrollLeft <= 0;
+			prev.disabled = travelled <= 1;
 			next.disabled =
-				list.scrollLeft + list.clientWidth >= list.scrollWidth - 1;
+				travelled + list.clientWidth >= list.scrollWidth - 1;
 		};
 
+		/*
+		 * By whole cards: the first card not wholly in view becomes the first
+		 * one shown. Most of a width at a time left a card cut in half at the
+		 * leading edge after every press.
+		 */
 		const by = ( direction: number ): void => {
+			const items = Array.from(
+				list.querySelectorAll< HTMLElement >( '.imgp-playlist__item' )
+			);
+			const box = list.getBoundingClientRect();
+			const sign = rtl() ? -1 : 1;
+			const ahead = ( item: HTMLElement ): number => {
+				const rect = item.getBoundingClientRect();
+
+				return rtl() ? box.right - rect.right : rect.left - box.left;
+			};
+
+			let target: HTMLElement | undefined;
+
+			if ( direction > 0 ) {
+				target = items.find(
+					( item ) =>
+						ahead( item ) + item.offsetWidth > list.clientWidth + 1
+				);
+			} else {
+				const visible = items.findIndex(
+					( item ) => ahead( item ) >= -1
+				);
+				const perView = Math.max(
+					1,
+					Math.floor(
+						list.clientWidth /
+							Math.max( 1, items[ 0 ]?.offsetWidth ?? 1 )
+					)
+				);
+
+				target = items[ Math.max( 0, visible - perView ) ];
+			}
+
+			if ( ! target ) {
+				return;
+			}
+
 			list.scrollBy( {
-				left: direction * list.clientWidth * 0.8,
+				left: sign * ahead( target ),
 				behavior: 'smooth',
 			} );
 		};
@@ -255,7 +329,10 @@ export class Playlist {
 	}
 
 	private key(): string {
-		return this.root.id || 'playlist';
+		// Stable across page loads; the element's id is not.
+		return (
+			this.root.dataset.imaginaPlaylistKey || this.root.id || 'playlist'
+		);
 	}
 
 	private remembered(): number {

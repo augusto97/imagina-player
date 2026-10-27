@@ -24,8 +24,21 @@ final class Assets {
 
 	private static bool $frontend_enqueued = false;
 
+	/** Whether `window.imaginaPlayer` has been attached to the script yet. */
+	private static bool $runtime_attached = false;
+
 	public function hooks(): void {
 		add_action( 'init', array( $this, 'register' ) );
+		/*
+		 * The runtime object goes with the script however the script came to
+		 * be on the page. A player renders it through `enqueue_frontend()`,
+		 * but WordPress also enqueues a block's `viewScript` by itself, and a
+		 * page builder serving a cached element enqueues the script without
+		 * rendering anything — and a player with no runtime object loads its
+		 * chunks from the wrong place and has no strings.
+		 */
+		add_action( 'wp_print_footer_scripts', array( self::class, 'attach_runtime' ), 1 );
+		add_action( 'wp_print_scripts', array( self::class, 'attach_runtime' ), 1 );
 	}
 
 	public function register(): void {
@@ -48,6 +61,9 @@ final class Assets {
 			array(),
 			$frontend['version']
 		);
+		// The build writes a mirrored sheet beside each one; without this a
+		// right-to-left site was served the left-to-right one.
+		wp_style_add_data( self::FRONTEND_HANDLE, 'rtl', 'replace' );
 
 		$editor = self::asset_meta( 'editor' );
 
@@ -79,6 +95,7 @@ final class Assets {
 			array( 'wp-edit-blocks' ),
 			$editor['version']
 		);
+		wp_style_add_data( self::EDITOR_HANDLE, 'rtl', 'replace' );
 
 		/*
 		 * Only the editor bundle. Nothing in the front-end bundle calls `__()`
@@ -186,6 +203,32 @@ final class Assets {
 		 * contain "</script>" would end the element early. Cheap insurance
 		 * against a future field being less careful than the present ones.
 		 */
+		self::attach_runtime( true );
+
+		$custom = trim( (string) ( $advanced['custom_css'] ?? '' ) );
+
+		if ( '' !== $custom ) {
+			wp_add_inline_style( self::FRONTEND_HANDLE, wp_strip_all_tags( $custom ) );
+		}
+	}
+
+	/**
+	 * Put `window.imaginaPlayer` in front of the script, once.
+	 *
+	 * @param bool $force Attach even if the script is not enqueued yet — for
+	 *                    `enqueue_frontend()`, which is about to enqueue it.
+	 */
+	public static function attach_runtime( bool $force = false ): void {
+		if ( self::$runtime_attached ) {
+			return;
+		}
+
+		if ( true !== $force && ! wp_script_is( self::FRONTEND_HANDLE, 'enqueued' ) ) {
+			return;
+		}
+
+		self::$runtime_attached = true;
+
 		wp_add_inline_script(
 			self::FRONTEND_HANDLE,
 			'window.imaginaPlayer = ' . wp_json_encode(
@@ -194,12 +237,6 @@ final class Assets {
 			) . ';',
 			'before'
 		);
-
-		$custom = trim( (string) ( $advanced['custom_css'] ?? '' ) );
-
-		if ( '' !== $custom ) {
-			wp_add_inline_style( self::FRONTEND_HANDLE, wp_strip_all_tags( $custom ) );
-		}
 	}
 
 	/**
@@ -221,7 +258,6 @@ final class Assets {
 			 * pages, since those are the ones the nonce is for and the ones a
 			 * page cache does not hold.
 			 */
-			'nonce'           => is_user_logged_in() ? wp_create_nonce( 'wp_rest' ) : '',
 			// The player loads its video chrome on demand. Webpack would work
 			// the location out from the script's own URL, but that throws
 			// outright when an optimisation plugin inlines the bundle — so the
