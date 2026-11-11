@@ -32,8 +32,8 @@ function find_browser(): string {
 	$candidates = array_filter(
 		array_merge(
 			array( (string) getenv( 'CHROMIUM_BIN' ) ),
-			glob( '/opt/pw-browsers/chromium-*/chrome-linux/chrome' ) ?: array(),
-			glob( '/opt/pw-browsers/chromium_headless_shell-*/chrome-linux/headless_shell' ) ?: array()
+			glob( '/opt/pw-browsers/chromium-*/chrome-linux*/chrome' ) ?: array(),
+			glob( '/opt/pw-browsers/chromium_headless_shell-*/chrome*linux*/{headless_shell,chrome-headless-shell}', GLOB_BRACE ) ?: array()
 		)
 	);
 
@@ -538,13 +538,13 @@ check( 'and a new choice is kept', '2' === ( $out['speedStored'] ?? '' ), $show(
 
 echo '## The "more" menu' . PHP_EOL;
 check( 'opens on the first press', true === ( $out['menuOpen'] ?? null ) );
-check( 'with a timer, a bookmark and a link', array( 'Sleep timer · Off', 'Bookmark this moment', 'Copy link to this moment' ) === ( $out['menuItems'] ?? null ), $show( $out['menuItems'] ?? null ) );
+check( 'with a timer, a bookmark, a link and a clip', array( 'Sleep timer · Off', 'Bookmark this moment', 'Copy link to this moment', 'Share a clip' ) === ( $out['menuItems'] ?? null ), $show( $out['menuItems'] ?? null ) );
 check( 'the keyboard starts on the first item', true === ( $out['menuFocus'] ?? null ) );
 check( 'the arrows walk the list', 'Bookmark this moment' === ( $out['menuArrow'] ?? '' ) );
 check( 'and Escape closes it, back on the button', true === ( $out['menuEscape'] ?? null ) );
 check( 'a bookmark closes the menu and says where', true === ( $out['markClosed'] ?? null ) && 'Bookmarked at 1:15' === ( $out['markToast'] ?? '' ), $show( $out['markToast'] ?? null ) );
 check( 'kept in this browser for this file', '[75]' === ( $out['markStored'] ?? '' ), $show( $out['markStored'] ?? null ) );
-check( 'listed the next time', array( 'Sleep timer · Off', 'Bookmark this moment', 'Bookmarks', '1:15', 'Clear bookmarks', 'Copy link to this moment' ) === ( $out['marksListed'] ?? null ), $show( $out['marksListed'] ?? null ) );
+check( 'listed the next time', array( 'Sleep timer · Off', 'Bookmark this moment', 'Bookmarks', '1:15', 'Clear bookmarks', 'Copy link to this moment', 'Share a clip' ) === ( $out['marksListed'] ?? null ), $show( $out['marksListed'] ?? null ) );
 check( 'and a press goes back to it', 75 === (int) ( $out['markJumped'] ?? 0 ) );
 
 echo '## The sleep timer' . PHP_EOL;

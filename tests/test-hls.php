@@ -30,8 +30,8 @@ function find_browser(): string {
 	$candidates = array_filter(
 		array_merge(
 			array( (string) getenv( 'CHROMIUM_BIN' ) ),
-			glob( '/opt/pw-browsers/chromium_headless_shell-*/chrome-linux/headless_shell' ) ?: array(),
-			glob( '/opt/pw-browsers/chromium-*/chrome-linux/chrome' ) ?: array()
+			glob( '/opt/pw-browsers/chromium_headless_shell-*/chrome*linux*/{headless_shell,chrome-headless-shell}', GLOB_BRACE ) ?: array(),
+			glob( '/opt/pw-browsers/chromium-*/chrome-linux*/chrome' ) ?: array()
 		)
 	);
 
@@ -71,6 +71,13 @@ check( 'but starts hidden, since one rendition is not a choice', (bool) preg_mat
 $mp4 = $renderer->render( array( 'src' => 'https://example.test/wp-content/uploads/lesson.mp4' ) );
 
 check( 'a plain MP4 is not flagged as a stream', str_contains( $mp4, '&quot;hls&quot;:false' ), 'this is what keeps 400 KB of hls.js off ordinary pages' );
+
+// A browser that plays streams itself would start on a signed one as the page
+// loads and ask for its segments unsigned; hls.js, which signs them, fetches
+// the manifest itself when it takes over.
+check( 'a signed stream is not fetched by the browser before the script', (bool) preg_match( '#<video[^>]*preload="none"#', $html ) );
+$unsigned = $renderer->render( array( 'src' => 'https://example.test/wp-content/uploads/open.m3u8' ) );
+check( 'an unsigned one is, as the settings say', ! preg_match( '#<video[^>]*preload="none"#', $unsigned ) );
 
 echo PHP_EOL . '# Every segment is signed, not just the manifest' . PHP_EOL;
 

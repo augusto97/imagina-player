@@ -7,6 +7,7 @@
  */
 
 import type { Player } from './player';
+import { formatTime } from './utils';
 
 const SELECTOR = '[data-imagina-player]';
 
@@ -141,7 +142,10 @@ export function followDeepLink( withPlayer: WithPlayer ): void {
 			continue;
 		}
 
-		const seconds = parseMoment( moment );
+		// `t=95&end=130`, or a media fragment's `t=95,130`.
+		const [ from, to ] = moment.split( ',' );
+		const seconds = parseMoment( from ?? '' );
+		const end = parseMoment( params.get( 'end' ) ?? to ?? '' );
 
 		if ( ! Number.isFinite( seconds ) || seconds < 0 ) {
 			continue;
@@ -151,10 +155,127 @@ export function followDeepLink( withPlayer: WithPlayer ): void {
 
 		if ( root ) {
 			jump( root, seconds, false, withPlayer );
+
+			if ( Number.isFinite( end ) && end > seconds ) {
+				withPlayer( root, ( player ) => clip( player, seconds, end ) );
+			}
 		}
 
 		return;
 	}
+}
+
+/**
+ * A clip: the player stops where the link says, once, and offers the clip
+ * again or the rest.
+ *
+ * Only for as long as the viewer stays inside it. Somebody who drags the
+ * playhead outside the clip has chosen to watch something else, and is not
+ * stopped at a second they have left behind.
+ * @param player
+ * @param start
+ * @param end
+ */
+export function clip( player: Player, start: number, end: number ): void {
+	const media = player.media;
+	let timer = 0;
+
+	const stop = (): void => {
+		window.clearTimeout( timer );
+		media.removeEventListener( 'timeupdate', check );
+		media.removeEventListener( 'seeking', left );
+	};
+
+	const finish = (): void => {
+		stop();
+		media.pause();
+		offerMore( player, start, end );
+	};
+
+	/*
+	 * `timeupdate` comes four times a second, so the last stretch is timed
+	 * instead: stopping a quarter of a second late is the first word of the
+	 * next sentence.
+	 */
+	const check = (): void => {
+		const left = end - media.currentTime;
+
+		window.clearTimeout( timer );
+
+		if ( left <= 0.05 ) {
+			finish();
+		} else if ( left < 0.6 && ! media.paused ) {
+			timer = window.setTimeout(
+				finish,
+				( left * 1000 ) / ( media.playbackRate || 1 )
+			);
+		}
+	};
+
+	const left = (): void => {
+		const at = media.currentTime;
+
+		if ( at < start - 1 || at > end + 0.5 ) {
+			stop();
+		}
+	};
+
+	media.addEventListener( 'timeupdate', check );
+	media.addEventListener( 'seeking', left );
+}
+
+/**
+ * Where a clip ends: say so, and offer it again or the rest.
+ * @param player
+ * @param start
+ * @param end
+ */
+function offerMore( player: Player, start: number, end: number ): void {
+	const host = player.root;
+	const i18n = window.imaginaPlayer?.i18n ?? {};
+	const doc = host.ownerDocument;
+	const chip = doc.createElement( 'div' );
+	const text = doc.createElement( 'span' );
+	const again = doc.createElement( 'button' );
+	const more = doc.createElement( 'button' );
+
+	host.querySelector( '.imgp__resume' )?.remove();
+
+	chip.className = 'imgp__resume imgp__resume--clip';
+	chip.setAttribute( 'role', 'status' );
+	text.className = 'imgp__resume-text';
+	text.textContent = `${
+		i18n.clipEnded ?? 'End of the clip'
+	} · ${ formatTime( start ) }–${ formatTime( end ) }`;
+
+	for ( const [ button, label ] of [
+		[ again, i18n.clipReplay ?? 'Replay clip' ],
+		[ more, i18n.clipContinue ?? 'Keep watching' ],
+	] as const ) {
+		button.type = 'button';
+		button.className = 'imgp__resume-restart';
+		button.textContent = label;
+	}
+
+	again.addEventListener( 'click', () => {
+		chip.remove();
+		player.seekTo( start );
+		clip( player, start, end );
+
+		if ( player.media.paused ) {
+			player.toggle();
+		}
+	} );
+	more.addEventListener( 'click', () => {
+		chip.remove();
+
+		if ( player.media.paused ) {
+			player.toggle();
+		}
+	} );
+
+	chip.append( text, again, more );
+	host.appendChild( chip );
 }
 
 /**

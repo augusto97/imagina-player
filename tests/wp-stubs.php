@@ -374,7 +374,9 @@ function user_can( $user, $cap, ...$args ) {
 
 	return in_array( $cap . ( isset( $args[0] ) ? ':' . $args[0] : '' ), (array) ( $GLOBALS['stub_user_caps'][ $id ] ?? array() ), true );
 }
-function get_permalink( $post = 0 ) { return 'https://example.test/?p=' . (int) ( $post ?: ( $GLOBALS['stub_current_post'] ?? 0 ) ); }
+function get_permalink( $post = 0 ) { return 'https://example.test/?p=' . (int) ( is_object( $post ) ? $post->ID : ( $post ?: ( $GLOBALS['stub_current_post'] ?? 0 ) ) ); }
+function __return_true() { return true; }
+function __return_false() { return false; }
 function wp_login_url( $redirect = '' ) { return 'https://example.test/wp-login.php' . ( '' === $redirect ? '' : '?redirect_to=' . rawurlencode( $redirect ) ); }
 function wp_update_attachment_metadata( $id, $meta ) { return true; }
 function status_header( $code ) { $GLOBALS['stub_status'] = $code; if ( ! headers_sent() ) { http_response_code( $code ); } }

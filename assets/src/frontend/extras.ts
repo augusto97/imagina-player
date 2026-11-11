@@ -126,10 +126,17 @@ class Extras {
 			} );
 		}
 
-		items.push( {
-			label: this.i18n.copyLink ?? 'Copy link to this moment',
-			run: () => void this.copyLink(),
-		} );
+		items.push(
+			{
+				label: this.i18n.copyLink ?? 'Copy link to this moment',
+				run: () => void this.copyLink(),
+			},
+			{
+				label: this.i18n.clipShare ?? 'Share a clip',
+				stay: true,
+				run: () => void this.openClip(),
+			}
+		);
 
 		return items;
 	}
@@ -310,6 +317,36 @@ class Extras {
 			this.say( this.i18n.linkCopied ?? 'Link copied' );
 		} catch {
 			this.say( url.toString() );
+		}
+	}
+
+	/**
+	 * A start and an end for a link that plays just that, in this menu's
+	 * place. The same form the video's settings menu shows.
+	 */
+	private async openClip(): Promise< void > {
+		const root = this.button.closest< HTMLElement >( '.imgp' );
+
+		if ( ! root ) {
+			return;
+		}
+
+		try {
+			const { clipForm } = await import(
+				/* webpackChunkName: "imagina-clip" */ './clip'
+			);
+			const form = clipForm( {
+				root,
+				media: this.player.media,
+				say: ( text ) => this.say( text ),
+				done: () => this.close( true ),
+			} );
+
+			this.show( [] );
+			this.menu.appendChild( form );
+			form.querySelector< HTMLInputElement >( 'input' )?.focus();
+		} catch {
+			// The link to this moment still works.
 		}
 	}
 

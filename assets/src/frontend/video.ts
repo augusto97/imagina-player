@@ -1846,14 +1846,64 @@ export class VideoChrome {
 			} );
 		}
 
-		items.push( {
-			label: this.i18n( 'copyLink', 'Copy link to this moment' ),
-			active: false,
-			action: true,
-			onPick: () => void this.copyMomentLink(),
-		} );
+		items.push(
+			{
+				label: this.i18n( 'copyLink', 'Copy link to this moment' ),
+				active: false,
+				action: true,
+				onPick: () => void this.copyMomentLink(),
+			},
+			{
+				label: this.i18n( 'clipShare', 'Share a clip' ),
+				active: false,
+				action: true,
+				keepOpen: true,
+				onPick: () => void this.openClip(),
+			}
+		);
 
 		return items;
+	}
+
+	/**
+	 * A start and an end for a link that plays just that. Its own chunk:
+	 * fetched by somebody who asks, and by nobody else.
+	 */
+	private async openClip(): Promise< void > {
+		const menu = this.root.querySelector< HTMLElement >( '.imgp__menu' );
+
+		if ( ! menu ) {
+			return;
+		}
+
+		const settings = this.root.querySelector< HTMLElement >(
+			'.imgp__vbtn--settings'
+		);
+
+		try {
+			const { clipForm } = await import(
+				/* webpackChunkName: "imagina-clip" */ './clip'
+			);
+
+			const form = clipForm( {
+				root: this.root,
+				media: this.media,
+				say: ( text ) => this.toast( text ),
+				done: () => this.closeMenu( true ),
+			} );
+
+			if ( ! menu.hidden ) {
+				this.releaseMenu( false, settings );
+			}
+
+			menu.textContent = '';
+			menu.classList.add( 'imgp__menu--search' );
+			menu.appendChild( form );
+			this.showMenu( menu, settings );
+			form.querySelector< HTMLInputElement >( 'input' )?.focus();
+		} catch {
+			// Nothing to show; the link to this moment still works.
+		}
 	}
 
 	private speedItems(): MenuItem[] {

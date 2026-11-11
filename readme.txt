@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.52.0
+Stable tag: 1.53.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -190,6 +190,14 @@ follows them to another device. **One lesson at a time** keeps a lesson shut
 until the one before has been watched; it guides students, it does not protect
 the files — use **Who can play it** for that.
 
+= Can I share just part of a video or an episode? =
+
+Yes: **Share a clip** in the video's settings menu, or in the audio player's
+"more" menu. Choose where it starts and ends and copy the link; whoever opens
+it sees the page at the start of the clip, and the player stops at its end.
+Shared on a social network or in a chat, the link shows a card with the clip's
+title and picture, and sites that read oEmbed show the player itself.
+
 = Is there a sleep timer? =
 
 Yes, in the audio player's **More** menu, the three dots beside the volume,
@@ -227,6 +235,34 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.53.0 =
+A new feature, clips you can share, and two fixes found on a newer browser
+and server.
+
+* New: **Share a clip**, in the video's settings menu and the audio player's
+  "more" menu. Choose a start and an end — "Now" takes the second playing — and
+  copy a link that opens the page at the start and stops at the end, saying so
+  and offering the clip again or the rest. The link is the page's own address
+  with `t` and `end` (`?t=95&end=130`, or `t=95,130` as a media fragment), with
+  `player` naming the block by its HTML anchor; dragging outside the clip lets
+  it go.
+* New: **a card for a shared clip or moment.** Its link carries Open Graph and
+  Twitter tags naming the clip with its picture, for Facebook, X, LinkedIn and
+  WhatsApp — left to an SEO plugin when one is writing the page's own — and an
+  oEmbed endpoint, for WordPress, Slack, Discord and Notion, that answers with
+  the player in a frame: a page with nothing on it but that player, starting at
+  the clip. A player behind "Who can play it" is offered as a link, never in a
+  frame; a draft or a post behind a password gets nothing.
+* Fixed: a signed HLS stream — its credentials in the address — did not play in
+  a browser that plays streams by itself, which now includes Chrome: its own
+  player asked for every segment without the credentials. Such a stream is
+  played by hls.js wherever it can run, and the page no longer starts fetching
+  it before the script takes over.
+* Fixed: an ffmpeg path typed in the settings was silently replaced by another
+  ffmpeg when the server had one in the usual place, so a mistyped path was
+  never reported. The path given is the one used, as the settings say.
+* Changed: the strings for all of this translated into Spanish.
 
 = 1.52.0 =
 Two new features: a video in other qualities and other languages, and block

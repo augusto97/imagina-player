@@ -8,9 +8,10 @@
  * only when the source is an `.m3u8`, and only when the browser cannot play one
  * by itself.
  *
- * Safari can. On iOS it is the *only* way to play HLS, since Media Source
- * Extensions are not available in the browser at all. Loading hls.js there
- * would be 400 KB spent to do worse than the built-in.
+ * Safari can, and recent Chrome too. On an older iPhone it is the *only* way
+ * to play HLS, since Media Source Extensions are not available there at all.
+ * Loading hls.js where the browser can play the stream would be 400 KB spent
+ * to do worse than the built-in — except for a signed stream, below.
  *
  * The signing is the part that matters. A protected stream is not one file but
  * a manifest and a few hundred segments, and signing only the manifest protects
@@ -156,7 +157,17 @@ export class HlsStream {
 	 * stream itself, which is the better outcome where it is possible.
 	 */
 	async attach( src: string ): Promise< boolean > {
-		if ( canPlayNatively( this.host.media ) ) {
+		const params = signature( src );
+
+		/*
+		 * A browser's own player never carries the manifest's query onto
+		 * the segments it names, so a stream signed in its query string
+		 * plays its manifest and is refused every segment. Safari always
+		 * played streams itself, and Chrome does now too. hls.js plays a
+		 * signed stream wherever it can run; the browser's player keeps an
+		 * unsigned one, and a signed one only where nothing else can play.
+		 */
+		if ( canPlayNatively( this.host.media ) && 0 === params.length ) {
 			return false;
 		}
 
@@ -168,7 +179,7 @@ export class HlsStream {
 			return false;
 		}
 
-		this.signing = { params: signature( src ), manifest: src };
+		this.signing = { params, manifest: src };
 
 		this.hls = new HlsCtor( {
 			// The browser's own bandwidth estimate is better than a guess, and

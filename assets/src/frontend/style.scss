@@ -4255,3 +4255,70 @@ button.imgp-time:focus-visible {
 		max-width: none;
 	}
 }
+
+/* --- Choosing a clip -------------------------------------------------------
+   A start, an end and the link, in the menu it was asked for from. */
+
+/* A short picture on a phone has less room than the form: it scrolls. */
+.imgp__menu:has(> .imgp__clip) {
+	overflow-y: auto;
+}
+
+.imgp__clip {
+	display: grid;
+	gap: 0.35rem;
+	padding: 0.2rem;
+	color: var(--imgp-on-chrome, #fff);
+	font-size: 0.85rem;
+}
+
+.imgp__clip-title {
+	margin: 0 !important;
+	font-weight: 600;
+}
+
+.imgp__clip-row {
+	display: grid;
+	grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 0.4rem;
+}
+
+.imgp__clip-input {
+	font-variant-numeric: tabular-nums;
+}
+
+.imgp .imgp__clip .imgp__search-input {
+	padding: 0.35rem 0.5rem !important;
+}
+
+/* The menu is dark whatever the accent; a dark accent's ring vanished. */
+.imgp__clip .imgp__search-input:focus-visible {
+	outline-color: currentcolor;
+}
+
+.imgp .imgp__clip-now {
+	padding: 0.4rem 0.6rem !important;
+	border-radius: 0.35rem !important;
+	background-color: rgb(255 255 255 / 12%) !important;
+	font: inherit;
+	cursor: pointer;
+}
+
+.imgp__clip-note {
+	margin: 0 !important;
+	color: #fca5a5;
+}
+
+.imgp .imgp__clip-copy {
+	background-color: rgb(255 255 255 / 14%) !important;
+	font-weight: 600;
+	text-align: center;
+}
+
+@container (max-width: 30rem) {
+
+	.imgp--video .imgp__clip-title {
+		display: none;
+	}
+}

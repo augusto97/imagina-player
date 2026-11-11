@@ -558,6 +558,15 @@ final class PlayerRenderer {
 		$is_video = $track->is_video();
 		$tag      = $is_video ? 'video' : 'audio';
 
+		/*
+		 * A stream signed in its query string is played by hls.js, which
+		 * signs every segment. A browser that plays streams itself — Safari,
+		 * and Chrome now — would otherwise start on the manifest as the page
+		 * loads and ask for its segments unsigned, to be refused, before the
+		 * script takes over.
+		 */
+		$preload = $track->is_hls() && str_contains( $track->src, '?' ) ? 'none' : (string) $config['preload'];
+
 		// Everything here is what the visitor gets if our JavaScript never
 		// arrives: a real media element with native controls. The enhancement
 		// takes the controls off, it does not put the player there.
@@ -566,7 +575,7 @@ final class PlayerRenderer {
 		<<?php echo esc_attr( $tag ); ?>
 			class="imgp__media"
 			src="<?php echo esc_url( $track->src ); ?>"
-			preload="<?php echo esc_attr( (string) $config['preload'] ); ?>"
+			preload="<?php echo esc_attr( $preload ); ?>"
 			controls
 			<?php echo $atts['loop'] ? 'loop' : ''; ?>
 			<?php echo $atts['muted'] ? 'muted' : ''; ?>

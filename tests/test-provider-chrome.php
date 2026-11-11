@@ -41,7 +41,7 @@ $browser = '';
 
 foreach ( array_merge(
 	array( (string) getenv( 'CHROMIUM_BIN' ) ),
-	glob( '/opt/pw-browsers/chromium-*/chrome-linux/chrome' ) ?: array()
+	glob( '/opt/pw-browsers/chromium-*/chrome-linux*/chrome' ) ?: array()
 ) as $candidate ) {
 	if ( '' !== $candidate && is_executable( $candidate ) ) {
 		$browser = $candidate;

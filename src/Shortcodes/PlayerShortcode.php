@@ -42,7 +42,20 @@ final class PlayerShortcode {
 	 * @param array<string, mixed>|string $atts Shortcode attributes.
 	 */
 	public function render( $atts = array() ): string {
-		$atts = is_array( $atts ) ? $atts : array();
+		$renderer = new PlayerRenderer();
+
+		return $renderer->render( self::attributes( is_array( $atts ) ? $atts : array() ) );
+	}
+
+	/**
+	 * What a shortcode's attributes are as a block's: `show_volume` is
+	 * `showVolume`, `mp3` is `src`. Also read by whatever needs a player a
+	 * post carries — the card a shared clip shows — without drawing it.
+	 *
+	 * @param array<string, mixed> $atts Shortcode attributes.
+	 * @return array<string, mixed>
+	 */
+	public static function attributes( array $atts ): array {
 
 		$defaults = array();
 
@@ -85,9 +98,7 @@ final class PlayerShortcode {
 			$mapped['className'] = $atts[ self::CLASS_ALIAS ];
 		}
 
-		$renderer = new PlayerRenderer();
-
-		return $renderer->render( $mapped );
+		return $mapped;
 	}
 
 	/**

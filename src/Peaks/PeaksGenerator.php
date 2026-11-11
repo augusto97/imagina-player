@@ -116,7 +116,15 @@ final class PeaksGenerator {
 			return $resolved;
 		}
 
-		$candidates = array_filter( array( $configured, 'ffmpeg', '/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg', '/opt/homebrew/bin/ffmpeg' ) );
+		/*
+		 * A path somebody typed is the one used, and the only one: the
+		 * settings say to clear it to search the usual places. Falling back
+		 * to another ffmpeg hid a mistyped path on any host that had one in
+		 * the usual place, and ran a binary the admin had not chosen.
+		 */
+		$candidates = '' !== $configured
+			? array( $configured )
+			: array( 'ffmpeg', '/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg', '/opt/homebrew/bin/ffmpeg' );
 
 		foreach ( $candidates as $candidate ) {
 			if ( self::probe( $candidate ) ) {

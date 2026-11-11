@@ -72,6 +72,7 @@ final class Plugin {
 			'protection'  => new ProtectionIntegration(),
 			'blocks'      => new BlockRegistrar(),
 			'patterns'    => new Blocks\Patterns(),
+			'clips'       => new Share\ClipShare(),
 			'shortcodes'  => new PlayerShortcode(),
 			'timestamps'  => new TimeShortcode(),
 			'dashboard'   => new Dashboard(),

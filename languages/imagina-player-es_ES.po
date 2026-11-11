@@ -28,7 +28,7 @@ msgid "%1$d of %2$d generated."
 msgstr "%1$d de %2$d generadas."
 
 #. translators: 1: lessons watched, 2: lessons in the course.
-#: src/Assets.php:291
+#: src/Assets.php:301
 #: src/Render/PlaylistRenderer.php:181
 msgid "%1$d of %2$d watched"
 msgstr "%1$d de %2$d vistas"
@@ -42,6 +42,16 @@ msgstr "%1$d de %2$d — %3$s"
 #: assets/src/admin/panels.tsx:256
 msgid "%1$d of %2$d — %3$s — %4$s"
 msgstr "%1$d de %2$d — %3$s — %4$s"
+
+#. translators: 1: what is playing, 2: where the clip starts, 3: where it ends.
+#: src/Share/Clip.php:179
+msgid "%1$s (%2$s–%3$s)"
+msgstr "%1$s (%2$s–%3$s)"
+
+#. translators: 1: what is playing, 2: the moment the link opens at.
+#: src/Share/Clip.php:183
+msgid "%1$s, from %2$s"
+msgstr "%1$s, desde %2$s"
 
 #. translators: %d: number of failed checks.
 #: src/Protection/SelfCheck.php:532
@@ -77,12 +87,12 @@ msgid "%d in total"
 msgstr "%d en total"
 
 #. translators: %d: minutes
-#: src/Assets.php:297
+#: src/Assets.php:307
 msgid "%d min left"
 msgstr "quedan %d min"
 
 #. translators: %d: minutes
-#: src/Assets.php:299
+#: src/Assets.php:309
 msgid "%d minutes"
 msgstr "%d minutos"
 
@@ -452,7 +462,7 @@ msgstr "Reproducción automática"
 msgid "Autoplay is on but the sound is not muted, so no browser will start this by itself. It will show its play button instead."
 msgstr "La reproducción automática está activada pero el sonido no está silenciado, así que ningún navegador la arrancará solo. Mostrará su botón de reproducir."
 
-#: src/Assets.php:289
+#: src/Assets.php:299
 msgid "Back"
 msgstr "Atrás"
 
@@ -510,17 +520,17 @@ msgid "Block the browser download"
 msgstr "Bloquear la descarga del navegador"
 
 #. translators: %d: minutes
-#: src/Assets.php:300
+#: src/Assets.php:310
 msgid "Bookmark this moment"
 msgstr "Marcar este momento"
 
 #. translators: %s: a time such as 12:40
-#: src/Assets.php:302
+#: src/Assets.php:312
 msgid "Bookmarked at %s"
 msgstr "Marcado en %s"
 
 #. translators: %s: a time such as 12:40
-#: src/Assets.php:303
+#: src/Assets.php:313
 msgid "Bookmarks"
 msgstr "Marcadores"
 
@@ -641,8 +651,8 @@ msgstr "Cambiar la imagen"
 #: src/Integrations/Elementor/VideoWidget.php:232
 #: src/Integrations/Elementor/VideoWidget.php:242
 #: src/Integrations/Elementor/VideoWidget.php:322
-#: src/Render/PlayerRenderer.php:657
-#: src/Render/PlayerRenderer.php:937
+#: src/Render/PlayerRenderer.php:666
+#: src/Render/PlayerRenderer.php:946
 msgid "Chapters"
 msgstr "Capítulos"
 
@@ -707,7 +717,7 @@ msgid "Classic (4:3)"
 msgstr "Clásico (4:3)"
 
 #. translators: %s: a time such as 12:40
-#: src/Assets.php:304
+#: src/Assets.php:314
 msgid "Clear bookmarks"
 msgstr "Borrar marcadores"
 
@@ -715,8 +725,12 @@ msgstr "Borrar marcadores"
 msgid "Clear them"
 msgstr "Quitarlos"
 
-#: src/Render/PlayerRenderer.php:1148
-#: src/Render/PlayerRenderer.php:1281
+#: src/Assets.php:288
+msgid "Clip link copied"
+msgstr "Enlace del clip copiado"
+
+#: src/Render/PlayerRenderer.php:1157
+#: src/Render/PlayerRenderer.php:1290
 msgid "Close"
 msgstr "Cerrar"
 
@@ -762,8 +776,12 @@ msgstr "Controles en una barra sólida bajo la imagen, siempre visibles. Nada ta
 msgid "Controls over the picture, fading out while it plays. What most video players do."
 msgstr "Controles sobre la imagen, que se desvanecen mientras se reproduce. Lo que hacen casi todos los reproductores de vídeo."
 
+#: src/Assets.php:287
+msgid "Copy clip link"
+msgstr "Copiar enlace del clip"
+
 #. translators: %s: a time such as 12:40
-#: src/Assets.php:305
+#: src/Assets.php:315
 msgid "Copy link to this moment"
 msgstr "Copiar enlace a este momento"
 
@@ -877,7 +895,7 @@ msgid "Details"
 msgstr "Detalles"
 
 #. translators: %s: a time such as 12:40
-#: src/Assets.php:310
+#: src/Assets.php:320
 msgid "Dismiss"
 msgstr "Descartar"
 
@@ -888,7 +906,7 @@ msgstr "Vertical (porcentaje desde arriba)"
 
 #: assets/src/admin/PresetsPanel.tsx:345
 #: src/Integrations/Elementor/AudioWidget.php:138
-#: src/Render/PlayerRenderer.php:1736
+#: src/Render/PlayerRenderer.php:1745
 msgid "Download"
 msgstr "Descargar"
 
@@ -942,7 +960,7 @@ msgstr "Tiempo transcurrido y total"
 msgid "Email"
 msgstr "Correo"
 
-#: src/Render/PlayerRenderer.php:1092
+#: src/Render/PlayerRenderer.php:1101
 msgid "Email address"
 msgstr "Dirección de correo"
 
@@ -973,8 +991,16 @@ msgstr "Vacío usa el ajuste del sitio; cero los mantiene visibles."
 msgid "Empty: from the start for text, images, hotspots and shortcodes; at the end for a call to action."
 msgstr "Vacío: desde el principio para textos, imágenes, puntos interactivos y shortcodes; al final para una llamada a la acción."
 
+#: src/Assets.php:285
+msgid "End"
+msgstr "Fin"
+
+#: src/Assets.php:290
+msgid "End of the clip"
+msgstr "Fin del clip"
+
 #. translators: 1: lessons watched, 2: lessons in the course.
-#: src/Assets.php:295
+#: src/Assets.php:305
 msgid "End of this one"
 msgstr "Al terminar este"
 
@@ -1059,7 +1085,7 @@ msgid "Find out more"
 msgstr "Saber más"
 
 #. translators: 1: lessons watched, 2: lessons in the course.
-#: src/Assets.php:293
+#: src/Assets.php:303
 msgid "Finish the one before to open this"
 msgstr "Termina la anterior para abrir esta"
 
@@ -1067,7 +1093,7 @@ msgstr "Termina la anterior para abrir esta"
 msgid "Focus mode"
 msgstr "Modo concentración"
 
-#: src/Render/PlayerRenderer.php:1314
+#: src/Render/PlayerRenderer.php:1323
 msgid "Follow the video"
 msgstr "Seguir el vídeo"
 
@@ -1084,7 +1110,7 @@ msgid "For the weekly podcast"
 msgstr "Para el pódcast semanal"
 
 #. translators: %d: number of seconds
-#: src/Render/PlayerRenderer.php:1719
+#: src/Render/PlayerRenderer.php:1728
 msgid "Forward %d seconds"
 msgstr "Avanzar %d segundos"
 
@@ -1102,7 +1128,7 @@ msgstr "Desde el principio, antes de reproducir nada."
 
 #: assets/src/admin/panels.tsx:1317
 #: src/Integrations/Elementor/VideoWidget.php:330
-#: src/Render/PlayerRenderer.php:982
+#: src/Render/PlayerRenderer.php:991
 msgid "Full screen"
 msgstr "Pantalla completa"
 
@@ -1283,12 +1309,12 @@ msgid "Imagina Player requires PHP %1$s or newer. This site runs PHP %2$s."
 msgstr "Imagina Player necesita PHP %1$s o superior. Este sitio usa PHP %2$s."
 
 #. translators: %s: the name of a custom field.
-#: src/Render/PlayerRenderer.php:1885
+#: src/Render/PlayerRenderer.php:1894
 msgid "Imagina Player: no audio file selected."
 msgstr "Imagina Player: no hay ningún archivo de audio seleccionado."
 
 #. translators: %s: the name of a custom field.
-#: src/Render/PlayerRenderer.php:1876
+#: src/Render/PlayerRenderer.php:1885
 msgid "Imagina Player: the file comes from the custom field “%s” of the post this block is shown on. This one has none, so visitors see nothing here."
 msgstr "Imagina Player: el archivo sale del campo personalizado «%s» de la entrada en la que se muestra este bloque. Esta no tiene ninguno, así que los visitantes no ven nada aquí."
 
@@ -1331,6 +1357,10 @@ msgstr "Inscribirse en el curso"
 #: src/Integrations/Elementor/VideoWidget.php:334
 msgid "Keep playing in a corner while scrolling"
 msgstr "Seguir reproduciendo en una esquina al desplazarse"
+
+#: src/Assets.php:292
+msgid "Keep watching"
+msgstr "Seguir viendo"
 
 #: assets/src/admin/panels.tsx:1371
 msgid "Keeping the file"
@@ -1390,7 +1420,7 @@ msgstr "Déjalo vacío para usar el del preajuste."
 msgid "Leave it empty"
 msgstr "Dejarlo vacío"
 
-#: src/Render/PlayerRenderer.php:1113
+#: src/Render/PlayerRenderer.php:1122
 msgid "Leave this field empty"
 msgstr "Deja este campo vacío"
 
@@ -1432,7 +1462,7 @@ msgid "Link"
 msgstr "Enlace"
 
 #. translators: %s: a time such as 12:40
-#: src/Assets.php:306
+#: src/Assets.php:316
 msgid "Link copied"
 msgstr "Enlace copiado"
 
@@ -1480,7 +1510,7 @@ msgstr "Cargando…"
 msgid "Loads the video from youtube-nocookie.com, which sets nothing until a visitor presses play. Turn this off only if you need YouTube’s own analytics for these videos."
 msgstr "Carga el vídeo desde youtube-nocookie.com, que no pone nada hasta que alguien pulsa reproducir. Desactívalo sólo si necesitas las analíticas de YouTube para estos vídeos."
 
-#: src/Render/PlayerRenderer.php:1524
+#: src/Render/PlayerRenderer.php:1533
 msgid "Locked"
 msgstr "Bloqueado"
 
@@ -1581,7 +1611,7 @@ msgstr "Minutos y segundos, o solo segundos."
 msgid "Missing: %s. They are rewritten when the directory is next created; the check below is what actually decides whether access is denied."
 msgstr "Faltan: %s. Se reescriben la próxima vez que se cree el directorio; la comprobación de abajo es la que decide de verdad si el acceso está denegado."
 
-#: src/Render/PlayerRenderer.php:1778
+#: src/Render/PlayerRenderer.php:1787
 msgid "More"
 msgstr "Más"
 
@@ -1607,7 +1637,7 @@ msgid "Moves the file out of the public uploads folder and serves it through a s
 msgstr "Saca el archivo de la carpeta pública de subidas y lo sirve con un enlace firmado que caduca."
 
 #: src/Assets.php:278
-#: src/Render/PlayerRenderer.php:1745
+#: src/Render/PlayerRenderer.php:1754
 msgid "Mute"
 msgstr "Silenciar"
 
@@ -1689,7 +1719,7 @@ msgstr "Ninguno"
 msgid "None of this stops a screen recorder, and neither does DRM. What protects the file is that it lives outside the public folder and its link expires — see Protection."
 msgstr "Nada de esto detiene una grabación de pantalla, ni el DRM tampoco. Lo que protege al archivo es que vive fuera de la carpeta pública y que su enlace caduca: mira Protección."
 
-#: src/Assets.php:288
+#: src/Assets.php:298
 msgid "Normal"
 msgstr "Normal"
 
@@ -1711,7 +1741,7 @@ msgstr "Sin comprobar: aún no hay ningún archivo protegido. Protege uno en Med
 msgid "Not checked: this site could not make a request to itself."
 msgstr "Sin comprobar: este sitio no pudo hacerse una petición a sí mismo."
 
-#: src/Render/PlayerRenderer.php:729
+#: src/Render/PlayerRenderer.php:738
 msgid "Not started"
 msgstr "Sin empezar"
 
@@ -1727,7 +1757,7 @@ msgid_plural "Nothing failed, but %d checks could not be confirmed."
 msgstr[0] "No falló nada, pero %d comprobación no se pudo confirmar."
 msgstr[1] "No falló nada, pero %d comprobaciones no se pudieron confirmar."
 
-#: src/Assets.php:286
+#: src/Assets.php:296
 msgid "Nothing found."
 msgstr "No se encontró nada."
 
@@ -1739,6 +1769,10 @@ msgstr "No se pide nada a YouTube ni a Vimeo hasta que alguien pulsa reproducir:
 #: assets/src/admin/LeadsPanel.tsx:180
 msgid "Nothing yet. Add an email gate to a player under “Overlays and calls to action” in the block, and addresses will appear here."
 msgstr "Todavía nada. Añade una captura de correo a un reproductor en «Superposiciones y llamadas a la acción» del bloque y las direcciones aparecerán aquí."
+
+#: src/Assets.php:286
+msgid "Now"
+msgstr "Ahora"
 
 #: assets/src/admin/panels.tsx:1393
 #: assets/src/editor/controls.tsx:69
@@ -1851,7 +1885,7 @@ msgstr "O su dirección"
 #: assets/src/editor/sources-panel.tsx:229
 #: src/Integrations/Elementor/VideoWidget.php:261
 #: src/Integrations/Elementor/VideoWidget.php:279
-#: src/Render/PlayerRenderer.php:849
+#: src/Render/PlayerRenderer.php:858
 msgid "Original"
 msgstr "Original"
 
@@ -1907,7 +1941,7 @@ msgstr "Porcentaje de la pista. Si retrocedes por delante, vuelve a salir."
 
 #: assets/src/admin/panels.tsx:1324
 #: src/Integrations/Elementor/VideoWidget.php:328
-#: src/Render/PlayerRenderer.php:975
+#: src/Render/PlayerRenderer.php:984
 msgid "Picture in picture"
 msgstr "Imagen en imagen"
 
@@ -1920,8 +1954,8 @@ msgid "Pill"
 msgstr "Píldora"
 
 #: src/Assets.php:276
-#: src/Render/PlayerRenderer.php:805
-#: src/Render/PlayerRenderer.php:1661
+#: src/Render/PlayerRenderer.php:814
+#: src/Render/PlayerRenderer.php:1670
 msgid "Play"
 msgstr "Reproducir"
 
@@ -1950,7 +1984,7 @@ msgstr "Reproducción"
 #. translators: %d: number of seconds
 #: assets/src/admin/PresetsPanel.tsx:336
 #: assets/src/admin/panels.tsx:1271
-#: src/Render/PlayerRenderer.php:1727
+#: src/Render/PlayerRenderer.php:1736
 msgid "Playback speed"
 msgstr "Velocidad de reproducción"
 
@@ -2081,7 +2115,7 @@ msgstr "La protección está activada"
 msgid "Qualities and languages"
 msgstr "Calidades e idiomas"
 
-#: src/Render/PlayerRenderer.php:957
+#: src/Render/PlayerRenderer.php:966
 msgid "Quality"
 msgstr "Calidad"
 
@@ -2157,6 +2191,10 @@ msgstr "Reemplazar el archivo de descarga"
 msgid "Replace file"
 msgstr "Reemplazar el archivo"
 
+#: src/Assets.php:291
+msgid "Replay clip"
+msgstr "Repetir clip"
+
 #: assets/src/admin/panels.tsx:733
 msgid "Require a logged-in user"
 msgstr "Exigir una sesión iniciada"
@@ -2166,12 +2204,12 @@ msgid "Reset"
 msgstr "Restablecer"
 
 #. translators: %s: a time such as 12:40
-#: src/Assets.php:308
+#: src/Assets.php:318
 msgid "Resume from %s"
 msgstr "Continuar desde %s"
 
 #. translators: %d: number of seconds
-#: src/Render/PlayerRenderer.php:1714
+#: src/Render/PlayerRenderer.php:1723
 msgid "Rewind %d seconds"
 msgstr "Retroceder %d segundos"
 
@@ -2212,7 +2250,7 @@ msgstr "Redondea todo el reproductor."
 msgid "Run the check"
 msgstr "Hacer la comprobación"
 
-#: src/Render/PlayerRenderer.php:1261
+#: src/Render/PlayerRenderer.php:1270
 msgid "Runs on the published page."
 msgstr "Se ejecuta en la página publicada."
 
@@ -2240,16 +2278,16 @@ msgstr "Guardando…"
 msgid "Scrub previews"
 msgstr "Vista previa al arrastrar"
 
-#: src/Render/PlayerRenderer.php:1312
-#: src/Render/PlayerRenderer.php:1313
+#: src/Render/PlayerRenderer.php:1321
+#: src/Render/PlayerRenderer.php:1322
 msgid "Search the transcript"
 msgstr "Buscar en la transcripción"
 
 #: assets/src/admin/panels.tsx:1294
 #: assets/src/editor/edit.tsx:77
-#: src/Assets.php:284
+#: src/Assets.php:294
 #: src/Integrations/Elementor/VideoWidget.php:324
-#: src/Render/PlayerRenderer.php:949
+#: src/Render/PlayerRenderer.php:958
 msgid "Search what is said"
 msgstr "Buscar en lo que se dice"
 
@@ -2265,7 +2303,7 @@ msgstr "Secciones"
 msgid "Sections of a page built around a player."
 msgstr "Secciones de página construidas alrededor de un reproductor."
 
-#: src/Render/PlayerRenderer.php:725
+#: src/Render/PlayerRenderer.php:734
 msgid "Seek"
 msgstr "Avanzar"
 
@@ -2299,7 +2337,7 @@ msgid "Server-side waveform generation is unavailable on this host."
 msgstr "La generación de ondas en el servidor no está disponible en este alojamiento."
 
 #: src/Admin/Dashboard.php:57
-#: src/Render/PlayerRenderer.php:967
+#: src/Render/PlayerRenderer.php:976
 msgid "Settings"
 msgstr "Ajustes"
 
@@ -2312,6 +2350,10 @@ msgstr "Sólo sombra"
 #: assets/src/editor/edit.tsx:1083
 msgid "Shape"
 msgstr "Forma"
+
+#: src/Assets.php:283
+msgid "Share a clip"
+msgstr "Compartir un clip"
 
 #: assets/src/admin/PresetsPanel.tsx:686
 msgid "Share of the height given to the mirrored copy below."
@@ -2408,7 +2450,7 @@ msgstr "Solo se muestra a quien tiene la sesión iniciada, y solo el suyo, movi�
 msgid "Shown only to somebody signed in, and only their own. It moves every few seconds, so a screen recording carries the name of whoever made it. Picture-in-picture is turned off with it."
 msgstr "Solo se muestra a quien tiene la sesión iniciada, y solo el suyo. Se mueve cada pocos segundos, así una grabación de pantalla lleva el nombre de quien la hizo. Con él se desactiva la imagen dentro de imagen."
 
-#: src/Render/PlayerRenderer.php:1518
+#: src/Render/PlayerRenderer.php:1527
 msgid "Sign in"
 msgstr "Iniciar sesión"
 
@@ -2475,7 +2517,7 @@ msgid "Skipping"
 msgstr "Saltos"
 
 #. translators: 1: lessons watched, 2: lessons in the course.
-#: src/Assets.php:294
+#: src/Assets.php:304
 msgid "Sleep timer"
 msgstr "Temporizador"
 
@@ -2502,7 +2544,7 @@ msgstr "Pistas de audio"
 msgid "Source"
 msgstr "Origen"
 
-#: src/Assets.php:287
+#: src/Assets.php:297
 #: src/Integrations/Elementor/AudioWidget.php:134
 #: src/Integrations/Elementor/VideoWidget.php:318
 msgid "Speed"
@@ -2521,6 +2563,10 @@ msgstr "Cuadrado (1:1)"
 msgid "Stacked"
 msgstr "Apilado"
 
+#: src/Assets.php:284
+msgid "Start"
+msgstr "Inicio"
+
 #: assets/src/editor/edit.tsx:1672
 #: src/Integrations/Elementor/AudioWidget.php:90
 #: src/Integrations/Elementor/VideoWidget.php:100
@@ -2537,7 +2583,7 @@ msgid "Start muted as well"
 msgstr "Empezar también en silencio"
 
 #. translators: %s: a time such as 12:40
-#: src/Assets.php:309
+#: src/Assets.php:319
 #: src/Render/PlaylistRenderer.php:189
 msgid "Start over"
 msgstr "Empezar de nuevo"
@@ -2553,7 +2599,7 @@ msgstr "Empieza en"
 msgid "Stick to the edge while scrolling"
 msgstr "Fijar al borde al desplazarse"
 
-#: src/Render/PlayerRenderer.php:1581
+#: src/Render/PlayerRenderer.php:1590
 msgid "Stop following"
 msgstr "Dejar de seguir"
 
@@ -2597,7 +2643,7 @@ msgstr "Pistas de subtítulos"
 #: assets/src/editor/edit.tsx:1793
 #: src/Integrations/Elementor/VideoWidget.php:208
 #: src/Integrations/Elementor/VideoWidget.php:320
-#: src/Render/PlayerRenderer.php:930
+#: src/Render/PlayerRenderer.php:939
 msgid "Subtitles"
 msgstr "Subtítulos"
 
@@ -2655,7 +2701,7 @@ msgstr "Ese adjunto no existe."
 msgid "That could not be saved. Please try again."
 msgstr "No se pudo guardar. Inténtalo de nuevo."
 
-#: src/Assets.php:283
+#: src/Assets.php:293
 #: src/Rest/LeadController.php:180
 msgid "That could not be sent. Please try again."
 msgstr "No se pudo enviar. Inténtalo de nuevo."
@@ -2699,6 +2745,10 @@ msgstr "Las reglas de denegación están puestas"
 #: src/Protection/SelfCheck.php:224
 msgid "The directory answers with an empty page rather than a listing."
 msgstr "El directorio responde con una página vacía en lugar de un listado."
+
+#: src/Assets.php:289
+msgid "The end has to come after the start."
+msgstr "El fin tiene que ir después del inicio."
 
 #: src/Blocks/Patterns.php:54
 msgid "The episode, its notes, and a list of the ones before it."
@@ -2874,7 +2924,7 @@ msgstr "No se pudieron guardar los ajustes: %s"
 msgid "The site’s own certificate"
 msgstr "El certificado del propio sitio"
 
-#: src/Assets.php:285
+#: src/Assets.php:295
 msgid "The subtitles for this video have not loaded yet."
 msgstr "Los subtítulos de este vídeo aún no se han cargado."
 
@@ -3106,7 +3156,7 @@ msgstr "Detalles de la pista"
 msgid "Tracks"
 msgstr "Pistas"
 
-#: src/Render/PlayerRenderer.php:1311
+#: src/Render/PlayerRenderer.php:1320
 msgid "Transcript"
 msgstr "Transcripción"
 
@@ -3293,17 +3343,17 @@ msgstr "Vimeo señaló una imagen en %s, un dominio en el que este sitio no conf
 #: assets/src/editor/edit.tsx:73
 #: src/Integrations/Elementor/AudioWidget.php:132
 #: src/Integrations/Elementor/VideoWidget.php:314
-#: src/Render/PlayerRenderer.php:1760
+#: src/Render/PlayerRenderer.php:1769
 msgid "Volume"
 msgstr "Volumen"
 
 #. translators: %s: YouTube or Vimeo.
-#: src/Render/PlayerRenderer.php:1382
+#: src/Render/PlayerRenderer.php:1391
 msgid "Watch this video on %s"
 msgstr "Ver este vídeo en %s"
 
 #. translators: 1: lessons watched, 2: lessons in the course.
-#: src/Assets.php:292
+#: src/Assets.php:302
 #: src/Render/PlaylistRenderer.php:264
 msgid "Watched"
 msgstr "Vista"
@@ -3810,7 +3860,7 @@ msgstr "se pidieron demasiados archivos en los últimos minutos; espera un poco 
 msgid "video"
 msgstr "vídeo"
 
-#: src/Render/PlayerRenderer.php:1101
+#: src/Render/PlayerRenderer.php:1110
 msgid "you@example.com"
 msgstr "tu@ejemplo.com"
 

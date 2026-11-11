@@ -30,8 +30,8 @@ function find_browser(): string {
 	$candidates = array_filter(
 		array_merge(
 			array( (string) getenv( 'CHROMIUM_BIN' ) ),
-			glob( '/opt/pw-browsers/chromium-*/chrome-linux/chrome' ) ?: array(),
-			glob( '/opt/pw-browsers/chromium_headless_shell-*/chrome-linux/headless_shell' ) ?: array()
+			glob( '/opt/pw-browsers/chromium-*/chrome-linux*/chrome' ) ?: array(),
+			glob( '/opt/pw-browsers/chromium_headless_shell-*/chrome*linux*/{headless_shell,chrome-headless-shell}', GLOB_BRACE ) ?: array()
 		)
 	);
 
