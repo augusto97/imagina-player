@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.54.0
+Stable tag: 1.55.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -206,6 +206,16 @@ code. Every address is kept on your site first and then sent in the background,
 and tried again if a service is down, so nobody's address is lost and nobody
 waits for it. "Test the connection" checks each one.
 
+= Can it make the subtitles for me? =
+
+From a transcript, yes: paste it in the video block's Subtitles panel and it
+becomes a subtitle file in your media library. With times at the start of its
+lines they are used; without them, the text is spread over the video. To have
+them written from the sound itself, set up a transcription service under
+Imagina Player → Integrations — OpenAI's Whisper, Groq or your own Whisper
+server — and use "Transcribe automatically". Chapters can be pasted as they
+appear in a YouTube description.
+
 = Is there a sleep timer? =
 
 Yes, in the audio player's **More** menu, the three dots beside the volume,
@@ -243,6 +253,29 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.55.0 =
+A new feature: subtitles and chapters made without leaving the block.
+
+* New: **subtitles from a transcript**, in the video block's Subtitles panel.
+  Paste a transcript and the block makes a WebVTT file, saves it to the media
+  library and lists it. Lines that start with their time ("1:23 …",
+  "[00:01:23] …", as YouTube, Descript or Otter export them) are placed at it;
+  a transcript without times is spread over the length of the video and said
+  to be approximate; SRT or WebVTT pasted whole is kept as it is. Long lines
+  are cut into cues of two lines at most, at a sentence or a word.
+* New: **automatic transcription**, optional. Under Imagina Player →
+  Integrations, set up any service that answers OpenAI's transcription API —
+  OpenAI's Whisper, Groq, or a Whisper server of your own — and the block
+  offers "Transcribe automatically". The sound is taken out of the file with
+  ffmpeg when the server has it (an hour in about fourteen megabytes), sent in
+  the background, and the subtitles that come back are saved to the library
+  beside the video and listed in the block. The editor can be left while it
+  works; a job that dies is reported rather than waited for.
+* New: **chapters pasted** as a YouTube description writes them ("0:00
+  Introduction", "Second part 1:30"), or read from a chapters file in the
+  library.
+* Changed: the strings for all of this translated into Spanish.
 
 = 1.54.0 =
 A new feature: captured emails sent on to the services a site already uses.

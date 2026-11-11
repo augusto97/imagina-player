@@ -184,6 +184,7 @@ function imagina_player_uninstall_site(): void {
 	wp_clear_scheduled_hook( 'imagina_player_purge_counters' );
 	wp_clear_scheduled_hook( 'imagina_player_vimeo_thumbnail' );
 	wp_clear_scheduled_hook( 'imagina_player_deliver_lead' );
+	wp_clear_scheduled_hook( 'imagina_player_transcribe' );
 }
 
 if ( is_multisite() && function_exists( 'get_sites' ) ) {

@@ -342,6 +342,8 @@ final class BlockRegistrar {
 					// Who may play a player: the rules, and which of the
 					// plugins they need are active here.
 					'access'         => \ImaginaPlayer\Player\Access::rules(),
+					// Whether "Transcribe automatically" has a service to ask.
+					'transcription'  => \ImaginaPlayer\Media\Transcriber::available(),
 					'settingsUrl' => esc_url_raw( admin_url( 'admin.php?page=imagina-player' ) ),
 				) + Assets::preview_assets()
 			) . ';',

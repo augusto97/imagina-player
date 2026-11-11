@@ -67,6 +67,8 @@ final class Plugin {
 			'leads'       => new LeadController(),
 			'integrations' => new Rest\IntegrationsController(),
 			'delivery'    => new Leads\Delivery(),
+			'transcriber' => new Media\Transcriber(),
+			'transcribe'  => new Rest\TranscriptionController(),
 			'progress'    => new Rest\ProgressController(),
 			'stream'      => new StreamServer(),
 			'streamRest'  => new StreamController(),

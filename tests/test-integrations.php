@@ -233,7 +233,7 @@ $GLOBALS['stub_caps'] = array();
 check( 'nobody but an administrator reads it', false === ( $routes['/integrations'][0]['permission_callback'] )() && false === ( $routes['/integrations/test']['permission_callback'] )() );
 $GLOBALS['stub_caps'] = array( 'manage_options' );
 check( 'an administrator does', true === ( $routes['/integrations'][0]['permission_callback'] )() );
-check( 'only the five services can be tried', Delivery::SERVICES === ( $routes['/integrations/test']['args']['service']['enum'] ?? null ) );
+check( 'only the five services and the transcription can be tried', array_merge( Delivery::SERVICES, array( 'transcription' ) ) === ( $routes['/integrations/test']['args']['service']['enum'] ?? null ) );
 unset( $GLOBALS['stub_caps'] );
 
 $read = ( new IntegrationsController() )->read()->get_data();

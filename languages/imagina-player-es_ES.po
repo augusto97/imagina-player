@@ -136,7 +136,7 @@ msgstr "6 horas"
 msgid "7 days"
 msgstr "7 días"
 
-#: assets/src/editor/edit.tsx:2100
+#: assets/src/editor/edit.tsx:2111
 msgid "A WebVTT storyboard, which most video tools can export. It shows a still where the pointer is on the seek bar. Nothing is downloaded until a visitor actually drags it."
 msgstr "Un storyboard WebVTT, que la mayoría de herramientas de vídeo exportan. Muestra el fotograma del punto donde está el puntero en la barra. No se descarga nada hasta que alguien la arrastra."
 
@@ -181,7 +181,7 @@ msgstr "Una lección se abre cuando se ha visto la anterior. Sirve de guía, no 
 msgid "A link with no token is refused"
 msgstr "Un enlace sin token es rechazado"
 
-#: assets/src/editor/edit.tsx:1159
+#: assets/src/editor/edit.tsx:1160
 #: src/Integrations/Elementor/VideoWidget.php:170
 msgid "A logo in a corner of the picture. It makes a copy traceable; it does not stop one being made."
 msgstr "Un logotipo en una esquina de la imagen. Permite rastrear una copia; no impide que se haga."
@@ -211,7 +211,7 @@ msgid "A short summary of the lesson. The transcript under the video lets a stud
 msgstr "Un breve resumen de la lección. La transcripción bajo el vídeo permite al alumno encontrar cualquier momento por lo que se dice en él."
 
 #: assets/src/admin/panels.tsx:1553
-#: assets/src/editor/edit.tsx:1979
+#: assets/src/editor/edit.tsx:1985
 msgid "A solid band reads over any footage. A shadow is lighter but struggles over a bright, busy shot."
 msgstr "Una banda sólida se lee sobre cualquier imagen. La sombra es más ligera pero sufre sobre un plano claro y cargado."
 
@@ -231,6 +231,10 @@ msgstr "Una línea de progreso fina y nada más hasta que llega el puntero. Para
 msgid "A token for one file cannot open another"
 msgstr "Un token de un archivo no puede abrir otro"
 
+#: assets/src/admin/IntegrationsPanel.tsx:226
+msgid "A two-letter code. Empty lets the service tell; one given in the block wins."
+msgstr "Un código de dos letras. Vacío, el servicio lo detecta; el que se indique en el bloque tiene prioridad."
+
 #: src/Protection/SelfCheck.php:317
 msgid "A valid signed link plays"
 msgstr "Un enlace firmado válido reproduce"
@@ -249,6 +253,7 @@ msgstr "Un vídeo que se reproduce solo, sin sonido, bajo un titular y un botón
 
 #: assets/src/admin/IntegrationsPanel.tsx:46
 #: assets/src/admin/IntegrationsPanel.tsx:90
+#: assets/src/admin/IntegrationsPanel.tsx:212
 msgid "API key"
 msgstr "Clave de API"
 
@@ -258,7 +263,7 @@ msgstr "Token de API"
 
 #: assets/src/admin/PresetsPanel.tsx:539
 #: assets/src/admin/panels.tsx:1653
-#: assets/src/editor/edit.tsx:1410
+#: assets/src/editor/edit.tsx:1411
 msgid "Accent"
 msgstr "Color principal"
 
@@ -270,7 +275,7 @@ msgstr "Color de acento"
 msgid "Account → Extras → API keys. It ends in the data centre, such as -us21."
 msgstr "Cuenta → Extras → Claves API. Termina en el centro de datos, por ejemplo -us21."
 
-#: assets/src/editor/edit.tsx:2376
+#: assets/src/editor/edit.tsx:2387
 #: src/Integrations/Elementor/PlayerWidget.php:289
 msgid "Across (percent from the left)"
 msgstr "Horizontal (porcentaje desde la izquierda)"
@@ -291,7 +296,7 @@ msgstr "Añadir una calidad"
 msgid "Add a soundtrack"
 msgstr "Añadir una pista de audio"
 
-#: assets/src/editor/edit.tsx:2643
+#: assets/src/editor/edit.tsx:2654
 msgid "Add an overlay"
 msgstr "Añadir una capa"
 
@@ -299,11 +304,11 @@ msgstr "Añadir una capa"
 msgid "Add by address"
 msgstr "Añadir por dirección"
 
-#: assets/src/editor/edit.tsx:2092
+#: assets/src/editor/edit.tsx:2098
 msgid "Add chapter"
 msgstr "Añadir capítulo"
 
-#: assets/src/editor/edit.tsx:1931
+#: assets/src/editor/edit.tsx:1932
 msgid "Add subtitles"
 msgstr "Añadir subtítulos"
 
@@ -316,6 +321,7 @@ msgid "Added after the player stylesheet, on pages that contain a player."
 msgstr "Se añade después de la hoja de estilos del reproductor, en las páginas que llevan uno."
 
 #: assets/src/admin/IntegrationsPanel.tsx:180
+#: assets/src/admin/IntegrationsPanel.tsx:205
 #: assets/src/editor/playlist.tsx:232
 #: assets/src/editor/playlist.tsx:480
 #: src/Integrations/Elementor/PlayerWidget.php:97
@@ -331,7 +337,7 @@ msgstr "Direcciones dadas a través de una puerta de correo en un reproductor. A
 msgid "Adds a barrier to forwarding, but a listener moving from Wi-Fi to mobile needs a fresh link."
 msgstr "Pone una barrera al reenvío, pero alguien que pase del wifi a los datos necesitará un enlace nuevo."
 
-#: assets/src/editor/edit.tsx:365
+#: assets/src/editor/edit.tsx:366
 msgid "Adds a small × to put it away."
 msgstr "Añade una pequeña × para quitarlo."
 
@@ -345,7 +351,7 @@ msgstr "Añade el suscriptor, o lo actualiza, y lo mete en los grupos indicados.
 
 #: assets/src/admin/App.tsx:38
 #: assets/src/admin/panels.tsx:1741
-#: assets/src/editor/edit.tsx:2662
+#: assets/src/editor/edit.tsx:2673
 msgid "Advanced"
 msgstr "Avanzado"
 
@@ -353,11 +359,11 @@ msgstr "Avanzado"
 msgid "Also removes “Save video as” and casting the raw file to a device. It has no effect on a player that deliberately offers a download."
 msgstr "También quita «Guardar vídeo como» y enviar el archivo a un dispositivo. No afecta a un reproductor que ofrece la descarga a propósito."
 
-#: assets/src/editor/edit.tsx:2674
+#: assets/src/editor/edit.tsx:2685
 msgid "Also removes “Save video as” and casting the raw file. It has no effect on a player that deliberately offers a download."
 msgstr "También quita «Guardar vídeo como» y enviar el archivo original. No afecta a un reproductor que ofrece la descarga a propósito."
 
-#: assets/src/editor/edit.tsx:2438
+#: assets/src/editor/edit.tsx:2449
 msgid "Alternative text"
 msgstr "Texto alternativo"
 
@@ -381,7 +387,7 @@ msgstr "Una introducción y después las lecciones junto al reproductor, cada un
 msgid "Another language for the same video: an audio file as long as the video, played in step with the picture in place of its own sound. The viewer picks it in the settings menu."
 msgstr "Otro idioma para el mismo vídeo: un archivo de audio tan largo como el vídeo, que suena sincronizado con la imagen en lugar de su sonido propio. El espectador lo elige en el menú de ajustes."
 
-#: assets/src/editor/edit.tsx:2281
+#: assets/src/editor/edit.tsx:2292
 msgid "Any shortcode another plugin provides — a form, a button, a countdown. It runs when the page is shown."
 msgstr "Cualquier shortcode de otro plugin: un formulario, un botón, una cuenta atrás. Se ejecuta al mostrar la página."
 
@@ -397,20 +403,20 @@ msgstr "Cualquiera con sesión iniciada"
 msgid "Anyone who can open a page with the player can play the file. Links expire and cannot be shared for long, but nothing limits playback to members: turn on “Require a logged-in user”, or decide it per visitor with the imagina_player_can_stream filter."
 msgstr "Cualquiera que pueda abrir una página con el reproductor puede reproducir el archivo. Los enlaces caducan y no se pueden compartir por mucho tiempo, pero nada limita la reproducción a los miembros: activa «Exigir una sesión iniciada» o decídelo para cada visitante con el filtro imagina_player_can_stream."
 
-#: assets/src/editor/edit.tsx:1023
+#: assets/src/editor/edit.tsx:1024
 #: src/Integrations/Elementor/PlayerWidget.php:156
 msgid "Appearance"
 msgstr "Aspecto"
 
-#: assets/src/editor/edit.tsx:2222
+#: assets/src/editor/edit.tsx:2233
 msgid "Appears at"
 msgstr "Aparece en"
 
-#: assets/src/editor/edit.tsx:2175
+#: assets/src/editor/edit.tsx:2186
 msgid "Appears part-way through, under the player. A call to action and an email gate stop playback until answered or closed; a bar, a text, an image and a shortcode sit alongside it."
 msgstr "Aparece a mitad de la reproducción, debajo del reproductor. Una llamada a la acción y una captura de correo detienen la reproducción hasta que se respondan o se cierren; una barra, un texto, una imagen y un shortcode aparecen junto a ella."
 
-#: assets/src/editor/edit.tsx:2171
+#: assets/src/editor/edit.tsx:2182
 msgid "Appears part-way through. A call to action and an email gate stop playback until answered or closed; a bar, a text, an image, a hotspot and a shortcode sit alongside it."
 msgstr "Aparece a mitad de la reproducción. Una llamada a la acción y una puerta de correo detienen la reproducción hasta que se responden o se cierran; una barra, un texto, una imagen, un punto interactivo y un shortcode conviven con ella."
 
@@ -418,8 +424,8 @@ msgstr "Aparece a mitad de la reproducción. Una llamada a la acción y una puer
 #: assets/src/admin/PresetsPanel.tsx:581
 #: assets/src/admin/panels.tsx:1034
 #: assets/src/admin/panels.tsx:1676
-#: assets/src/editor/edit.tsx:727
-#: assets/src/editor/edit.tsx:1494
+#: assets/src/editor/edit.tsx:728
+#: assets/src/editor/edit.tsx:1495
 #: assets/src/editor/playlist.tsx:409
 #: src/Integrations/Elementor/AudioWidget.php:63
 #: src/Integrations/Elementor/AudioWidget.php:126
@@ -440,7 +446,7 @@ msgstr "Como 3:14. Los archivos de la biblioteca de medios conocen la suya."
 msgid "As it appears in the menu, such as 1080p."
 msgstr "Como aparece en el menú, por ejemplo 1080p."
 
-#: assets/src/editor/edit.tsx:680
+#: assets/src/editor/edit.tsx:681
 msgid "Ask Vimeo again"
 msgstr "Volver a preguntar a Vimeo"
 
@@ -473,7 +479,7 @@ msgid "Audio files often carry their own artwork, and WordPress pulls it out whe
 msgstr "Los archivos de audio suelen llevar su propia carátula, y WordPress la extrae al subirlos."
 
 #: assets/src/admin/PresetsPanel.tsx:419
-#: assets/src/editor/edit.tsx:1659
+#: assets/src/editor/edit.tsx:1660
 #: src/Assets.php:281
 msgid "Auto"
 msgstr "Automático"
@@ -482,13 +488,17 @@ msgstr "Automático"
 msgid "Automatic"
 msgstr "Automático"
 
-#: assets/src/editor/edit.tsx:1584
+#: assets/src/admin/IntegrationsPanel.tsx:196
+msgid "Automatic transcription"
+msgstr "Transcripción automática"
+
+#: assets/src/editor/edit.tsx:1585
 #: src/Integrations/Elementor/AudioWidget.php:88
 #: src/Integrations/Elementor/VideoWidget.php:97
 msgid "Autoplay"
 msgstr "Reproducción automática"
 
-#: assets/src/editor/edit.tsx:1620
+#: assets/src/editor/edit.tsx:1621
 msgid "Autoplay is on but the sound is not muted, so no browser will start this by itself. It will show its play button instead."
 msgstr "La reproducción automática está activada pero el sonido no está silenciado, así que ningún navegador la arrancará solo. Mostrará su botón de reproducir."
 
@@ -500,7 +510,7 @@ msgstr "Atrás"
 msgid "Background"
 msgstr "Fondo"
 
-#: assets/src/editor/edit.tsx:243
+#: assets/src/editor/edit.tsx:244
 msgid "Bar (does not stop playback)"
 msgstr "Barra (no detiene la reproducción)"
 
@@ -531,7 +541,7 @@ msgid "Behaviour"
 msgstr "Comportamiento"
 
 #: assets/src/admin/panels.tsx:1551
-#: assets/src/editor/edit.tsx:1975
+#: assets/src/editor/edit.tsx:1981
 msgid "Behind the subtitles"
 msgstr "Detrás de los subtítulos"
 
@@ -544,7 +554,7 @@ msgstr "Entre %1$s y %2$s."
 msgid "Big play button over the picture"
 msgstr "Botón grande de reproducir sobre la imagen"
 
-#: assets/src/editor/edit.tsx:2670
+#: assets/src/editor/edit.tsx:2681
 #: src/Integrations/Elementor/VideoWidget.php:332
 msgid "Block the browser download"
 msgstr "Bloquear la descarga del navegador"
@@ -564,22 +574,22 @@ msgstr "Marcado en %s"
 msgid "Bookmarks"
 msgstr "Marcadores"
 
-#: assets/src/editor/edit.tsx:305
+#: assets/src/editor/edit.tsx:306
 #: src/Integrations/Elementor/PlayerWidget.php:306
 msgid "Bottom"
 msgstr "Abajo"
 
 #: assets/src/admin/PresetsPanel.tsx:518
-#: assets/src/editor/edit.tsx:304
-#: assets/src/editor/edit.tsx:313
+#: assets/src/editor/edit.tsx:305
+#: assets/src/editor/edit.tsx:314
 #: src/Integrations/Elementor/PlayerWidget.php:305
 #: src/Integrations/Elementor/VideoWidget.php:182
 msgid "Bottom left"
 msgstr "Abajo a la izquierda"
 
 #: assets/src/admin/PresetsPanel.tsx:525
-#: assets/src/editor/edit.tsx:306
-#: assets/src/editor/edit.tsx:314
+#: assets/src/editor/edit.tsx:307
+#: assets/src/editor/edit.tsx:315
 #: src/Integrations/Elementor/PlayerWidget.php:307
 #: src/Integrations/Elementor/VideoWidget.php:183
 msgid "Bottom right"
@@ -605,7 +615,7 @@ msgstr "Límite de tamaño en el navegador"
 msgid "Browsers allow it only when muted."
 msgstr "Los navegadores solo lo permiten en silencio."
 
-#: assets/src/editor/edit.tsx:1590
+#: assets/src/editor/edit.tsx:1591
 msgid "Browsers only allow autoplay when the player is muted."
 msgstr "Los navegadores sólo permiten la reproducción automática con el sonido silenciado."
 
@@ -614,26 +624,26 @@ msgid "Builds waveforms for every audio and video file that does not have one ye
 msgstr "Genera las ondas de todos los archivos de audio y vídeo que aún no la tienen, sin esperar a las tareas programadas."
 
 #: assets/src/editor/access-panel.tsx:113
-#: assets/src/editor/edit.tsx:2477
+#: assets/src/editor/edit.tsx:2488
 #: src/Integrations/Elementor/PlayerWidget.php:314
 #: src/Integrations/Elementor/PlayerWidget.php:374
 msgid "Button label"
 msgstr "Texto del botón"
 
 #: assets/src/editor/access-panel.tsx:121
-#: assets/src/editor/edit.tsx:2559
+#: assets/src/editor/edit.tsx:2570
 #: src/Integrations/Elementor/PlayerWidget.php:375
 msgid "Button links to"
 msgstr "El botón enlaza a"
 
 #: assets/src/admin/PresetsPanel.tsx:590
 #: assets/src/admin/panels.tsx:1683
-#: assets/src/editor/edit.tsx:1478
+#: assets/src/editor/edit.tsx:1479
 msgid "Buttons"
 msgstr "Botones"
 
 #: assets/src/admin/panels.tsx:1477
-#: assets/src/editor/edit.tsx:1446
+#: assets/src/editor/edit.tsx:1447
 msgid "Buttons and times"
 msgstr "Botones y tiempos"
 
@@ -641,11 +651,11 @@ msgstr "Botones y tiempos"
 msgid "Buy it"
 msgstr "Comprar"
 
-#: assets/src/editor/edit.tsx:239
+#: assets/src/editor/edit.tsx:240
 msgid "Call to action (stops playback)"
 msgstr "Llamada a la acción (detiene la reproducción)"
 
-#: assets/src/editor/edit.tsx:2593
+#: assets/src/editor/edit.tsx:2604
 msgid "Can be closed"
 msgstr "Se puede cerrar"
 
@@ -665,7 +675,7 @@ msgstr "Tarjeta con un botón"
 msgid "Card with cover"
 msgstr "Tarjeta con carátula"
 
-#: assets/src/editor/edit.tsx:302
+#: assets/src/editor/edit.tsx:303
 #: src/Integrations/Elementor/PlayerWidget.php:303
 msgid "Centre"
 msgstr "Centro"
@@ -674,10 +684,11 @@ msgstr "Centro"
 msgid "Certain roles"
 msgstr "Ciertos roles"
 
-#: assets/src/editor/edit.tsx:2326
+#: assets/src/editor/edit.tsx:2337
 msgid "Change image"
 msgstr "Cambiar la imagen"
 
+#: assets/src/editor/subtitle-tools.tsx:465
 #: src/Integrations/Elementor/VideoWidget.php:232
 #: src/Integrations/Elementor/VideoWidget.php:242
 #: src/Integrations/Elementor/VideoWidget.php:322
@@ -686,14 +697,18 @@ msgstr "Cambiar la imagen"
 msgid "Chapters"
 msgstr "Capítulos"
 
-#: assets/src/editor/edit.tsx:2031
+#: assets/src/editor/edit.tsx:2037
 msgid "Chapters and previews"
 msgstr "Capítulos y vistas previas"
 
 #: assets/src/admin/panels.tsx:1287
-#: assets/src/editor/edit.tsx:76
+#: assets/src/editor/edit.tsx:77
 msgid "Chapters button"
 msgstr "Botón de capítulos"
+
+#: assets/src/editor/subtitle-tools.tsx:414
+msgid "Chapters replaced."
+msgstr "Capítulos sustituidos."
 
 #: assets/src/admin/panels.tsx:886
 msgid "Check that it works"
@@ -716,24 +731,24 @@ msgstr "Elegir una portada"
 msgid "Choose a logo"
 msgstr "Elegir un logotipo"
 
-#: assets/src/editor/edit.tsx:2135
+#: assets/src/editor/edit.tsx:2146
 msgid "Choose a storyboard file"
 msgstr "Elegir un archivo de storyboard"
 
 #: assets/src/admin/controls.tsx:429
-#: assets/src/editor/edit.tsx:1211
-#: assets/src/editor/edit.tsx:2330
+#: assets/src/editor/edit.tsx:1212
+#: assets/src/editor/edit.tsx:2341
 msgid "Choose an image"
 msgstr "Elegir una imagen"
 
-#: assets/src/editor/edit.tsx:1890
+#: assets/src/editor/edit.tsx:1891
 #: assets/src/editor/sources-panel.tsx:114
 msgid "Choose file"
 msgstr "Elegir archivo"
 
-#: assets/src/editor/edit.tsx:804
-#: assets/src/editor/edit.tsx:903
-#: assets/src/editor/edit.tsx:994
+#: assets/src/editor/edit.tsx:805
+#: assets/src/editor/edit.tsx:904
+#: assets/src/editor/edit.tsx:995
 msgid "Choose from media library"
 msgstr "Elegir de la biblioteca de medios"
 
@@ -742,7 +757,7 @@ msgid "Choose several files from your media library, or start from one address. 
 msgstr "Elige varios archivos de tu biblioteca de medios o empieza con una dirección. Se reproducen en el orden en que los eliges, y después puedes reordenarlos y añadir más."
 
 #: assets/src/admin/panels.tsx:1161
-#: assets/src/editor/edit.tsx:370
+#: assets/src/editor/edit.tsx:371
 msgid "Classic (4:3)"
 msgstr "Clásico (4:3)"
 
@@ -751,7 +766,7 @@ msgstr "Clásico (4:3)"
 msgid "Clear bookmarks"
 msgstr "Borrar marcadores"
 
-#: assets/src/editor/edit.tsx:653
+#: assets/src/editor/edit.tsx:654
 msgid "Clear them"
 msgstr "Quitarlos"
 
@@ -773,7 +788,7 @@ msgstr "Color"
 msgid "Colours and subtitles"
 msgstr "Colores y subtítulos"
 
-#: assets/src/editor/edit.tsx:1393
+#: assets/src/editor/edit.tsx:1394
 msgid "Colours left unset come from the preset, or from the site settings."
 msgstr "Los colores que dejes sin poner vienen del preajuste, o de los ajustes del sitio."
 
@@ -782,16 +797,17 @@ msgid "Compact, one line"
 msgstr "Compacto, una línea"
 
 #. translators: %s: the account's email address or company name.
-#: src/Leads/Delivery.php:163
+#: src/Leads/Delivery.php:161
 msgid "Connected to the account %s."
 msgstr "Conectado a la cuenta %s."
 
 #. translators: %s: the name of a Mailchimp audience.
-#: src/Leads/Delivery.php:150
+#: src/Leads/Delivery.php:148
 msgid "Connected to the audience “%s”."
 msgstr "Conectado a la audiencia «%s»."
 
-#: src/Leads/Delivery.php:172
+#: src/Leads/Delivery.php:170
+#: src/Media/Transcriber.php:410
 msgid "Connected."
 msgstr "Conectado."
 
@@ -800,13 +816,13 @@ msgid "Consent text"
 msgstr "Texto de consentimiento"
 
 #: assets/src/admin/panels.tsx:1467
-#: assets/src/editor/edit.tsx:1437
+#: assets/src/editor/edit.tsx:1438
 msgid "Control bar"
 msgstr "Barra de controles"
 
 #: assets/src/admin/PresetsPanel.tsx:207
 #: assets/src/admin/panels.tsx:1218
-#: assets/src/editor/edit.tsx:1522
+#: assets/src/editor/edit.tsx:1523
 #: src/Integrations/Elementor/AudioWidget.php:102
 #: src/Integrations/Elementor/VideoWidget.php:112
 msgid "Controls"
@@ -864,11 +880,11 @@ msgid "Cover art alongside the waveform and the controls."
 msgstr "Carátula junto a la onda y los controles."
 
 #: assets/src/admin/PresetsPanel.tsx:302
-#: assets/src/editor/edit.tsx:833
+#: assets/src/editor/edit.tsx:834
 msgid "Cover image"
 msgstr "Imagen de portada"
 
-#: assets/src/editor/edit.tsx:852
+#: assets/src/editor/edit.tsx:853
 msgid "Cover image URL"
 msgstr "URL de la imagen de portada"
 
@@ -877,7 +893,7 @@ msgid "Creates the contact, or updates it, and adds it to the lists given."
 msgstr "Crea el contacto, o lo actualiza, y lo añade a las listas indicadas."
 
 #: assets/src/admin/panels.tsx:1191
-#: assets/src/editor/edit.tsx:1133
+#: assets/src/editor/edit.tsx:1134
 #: src/Integrations/Elementor/VideoWidget.php:134
 msgid "Crop to fill"
 msgstr "Recortar para llenar"
@@ -886,7 +902,7 @@ msgstr "Recortar para llenar"
 msgid "Crop to fill cuts the edges to fill the box. Show all of it shows the whole image and lets the black show through."
 msgstr "Recortar para llenar corta los bordes para llenar el recuadro. Mostrarla entera enseña toda la imagen y deja ver el negro."
 
-#: assets/src/editor/edit.tsx:1114
+#: assets/src/editor/edit.tsx:1115
 msgid "Crop to fill, or show the whole image and let the black show through."
 msgstr "Recortar para llenar, o mostrar la imagen entera y dejar ver el negro."
 
@@ -903,7 +919,7 @@ msgstr "Clave del campo personalizado"
 msgid "Custom field of the post"
 msgstr "Campo personalizado de la entrada"
 
-#: assets/src/editor/edit.tsx:121
+#: assets/src/editor/edit.tsx:122
 #: assets/src/editor/playlist.tsx:82
 #: src/Settings.php:53
 msgid "Default"
@@ -952,7 +968,7 @@ msgstr "Descartar"
 msgid "Double opt-in: they confirm by email before they are added"
 msgstr "Doble confirmación: confirman por email antes de añadirse"
 
-#: assets/src/editor/edit.tsx:2391
+#: assets/src/editor/edit.tsx:2402
 #: src/Integrations/Elementor/PlayerWidget.php:290
 msgid "Down (percent from the top)"
 msgstr "Vertical (porcentaje desde arriba)"
@@ -963,7 +979,7 @@ msgstr "Vertical (porcentaje desde arriba)"
 msgid "Download"
 msgstr "Descargar"
 
-#: assets/src/editor/edit.tsx:956
+#: assets/src/editor/edit.tsx:957
 msgid "Download URL"
 msgstr "URL de descarga"
 
@@ -971,7 +987,7 @@ msgstr "URL de descarga"
 msgid "Download as CSV"
 msgstr "Descargar como CSV"
 
-#: assets/src/editor/edit.tsx:932
+#: assets/src/editor/edit.tsx:933
 #: src/Integrations/Elementor/AudioWidget.php:81
 msgid "Download file"
 msgstr "Archivo de descarga"
@@ -996,7 +1012,7 @@ msgstr "Cada oyente o espectador vuelve a donde lo dejó."
 msgid "Earlier episodes"
 msgstr "Episodios anteriores"
 
-#: assets/src/editor/edit.tsx:1058
+#: assets/src/editor/edit.tsx:1059
 msgid "Edit presets"
 msgstr "Editar preajustes"
 
@@ -1005,7 +1021,7 @@ msgid "Edit tracks"
 msgstr "Editar pistas"
 
 #: assets/src/admin/panels.tsx:1251
-#: assets/src/editor/edit.tsx:71
+#: assets/src/editor/edit.tsx:72
 msgid "Elapsed and total time"
 msgstr "Tiempo transcurrido y total"
 
@@ -1017,7 +1033,7 @@ msgstr "Correo"
 msgid "Email address"
 msgstr "Dirección de correo"
 
-#: assets/src/editor/edit.tsx:245
+#: assets/src/editor/edit.tsx:246
 #: src/Integrations/Elementor/PlayerWidget.php:273
 msgid "Email gate"
 msgstr "Puerta de correo"
@@ -1027,12 +1043,12 @@ msgid "Emails"
 msgstr "Correos"
 
 #. translators: %s: the title the file itself carries.
-#: assets/src/editor/edit.tsx:714
-#: assets/src/editor/edit.tsx:738
+#: assets/src/editor/edit.tsx:715
+#: assets/src/editor/edit.tsx:739
 msgid "Empty shows “%s”, taken from the file."
 msgstr "Vacío muestra «%s», tomado del archivo."
 
-#: assets/src/editor/edit.tsx:1070
+#: assets/src/editor/edit.tsx:1071
 msgid "Empty uses the preset. Rounds the picture, the bar and the floating card together."
 msgstr "Vacío usa el del preajuste. Redondea a la vez la imagen, la barra y la tarjeta flotante."
 
@@ -1066,19 +1082,23 @@ msgstr "Inglés"
 msgid "Enrolled in a course (LearnDash)"
 msgstr "Inscrito en un curso (LearnDash)"
 
-#: src/Leads/Delivery.php:143
+#: src/Leads/Delivery.php:141
 msgid "Enter an API key and an audience ID first."
 msgstr "Introduce primero una clave de API y un ID de audiencia."
 
 #. translators: %s: the name of a Mailchimp audience.
-#: src/Leads/Delivery.php:157
-#: src/Leads/Delivery.php:167
+#: src/Leads/Delivery.php:155
+#: src/Leads/Delivery.php:165
 msgid "Enter an API key first."
 msgstr "Introduce primero una clave de API."
 
-#: src/Leads/Delivery.php:342
+#: src/Leads/Delivery.php:340
 msgid "Enter the address to send to first."
 msgstr "Introduce primero la dirección a la que enviar."
+
+#: src/Media/Transcriber.php:385
+msgid "Enter the service’s address and an API key first."
+msgstr "Introduce primero la dirección del servicio y una clave de API."
 
 #: src/Blocks/Patterns.php:59
 msgid "Episode 12: the title of this episode"
@@ -1088,11 +1108,12 @@ msgstr "Episodio 12: el título de este episodio"
 msgid "Episodes as a row of pictures under the player."
 msgstr "Los episodios como una fila de imágenes bajo el reproductor."
 
-#: assets/src/editor/edit.tsx:1813
+#: assets/src/editor/edit.tsx:1814
+#: assets/src/editor/subtitle-tools.tsx:275
 msgid "Español"
 msgstr "Español"
 
-#: assets/src/admin/IntegrationsPanel.tsx:293
+#: assets/src/admin/IntegrationsPanel.tsx:331
 msgid "Every address is kept here first. Then it is sent to each service switched on below, in the background, and tried again three times if a service does not answer."
 msgstr "Cada dirección se guarda primero aquí. Después se envía, en segundo plano, a cada servicio activado abajo, y se reintenta tres veces si un servicio no responde."
 
@@ -1160,12 +1181,12 @@ msgstr "Saber más"
 msgid "Finish the one before to open this"
 msgstr "Termina la anterior para abrir esta"
 
-#: src/Leads/Delivery.php:176
+#: src/Leads/Delivery.php:174
 msgid "FluentCRM is active on this site."
 msgstr "FluentCRM está activo en este sitio."
 
-#: assets/src/admin/IntegrationsPanel.tsx:332
-#: src/Leads/Delivery.php:177
+#: assets/src/admin/IntegrationsPanel.tsx:370
+#: src/Leads/Delivery.php:175
 msgid "FluentCRM is not active on this site."
 msgstr "FluentCRM no está activo en este sitio."
 
@@ -1185,6 +1206,10 @@ msgstr "Para un público que mira sobre todo sin sonido. A quien los apague se l
 msgid "For paid lessons. Shown only to somebody signed in, and only their own name or email, moving every few seconds, so a screen recording carries the name of whoever made it. Picture-in-picture is turned off with it. Each block can say otherwise."
 msgstr "Para lecciones de pago. Solo se muestra a quien tiene la sesión iniciada, y solo su propio nombre o correo, moviéndose cada pocos segundos, así una grabación de pantalla lleva el nombre de quien la hizo. Con ella se desactiva la imagen dentro de imagen. Cada bloque puede decidir otra cosa."
 
+#: assets/src/admin/IntegrationsPanel.tsx:198
+msgid "For the video block’s “Transcribe automatically”: any service that answers OpenAI’s transcription API — OpenAI’s Whisper, Groq, or a Whisper server of your own. The sound is sent to it, and the subtitles it writes are saved to the media library."
+msgstr "Para «Transcribir automáticamente» del bloque de vídeo: cualquier servicio compatible con la API de transcripción de OpenAI, como Whisper de OpenAI, Groq o un servidor Whisper propio. Se le envía el sonido y los subtítulos que escribe se guardan en la biblioteca de medios."
+
 #: assets/src/admin/PresetsPanel.tsx:249
 msgid "For the weekly podcast"
 msgstr "Para el pódcast semanal"
@@ -1198,11 +1223,19 @@ msgstr "Avanzar %d segundos"
 msgid "From"
 msgstr "Desde"
 
+#: assets/src/editor/subtitle-tools.tsx:454
+msgid "From a file…"
+msgstr "Desde un archivo…"
+
+#: assets/src/editor/subtitle-tools.tsx:297
+msgid "From a transcript…"
+msgstr "Desde una transcripción…"
+
 #: assets/src/admin/panels.tsx:1042
 msgid "From the file’s tags"
 msgstr "De las etiquetas del archivo"
 
-#: assets/src/editor/edit.tsx:2232
+#: assets/src/editor/edit.tsx:2243
 msgid "From the start, before anything is played."
 msgstr "Desde el principio, antes de reproducir nada."
 
@@ -1216,7 +1249,7 @@ msgstr "Pantalla completa"
 msgid "Full width, bottom"
 msgstr "Ancho completo, abajo"
 
-#: assets/src/editor/edit.tsx:83
+#: assets/src/editor/edit.tsx:84
 msgid "Fullscreen button"
 msgstr "Botón de pantalla completa"
 
@@ -1251,7 +1284,7 @@ msgstr "Generando %1$d de %2$d: %3$s"
 msgid "Get started"
 msgstr "Empezar"
 
-#: assets/src/editor/edit.tsx:2253
+#: assets/src/editor/edit.tsx:2264
 msgid "Goes away at"
 msgstr "Desaparece en"
 
@@ -1267,7 +1300,7 @@ msgstr "Cuadrícula de carátulas"
 msgid "Group IDs"
 msgstr "ID de los grupos"
 
-#: assets/src/editor/edit.tsx:2497
+#: assets/src/editor/edit.tsx:2508
 msgid "Groups the addresses this player captures. Anything you like: \"course\", \"newsletter\"."
 msgstr "Agrupa las direcciones que captura este reproductor. Lo que quieras: «curso», «boletín»."
 
@@ -1276,7 +1309,7 @@ msgstr "Agrupa las direcciones que captura este reproductor. Lo que quieras: «c
 msgid "Heading"
 msgstr "Encabezado"
 
-#: assets/src/editor/edit.tsx:2442
+#: assets/src/editor/edit.tsx:2453
 msgid "Headline"
 msgstr "Titular"
 
@@ -1305,7 +1338,7 @@ msgstr "Ocultar de nuevo al (porcentaje de la reproducción, 0 para nunca)"
 msgid "Hide the controls after"
 msgstr "Ocultar los controles tras"
 
-#: assets/src/editor/edit.tsx:1692
+#: assets/src/editor/edit.tsx:1693
 #: src/Integrations/Elementor/VideoWidget.php:123
 msgid "Hide the controls after (seconds)"
 msgstr "Ocultar los controles tras (segundos)"
@@ -1314,11 +1347,11 @@ msgstr "Ocultar los controles tras (segundos)"
 msgid "Hide the controls after was kept between 0 and 20 seconds."
 msgstr "Ocultar los controles tras se mantuvo entre 0 y 20 segundos."
 
-#: assets/src/editor/edit.tsx:94
+#: assets/src/editor/edit.tsx:95
 msgid "Hide the provider’s own interface"
 msgstr "Ocultar la interfaz propia del proveedor"
 
-#: assets/src/editor/edit.tsx:250
+#: assets/src/editor/edit.tsx:251
 #: src/Integrations/Elementor/PlayerWidget.php:276
 msgid "Hotspot (a spot to press)"
 msgstr "Punto interactivo (un punto que pulsar)"
@@ -1361,20 +1394,20 @@ msgstr "ID"
 msgid "Image"
 msgstr "Imagen"
 
-#: assets/src/editor/edit.tsx:2340
+#: assets/src/editor/edit.tsx:2351
 msgid "Image URL"
 msgstr "URL de la imagen"
 
-#: assets/src/editor/edit.tsx:247
+#: assets/src/editor/edit.tsx:248
 #: src/Integrations/Elementor/PlayerWidget.php:275
 msgid "Image over the picture"
 msgstr "Imagen sobre el vídeo"
 
-#: assets/src/editor/edit.tsx:267
+#: assets/src/editor/edit.tsx:268
 msgid "Image under the player"
 msgstr "Imagen debajo del reproductor"
 
-#: assets/src/editor/edit.tsx:534
+#: assets/src/editor/edit.tsx:535
 #: src/Integrations/Elementor/AudioWidget.php:41
 msgid "Imagina Audio Player"
 msgstr "Imagina Reproductor de Audio"
@@ -1411,7 +1444,7 @@ msgstr "Imagina Player: esta lista aún no tiene pistas."
 msgid "Imagina Playlist"
 msgstr "Imagina Lista de reproducción"
 
-#: assets/src/editor/edit.tsx:532
+#: assets/src/editor/edit.tsx:533
 #: src/Integrations/Elementor/VideoWidget.php:52
 msgid "Imagina Video Player"
 msgstr "Imagina Reproductor de Vídeo"
@@ -1445,7 +1478,7 @@ msgstr "Se reproduce aquí con tus propios controles. No se les pide nada hasta 
 msgid "Join the course"
 msgstr "Inscribirse en el curso"
 
-#: assets/src/editor/edit.tsx:207
+#: assets/src/editor/edit.tsx:208
 #: src/Integrations/Elementor/VideoWidget.php:334
 msgid "Keep playing in a corner while scrolling"
 msgstr "Seguir reproduciendo en una esquina al desplazarse"
@@ -1458,25 +1491,27 @@ msgstr "Seguir viendo"
 msgid "Keeping the file"
 msgstr "Conservar el archivo"
 
-#: assets/src/editor/edit.tsx:2193
+#: assets/src/editor/edit.tsx:2204
 #: src/Integrations/Elementor/PlayerWidget.php:267
 msgid "Kind"
 msgstr "Tipo"
 
-#: assets/src/editor/edit.tsx:1823
+#: assets/src/editor/edit.tsx:1824
 #: assets/src/editor/sources-panel.tsx:68
+#: assets/src/editor/subtitle-tools.tsx:280
 #: src/Integrations/Elementor/VideoWidget.php:213
 #: src/Integrations/Elementor/VideoWidget.php:283
 msgid "Language code"
 msgstr "Código de idioma"
 
-#: assets/src/editor/edit.tsx:1808
+#: assets/src/editor/edit.tsx:1809
+#: assets/src/editor/subtitle-tools.tsx:273
 #: src/Integrations/Elementor/VideoWidget.php:212
 msgid "Language name"
 msgstr "Nombre del idioma"
 
 #: assets/src/admin/panels.tsx:1540
-#: assets/src/editor/edit.tsx:1960
+#: assets/src/editor/edit.tsx:1966
 #: src/Integrations/Elementor/VideoWidget.php:149
 msgid "Large"
 msgstr "Grande"
@@ -1486,12 +1521,12 @@ msgid "Larger files are never analysed in the browser: decoding expands audio to
 msgstr "Los archivos más grandes nunca se analizan en el navegador: descodificar expande el audio a muestras en memoria, y una hora en estéreo pasa del gigabyte."
 
 #. translators: 1: when, 2: a shortened email address, 3: why it failed.
-#: assets/src/admin/IntegrationsPanel.tsx:421
+#: assets/src/admin/IntegrationsPanel.tsx:466
 msgid "Last attempt %1$s, %2$s, failed: %3$s"
 msgstr "Último intento %1$s, %2$s, falló: %3$s"
 
 #. translators: 1: when, 2: a shortened email address, 3: what the service answered.
-#: assets/src/admin/IntegrationsPanel.tsx:407
+#: assets/src/admin/IntegrationsPanel.tsx:452
 msgid "Last sent %1$s, %2$s: %3$s"
 msgstr "Último envío %1$s, %2$s: %3$s"
 
@@ -1509,7 +1544,7 @@ msgid "Leave empty to use the file’s own title."
 msgstr "Déjalo vacío para usar el título del propio archivo."
 
 #. translators: %s: the title the file itself carries.
-#: assets/src/editor/edit.tsx:720
+#: assets/src/editor/edit.tsx:721
 msgid "Leave empty to use the file’s own title. This one has none, so set where titles come from under Track details."
 msgstr "Déjalo vacío para usar el título del propio archivo. Este no tiene, así que indica de dónde salen los títulos en Datos de la pista."
 
@@ -1526,7 +1561,7 @@ msgstr "Dejarlo vacío"
 msgid "Leave this field empty"
 msgstr "Deja este campo vacío"
 
-#: assets/src/editor/edit.tsx:301
+#: assets/src/editor/edit.tsx:302
 #: src/Integrations/Elementor/PlayerWidget.php:302
 msgid "Left"
 msgstr "Izquierda"
@@ -1559,6 +1594,10 @@ msgstr "Las lecciones junto a la imagen, cada una marcada al verla, y siguiendo 
 msgid "Let the browser fill in the gaps"
 msgstr "Dejar que el navegador rellene los huecos"
 
+#: assets/src/editor/subtitle-tools.tsx:319
+msgid "Lines that start with their time, such as 1:23 or [00:01:23], are placed at that time. Without times, the text is spread over the length of the video. SRT or WebVTT pasted whole is kept as it is."
+msgstr "Las líneas que empiezan por su tiempo, como 1:23 o [00:01:23], se colocan en ese momento. Sin tiempos, el texto se reparte por la duración del vídeo. Un SRT o WebVTT pegado entero se conserva tal cual."
+
 #: src/Integrations/Elementor/PlayerWidget.php:315
 msgid "Link"
 msgstr "Enlace"
@@ -1576,7 +1615,7 @@ msgstr "Duración del enlace"
 msgid "Links to"
 msgstr "Enlaza a"
 
-#: assets/src/editor/edit.tsx:2555
+#: assets/src/editor/edit.tsx:2566
 msgid "Links to (optional)"
 msgstr "Enlaza a (opcional)"
 
@@ -1591,7 +1630,7 @@ msgstr "Lista"
 msgid "List IDs"
 msgstr "ID de las listas"
 
-#: assets/src/editor/edit.tsx:2493
+#: assets/src/editor/edit.tsx:2504
 #: src/Integrations/Elementor/PlayerWidget.php:318
 msgid "List name"
 msgstr "Nombre de la lista"
@@ -1629,17 +1668,21 @@ msgstr "Logotipo"
 msgid "Looking for files without a waveform…"
 msgstr "Buscando archivos sin onda…"
 
-#: assets/src/editor/edit.tsx:1596
+#: assets/src/editor/edit.tsx:1597
 #: src/Integrations/Elementor/AudioWidget.php:89
 #: src/Integrations/Elementor/VideoWidget.php:99
 msgid "Loop"
 msgstr "Repetir"
 
+#: assets/src/editor/subtitle-tools.tsx:333
+msgid "Make the subtitles"
+msgstr "Crear los subtítulos"
+
 #: src/Integrations/Elementor/PlaylistWidget.php:96
 msgid "Marks each lesson once watched, counts them, and carries on where the student stopped."
 msgstr "Marca cada lección vista, las cuenta y sigue donde el alumno lo dejó."
 
-#: assets/src/editor/edit.tsx:2038
+#: assets/src/editor/edit.tsx:2044
 msgid "Marks on the progress bar, and a menu to jump between sections. Times can be written as 90, 1:30 or 0:01:30."
 msgstr "Marcas en la barra de progreso y un menú para saltar entre secciones. Los tiempos se pueden escribir como 90, 1:30 o 0:01:30."
 
@@ -1659,7 +1702,7 @@ msgstr[1] "Volver a medir estas ondas"
 msgid "Measured here, in this browser, and stored for every visitor. Nobody browsing your site downloads anything extra."
 msgstr "Se mide aquí, en este navegador, y se guarda para todos los visitantes. Nadie que navegue por tu sitio descarga nada extra."
 
-#: assets/src/editor/edit.tsx:613
+#: assets/src/editor/edit.tsx:614
 msgid "Media"
 msgstr "Medio"
 
@@ -1669,7 +1712,7 @@ msgid "Media library"
 msgstr "Biblioteca de medios"
 
 #: assets/src/admin/panels.tsx:1536
-#: assets/src/editor/edit.tsx:1956
+#: assets/src/editor/edit.tsx:1962
 #: src/Integrations/Elementor/VideoWidget.php:148
 msgid "Medium"
 msgstr "Mediano"
@@ -1696,7 +1739,7 @@ msgid "Message"
 msgstr "Mensaje"
 
 #: assets/src/admin/PresetsPanel.tsx:412
-#: assets/src/editor/edit.tsx:1655
+#: assets/src/editor/edit.tsx:1656
 msgid "Metadata"
 msgstr "Metadatos"
 
@@ -1718,6 +1761,10 @@ msgstr "Minutos y segundos, o solo segundos."
 msgid "Missing: %s. They are rewritten when the directory is next created; the check below is what actually decides whether access is denied."
 msgstr "Faltan: %s. Se reescriben la próxima vez que se cree el directorio; la comprobación de abajo es la que decide de verdad si el acceso está denegado."
 
+#: assets/src/admin/IntegrationsPanel.tsx:217
+msgid "Model"
+msgstr "Modelo"
+
 #: src/Render/PlayerRenderer.php:1787
 msgid "More"
 msgstr "Más"
@@ -1726,7 +1773,7 @@ msgstr "Más"
 msgid "More: sleep timer, bookmarks and a link to the moment"
 msgstr "Más: temporizador, marcadores y enlace al momento"
 
-#: assets/src/editor/edit.tsx:226
+#: assets/src/editor/edit.tsx:227
 #: src/Integrations/Elementor/AudioWidget.php:140
 msgid "More: sleep timer, bookmarks, link"
 msgstr "Más: temporizador, marcadores, enlace"
@@ -1769,23 +1816,23 @@ msgstr "Nombre del archivo principal"
 msgid "Name of the video’s own sound"
 msgstr "Nombre del sonido propio del vídeo"
 
-#: assets/src/editor/edit.tsx:325
+#: assets/src/editor/edit.tsx:326
 msgid "Needs a headline or some text to appear."
 msgstr "Necesita un titular o algo de texto para aparecer."
 
-#: assets/src/editor/edit.tsx:330
+#: assets/src/editor/edit.tsx:331
 msgid "Needs a label, some text or a link to appear."
 msgstr "Necesita una etiqueta, algo de texto o un enlace para aparecer."
 
-#: assets/src/editor/edit.tsx:334
+#: assets/src/editor/edit.tsx:335
 msgid "Needs a shortcode, in brackets, to appear."
 msgstr "Necesita un shortcode, entre corchetes, para aparecer."
 
-#: assets/src/editor/edit.tsx:338
+#: assets/src/editor/edit.tsx:339
 msgid "Needs an address for its button to appear."
 msgstr "Necesita una dirección para su botón para aparecer."
 
-#: assets/src/editor/edit.tsx:328
+#: assets/src/editor/edit.tsx:329
 msgid "Needs an image to appear."
 msgstr "Necesita una imagen para aparecer."
 
@@ -1808,9 +1855,17 @@ msgstr "Siguiente"
 msgid "No answer from the site."
 msgstr "El sitio no respondió."
 
+#: assets/src/editor/subtitle-tools.tsx:396
+msgid "No chapters there: each line needs a time, such as 1:30 Second part."
+msgstr "No hay capítulos: cada línea necesita un tiempo, como 1:30 Segunda parte."
+
 #: src/Rest/PeaksController.php:1159
 msgid "No track was named."
 msgstr "No se indicó ninguna pista."
+
+#: src/Rest/TranscriptionController.php:69
+msgid "No transcription service is set up under Imagina Player → Integrations."
+msgstr "No hay ningún servicio de transcripción configurado en Imagina Player → Integraciones."
 
 #: src/Rest/PeaksController.php:1173
 #: src/Rest/PeaksController.php:1233
@@ -1818,7 +1873,7 @@ msgid "No waveform data was supplied."
 msgstr "No se envió ningún dato de onda."
 
 #: assets/src/admin/PresetsPanel.tsx:405
-#: assets/src/editor/edit.tsx:1651
+#: assets/src/editor/edit.tsx:1652
 msgid "None"
 msgstr "Ninguno"
 
@@ -1853,7 +1908,7 @@ msgid "Not started"
 msgstr "Sin empezar"
 
 #: assets/src/admin/panels.tsx:1571
-#: assets/src/editor/edit.tsx:2008
+#: assets/src/editor/edit.tsx:2014
 msgid "Nothing"
 msgstr "Nada"
 
@@ -1890,7 +1945,7 @@ msgstr "Números, separados por comas."
 
 #: assets/src/admin/panels.tsx:1393
 #: assets/src/editor/controls.tsx:69
-#: assets/src/editor/edit.tsx:1290
+#: assets/src/editor/edit.tsx:1291
 #: src/Assets.php:280
 #: src/Integrations/Elementor/VideoWidget.php:196
 msgid "Off"
@@ -1899,6 +1954,10 @@ msgstr "Desactivado"
 #: src/Protection/SelfCheck.php:418
 msgid "Off. Every protected file is streamed through PHP, which holds a worker for the whole length of the track. Fine for a handful of listeners; on a busy site turn on X-Accel-Redirect (nginx) or X-Sendfile (Apache, LiteSpeed)."
 msgstr "Desactivado. Cada archivo protegido se sirve a través de PHP, que ocupa un proceso durante toda la pista. Bien para unos pocos oyentes; en un sitio con tráfico activa X-Accel-Redirect (nginx) o X-Sendfile (Apache, LiteSpeed)."
+
+#: assets/src/admin/IntegrationsPanel.tsx:384
+msgid "Offer it in the video block"
+msgstr "Ofrecerla en el bloque de vídeo"
 
 #: src/Integrations/Elementor/AudioWidget.php:84
 msgid "Offered when the Download control is on. Leave empty to offer the file itself."
@@ -1916,6 +1975,10 @@ msgstr "Activado por defecto"
 msgid "On this same site: creates or updates the contact, with its lists and tags."
 msgstr "En este mismo sitio: crea o actualiza el contacto, con sus listas y etiquetas."
 
+#: assets/src/editor/subtitle-tools.tsx:467
+msgid "One a line, as in a YouTube description: 0:00 Introduction, 1:30 Second part. They replace the chapters above."
+msgstr "Uno por línea, como en una descripción de YouTube: 0:00 Introducción, 1:30 Segunda parte. Sustituyen a los capítulos de arriba."
+
 #: assets/src/editor/playlist.tsx:297
 #: src/Integrations/Elementor/PlaylistWidget.php:97
 msgid "One lesson at a time"
@@ -1929,13 +1992,21 @@ msgstr "Una sola línea: botón de reproducir, título y una barra fina. Para un
 msgid "One sentence that says why the visitor should keep reading."
 msgstr "Una frase que diga por qué el visitante debería seguir leyendo."
 
-#: assets/src/editor/edit.tsx:360
+#: assets/src/editor/edit.tsx:361
 msgid "One that appears part-way through can always be closed, so the video is never stuck behind it. This decides it for one at the end."
 msgstr "Una que aparece a mitad siempre se puede cerrar, así el vídeo nunca queda bloqueado detrás. Esto decide para una al final."
 
 #: src/Rest/SettingsController.php:452
 msgid "Only a Vimeo video has a picture that must be asked for."
 msgstr "Solo un vídeo de Vimeo tiene una imagen que haya que pedir."
+
+#: assets/src/editor/subtitle-tools.tsx:363
+msgid "Only a file from the media library can be transcribed."
+msgstr "Solo se puede transcribir un archivo de la biblioteca de medios."
+
+#: src/Rest/TranscriptionController.php:73
+msgid "Only an audio or video file from the media library can be transcribed."
+msgstr "Solo se puede transcribir un archivo de audio o vídeo de la biblioteca de medios."
 
 #: assets/src/admin/panels.tsx:1278
 msgid "Only appears on a video that actually carries subtitles."
@@ -1973,7 +2044,7 @@ msgstr "Opacidad (%)"
 msgid "Opacity of the name. Faint enough not to spoil the picture, strong enough to survive a recording."
 msgstr "Opacidad del nombre. Lo bastante tenue para no estropear la imagen y lo bastante marcada para sobrevivir a una grabación."
 
-#: assets/src/editor/edit.tsx:2574
+#: assets/src/editor/edit.tsx:2585
 #: src/Integrations/Elementor/PlayerWidget.php:316
 msgid "Open in a new tab"
 msgstr "Abrir en una pestaña nueva"
@@ -1982,11 +2053,11 @@ msgstr "Abrir en una pestaña nueva"
 msgid "Open what you pasted"
 msgstr "Abrir lo que pegaste"
 
-#: assets/src/editor/edit.tsx:940
+#: assets/src/editor/edit.tsx:941
 msgid "Optional. Defaults to the audio file itself."
 msgstr "Opcional. Por defecto, el propio archivo de audio."
 
-#: assets/src/editor/edit.tsx:936
+#: assets/src/editor/edit.tsx:937
 msgid "Optional. Defaults to the video file itself."
 msgstr "Opcional. Por defecto, el propio archivo de vídeo."
 
@@ -2019,7 +2090,7 @@ msgstr "Otras calidades"
 msgid "Overlays"
 msgstr "Capas"
 
-#: assets/src/editor/edit.tsx:2163
+#: assets/src/editor/edit.tsx:2174
 #: src/Integrations/Elementor/PlayerWidget.php:259
 msgid "Overlays and calls to action"
 msgstr "Capas y llamadas a la acción"
@@ -2037,6 +2108,10 @@ msgstr "Página %1$d de %2$d"
 msgid "Passed."
 msgstr "Pasó."
 
+#: assets/src/editor/subtitle-tools.tsx:426
+msgid "Paste chapters…"
+msgstr "Pegar capítulos…"
+
 #: assets/src/admin/panels.tsx:386
 msgid "Paste the address of a track that has no waveform. This asks the server what happens when it goes for it, and reports what it finds."
 msgstr "Pega la dirección de una pista que no tenga onda. Esto le pregunta al servidor qué pasa cuando va a por ella, e informa de lo que encuentra."
@@ -2053,11 +2128,11 @@ msgstr "Pausar"
 msgid "Pauses when the tab goes to the background or the picture scrolls away. It does not start again by itself."
 msgstr "Pausa cuando la pestaña pasa a segundo plano o la imagen se sale de la pantalla. No vuelve a arrancar sola."
 
-#: assets/src/editor/edit.tsx:2236
+#: assets/src/editor/edit.tsx:2247
 msgid "Percentage of the track. 100 means when it ends."
 msgstr "Porcentaje de la pista. 100 significa al terminar."
 
-#: assets/src/editor/edit.tsx:2261
+#: assets/src/editor/edit.tsx:2272
 msgid "Percentage of the track. Rewinding past it brings it back."
 msgstr "Porcentaje de la pista. Si retrocedes por delante, vuelve a salir."
 
@@ -2067,7 +2142,7 @@ msgstr "Porcentaje de la pista. Si retrocedes por delante, vuelve a salir."
 msgid "Picture in picture"
 msgstr "Imagen en imagen"
 
-#: assets/src/editor/edit.tsx:82
+#: assets/src/editor/edit.tsx:83
 msgid "Picture-in-picture button"
 msgstr "Botón de imagen en imagen"
 
@@ -2094,12 +2169,12 @@ msgstr "Botón de reproducir y destacados."
 msgid "Play button and title only, with no scrubber."
 msgstr "Sólo botón de reproducir y título, sin barra de búsqueda."
 
-#: assets/src/editor/edit.tsx:69
+#: assets/src/editor/edit.tsx:70
 #: src/Integrations/Elementor/VideoWidget.php:308
 msgid "Play button over the picture"
 msgstr "Botón de reproducir sobre la imagen"
 
-#: assets/src/editor/edit.tsx:1579
+#: assets/src/editor/edit.tsx:1580
 msgid "Playback"
 msgstr "Reproducción"
 
@@ -2112,8 +2187,8 @@ msgstr "Velocidad de reproducción"
 
 #: assets/src/admin/PresetsPanel.tsx:562
 #: assets/src/admin/panels.tsx:1497
-#: assets/src/editor/edit.tsx:1427
-#: assets/src/editor/edit.tsx:1457
+#: assets/src/editor/edit.tsx:1428
+#: assets/src/editor/edit.tsx:1458
 msgid "Played portion"
 msgstr "Parte reproducida"
 
@@ -2144,14 +2219,14 @@ msgstr "Episodio de pódcast"
 msgid "Podcast episode with earlier episodes"
 msgstr "Episodio de pódcast con episodios anteriores"
 
-#: assets/src/editor/edit.tsx:2413
+#: assets/src/editor/edit.tsx:2424
 #: src/Integrations/Elementor/PlayerWidget.php:294
 msgid "Position"
 msgstr "Posición"
 
 #: assets/src/admin/panels.tsx:1179
-#: assets/src/editor/edit.tsx:752
-#: assets/src/editor/edit.tsx:1112
+#: assets/src/editor/edit.tsx:753
+#: assets/src/editor/edit.tsx:1113
 #: src/Integrations/Elementor/VideoWidget.php:74
 #: src/Integrations/Elementor/VideoWidget.php:129
 msgid "Poster"
@@ -2162,7 +2237,7 @@ msgid "Posts each address as JSON to any address: Zapier, Make, n8n or your own.
 msgstr "Envía cada dirección como JSON a cualquier dirección: Zapier, Make, n8n o la tuya."
 
 #: assets/src/admin/PresetsPanel.tsx:390
-#: assets/src/editor/edit.tsx:1640
+#: assets/src/editor/edit.tsx:1641
 msgid "Preload"
 msgstr "Precarga"
 
@@ -2170,7 +2245,7 @@ msgstr "Precarga"
 msgid "Preparing…"
 msgstr "Preparando…"
 
-#: assets/src/editor/edit.tsx:1028
+#: assets/src/editor/edit.tsx:1029
 #: assets/src/editor/playlist.tsx:217
 #: src/Integrations/Elementor/PlayerWidget.php:168
 #: src/Integrations/Elementor/PlaylistWidget.php:89
@@ -2258,12 +2333,12 @@ msgstr "Rechazado con %d."
 msgid "Refused with 401, which is correct: “Require login” is on and this check runs as a logged-out visitor."
 msgstr "Rechazado con 401, que es lo correcto: «Exigir sesión iniciada» está activo y esta comprobación se hace como visitante sin sesión."
 
-#: assets/src/editor/edit.tsx:214
+#: assets/src/editor/edit.tsx:215
 #: src/Integrations/Elementor/AudioWidget.php:144
 msgid "Remember where the listener left off"
 msgstr "Recordar por dónde iba el oyente"
 
-#: assets/src/editor/edit.tsx:213
+#: assets/src/editor/edit.tsx:214
 #: src/Integrations/Elementor/VideoWidget.php:336
 msgid "Remember where the viewer left off"
 msgstr "Recordar dónde se quedó el espectador"
@@ -2277,14 +2352,14 @@ msgid "Remembered for the viewer: the next video in this language starts in it."
 msgstr "Se recuerda para el espectador: el siguiente vídeo en este idioma empieza en él."
 
 #: assets/src/admin/controls.tsx:483
-#: assets/src/editor/edit.tsx:822
-#: assets/src/editor/edit.tsx:921
-#: assets/src/editor/edit.tsx:1009
-#: assets/src/editor/edit.tsx:1229
-#: assets/src/editor/edit.tsx:1908
-#: assets/src/editor/edit.tsx:2076
-#: assets/src/editor/edit.tsx:2153
-#: assets/src/editor/edit.tsx:2617
+#: assets/src/editor/edit.tsx:823
+#: assets/src/editor/edit.tsx:922
+#: assets/src/editor/edit.tsx:1010
+#: assets/src/editor/edit.tsx:1230
+#: assets/src/editor/edit.tsx:1909
+#: assets/src/editor/edit.tsx:2082
+#: assets/src/editor/edit.tsx:2164
+#: assets/src/editor/edit.tsx:2628
 #: assets/src/editor/playlist.tsx:401
 #: assets/src/editor/sources-panel.tsx:130
 msgid "Remove"
@@ -2294,9 +2369,9 @@ msgstr "Quitar"
 msgid "Remove cover"
 msgstr "Quitar portada"
 
-#: assets/src/editor/edit.tsx:800
-#: assets/src/editor/edit.tsx:1207
-#: assets/src/editor/edit.tsx:2131
+#: assets/src/editor/edit.tsx:801
+#: assets/src/editor/edit.tsx:1208
+#: assets/src/editor/edit.tsx:2142
 msgid "Replace"
 msgstr "Reemplazar"
 
@@ -2304,15 +2379,15 @@ msgstr "Reemplazar"
 msgid "Replace cover"
 msgstr "Reemplazar portada"
 
-#: assets/src/editor/edit.tsx:899
+#: assets/src/editor/edit.tsx:900
 msgid "Replace cover image"
 msgstr "Reemplazar la portada"
 
-#: assets/src/editor/edit.tsx:990
+#: assets/src/editor/edit.tsx:991
 msgid "Replace download file"
 msgstr "Reemplazar el archivo de descarga"
 
-#: assets/src/editor/edit.tsx:1886
+#: assets/src/editor/edit.tsx:1887
 #: assets/src/editor/sources-panel.tsx:110
 msgid "Replace file"
 msgstr "Reemplazar el archivo"
@@ -2343,7 +2418,7 @@ msgstr "Retroceder %d segundos"
 msgid "Rewind to the start"
 msgstr "Volver al principio"
 
-#: assets/src/editor/edit.tsx:303
+#: assets/src/editor/edit.tsx:304
 #: src/Integrations/Elementor/PlayerWidget.php:304
 msgid "Right"
 msgstr "Derecha"
@@ -2364,7 +2439,7 @@ msgstr "Roles o ID"
 msgid "Rounded bars"
 msgstr "Barras redondeadas"
 
-#: assets/src/editor/edit.tsx:1068
+#: assets/src/editor/edit.tsx:1069
 msgid "Rounded corners (px)"
 msgstr "Esquinas redondeadas (px)"
 
@@ -2392,7 +2467,7 @@ msgstr "SMTP y API → Claves API."
 msgid "Save changes"
 msgstr "Guardar los cambios"
 
-#: assets/src/admin/IntegrationsPanel.tsx:306
+#: assets/src/admin/IntegrationsPanel.tsx:344
 msgid "Save connections"
 msgstr "Guardar conexiones"
 
@@ -2401,16 +2476,16 @@ msgid "Saved, with changes:"
 msgstr "Guardado, con cambios:"
 
 #: assets/src/admin/App.tsx:117
-#: assets/src/admin/IntegrationsPanel.tsx:310
+#: assets/src/admin/IntegrationsPanel.tsx:348
 msgid "Saved."
 msgstr "Guardado."
 
 #: assets/src/admin/App.tsx:194
-#: assets/src/admin/IntegrationsPanel.tsx:305
+#: assets/src/admin/IntegrationsPanel.tsx:343
 msgid "Saving…"
 msgstr "Guardando…"
 
-#: assets/src/editor/edit.tsx:2098
+#: assets/src/editor/edit.tsx:2109
 msgid "Scrub previews"
 msgstr "Vista previa al arrastrar"
 
@@ -2420,7 +2495,7 @@ msgid "Search the transcript"
 msgstr "Buscar en la transcripción"
 
 #: assets/src/admin/panels.tsx:1294
-#: assets/src/editor/edit.tsx:77
+#: assets/src/editor/edit.tsx:78
 #: src/Assets.php:294
 #: src/Integrations/Elementor/VideoWidget.php:324
 #: src/Render/PlayerRenderer.php:958
@@ -2455,15 +2530,15 @@ msgstr "Selecciona todo esto y envíaselo a quien te esté ayudando: es la respu
 msgid "Send"
 msgstr "Enviar"
 
-#: assets/src/admin/IntegrationsPanel.tsx:291
+#: assets/src/admin/IntegrationsPanel.tsx:329
 msgid "Send captured emails to"
 msgstr "Enviar los emails capturados a"
 
-#: assets/src/admin/IntegrationsPanel.tsx:344
+#: assets/src/admin/IntegrationsPanel.tsx:388
 msgid "Send new addresses here"
 msgstr "Enviar aquí las direcciones nuevas"
 
-#: src/Leads/Delivery.php:366
+#: src/Leads/Delivery.php:364
 msgid "Sent."
 msgstr "Enviado."
 
@@ -2494,12 +2569,12 @@ msgid "Settings"
 msgstr "Ajustes"
 
 #: assets/src/admin/panels.tsx:1567
-#: assets/src/editor/edit.tsx:2002
+#: assets/src/editor/edit.tsx:2008
 msgid "Shadow only"
 msgstr "Sólo sombra"
 
 #: assets/src/admin/panels.tsx:1142
-#: assets/src/editor/edit.tsx:1083
+#: assets/src/editor/edit.tsx:1084
 msgid "Shape"
 msgstr "Forma"
 
@@ -2516,8 +2591,8 @@ msgid "Short clip"
 msgstr "Clip corto"
 
 #: assets/src/admin/panels.tsx:1789
-#: assets/src/editor/edit.tsx:252
-#: assets/src/editor/edit.tsx:2277
+#: assets/src/editor/edit.tsx:253
+#: assets/src/editor/edit.tsx:2288
 #: src/Integrations/Elementor/PlayerWidget.php:277
 #: src/Integrations/Elementor/PlayerWidget.php:286
 msgid "Shortcode"
@@ -2529,12 +2604,12 @@ msgid "Show"
 msgstr "Mostrar"
 
 #: assets/src/admin/panels.tsx:1195
-#: assets/src/editor/edit.tsx:1140
+#: assets/src/editor/edit.tsx:1141
 #: src/Integrations/Elementor/VideoWidget.php:135
 msgid "Show all of it"
 msgstr "Mostrarlo entero"
 
-#: assets/src/editor/edit.tsx:218
+#: assets/src/editor/edit.tsx:219
 msgid "Show artist"
 msgstr "Mostrar el artista"
 
@@ -2542,35 +2617,35 @@ msgstr "Mostrar el artista"
 msgid "Show at (percent of playback)"
 msgstr "Mostrar al (porcentaje de la reproducción)"
 
-#: assets/src/editor/edit.tsx:1839
+#: assets/src/editor/edit.tsx:1840
 msgid "Show by default"
 msgstr "Mostrar por defecto"
 
-#: assets/src/editor/edit.tsx:223
+#: assets/src/editor/edit.tsx:224
 msgid "Show download button"
 msgstr "Mostrar el botón de descarga"
 
-#: assets/src/editor/edit.tsx:225
+#: assets/src/editor/edit.tsx:226
 msgid "Show skip buttons"
 msgstr "Mostrar los botones de salto"
 
-#: assets/src/editor/edit.tsx:224
+#: assets/src/editor/edit.tsx:225
 msgid "Show speed control"
 msgstr "Mostrar el control de velocidad"
 
-#: assets/src/editor/edit.tsx:220
+#: assets/src/editor/edit.tsx:221
 msgid "Show thumbnail"
 msgstr "Mostrar la miniatura"
 
-#: assets/src/editor/edit.tsx:222
+#: assets/src/editor/edit.tsx:223
 msgid "Show times"
 msgstr "Mostrar los tiempos"
 
-#: assets/src/editor/edit.tsx:219
+#: assets/src/editor/edit.tsx:220
 msgid "Show title"
 msgstr "Mostrar el título"
 
-#: assets/src/editor/edit.tsx:221
+#: assets/src/editor/edit.tsx:222
 msgid "Show volume"
 msgstr "Mostrar el volumen"
 
@@ -2582,15 +2657,15 @@ msgstr "Se muestra al final de la fila de controles en todos los reproductores. 
 msgid "Shown before play. Leave empty to use YouTube’s or Vimeo’s own picture."
 msgstr "Se muestra antes de reproducir. Déjalo vacío para usar la imagen de YouTube o Vimeo."
 
-#: assets/src/editor/edit.tsx:754
+#: assets/src/editor/edit.tsx:755
 msgid "Shown before play. Often the largest image on the page, so pick one that is already the right size."
 msgstr "Se muestra antes de reproducir. Suele ser la imagen más grande de la página, así que elige una que ya tenga el tamaño adecuado."
 
-#: assets/src/editor/edit.tsx:835
+#: assets/src/editor/edit.tsx:836
 msgid "Shown next to the title. Optional."
 msgstr "Se muestra junto al título. Opcional."
 
-#: assets/src/editor/edit.tsx:2529
+#: assets/src/editor/edit.tsx:2540
 msgid "Shown once the address is in, before playback carries on."
 msgstr "Se muestra cuando se ha enviado la dirección, antes de que siga la reproducción."
 
@@ -2598,7 +2673,7 @@ msgstr "Se muestra cuando se ha enviado la dirección, antes de que siga la repr
 msgid "Shown only to somebody signed in, and only their own, moving over the picture so a screen recording carries their name."
 msgstr "Solo se muestra a quien tiene la sesión iniciada, y solo el suyo, moviéndose sobre la imagen para que una grabación de pantalla lleve su nombre."
 
-#: assets/src/editor/edit.tsx:1244
+#: assets/src/editor/edit.tsx:1245
 msgid "Shown only to somebody signed in, and only their own. It moves every few seconds, so a screen recording carries the name of whoever made it. Picture-in-picture is turned off with it."
 msgstr "Solo se muestra a quien tiene la sesión iniciada, y solo el suyo. Se mueve cada pocos segundos, así una grabación de pantalla lleva el nombre de quien la hizo. Con él se desactiva la imagen dentro de imagen."
 
@@ -2639,7 +2714,7 @@ msgid "Site: on"
 msgstr "Sitio: sí"
 
 #: assets/src/admin/PresetsPanel.tsx:267
-#: assets/src/editor/edit.tsx:1037
+#: assets/src/editor/edit.tsx:1038
 #: src/Integrations/Elementor/PlayerWidget.php:184
 msgid "Skin"
 msgstr "Aspecto"
@@ -2649,7 +2724,7 @@ msgid "Skip amount"
 msgstr "Cuánto salta"
 
 #: assets/src/admin/panels.tsx:1259
-#: assets/src/editor/edit.tsx:72
+#: assets/src/editor/edit.tsx:73
 #: src/Integrations/Elementor/AudioWidget.php:136
 #: src/Integrations/Elementor/VideoWidget.php:316
 msgid "Skip back and forward"
@@ -2674,17 +2749,17 @@ msgid "Sleep timer"
 msgstr "Temporizador"
 
 #: assets/src/admin/panels.tsx:1532
-#: assets/src/editor/edit.tsx:1952
+#: assets/src/editor/edit.tsx:1958
 #: src/Integrations/Elementor/VideoWidget.php:147
 msgid "Small"
 msgstr "Pequeño"
 
-#: assets/src/editor/edit.tsx:2510
+#: assets/src/editor/edit.tsx:2521
 msgid "Small print"
 msgstr "Letra pequeña"
 
 #: assets/src/admin/panels.tsx:1563
-#: assets/src/editor/edit.tsx:1997
+#: assets/src/editor/edit.tsx:2003
 msgid "Solid band"
 msgstr "Banda sólida"
 
@@ -2702,12 +2777,12 @@ msgstr "Origen"
 msgid "Speed"
 msgstr "Velocidad"
 
-#: assets/src/editor/edit.tsx:74
+#: assets/src/editor/edit.tsx:75
 msgid "Speed control"
 msgstr "Control de velocidad"
 
 #: assets/src/admin/panels.tsx:1165
-#: assets/src/editor/edit.tsx:371
+#: assets/src/editor/edit.tsx:372
 msgid "Square (1:1)"
 msgstr "Cuadrado (1:1)"
 
@@ -2719,18 +2794,18 @@ msgstr "Apilado"
 msgid "Start"
 msgstr "Inicio"
 
-#: assets/src/editor/edit.tsx:1672
+#: assets/src/editor/edit.tsx:1673
 #: src/Integrations/Elementor/AudioWidget.php:90
 #: src/Integrations/Elementor/VideoWidget.php:100
 msgid "Start at (seconds)"
 msgstr "Empezar en (segundos)"
 
-#: assets/src/editor/edit.tsx:1604
+#: assets/src/editor/edit.tsx:1605
 #: src/Integrations/Elementor/VideoWidget.php:98
 msgid "Start muted"
 msgstr "Empezar en silencio"
 
-#: assets/src/editor/edit.tsx:1631
+#: assets/src/editor/edit.tsx:1632
 msgid "Start muted as well"
 msgstr "Empezar también en silencio"
 
@@ -2740,13 +2815,13 @@ msgstr "Empezar también en silencio"
 msgid "Start over"
 msgstr "Empezar de nuevo"
 
-#: assets/src/editor/edit.tsx:2048
+#: assets/src/editor/edit.tsx:2054
 #: src/Integrations/Elementor/VideoWidget.php:236
 msgid "Starts at"
 msgstr "Empieza en"
 
 #: assets/src/admin/PresetsPanel.tsx:467
-#: assets/src/editor/edit.tsx:208
+#: assets/src/editor/edit.tsx:209
 #: src/Integrations/Elementor/AudioWidget.php:142
 msgid "Stick to the edge while scrolling"
 msgstr "Fijar al borde al desplazarse"
@@ -2756,7 +2831,7 @@ msgid "Stop following"
 msgstr "Dejar de seguir"
 
 #: assets/src/admin/panels.tsx:1357
-#: assets/src/editor/edit.tsx:90
+#: assets/src/editor/edit.tsx:91
 msgid "Stop when it leaves the screen"
 msgstr "Parar cuando salga de la pantalla"
 
@@ -2781,7 +2856,7 @@ msgid "Subtitle file (.vtt or .srt)"
 msgstr "Archivo de subtítulos (.vtt o .srt)"
 
 #: assets/src/admin/panels.tsx:1525
-#: assets/src/editor/edit.tsx:1936
+#: assets/src/editor/edit.tsx:1942
 #: src/Integrations/Elementor/VideoWidget.php:142
 msgid "Subtitle size"
 msgstr "Tamaño de los subtítulos"
@@ -2791,24 +2866,41 @@ msgid "Subtitle tracks"
 msgstr "Pistas de subtítulos"
 
 #: assets/src/admin/panels.tsx:1516
-#: assets/src/editor/edit.tsx:1470
-#: assets/src/editor/edit.tsx:1793
+#: assets/src/editor/edit.tsx:1471
+#: assets/src/editor/edit.tsx:1794
 #: src/Integrations/Elementor/VideoWidget.php:208
 #: src/Integrations/Elementor/VideoWidget.php:320
 #: src/Render/PlayerRenderer.php:939
 msgid "Subtitles"
 msgstr "Subtítulos"
 
+#: assets/src/editor/subtitle-tools.tsx:160
+msgid "Subtitles added."
+msgstr "Subtítulos añadidos."
+
+#: assets/src/editor/subtitle-tools.tsx:203
+msgid "Subtitles added. A service that listens makes mistakes too: read them through."
+msgstr "Subtítulos añadidos. Un servicio que escucha también se equivoca: revísalos."
+
+#: assets/src/editor/subtitle-tools.tsx:154
+msgid "Subtitles added. The transcript had no times, so its text is spread over the length of the video: watch them through and adjust the file if a line comes too early or too late."
+msgstr "Subtítulos añadidos. La transcripción no tenía tiempos, así que el texto se ha repartido por la duración del vídeo: revísalos y ajusta el archivo si alguna línea llega antes o después de tiempo."
+
 #: assets/src/admin/panels.tsx:1276
-#: assets/src/editor/edit.tsx:75
+#: assets/src/editor/edit.tsx:76
 msgid "Subtitles button"
 msgstr "Botón de subtítulos"
 
 #: assets/src/admin/panels.tsx:1345
-#: assets/src/editor/edit.tsx:113
+#: assets/src/editor/edit.tsx:114
 #: src/Integrations/Elementor/VideoWidget.php:340
 msgid "Subtitles on from the start"
 msgstr "Subtítulos puestos desde el principio"
+
+#. translators: %s: the title of the video the subtitles are for.
+#: src/Media/Transcriber.php:354
+msgid "Subtitles: %s"
+msgstr "Subtítulos: %s"
 
 #: assets/src/admin/IntegrationsPanel.tsx:152
 msgid "Tag IDs"
@@ -2822,30 +2914,30 @@ msgstr "Etiquetar cada dirección con el nombre de lista de su formulario de ema
 msgid "Take away the browser download button"
 msgstr "Quitar el botón de descarga del navegador"
 
-#: assets/src/admin/IntegrationsPanel.tsx:389
+#: assets/src/admin/IntegrationsPanel.tsx:434
 msgid "Test the connection"
 msgstr "Probar la conexión"
 
-#: assets/src/editor/edit.tsx:2457
+#: assets/src/editor/edit.tsx:2468
 #: src/Integrations/Elementor/PlayerWidget.php:313
 msgid "Text"
 msgstr "Texto"
 
-#: assets/src/editor/edit.tsx:246
+#: assets/src/editor/edit.tsx:247
 #: src/Integrations/Elementor/PlayerWidget.php:274
 msgid "Text over the picture"
 msgstr "Texto sobre el vídeo"
 
-#: assets/src/editor/edit.tsx:266
+#: assets/src/editor/edit.tsx:267
 msgid "Text under the player"
 msgstr "Texto debajo del reproductor"
 
-#: assets/src/editor/edit.tsx:2533
+#: assets/src/editor/edit.tsx:2544
 #: src/Player/Layers.php:151
 msgid "Thank you."
 msgstr "Gracias."
 
-#: assets/src/editor/edit.tsx:2525
+#: assets/src/editor/edit.tsx:2536
 msgid "Thank-you message"
 msgstr "Mensaje de agradecimiento"
 
@@ -2873,6 +2965,10 @@ msgstr "No se pudo enviar. Inténtalo de nuevo."
 #: src/Rest/LeadController.php:162
 msgid "That does not look like an email address."
 msgstr "Eso no parece una dirección de correo."
+
+#: assets/src/editor/subtitle-tools.tsx:446
+msgid "That file could not be read."
+msgstr "No se pudo leer ese archivo."
 
 #: src/Rest/StreamController.php:72
 msgid "That file is not available."
@@ -2930,7 +3026,7 @@ msgstr "Se llegó a la ruta de ffmpeg puesta abajo, pero no respondió como ffmp
 msgid "The ffmpeg path was cleared: it has to be the full path to a program on the server, such as /usr/bin/ffmpeg."
 msgstr "Se vació la ruta de ffmpeg: tiene que ser la ruta completa a un programa del servidor, como /usr/bin/ffmpeg."
 
-#: assets/src/editor/edit.tsx:635
+#: assets/src/editor/edit.tsx:636
 msgid "The file changed. The subtitles, chapters, poster and storyboard of the previous one are still on this block."
 msgstr "El archivo cambió. Los subtítulos, capítulos, póster y storyboard del anterior siguen en este bloque."
 
@@ -2949,6 +3045,14 @@ msgstr "No se pudo preparar el archivo. Recarga la página y vuelve a intentarlo
 #: src/Protection/Vault.php:155
 msgid "The file for this attachment could not be found."
 msgstr "No se encontró el archivo de este adjunto."
+
+#: src/Media/Transcriber.php:253
+msgid "The file is larger than the service takes in one piece, and ffmpeg is not available here to take the sound out of it."
+msgstr "El archivo es más grande de lo que el servicio acepta de una vez, y aquí no hay ffmpeg para extraer el sonido."
+
+#: src/Media/Transcriber.php:156
+msgid "The file is not on this server, so it cannot be sent to be transcribed."
+msgstr "El archivo no está en este servidor, así que no se puede enviar a transcribir."
 
 #: assets/src/admin/panels.tsx:1499
 msgid "The filled part of the seek bar as the video plays, and the volume knob beside it."
@@ -2995,7 +3099,7 @@ msgstr "La imagen"
 msgid "The player follows the reader when it scrolls out of view while playing: a bar at the edge of the screen for audio, a small card in a corner for a video."
 msgstr "El reproductor sigue al lector cuando sale de la vista mientras suena: una barra en el borde de la pantalla para audio, una tarjeta pequeña en una esquina para un vídeo."
 
-#: assets/src/editor/edit.tsx:1085
+#: assets/src/editor/edit.tsx:1086
 msgid "The player holds this shape before the video loads, so the page does not jump when it arrives."
 msgstr "El reproductor mantiene esta forma antes de que cargue el vídeo, para que la página no dé un salto cuando llegue."
 
@@ -3071,9 +3175,16 @@ msgid "The server refuses direct access to the vault"
 msgstr "El servidor rechaza el acceso directo a la bóveda"
 
 #. translators: %d: an HTTP status code.
-#: src/Leads/Delivery.php:423
+#: src/Leads/Delivery.php:421
+#: src/Media/Transcriber.php:322
+#: src/Media/Transcriber.php:415
 msgid "The service answered with status %d."
 msgstr "El servicio respondió con el estado %d."
+
+#. translators: %d: an HTTP status code.
+#: src/Media/Transcriber.php:331
+msgid "The service did not answer with subtitles."
+msgstr "El servicio no respondió con subtítulos."
 
 #: assets/src/admin/App.tsx:58
 msgid "The settings could not be loaded."
@@ -3093,13 +3204,34 @@ msgstr "No se pudieron guardar los ajustes: %s"
 msgid "The site’s own certificate"
 msgstr "El certificado del propio sitio"
 
+#: assets/src/editor/subtitle-tools.tsx:344
+msgid "The sound is sent to the service set up under Imagina Player → Integrations, and the subtitles it writes are saved to the media library. It takes a few minutes for a long recording; you can keep editing."
+msgstr "El sonido se envía al servicio configurado en Imagina Player → Integraciones, y los subtítulos que escribe se guardan en la biblioteca de medios. Una grabación larga tarda unos minutos; puedes seguir editando."
+
+#: assets/src/editor/subtitle-tools.tsx:169
+msgid "The subtitles could not be saved to the media library."
+msgstr "No se pudieron guardar los subtítulos en la biblioteca de medios."
+
 #: src/Assets.php:295
 msgid "The subtitles for this video have not loaded yet."
 msgstr "Los subtítulos de este vídeo aún no se han cargado."
 
-#: assets/src/admin/IntegrationsPanel.tsx:278
+#: assets/src/admin/IntegrationsPanel.tsx:316
 msgid "The test could not be run."
 msgstr "No se pudo hacer la prueba."
+
+#: assets/src/editor/subtitle-tools.tsx:262
+msgid "The transcription could not start."
+msgstr "No se pudo empezar la transcripción."
+
+#: assets/src/editor/subtitle-tools.tsx:217
+msgid "The transcription failed."
+msgstr "La transcripción falló."
+
+#: src/Media/Transcriber.php:88
+#: src/Media/Transcriber.php:136
+msgid "The transcription stopped before it finished."
+msgstr "La transcripción se detuvo antes de terminar."
 
 #: src/Protection/Vault.php:219
 msgid "The uploads directory could not be written to."
@@ -3130,44 +3262,52 @@ msgstr "La onda reflejada sobre la línea central."
 msgid "The whole of what is said, as a list under the video that follows playback and can be searched. Built from the subtitles the video already carries."
 msgstr "Todo lo que se dice, como una lista bajo el vídeo que sigue la reproducción y se puede buscar. Se construye con los subtítulos que el vídeo ya lleva."
 
-#: assets/src/editor/edit.tsx:124
+#: assets/src/editor/edit.tsx:125
 #: src/Player/Skins.php:63
 msgid "Theater"
 msgstr "Cine"
 
 #: assets/src/admin/panels.tsx:1401
-#: assets/src/editor/edit.tsx:1302
+#: assets/src/editor/edit.tsx:1303
 #: src/Integrations/Elementor/VideoWidget.php:198
 msgid "Their email"
 msgstr "Su correo"
 
 #: assets/src/admin/panels.tsx:1397
-#: assets/src/editor/edit.tsx:1295
+#: assets/src/editor/edit.tsx:1296
 #: src/Integrations/Elementor/VideoWidget.php:197
 msgid "Their name"
 msgstr "Su nombre"
 
 #: assets/src/admin/panels.tsx:1406
-#: assets/src/editor/edit.tsx:1309
+#: assets/src/editor/edit.tsx:1310
 #: src/Integrations/Elementor/VideoWidget.php:199
 msgid "Their name and email"
 msgstr "Su nombre y su correo"
 
-#: src/Leads/Delivery.php:135
-#: src/Leads/Delivery.php:191
+#: src/Leads/Delivery.php:133
+#: src/Leads/Delivery.php:189
 msgid "There is no such service."
 msgstr "Ese servicio no existe."
+
+#: src/Rest/TranscriptionController.php:94
+msgid "There is no such transcription."
+msgstr "Esa transcripción no existe."
+
+#: assets/src/editor/subtitle-tools.tsx:117
+msgid "There is no text there to make subtitles from."
+msgstr "No hay texto con el que crear subtítulos."
 
 #: assets/src/admin/PresetsPanel.tsx:262
 msgid "These are the controls of an audio player. A video has its own, under Video, whatever preset it uses."
 msgstr "Estos son los controles de un reproductor de audio. Un vídeo tiene los suyos, en Vídeo, use el preset que use."
 
-#: assets/src/admin/IntegrationsPanel.tsx:212
+#: assets/src/admin/IntegrationsPanel.tsx:250
 #: assets/src/admin/LeadsPanel.tsx:54
 msgid "These could not be loaded."
 msgstr "No se pudieron cargar."
 
-#: assets/src/admin/IntegrationsPanel.tsx:248
+#: assets/src/admin/IntegrationsPanel.tsx:286
 msgid "These could not be saved. Try again."
 msgstr "No se pudieron guardar. Inténtalo de nuevo."
 
@@ -3194,6 +3334,10 @@ msgstr "Este archivo se guarda fuera de la carpeta pública de subidas y se sirv
 #: assets/src/admin/panels.tsx:50
 msgid "This host does not let PHP start other programs (popen is in disable_functions), so ffmpeg cannot be used even if it is installed."
 msgstr "Este alojamiento no deja que PHP arranque otros programas (popen está en disable_functions), así que no se puede usar ffmpeg aunque esté instalado."
+
+#: assets/src/editor/subtitle-tools.tsx:231
+msgid "This is taking longer than the editor waits. The subtitles will be in the media library when it is done."
+msgstr "Está tardando más de lo que el editor espera. Los subtítulos estarán en la biblioteca de medios cuando termine."
 
 #: assets/src/editor/playlist.tsx:270
 #: src/Integrations/Elementor/PlaylistWidget.php:96
@@ -3283,9 +3427,9 @@ msgstr "Tiempos"
 #: assets/src/admin/PresetsPanel.tsx:573
 #: assets/src/admin/panels.tsx:988
 #: assets/src/admin/panels.tsx:1670
-#: assets/src/editor/edit.tsx:700
-#: assets/src/editor/edit.tsx:1486
-#: assets/src/editor/edit.tsx:2059
+#: assets/src/editor/edit.tsx:701
+#: assets/src/editor/edit.tsx:1487
+#: assets/src/editor/edit.tsx:2065
 #: src/Integrations/Elementor/AudioWidget.php:124
 #: src/Integrations/Elementor/PlayerWidget.php:144
 #: src/Integrations/Elementor/PlayerWidget.php:312
@@ -3296,7 +3440,7 @@ msgid "Title"
 msgstr "Título"
 
 #: assets/src/admin/panels.tsx:1245
-#: assets/src/editor/edit.tsx:70
+#: assets/src/editor/edit.tsx:71
 msgid "Title and artist"
 msgstr "Título y artista"
 
@@ -3305,20 +3449,20 @@ msgstr "Título y artista"
 msgid "Too many attempts. Try again in a few minutes."
 msgstr "Demasiados intentos. Inténtalo de nuevo dentro de unos minutos."
 
-#: assets/src/editor/edit.tsx:299
+#: assets/src/editor/edit.tsx:300
 #: src/Integrations/Elementor/PlayerWidget.php:300
 msgid "Top"
 msgstr "Arriba"
 
-#: assets/src/editor/edit.tsx:298
-#: assets/src/editor/edit.tsx:311
+#: assets/src/editor/edit.tsx:299
+#: assets/src/editor/edit.tsx:312
 #: src/Integrations/Elementor/PlayerWidget.php:299
 #: src/Integrations/Elementor/VideoWidget.php:180
 msgid "Top left"
 msgstr "Arriba a la izquierda"
 
-#: assets/src/editor/edit.tsx:300
-#: assets/src/editor/edit.tsx:312
+#: assets/src/editor/edit.tsx:301
+#: assets/src/editor/edit.tsx:313
 #: src/Integrations/Elementor/PlayerWidget.php:301
 #: src/Integrations/Elementor/VideoWidget.php:181
 msgid "Top right"
@@ -3339,12 +3483,25 @@ msgstr "Detalles de la pista"
 msgid "Tracks"
 msgstr "Pistas"
 
+#: assets/src/editor/subtitle-tools.tsx:357
+msgid "Transcribe"
+msgstr "Transcribir"
+
+#: assets/src/editor/subtitle-tools.tsx:308
+msgid "Transcribe automatically…"
+msgstr "Transcribir automáticamente…"
+
+#: assets/src/editor/subtitle-tools.tsx:356
+msgid "Transcribing…"
+msgstr "Transcribiendo…"
+
+#: assets/src/editor/subtitle-tools.tsx:317
 #: src/Render/PlayerRenderer.php:1320
 msgid "Transcript"
 msgstr "Transcripción"
 
 #: assets/src/admin/panels.tsx:1304
-#: assets/src/editor/edit.tsx:80
+#: assets/src/editor/edit.tsx:81
 #: src/Integrations/Elementor/VideoWidget.php:326
 msgid "Transcript under the picture"
 msgstr "Transcripción bajo el vídeo"
@@ -3366,7 +3523,7 @@ msgstr "Intenta llegar a un archivo protegido como lo haría un desconocido: una
 msgid "Try again"
 msgstr "Intentar de nuevo"
 
-#: assets/src/admin/IntegrationsPanel.tsx:387
+#: assets/src/admin/IntegrationsPanel.tsx:432
 msgid "Trying…"
 msgstr "Probando…"
 
@@ -3378,7 +3535,7 @@ msgstr "Desactívalo para una imagen desnuda con sólo la barra de controles."
 msgid "Turn off only if your theme styles the player itself."
 msgstr "Desactívalo sólo si tu tema le da estilo al reproductor por su cuenta."
 
-#: assets/src/editor/edit.tsx:1829
+#: assets/src/editor/edit.tsx:1830
 msgid "Two letters, as in es, en, pt-br."
 msgstr "Dos letras, como en es, en, pt-br."
 
@@ -3386,15 +3543,15 @@ msgstr "Dos letras, como en es, en, pt-br."
 msgid "Unmute"
 msgstr "Quitar el silencio"
 
-#: assets/src/editor/edit.tsx:1384
+#: assets/src/editor/edit.tsx:1385
 msgid "Unset uses the preset’s height."
 msgstr "Sin poner usa la altura del preajuste."
 
-#: assets/src/editor/edit.tsx:539
+#: assets/src/editor/edit.tsx:540
 msgid "Upload a video, pick one from your media library, or paste a YouTube or Vimeo address, an MP4, or an HLS stream (.m3u8)."
 msgstr "Sube un vídeo, elige uno de tu biblioteca de medios, o pega una dirección de YouTube o Vimeo, un MP4, o una emisión HLS (.m3u8)."
 
-#: assets/src/editor/edit.tsx:543
+#: assets/src/editor/edit.tsx:544
 msgid "Upload an audio file, pick one from your media library, or paste a URL from your streaming provider."
 msgstr "Sube un archivo de audio, elige uno de tu biblioteca de medios, o pega una URL de tu proveedor de streaming."
 
@@ -3406,16 +3563,16 @@ msgstr "Súbelo a la biblioteca de medios y pega su dirección."
 msgid "Use YouTube’s no-cookie domain"
 msgstr "Usar el dominio sin cookies de YouTube"
 
-#: assets/src/editor/edit.tsx:1042
-#: assets/src/editor/edit.tsx:1647
+#: assets/src/editor/edit.tsx:1043
+#: assets/src/editor/edit.tsx:1648
 #: src/Integrations/Elementor/PlayerWidget.php:175
 #: src/Integrations/Elementor/PlayerWidget.php:249
 msgid "Use preset"
 msgstr "Usar el preajuste"
 
-#: assets/src/editor/edit.tsx:1126
-#: assets/src/editor/edit.tsx:1946
-#: assets/src/editor/edit.tsx:1991
+#: assets/src/editor/edit.tsx:1127
+#: assets/src/editor/edit.tsx:1952
+#: assets/src/editor/edit.tsx:1997
 #: src/Integrations/Elementor/VideoWidget.php:81
 #: src/Integrations/Elementor/VideoWidget.php:133
 #: src/Integrations/Elementor/VideoWidget.php:146
@@ -3424,14 +3581,18 @@ msgid "Use site setting"
 msgstr "Usar el ajuste del sitio"
 
 #. translators: %s: the site's shape, as in 16:9.
-#: assets/src/editor/edit.tsx:1095
-#: assets/src/editor/edit.tsx:1258
+#: assets/src/editor/edit.tsx:1096
+#: assets/src/editor/edit.tsx:1259
 msgid "Use site setting (%s)"
 msgstr "Usar el ajuste del sitio (%s)"
 
 #: assets/src/admin/panels.tsx:1071
 msgid "Use the cover art inside the file"
 msgstr "Usar la portada que hay dentro del archivo"
+
+#: assets/src/editor/subtitle-tools.tsx:479
+msgid "Use these chapters"
+msgstr "Usar estos capítulos"
 
 #: assets/src/admin/controls.tsx:431
 msgid "Use this image"
@@ -3441,17 +3602,21 @@ msgstr "Usar esta imagen"
 msgid "Used when no file is chosen above."
 msgstr "Se usa cuando arriba no se ha elegido ningún archivo."
 
+#: assets/src/admin/IntegrationsPanel.tsx:223
+msgid "Usual language"
+msgstr "Idioma habitual"
+
 #: assets/src/admin/panels.tsx:1797
 msgid "Version"
 msgstr "Versión"
 
 #: assets/src/admin/panels.tsx:1170
-#: assets/src/editor/edit.tsx:372
+#: assets/src/editor/edit.tsx:373
 msgid "Vertical (9:16)"
 msgstr "Vertical (9:16)"
 
 #: assets/src/admin/panels.tsx:1544
-#: assets/src/editor/edit.tsx:1964
+#: assets/src/editor/edit.tsx:1970
 msgid "Very large"
 msgstr "Muy grande"
 
@@ -3485,7 +3650,7 @@ msgid "Video with the list beside it"
 msgstr "Vídeo con la lista al lado"
 
 #: assets/src/admin/panels.tsx:1379
-#: assets/src/editor/edit.tsx:1240
+#: assets/src/editor/edit.tsx:1241
 #: src/Integrations/Elementor/VideoWidget.php:191
 msgid "Viewer’s name over the picture"
 msgstr "Nombre del espectador sobre la imagen"
@@ -3516,7 +3681,7 @@ msgid "Vimeo did not hand over a picture"
 msgstr "Vimeo no entregó ninguna imagen"
 
 #. translators: %s: why Vimeo did not hand over the picture.
-#: assets/src/editor/edit.tsx:668
+#: assets/src/editor/edit.tsx:669
 msgid "Vimeo did not hand over the video’s picture: %s. Choose a poster below, or ask again once the video is public."
 msgstr "Vimeo no entregó la imagen del vídeo: %s. Elige un póster más abajo, o vuelve a preguntar cuando el vídeo sea público."
 
@@ -3527,7 +3692,7 @@ msgstr "Vimeo señaló una imagen en %s, un dominio en el que este sitio no conf
 
 #: assets/src/admin/PresetsPanel.tsx:318
 #: assets/src/admin/panels.tsx:1266
-#: assets/src/editor/edit.tsx:73
+#: assets/src/editor/edit.tsx:74
 #: src/Integrations/Elementor/AudioWidget.php:132
 #: src/Integrations/Elementor/VideoWidget.php:314
 #: src/Render/PlayerRenderer.php:1769
@@ -3545,29 +3710,29 @@ msgstr "Ver este vídeo en %s"
 msgid "Watched"
 msgstr "Vista"
 
-#: assets/src/editor/edit.tsx:1157
+#: assets/src/editor/edit.tsx:1158
 #: src/Integrations/Elementor/VideoWidget.php:162
 msgid "Watermark"
 msgstr "Marca de agua"
 
-#: assets/src/editor/edit.tsx:1324
+#: assets/src/editor/edit.tsx:1325
 msgid "Watermark corner"
 msgstr "Esquina de la marca de agua"
 
-#: assets/src/editor/edit.tsx:1341
+#: assets/src/editor/edit.tsx:1342
 msgid "Watermark opacity (%)"
 msgstr "Opacidad de la marca de agua (%)"
 
 #: assets/src/admin/PresetsPanel.tsx:552
 #: assets/src/admin/panels.tsx:1664
-#: assets/src/editor/edit.tsx:123
-#: assets/src/editor/edit.tsx:1418
+#: assets/src/editor/edit.tsx:124
+#: assets/src/editor/edit.tsx:1419
 #: src/Player/Skins.php:106
 msgid "Waveform"
 msgstr "Onda"
 
 #: assets/src/admin/PresetsPanel.tsx:620
-#: assets/src/editor/edit.tsx:1366
+#: assets/src/editor/edit.tsx:1367
 msgid "Waveform height"
 msgstr "Altura de la onda"
 
@@ -3585,7 +3750,7 @@ msgstr "Ondas"
 msgid "Waveforms are measured in the browser instead, which works for any length of file and costs your visitors nothing."
 msgstr "Las ondas se miden en el navegador, lo que funciona con archivos de cualquier duración y no le cuesta nada a tus visitantes."
 
-#: assets/src/editor/edit.tsx:1798
+#: assets/src/editor/edit.tsx:1799
 msgid "WebVTT or SubRip (.vtt or .srt). SubRip files are converted for the browser automatically."
 msgstr "WebVTT o SubRip (.vtt o .srt). Los archivos SubRip se convierten para el navegador automáticamente."
 
@@ -3649,11 +3814,11 @@ msgstr "Dónde se archiva la dirección en Contactos."
 msgid "Where the field is empty, visitors see nothing — unless the block is also given a file of its own."
 msgstr "Donde el campo esté vacío, los visitantes no ven nada, salvo que el bloque tenga además un archivo propio."
 
-#: assets/src/editor/edit.tsx:1528
+#: assets/src/editor/edit.tsx:1529
 msgid "Which controls this player shows. Left on Site, each one follows the video settings for the whole site, and says what those are."
 msgstr "Qué controles muestra este reproductor. En «Sitio», cada uno sigue los ajustes de vídeo de todo el sitio y dice cuáles son."
 
-#: assets/src/editor/edit.tsx:1532
+#: assets/src/editor/edit.tsx:1533
 msgid "Which controls this player shows. Left on Site, each one follows this block’s preset, and says what that is."
 msgstr "Qué controles muestra este reproductor. En «Sitio», cada uno sigue el preset de este bloque y dice cuál es."
 
@@ -3662,7 +3827,7 @@ msgid "Whichever of black or white reads on the control bar."
 msgstr "El que se lea mejor sobre la barra de controles, negro o blanco."
 
 #. translators: %s: the site's setting, in seconds.
-#: assets/src/editor/edit.tsx:1698
+#: assets/src/editor/edit.tsx:1699
 msgid "While the video plays and nobody moves. Empty uses the site setting (%s s); zero keeps them up."
 msgstr "Mientras el vídeo se reproduce y nadie se mueve. Vacío usa el ajuste del sitio (%s s); cero los mantiene visibles."
 
@@ -3694,11 +3859,11 @@ msgid "Why a file will not measure"
 msgstr "Por qué un archivo no se deja medir"
 
 #: assets/src/admin/panels.tsx:1155
-#: assets/src/editor/edit.tsx:369
+#: assets/src/editor/edit.tsx:370
 msgid "Widescreen (16:9)"
 msgstr "Panorámico (16:9)"
 
-#: assets/src/editor/edit.tsx:2355
+#: assets/src/editor/edit.tsx:2366
 #: src/Integrations/Elementor/PlayerWidget.php:288
 msgid "Width (percent of the picture)"
 msgstr "Anchura (porcentaje del vídeo)"
@@ -3711,7 +3876,7 @@ msgstr "Con su portada, los botones de velocidad y salto, y siguiendo donde el o
 msgid "With its transcript and chapters, a speed list, and picking up where the student stopped."
 msgstr "Con su transcripción y capítulos, una lista de velocidades, y siguiendo donde el alumno lo dejó."
 
-#: assets/src/editor/edit.tsx:353
+#: assets/src/editor/edit.tsx:354
 msgid "Without this, the email gate has to be answered to carry on."
 msgstr "Sin esto, hay que responder a la captura de correo para continuar."
 
@@ -3744,7 +3909,7 @@ msgstr "El título de tu pista"
 msgid "Your video title"
 msgstr "El título de tu vídeo"
 
-#: assets/src/editor/edit.tsx:2257
+#: assets/src/editor/edit.tsx:2268
 msgid "Zero: it stays once it has appeared."
 msgstr "Cero: se queda una vez que ha salido."
 
@@ -3892,7 +4057,7 @@ msgid "downloading %d%%"
 msgstr "descargando %d%%"
 
 #. translators: %s: what the site does now.
-#: assets/src/editor/edit.tsx:1272
+#: assets/src/editor/edit.tsx:1273
 msgid "email"
 msgstr "correo"
 
@@ -3942,11 +4107,11 @@ msgid "measuring was stopped before it finished"
 msgstr "la medición se detuvo antes de terminar"
 
 #. translators: %s: what the site does now.
-#: assets/src/editor/edit.tsx:1268
+#: assets/src/editor/edit.tsx:1269
 msgid "name"
 msgstr "nombre"
 
-#: assets/src/editor/edit.tsx:1276
+#: assets/src/editor/edit.tsx:1277
 msgid "name and email"
 msgstr "nombre y correo"
 
@@ -3955,8 +4120,8 @@ msgid "nothing in the file decoded as audio"
 msgstr "nada del archivo se descodificó como audio"
 
 #. translators: %s: what the site does now.
-#: assets/src/editor/edit.tsx:1264
-#: assets/src/editor/edit.tsx:1285
+#: assets/src/editor/edit.tsx:1265
+#: assets/src/editor/edit.tsx:1286
 msgid "off"
 msgstr "desactivado"
 

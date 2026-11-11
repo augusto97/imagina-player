@@ -35,6 +35,7 @@ import {
 } from '../shared/source';
 import { SourceStatus, SourceWarning } from './source-notice';
 import { SourcesPanel } from './sources-panel';
+import { ChapterTools, SubtitleTools } from './subtitle-tools';
 import { WaveformNotice } from './waveform-notice';
 import type { EditorData } from './types';
 import { layerGap } from './layer-rules';
@@ -1931,6 +1932,11 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							{ __( 'Add subtitles', 'imagina-player' ) }
 						</Button>
 
+						<SubtitleTools
+							attributes={ attributes }
+							setAttributes={ setAttributes }
+						/>
+
 						<SelectControl
 							__nextHasNoMarginBottom
 							label={ __( 'Subtitle size', 'imagina-player' ) }
@@ -2091,6 +2097,11 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 						>
 							{ __( 'Add chapter', 'imagina-player' ) }
 						</Button>
+
+						<ChapterTools
+							attributes={ attributes }
+							setAttributes={ setAttributes }
+						/>
 
 						<BaseControl
 							__nextHasNoMarginBottom

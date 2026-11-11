@@ -24,6 +24,8 @@ export interface EditorData {
 	assetUrl: string;
 	/** Those pieces, to be written into the preview frame with the script. */
 	frontendChunks: string[];
+	/** A transcription service is set up for "Transcribe automatically". */
+	transcription?: boolean;
 }
 
 declare global {

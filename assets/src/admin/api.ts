@@ -251,7 +251,8 @@ export type ServiceName =
 	| 'brevo'
 	| 'mailerlite'
 	| 'fluentcrm'
-	| 'webhook';
+	| 'webhook'
+	| 'transcription';
 
 export type ServiceSettings = Record< string, string | boolean >;
 

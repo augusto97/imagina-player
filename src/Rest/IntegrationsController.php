@@ -15,6 +15,7 @@ namespace ImaginaPlayer\Rest;
 
 use ImaginaPlayer\Leads\Delivery;
 use ImaginaPlayer\Leads\Integrations;
+use ImaginaPlayer\Media\Transcriber;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -60,7 +61,7 @@ final class IntegrationsController {
 					'service' => array(
 						'type'     => 'string',
 						'required' => true,
-						'enum'     => Delivery::SERVICES,
+						'enum'     => array_merge( Delivery::SERVICES, array( 'transcription' ) ),
 					),
 				),
 			)
@@ -78,7 +79,9 @@ final class IntegrationsController {
 	}
 
 	public function test( WP_REST_Request $request ): WP_REST_Response {
-		return new WP_REST_Response( Delivery::test( (string) $request->get_param( 'service' ) ), 200 );
+		$service = (string) $request->get_param( 'service' );
+
+		return new WP_REST_Response( 'transcription' === $service ? Transcriber::test() : Delivery::test( $service ), 200 );
 	}
 
 	/** @return array<string, mixed> */

@@ -191,6 +191,44 @@ function services(): ServiceDef[] {
 				},
 			],
 		},
+		{
+			id: 'transcription',
+			title: __( 'Automatic transcription', 'imagina-player' ),
+			description: __(
+				'For the video block’s “Transcribe automatically”: any service that answers OpenAI’s transcription API — OpenAI’s Whisper, Groq, or a Whisper server of your own. The sound is sent to it, and the subtitles it writes are saved to the media library.',
+				'imagina-player'
+			),
+			fields: [
+				{
+					key: 'endpoint',
+					kind: 'text',
+					label: __( 'Address', 'imagina-player' ),
+					placeholder:
+						'https://api.openai.com/v1/audio/transcriptions',
+				},
+				{
+					key: 'api_key',
+					kind: 'secret',
+					label: __( 'API key', 'imagina-player' ),
+				},
+				{
+					key: 'model',
+					kind: 'text',
+					label: __( 'Model', 'imagina-player' ),
+					placeholder: 'whisper-1',
+				},
+				{
+					key: 'language',
+					kind: 'text',
+					label: __( 'Usual language', 'imagina-player' ),
+					placeholder: 'es',
+					help: __(
+						'A two-letter code. Empty lets the service tell; one given in the block wins.',
+						'imagina-player'
+					),
+				},
+			],
+		},
 	];
 }
 
@@ -340,10 +378,17 @@ export function IntegrationsPanel() {
 							onChange={ ( value ) =>
 								set( service.id, 'enabled', value )
 							}
-							label={ __(
-								'Send new addresses here',
-								'imagina-player'
-							) }
+							label={
+								'transcription' === service.id
+									? __(
+											'Offer it in the video block',
+											'imagina-player'
+									  )
+									: __(
+											'Send new addresses here',
+											'imagina-player'
+									  )
+							}
 						/>
 
 						{ service.fields.map( ( field ) =>

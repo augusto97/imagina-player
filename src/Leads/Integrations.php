@@ -30,7 +30,8 @@ final class Integrations {
 		'mailchimp'  => 'api_key',
 		'brevo'      => 'api_key',
 		'mailerlite' => 'api_key',
-		'webhook'    => 'secret',
+		'webhook'       => 'secret',
+		'transcription' => 'api_key',
 	);
 
 	/**
@@ -70,6 +71,16 @@ final class Integrations {
 				'url'     => '',
 				'secret'  => '',
 			),
+			// Not where addresses go: the speech-to-text service the video
+			// block's "Transcribe automatically" asks. Any that answers
+			// OpenAI's transcription call.
+			'transcription' => array(
+				'enabled'  => false,
+				'endpoint' => 'https://api.openai.com/v1/audio/transcriptions',
+				'api_key'  => '',
+				'model'    => 'whisper-1',
+				'language' => '',
+			),
 		);
 	}
 
@@ -90,10 +101,12 @@ final class Integrations {
 		return $out;
 	}
 
-	/** Whether any service is switched on, so a capture knows to queue. */
+	/** Whether any service addresses are sent to is switched on. */
 	public static function any_enabled(): bool {
-		foreach ( self::get() as $service ) {
-			if ( ! empty( $service['enabled'] ) ) {
+		$all = self::get();
+
+		foreach ( Delivery::SERVICES as $service ) {
+			if ( ! empty( $all[ $service ]['enabled'] ) ) {
 				return true;
 			}
 		}
@@ -166,7 +179,8 @@ final class Integrations {
 
 				$next[ $service ][ $field ] = match ( true ) {
 					is_bool( $default )   => (bool) $value,
-					'url' === $field      => self::url( (string) $value ),
+					'url' === $field, 'endpoint' === $field => self::url( (string) $value ),
+					'language' === $field => substr( strtolower( (string) preg_replace( '/[^A-Za-z-]/', '', (string) $value ) ), 0, 12 ),
 					str_ends_with( $field, '_ids' ) => self::ids( (string) $value, 'mailerlite' === $service ),
 					'list_id' === $field  => substr( (string) preg_replace( '/[^A-Za-z0-9]/', '', (string) $value ), 0, 40 ),
 					default               => sanitize_text_field( (string) $value ),
