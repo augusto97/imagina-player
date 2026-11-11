@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.53.0
+Stable tag: 1.54.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -198,6 +198,14 @@ it sees the page at the start of the clip, and the player stops at its end.
 Shared on a social network or in a chat, the link shows a card with the clip's
 title and picture, and sites that read oEmbed show the player itself.
 
+= Can captured emails go to Mailchimp or my CRM? =
+
+Yes. Under Imagina Player → Integrations, switch on Mailchimp, Brevo,
+MailerLite, FluentCRM or a webhook — the last for Zapier, Make, n8n or your own
+code. Every address is kept on your site first and then sent in the background,
+and tried again if a service is down, so nobody's address is lost and nobody
+waits for it. "Test the connection" checks each one.
+
 = Is there a sleep timer? =
 
 Yes, in the audio player's **More** menu, the three dots beside the volume,
@@ -235,6 +243,26 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.54.0 =
+A new feature: captured emails sent on to the services a site already uses.
+
+* New: **Integrations**, under Imagina Player → Integrations. Every address an
+  email gate captures is still kept in this site's own table first; then it is
+  sent, in the background, to each service switched on: **Mailchimp** (added or
+  updated in an audience, with double opt-in if wanted, and tagged with the
+  gate's list name), **Brevo** and **MailerLite** (into the lists or groups
+  given), **FluentCRM** on the same site (with its lists, tags and double
+  opt-in), and a **webhook** for Zapier, Make, n8n or anything that takes a
+  POST — JSON, signed with an HMAC of the body when a secret is set. A service
+  that does not answer is tried again three times, over two and a half hours.
+  Each card has "Test the connection", which checks the account without
+  sending anybody's address, and shows the last result.
+* Security: the keys are kept in an option of their own, never sent back to
+  the settings screen — only their last four characters — and the screen and
+  its test are for administrators only. The webhook cannot reach an address
+  inside the server's own network. Everything is removed on uninstall.
+* Changed: the strings for all of this translated into Spanish.
 
 = 1.53.0 =
 A new feature, clips you can share, and two fixes found on a newer browser

@@ -143,6 +143,9 @@ function imagina_player_uninstall_site(): void {
 		'imagina_player_schema',
 		'imagina_player_peaks_db_version',
 		'imagina_player_leads_db',
+		// Where captured addresses are sent, with the API keys, and how it went.
+		'imagina_player_integrations',
+		'imagina_player_integration_log',
 	) as $option ) {
 		delete_option( $option );
 	}
@@ -180,6 +183,7 @@ function imagina_player_uninstall_site(): void {
 	wp_clear_scheduled_hook( 'imagina_player_generate_peaks' );
 	wp_clear_scheduled_hook( 'imagina_player_purge_counters' );
 	wp_clear_scheduled_hook( 'imagina_player_vimeo_thumbnail' );
+	wp_clear_scheduled_hook( 'imagina_player_deliver_lead' );
 }
 
 if ( is_multisite() && function_exists( 'get_sites' ) ) {

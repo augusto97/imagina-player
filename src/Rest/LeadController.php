@@ -19,6 +19,7 @@ declare( strict_types = 1 );
 
 namespace ImaginaPlayer\Rest;
 
+use ImaginaPlayer\Leads\Delivery;
 use ImaginaPlayer\Leads\LeadRepository;
 use ImaginaPlayer\Protection\ProtectedMedia;
 use WP_Error;
@@ -190,26 +191,28 @@ final class LeadController {
 			);
 		}
 
-		$saved = $this->leads->save(
-			array(
-				'email'      => $email,
-				// A name for a list, not a sentence: letters, digits and the
-				// usual separators, short enough to be one. Anything else is a
-				// stranger's text arriving on the admin's screen.
-				'list'       => substr( preg_replace( '/[^A-Za-z0-9 _-]/', '', (string) $request->get_param( 'list' ) ) ?? '', 0, 50 ),
-				'source_id'  => (int) $request->get_param( 'source' ),
-				'source_url' => esc_url_raw( (string) $request->get_header( 'referer' ) ),
-				'position'   => (float) $request->get_param( 'at' ),
-			)
+		$lead = array(
+			'email'      => $email,
+			// A name for a list, not a sentence: letters, digits and the
+			// usual separators, short enough to be one. Anything else is a
+			// stranger's text arriving on the admin's screen.
+			'list'       => substr( preg_replace( '/[^A-Za-z0-9 _-]/', '', (string) $request->get_param( 'list' ) ) ?? '', 0, 50 ),
+			'source_id'  => (int) $request->get_param( 'source' ),
+			'source_url' => esc_url_raw( (string) $request->get_header( 'referer' ) ),
+			'position'   => (float) $request->get_param( 'at' ),
 		);
 
-		if ( ! $saved ) {
+		if ( ! $this->leads->save( $lead ) ) {
 			return new WP_Error(
 				'imagina_player_lead_failed',
 				__( 'That could not be saved. Please try again.', 'imagina-player' ),
 				array( 'status' => 500 )
 			);
 		}
+
+		// Kept here first; sent on to the services switched on afterwards,
+		// not while the visitor waits.
+		Delivery::queue( $lead );
 
 		return new WP_REST_Response( array( 'ok' => true ), 201 );
 	}

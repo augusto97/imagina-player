@@ -245,3 +245,52 @@ export function storeWaveform(
 		data: { attachmentId, peaks, duration, src },
 	} );
 }
+
+export type ServiceName =
+	| 'mailchimp'
+	| 'brevo'
+	| 'mailerlite'
+	| 'fluentcrm'
+	| 'webhook';
+
+export type ServiceSettings = Record< string, string | boolean >;
+
+export interface DeliveryLog {
+	ok: boolean;
+	message: string;
+	email: string;
+	attempt: number;
+	time: number;
+}
+
+export interface IntegrationsPayload {
+	services: Record< ServiceName, ServiceSettings >;
+	log: Partial< Record< ServiceName, DeliveryLog > >;
+	fluentcrm: boolean;
+}
+
+export function loadIntegrations(): Promise< IntegrationsPayload > {
+	return apiFetch( {
+		path: '/imagina-player/v1/integrations',
+	} ) as Promise< IntegrationsPayload >;
+}
+
+export function saveIntegrations(
+	services: Record< ServiceName, ServiceSettings >
+): Promise< IntegrationsPayload > {
+	return apiFetch( {
+		path: '/imagina-player/v1/integrations',
+		method: 'POST',
+		data: services,
+	} ) as Promise< IntegrationsPayload >;
+}
+
+export function testIntegration(
+	service: ServiceName
+): Promise< { ok: boolean; message: string } > {
+	return apiFetch( {
+		path: '/imagina-player/v1/integrations/test',
+		method: 'POST',
+		data: { service },
+	} ) as Promise< { ok: boolean; message: string } >;
+}

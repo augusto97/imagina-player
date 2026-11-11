@@ -2,7 +2,7 @@
 # This file is distributed under the same licence as the Imagina Player plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: Imagina Player 1.53.0\n"
+"Project-Id-Version: Imagina Player 1.54.0\n"
 "Report-Msgid-Bugs-To: https://github.com/augusto97/imagina-player\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -242,6 +242,15 @@ msgstr ""
 msgid "A video playing by itself, without sound, under a headline and a button."
 msgstr ""
 
+#: assets/src/admin/IntegrationsPanel.tsx:46
+#: assets/src/admin/IntegrationsPanel.tsx:90
+msgid "API key"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:116
+msgid "API token"
+msgstr ""
+
 #: assets/src/admin/PresetsPanel.tsx:539
 #: assets/src/admin/panels.tsx:1653
 #: assets/src/editor/edit.tsx:1410
@@ -250,6 +259,10 @@ msgstr ""
 
 #: src/Integrations/Elementor/PlayerWidget.php:194
 msgid "Accent colour"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:48
+msgid "Account → Extras → API keys. It ends in the data centre, such as -us21."
 msgstr ""
 
 #: assets/src/editor/edit.tsx:2376
@@ -297,6 +310,7 @@ msgstr ""
 msgid "Added after the player stylesheet, on pages that contain a player."
 msgstr ""
 
+#: assets/src/admin/IntegrationsPanel.tsx:180
 #: assets/src/editor/playlist.tsx:232
 #: assets/src/editor/playlist.tsx:480
 #: src/Integrations/Elementor/PlayerWidget.php:97
@@ -316,7 +330,15 @@ msgstr ""
 msgid "Adds a small × to put it away."
 msgstr ""
 
-#: assets/src/admin/App.tsx:35
+#: assets/src/admin/IntegrationsPanel.tsx:39
+msgid "Adds each address to an audience, or updates it if it is already there."
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:109
+msgid "Adds the subscriber, or updates it, and puts it in the groups given."
+msgstr ""
+
+#: assets/src/admin/App.tsx:38
 #: assets/src/admin/panels.tsx:1741
 #: assets/src/editor/edit.tsx:2662
 msgid "Advanced"
@@ -419,6 +441,14 @@ msgstr ""
 
 #: src/Integrations/Elementor/VideoWidget.php:90
 msgid "Aspect ratio"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:55
+msgid "Audience ID"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:57
+msgid "Audience → Settings → Audience name and defaults."
 msgstr ""
 
 #: assets/src/admin/PresetsPanel.tsx:184
@@ -558,7 +588,7 @@ msgstr ""
 msgid "Brand colours"
 msgstr ""
 
-#: assets/src/admin/App.tsx:29
+#: assets/src/admin/App.tsx:31
 msgid "Branding"
 msgstr ""
 
@@ -746,6 +776,20 @@ msgstr ""
 msgid "Compact, one line"
 msgstr ""
 
+#. translators: %s: the account's email address or company name.
+#: src/Leads/Delivery.php:163
+msgid "Connected to the account %s."
+msgstr ""
+
+#. translators: %s: the name of a Mailchimp audience.
+#: src/Leads/Delivery.php:150
+msgid "Connected to the audience “%s”."
+msgstr ""
+
+#: src/Leads/Delivery.php:172
+msgid "Connected."
+msgstr ""
+
 #: src/Integrations/Elementor/PlayerWidget.php:319
 msgid "Consent text"
 msgstr ""
@@ -823,6 +867,10 @@ msgstr ""
 msgid "Cover image URL"
 msgstr ""
 
+#: assets/src/admin/IntegrationsPanel.tsx:83
+msgid "Creates the contact, or updates it, and adds it to the lists given."
+msgstr ""
+
 #: assets/src/admin/panels.tsx:1191
 #: assets/src/editor/edit.tsx:1133
 #: src/Integrations/Elementor/VideoWidget.php:134
@@ -892,6 +940,11 @@ msgstr ""
 #. translators: %s: a time such as 12:40
 #: src/Assets.php:320
 msgid "Dismiss"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:65
+#: assets/src/admin/IntegrationsPanel.tsx:163
+msgid "Double opt-in: they confirm by email before they are added"
 msgstr ""
 
 #: assets/src/editor/edit.tsx:2391
@@ -964,7 +1017,7 @@ msgstr ""
 msgid "Email gate"
 msgstr ""
 
-#: assets/src/admin/App.tsx:34
+#: assets/src/admin/App.tsx:36
 msgid "Emails"
 msgstr ""
 
@@ -1008,6 +1061,20 @@ msgstr ""
 msgid "Enrolled in a course (LearnDash)"
 msgstr ""
 
+#: src/Leads/Delivery.php:143
+msgid "Enter an API key and an audience ID first."
+msgstr ""
+
+#. translators: %s: the name of a Mailchimp audience.
+#: src/Leads/Delivery.php:157
+#: src/Leads/Delivery.php:167
+msgid "Enter an API key first."
+msgstr ""
+
+#: src/Leads/Delivery.php:342
+msgid "Enter the address to send to first."
+msgstr ""
+
 #: src/Blocks/Patterns.php:59
 msgid "Episode 12: the title of this episode"
 msgstr ""
@@ -1018,6 +1085,10 @@ msgstr ""
 
 #: assets/src/editor/edit.tsx:1813
 msgid "Español"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:293
+msgid "Every address is kept here first. Then it is sent to each service switched on below, in the background, and tried again three times if a service does not answer."
 msgstr ""
 
 #. translators: %d: number of checks not confirmed.
@@ -1082,6 +1153,15 @@ msgstr ""
 #. translators: 1: lessons watched, 2: lessons in the course.
 #: src/Assets.php:303
 msgid "Finish the one before to open this"
+msgstr ""
+
+#: src/Leads/Delivery.php:176
+msgid "FluentCRM is active on this site."
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:332
+#: src/Leads/Delivery.php:177
+msgid "FluentCRM is not active on this site."
 msgstr ""
 
 #: src/Integrations/Elementor/VideoWidget.php:338
@@ -1176,6 +1256,10 @@ msgstr ""
 
 #: assets/src/editor/playlist.tsx:52
 msgid "Grid of covers"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:122
+msgid "Group IDs"
 msgstr ""
 
 #: assets/src/editor/edit.tsx:2497
@@ -1290,7 +1374,7 @@ msgstr ""
 msgid "Imagina Audio Player"
 msgstr ""
 
-#: assets/src/admin/App.tsx:173
+#: assets/src/admin/App.tsx:176
 #: src/Admin/Dashboard.php:37
 #: src/Admin/Dashboard.php:38
 #: src/Blocks/Patterns.php:37
@@ -1329,6 +1413,14 @@ msgstr ""
 
 #: src/Blocks/Patterns.php:62
 msgid "In this episode"
+msgstr ""
+
+#: assets/src/admin/App.tsx:37
+msgid "Integrations"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:117
+msgid "Integrations → API."
 msgstr ""
 
 #: src/Protection/SelfCheck.php:370
@@ -1386,6 +1478,16 @@ msgstr ""
 
 #: assets/src/admin/panels.tsx:569
 msgid "Larger files are never analysed in the browser: decoding expands audio to raw samples in memory, and an hour of stereo is well over a gigabyte."
+msgstr ""
+
+#. translators: 1: when, 2: a shortened email address, 3: why it failed.
+#: assets/src/admin/IntegrationsPanel.tsx:421
+msgid "Last attempt %1$s, %2$s, failed: %3$s"
+msgstr ""
+
+#. translators: 1: when, 2: a shortened email address, 3: what the service answered.
+#: assets/src/admin/IntegrationsPanel.tsx:407
+msgid "Last sent %1$s, %2$s: %3$s"
 msgstr ""
 
 #: assets/src/editor/playlist.tsx:206
@@ -1479,6 +1581,11 @@ msgstr ""
 msgid "List"
 msgstr ""
 
+#: assets/src/admin/IntegrationsPanel.tsx:96
+#: assets/src/admin/IntegrationsPanel.tsx:142
+msgid "List IDs"
+msgstr ""
+
 #: assets/src/editor/edit.tsx:2493
 #: src/Integrations/Elementor/PlayerWidget.php:318
 msgid "List name"
@@ -1496,7 +1603,7 @@ msgstr ""
 msgid "Loading the preview…"
 msgstr ""
 
-#: assets/src/admin/App.tsx:149
+#: assets/src/admin/App.tsx:152
 #: assets/src/admin/LeadsPanel.tsx:168
 msgid "Loading…"
 msgstr ""
@@ -1769,6 +1876,13 @@ msgstr ""
 msgid "Now"
 msgstr ""
 
+#: assets/src/admin/IntegrationsPanel.tsx:99
+#: assets/src/admin/IntegrationsPanel.tsx:125
+#: assets/src/admin/IntegrationsPanel.tsx:145
+#: assets/src/admin/IntegrationsPanel.tsx:155
+msgid "Numbers, separated by commas."
+msgstr ""
+
 #: assets/src/admin/panels.tsx:1393
 #: assets/src/editor/controls.tsx:69
 #: assets/src/editor/edit.tsx:1290
@@ -1791,6 +1905,10 @@ msgstr ""
 
 #: src/Integrations/Elementor/VideoWidget.php:215
 msgid "On by default"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:135
+msgid "On this same site: creates or updates the contact, with its lists and tags."
 msgstr ""
 
 #: assets/src/editor/playlist.tsx:297
@@ -1865,6 +1983,10 @@ msgstr ""
 
 #: assets/src/editor/edit.tsx:936
 msgid "Optional. Defaults to the video file itself."
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:188
+msgid "Optional. Each request then carries X-Imagina-Signature: sha256= and the HMAC of its body with this secret, so the receiver can tell it came from this site."
 msgstr ""
 
 #: src/Integrations/Elementor/PlaylistWidget.php:47
@@ -2030,6 +2152,10 @@ msgstr ""
 msgid "Poster"
 msgstr ""
 
+#: assets/src/admin/IntegrationsPanel.tsx:173
+msgid "Posts each address as JSON to any address: Zapier, Make, n8n or your own."
+msgstr ""
+
 #: assets/src/admin/PresetsPanel.tsx:390
 #: assets/src/editor/edit.tsx:1640
 msgid "Preload"
@@ -2050,7 +2176,7 @@ msgstr ""
 msgid "Preset name"
 msgstr ""
 
-#: assets/src/admin/App.tsx:28
+#: assets/src/admin/App.tsx:30
 #: assets/src/admin/PresetsPanel.tsx:133
 msgid "Presets"
 msgstr ""
@@ -2084,7 +2210,7 @@ msgstr ""
 msgid "Protected media"
 msgstr ""
 
-#: assets/src/admin/App.tsx:33
+#: assets/src/admin/App.tsx:35
 msgid "Protection"
 msgstr ""
 
@@ -2253,19 +2379,29 @@ msgstr ""
 msgid "Runs outside the page request, so nobody waits for it."
 msgstr ""
 
-#: assets/src/admin/App.tsx:192
+#: assets/src/admin/IntegrationsPanel.tsx:91
+msgid "SMTP & API → API keys."
+msgstr ""
+
+#: assets/src/admin/App.tsx:195
 msgid "Save changes"
 msgstr ""
 
-#: assets/src/admin/App.tsx:113
+#: assets/src/admin/IntegrationsPanel.tsx:306
+msgid "Save connections"
+msgstr ""
+
+#: assets/src/admin/App.tsx:116
 msgid "Saved, with changes:"
 msgstr ""
 
-#: assets/src/admin/App.tsx:114
+#: assets/src/admin/App.tsx:117
+#: assets/src/admin/IntegrationsPanel.tsx:310
 msgid "Saved."
 msgstr ""
 
-#: assets/src/admin/App.tsx:191
+#: assets/src/admin/App.tsx:194
+#: assets/src/admin/IntegrationsPanel.tsx:305
 msgid "Saving…"
 msgstr ""
 
@@ -2290,7 +2426,11 @@ msgstr ""
 msgid "Seconds of stillness while playing. Zero keeps them up for good, which suits a lesson more than a film."
 msgstr ""
 
-#: assets/src/admin/App.tsx:208
+#: assets/src/admin/IntegrationsPanel.tsx:186
+msgid "Secret"
+msgstr ""
+
+#: assets/src/admin/App.tsx:211
 msgid "Sections"
 msgstr ""
 
@@ -2308,6 +2448,18 @@ msgstr ""
 
 #: src/Player/Layers.php:149
 msgid "Send"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:291
+msgid "Send captured emails to"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:344
+msgid "Send new addresses here"
+msgstr ""
+
+#: src/Leads/Delivery.php:366
+msgid "Sent."
 msgstr ""
 
 #: src/Integrations/Elementor/PlayerWidget.php:372
@@ -2653,8 +2805,20 @@ msgstr ""
 msgid "Subtitles on from the start"
 msgstr ""
 
+#: assets/src/admin/IntegrationsPanel.tsx:152
+msgid "Tag IDs"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:73
+msgid "Tag each address with the list name set on its email gate"
+msgstr ""
+
 #: assets/src/admin/panels.tsx:1438
 msgid "Take away the browser download button"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:389
+msgid "Test the connection"
 msgstr ""
 
 #: assets/src/editor/edit.tsx:2457
@@ -2692,16 +2856,16 @@ msgstr ""
 msgid "That attachment does not exist."
 msgstr ""
 
-#: src/Rest/LeadController.php:209
+#: src/Rest/LeadController.php:208
 msgid "That could not be saved. Please try again."
 msgstr ""
 
 #: src/Assets.php:293
-#: src/Rest/LeadController.php:180
+#: src/Rest/LeadController.php:181
 msgid "That could not be sent. Please try again."
 msgstr ""
 
-#: src/Rest/LeadController.php:161
+#: src/Rest/LeadController.php:162
 msgid "That does not look like an email address."
 msgstr ""
 
@@ -2901,17 +3065,22 @@ msgstr ""
 msgid "The server refuses direct access to the vault"
 msgstr ""
 
-#: assets/src/admin/App.tsx:55
+#. translators: %d: an HTTP status code.
+#: src/Leads/Delivery.php:423
+msgid "The service answered with status %d."
+msgstr ""
+
+#: assets/src/admin/App.tsx:58
 msgid "The settings could not be loaded."
 msgstr ""
 
 #. translators: %s: the reason the site gave.
-#: assets/src/admin/App.tsx:134
+#: assets/src/admin/App.tsx:137
 msgid "The settings could not be saved."
 msgstr ""
 
 #. translators: %s: the reason the site gave.
-#: assets/src/admin/App.tsx:129
+#: assets/src/admin/App.tsx:132
 msgid "The settings could not be saved: %s"
 msgstr ""
 
@@ -2921,6 +3090,10 @@ msgstr ""
 
 #: src/Assets.php:295
 msgid "The subtitles for this video have not loaded yet."
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:278
+msgid "The test could not be run."
 msgstr ""
 
 #: src/Protection/Vault.php:219
@@ -2975,12 +3148,22 @@ msgstr ""
 msgid "Their name and email"
 msgstr ""
 
+#: src/Leads/Delivery.php:135
+#: src/Leads/Delivery.php:191
+msgid "There is no such service."
+msgstr ""
+
 #: assets/src/admin/PresetsPanel.tsx:262
 msgid "These are the controls of an audio player. A video has its own, under Video, whatever preset it uses."
 msgstr ""
 
+#: assets/src/admin/IntegrationsPanel.tsx:212
 #: assets/src/admin/LeadsPanel.tsx:54
 msgid "These could not be loaded."
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:248
+msgid "These could not be saved. Try again."
 msgstr ""
 
 #: assets/src/editor/source-notice.tsx:79
@@ -3112,7 +3295,7 @@ msgstr ""
 msgid "Title and artist"
 msgstr ""
 
-#: src/Rest/LeadController.php:188
+#: src/Rest/LeadController.php:189
 #: src/Rest/StreamController.php:85
 msgid "Too many attempts. Try again in a few minutes."
 msgstr ""
@@ -3141,7 +3324,7 @@ msgstr ""
 msgid "Track %d"
 msgstr ""
 
-#: assets/src/admin/App.tsx:32
+#: assets/src/admin/App.tsx:34
 #: assets/src/admin/panels.tsx:981
 msgid "Track details"
 msgstr ""
@@ -3176,6 +3359,10 @@ msgstr ""
 #. translators: %s: the reason the site gave.
 #: assets/src/editor/preview.tsx:230
 msgid "Try again"
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:387
+msgid "Trying…"
 msgstr ""
 
 #: assets/src/admin/panels.tsx:1208
@@ -3263,7 +3450,7 @@ msgstr ""
 msgid "Very large"
 msgstr ""
 
-#: assets/src/admin/App.tsx:31
+#: assets/src/admin/App.tsx:33
 #: assets/src/admin/PresetsPanel.tsx:185
 #: src/Integrations/Elementor/VideoWidget.php:66
 msgid "Video"
@@ -3383,7 +3570,7 @@ msgstr ""
 msgid "Waveform, mirrored"
 msgstr ""
 
-#: assets/src/admin/App.tsx:30
+#: assets/src/admin/App.tsx:32
 #: assets/src/admin/panels.tsx:430
 #: assets/src/editor/playlist.tsx:317
 msgid "Waveforms"
@@ -3395,6 +3582,10 @@ msgstr ""
 
 #: assets/src/editor/edit.tsx:1798
 msgid "WebVTT or SubRip (.vtt or .srt). SubRip files are converted for the browser automatically."
+msgstr ""
+
+#: assets/src/admin/IntegrationsPanel.tsx:171
+msgid "Webhook"
 msgstr ""
 
 #: assets/src/admin/panels.tsx:1144

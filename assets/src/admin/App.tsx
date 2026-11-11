@@ -10,6 +10,7 @@ import {
 	VideoPanel,
 	WaveformsPanel,
 } from './panels';
+import { IntegrationsPanel } from './IntegrationsPanel';
 import { LeadsPanel } from './LeadsPanel';
 import { PresetsPanel } from './PresetsPanel';
 import type { Preset, SettingsPayload } from './types';
@@ -22,6 +23,7 @@ type Section =
 	| 'metadata'
 	| 'protection'
 	| 'leads'
+	| 'integrations'
 	| 'advanced';
 
 const SECTIONS: Array< { id: Section; label: string } > = [
@@ -32,6 +34,7 @@ const SECTIONS: Array< { id: Section; label: string } > = [
 	{ id: 'metadata', label: __( 'Track details', 'imagina-player' ) },
 	{ id: 'protection', label: __( 'Protection', 'imagina-player' ) },
 	{ id: 'leads', label: __( 'Emails', 'imagina-player' ) },
+	{ id: 'integrations', label: __( 'Integrations', 'imagina-player' ) },
 	{ id: 'advanced', label: __( 'Advanced', 'imagina-player' ) },
 ];
 
@@ -261,6 +264,7 @@ export function App() {
 						/>
 					) }
 					{ 'leads' === section && <LeadsPanel /> }
+					{ 'integrations' === section && <IntegrationsPanel /> }
 					{ 'advanced' === section && (
 						<AdvancedPanel
 							settings={ settings }

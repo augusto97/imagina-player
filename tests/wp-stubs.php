@@ -96,7 +96,7 @@ function delete_transient( $k ) { unset( $GLOBALS['stub_transients'][ $k ] ); re
 function wp_cache_get( $k, $g = '' ) { return false; }
 function wp_cache_set( $k, $v, $g = '', $e = 0 ) { return true; }
 function wp_cache_delete( $k, $g = '' ) { return true; }
-function wp_schedule_single_event( $t, $h, $a = array() ) { $GLOBALS['stub_scheduled'][] = array( $h, $a ); return true; }
+function wp_schedule_single_event( $t, $h, $a = array() ) { $GLOBALS['stub_scheduled'][] = array( $h, $a ); $GLOBALS['stub_scheduled_at'][] = $t; return true; }
 if ( ! function_exists( 'wp_next_scheduled' ) ) {
 	function wp_next_scheduled( $hook, $args = array() ) {
 		foreach ( $GLOBALS['stub_scheduled'] ?? array() as $event ) {
@@ -637,6 +637,10 @@ function wp_tempnam( $prefix = '' ) { return tempnam( sys_get_temp_dir(), $prefi
  * a different answer per step by making that a list.
  */
 function wp_safe_remote_request( $url, $args = array() ) {
+	// Every request, for a test that checks what was sent rather than only
+	// what came back.
+	$GLOBALS['stub_remote_requests'][] = array( 'url' => $url, 'args' => $args );
+
 	$queue = $GLOBALS['stub_remote_steps'] ?? null;
 
 	if ( is_array( $queue ) && array() !== $queue ) {
