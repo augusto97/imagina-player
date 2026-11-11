@@ -236,7 +236,8 @@ class Stub_WPDB {
 	public $prefix = 'wp_';
 	public $options = 'wp_options';
 	public function get_charset_collate() { return 'DEFAULT CHARACTER SET utf8mb4'; }
-	public function prepare( $query, ...$args ) { return vsprintf( str_replace( array( '%s', '%d', '%f' ), array( "'%s'", '%d', '%f' ), $query ), $args ); }
+	// As the real one, an array of values may stand in for the list.
+	public function prepare( $query, ...$args ) { if ( 1 === count( $args ) && is_array( $args[0] ) ) { $args = $args[0]; } return vsprintf( str_replace( array( '%s', '%d', '%f' ), array( "'%s'", '%d', '%f' ), $query ), $args ); }
 	public function get_var( $query ) { if ( isset( $GLOBALS['counts'] ) ) { $GLOBALS['counts']['db_query']++; } return $GLOBALS['stub_table_exists'] ?? null; }
 	/**
 	 * Remembers what was written, and hands it back.
@@ -682,6 +683,11 @@ class WP_REST_Request {
 	public function get_params() { return $this->params; }
 	public function set_param( $name, $value ) { $this->params[ $name ] = $value; }
 	public function get_header( $name ) { return $this->headers[ strtolower( $name ) ] ?? ''; }
+	// The raw body, as a browser's beacon sends it: not parsed as JSON,
+	// because it is not labelled as JSON.
+	private string $body = '';
+	public function get_body() { return $this->body; }
+	public function set_body( $body ) { $this->body = (string) $body; }
 }
 
 class WP_REST_Response {

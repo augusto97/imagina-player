@@ -193,14 +193,16 @@ check(
 	str_contains( $peaks, '403 === status' )
 );
 
+// The words live in the chunk that measures, the only one that needs them;
+// the player hands it the reason.
 check(
 	'the console says which of them happened',
-	str_contains( $player, 'unreachable:' ) && str_contains( $player, "'too-large':" )
+	str_contains( $peaks, 'unreachable:' ) && str_contains( $peaks, "'too-large':" ) && str_contains( $player, 'compute.explain( computed )' )
 );
 
 check(
 	'and sends somebody to the block editor, where the doorway is',
-	str_contains( $player, 'block editor' ),
+	str_contains( $peaks, 'block editor' ),
 	'the front end has no way through, so the advice has to point somewhere that does'
 );
 

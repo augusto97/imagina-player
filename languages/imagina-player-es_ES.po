@@ -29,7 +29,7 @@ msgstr "%1$d de %2$d generadas."
 
 #. translators: 1: lessons watched, 2: lessons in the course.
 #: src/Assets.php:301
-#: src/Render/PlaylistRenderer.php:181
+#: src/Render/PlaylistRenderer.php:182
 msgid "%1$d of %2$d watched"
 msgstr "%1$d de %2$d vistas"
 
@@ -44,12 +44,12 @@ msgid "%1$d of %2$d — %3$s — %4$s"
 msgstr "%1$d de %2$d — %3$s — %4$s"
 
 #. translators: 1: what is playing, 2: where the clip starts, 3: where it ends.
-#: src/Share/Clip.php:179
+#: src/Share/Clip.php:193
 msgid "%1$s (%2$s–%3$s)"
 msgstr "%1$s (%2$s–%3$s)"
 
 #. translators: 1: what is playing, 2: the moment the link opens at.
-#: src/Share/Clip.php:183
+#: src/Share/Clip.php:197
 msgid "%1$s, from %2$s"
 msgstr "%1$s, desde %2$s"
 
@@ -109,6 +109,33 @@ msgid "%d waveform here was measured an older way, which draws long recordings a
 msgid_plural "%d waveforms here were measured an older way, which draws long recordings almost flat."
 msgstr[0] "aquí hay %d onda medida con el método anterior, que dibuja las grabaciones largas casi planas."
 msgstr[1] "aquí hay %d ondas medidas con el método anterior, que dibuja las grabaciones largas casi planas."
+
+#. translators: %s: a number of hours.
+#: assets/src/admin/StatsPanel.tsx:65
+msgid "%s h"
+msgstr "%s h"
+
+#. translators: %s: a number of minutes.
+#: assets/src/admin/StatsPanel.tsx:60
+msgid "%s min"
+msgstr "%s min"
+
+#. translators: %s: a number of plays.
+#: assets/src/admin/StatsPanel.tsx:743
+msgid "%s play"
+msgid_plural "%s plays"
+msgstr[0] "%s reproducción"
+msgstr[1] "%s reproducciones"
+
+#. translators: %s: a number of presses.
+#: assets/src/admin/StatsPanel.tsx:522
+msgid "%s presses on its overlays."
+msgstr "%s pulsaciones en sus capas."
+
+#. translators: %s: a share of the viewers, as 64%.
+#: assets/src/admin/StatsPanel.tsx:418
+msgid "%s still watching"
+msgstr "%s seguía viendo"
 
 #. translators: %s: the rule's name.
 #: assets/src/editor/access-panel.tsx:62
@@ -349,7 +376,7 @@ msgstr "Añade cada dirección a una audiencia, o la actualiza si ya está."
 msgid "Adds the subscriber, or updates it, and puts it in the groups given."
 msgstr "Añade el suscriptor, o lo actualiza, y lo mete en los grupos indicados."
 
-#: assets/src/admin/App.tsx:38
+#: assets/src/admin/App.tsx:41
 #: assets/src/admin/panels.tsx:1741
 #: assets/src/editor/edit.tsx:2673
 msgid "Advanced"
@@ -433,7 +460,7 @@ msgstr "Aparece a mitad de la reproducción. Una llamada a la acción y una puer
 msgid "Artist"
 msgstr "Artista"
 
-#: src/Rest/SettingsController.php:566
+#: src/Rest/SettingsController.php:578
 msgid "Artist name"
 msgstr "Nombre del artista"
 
@@ -453,6 +480,10 @@ msgstr "Volver a preguntar a Vimeo"
 #: src/Integrations/Elementor/VideoWidget.php:90
 msgid "Aspect ratio"
 msgstr "Relación de aspecto"
+
+#: assets/src/admin/StatsPanel.tsx:440
+msgid "At"
+msgstr "En"
 
 #: assets/src/admin/IntegrationsPanel.tsx:55
 msgid "Audience ID"
@@ -501,6 +532,11 @@ msgstr "Reproducción automática"
 #: assets/src/editor/edit.tsx:1621
 msgid "Autoplay is on but the sound is not muted, so no browser will start this by itself. It will show its play button instead."
 msgstr "La reproducción automática está activada pero el sonido no está silenciado, así que ningún navegador la arrancará solo. Mostrará su botón de reproducir."
+
+#: assets/src/admin/StatsPanel.tsx:697
+#: assets/src/admin/StatsPanel.tsx:791
+msgid "Average watched"
+msgstr "Promedio visto"
 
 #: src/Assets.php:299
 msgid "Back"
@@ -603,7 +639,7 @@ msgstr "Compró un producto (WooCommerce)"
 msgid "Brand colours"
 msgstr "Colores de marca"
 
-#: assets/src/admin/App.tsx:31
+#: assets/src/admin/App.tsx:33
 msgid "Branding"
 msgstr "Marca"
 
@@ -692,8 +728,8 @@ msgstr "Cambiar la imagen"
 #: src/Integrations/Elementor/VideoWidget.php:232
 #: src/Integrations/Elementor/VideoWidget.php:242
 #: src/Integrations/Elementor/VideoWidget.php:322
-#: src/Render/PlayerRenderer.php:666
-#: src/Render/PlayerRenderer.php:946
+#: src/Render/PlayerRenderer.php:678
+#: src/Render/PlayerRenderer.php:958
 msgid "Chapters"
 msgstr "Capítulos"
 
@@ -774,8 +810,8 @@ msgstr "Quitarlos"
 msgid "Clip link copied"
 msgstr "Enlace del clip copiado"
 
-#: src/Render/PlayerRenderer.php:1157
-#: src/Render/PlayerRenderer.php:1290
+#: src/Render/PlayerRenderer.php:1169
+#: src/Render/PlayerRenderer.php:1302
 msgid "Close"
 msgstr "Cerrar"
 
@@ -857,6 +893,18 @@ msgstr "Radio de las esquinas"
 msgid "Corner radius (px)"
 msgstr "Radio de las esquinas (px)"
 
+#: assets/src/admin/StatsPanel.tsx:921
+msgid "Count how players are watched"
+msgstr "Contar cómo se ven los reproductores"
+
+#: assets/src/admin/StatsPanel.tsx:917
+msgid "Counting"
+msgstr "Recuento"
+
+#: assets/src/admin/StatsPanel.tsx:617
+msgid "Counting is off, so nothing new is added. What was counted before is still shown."
+msgstr "El recuento está desactivado, así que no se suma nada nuevo. Lo que se contó antes se sigue mostrando."
+
 #: assets/src/editor/playlist.tsx:264
 #: src/Blocks/Variations.php:108
 msgid "Course"
@@ -919,6 +967,10 @@ msgstr "Clave del campo personalizado"
 msgid "Custom field of the post"
 msgstr "Campo personalizado de la entrada"
 
+#: assets/src/admin/StatsPanel.tsx:936
+msgid "Days older than this are deleted once a day."
+msgstr "Los días más antiguos se borran una vez al día."
+
 #: assets/src/editor/edit.tsx:122
 #: assets/src/editor/playlist.tsx:82
 #: src/Settings.php:53
@@ -954,6 +1006,8 @@ msgstr "Entrega"
 msgid "Description"
 msgstr "Descripción"
 
+#: assets/src/admin/StatsPanel.tsx:810
+#: assets/src/admin/StatsPanel.tsx:891
 #: assets/src/editor/playlist.tsx:370
 msgid "Details"
 msgstr "Detalles"
@@ -975,7 +1029,7 @@ msgstr "Vertical (porcentaje desde arriba)"
 
 #: assets/src/admin/PresetsPanel.tsx:345
 #: src/Integrations/Elementor/AudioWidget.php:138
-#: src/Render/PlayerRenderer.php:1745
+#: src/Render/PlayerRenderer.php:1757
 msgid "Download"
 msgstr "Descargar"
 
@@ -984,6 +1038,7 @@ msgid "Download URL"
 msgstr "URL de descarga"
 
 #: assets/src/admin/LeadsPanel.tsx:157
+#: assets/src/admin/StatsPanel.tsx:662
 msgid "Download as CSV"
 msgstr "Descargar como CSV"
 
@@ -1008,6 +1063,10 @@ msgstr "Cada lección se marca cuando se ha visto, la lista dice cuántas van y 
 msgid "Each listener or viewer comes back to where they stopped."
 msgstr "Cada oyente o espectador vuelve a donde lo dejó."
 
+#: assets/src/admin/StatsPanel.tsx:925
+msgid "Each player reports its plays, the time watched, how far the viewer got and the overlays pressed, when the page is closed or the media ends. No cookie is set and no address is stored."
+msgstr "Cada reproductor informa de sus reproducciones, el tiempo visto, hasta dónde llegó quien lo veía y las capas pulsadas, al cerrar la página o al terminar el contenido. No se usa ninguna cookie ni se guarda ninguna dirección."
+
 #: src/Blocks/Patterns.php:64
 msgid "Earlier episodes"
 msgstr "Episodios anteriores"
@@ -1029,7 +1088,7 @@ msgstr "Tiempo transcurrido y total"
 msgid "Email"
 msgstr "Correo"
 
-#: src/Render/PlayerRenderer.php:1101
+#: src/Render/PlayerRenderer.php:1113
 msgid "Email address"
 msgstr "Dirección de correo"
 
@@ -1038,7 +1097,7 @@ msgstr "Dirección de correo"
 msgid "Email gate"
 msgstr "Puerta de correo"
 
-#: assets/src/admin/App.tsx:36
+#: assets/src/admin/App.tsx:39
 msgid "Emails"
 msgstr "Correos"
 
@@ -1194,7 +1253,7 @@ msgstr "FluentCRM no está activo en este sitio."
 msgid "Focus mode"
 msgstr "Modo concentración"
 
-#: src/Render/PlayerRenderer.php:1323
+#: src/Render/PlayerRenderer.php:1335
 msgid "Follow the video"
 msgstr "Seguir el vídeo"
 
@@ -1215,13 +1274,20 @@ msgid "For the weekly podcast"
 msgstr "Para el pódcast semanal"
 
 #. translators: %d: number of seconds
-#: src/Render/PlayerRenderer.php:1728
+#: src/Render/PlayerRenderer.php:1740
 msgid "Forward %d seconds"
 msgstr "Avanzar %d segundos"
 
 #: assets/src/admin/LeadsPanel.tsx:198
 msgid "From"
 msgstr "Desde"
+
+#. translators: %s: a number of viewings.
+#: assets/src/admin/StatsPanel.tsx:394
+msgid "From %s viewing."
+msgid_plural "From %s viewings."
+msgstr[0] "De %s visionado."
+msgstr[1] "De %s visionados."
 
 #: assets/src/editor/subtitle-tools.tsx:454
 msgid "From a file…"
@@ -1241,7 +1307,7 @@ msgstr "Desde el principio, antes de reproducir nada."
 
 #: assets/src/admin/panels.tsx:1317
 #: src/Integrations/Elementor/VideoWidget.php:330
-#: src/Render/PlayerRenderer.php:991
+#: src/Render/PlayerRenderer.php:1003
 msgid "Full screen"
 msgstr "Pantalla completa"
 
@@ -1304,6 +1370,11 @@ msgstr "ID de los grupos"
 msgid "Groups the addresses this player captures. Anything you like: \"course\", \"newsletter\"."
 msgstr "Agrupa las direcciones que captura este reproductor. Lo que quieras: «curso», «boletín»."
 
+#. translators: %s: a moment in the media, as 1:23 or 40%.
+#: assets/src/admin/StatsPanel.tsx:405
+msgid "Half had stopped by %s."
+msgstr "La mitad había parado antes de %s."
+
 #: assets/src/editor/playlist.tsx:198
 #: src/Integrations/Elementor/PlaylistWidget.php:62
 msgid "Heading"
@@ -1317,6 +1388,7 @@ msgstr "Titular"
 msgid "Height"
 msgstr "Altura"
 
+#: assets/src/admin/StatsPanel.tsx:887
 #: assets/src/editor/controls.tsx:70
 #: src/Integrations/Elementor/PlayerWidget.php:251
 msgid "Hide"
@@ -1372,6 +1444,10 @@ msgstr "Qué tan tenue"
 msgid "How long a link lasts was kept between one hour and one week."
 msgstr "La duración de un enlace se mantuvo entre una hora y una semana."
 
+#: src/Rest/SettingsController.php:327
+msgid "How long statistics are kept was held between 30 days and ten years."
+msgstr "El tiempo que se guardan las estadísticas se mantuvo entre 30 días y diez años."
+
 #: assets/src/admin/panels.tsx:491
 msgid "How many amplitude samples are stored per track. 400 suits players up to about 1200px wide."
 msgstr "Cuántas muestras de amplitud se guardan por pista. 400 va bien para reproductores de hasta unos 1200 px de ancho."
@@ -1412,7 +1488,7 @@ msgstr "Imagen debajo del reproductor"
 msgid "Imagina Audio Player"
 msgstr "Imagina Reproductor de Audio"
 
-#: assets/src/admin/App.tsx:176
+#: assets/src/admin/App.tsx:179
 #: src/Admin/Dashboard.php:37
 #: src/Admin/Dashboard.php:38
 #: src/Blocks/Patterns.php:37
@@ -1426,16 +1502,16 @@ msgid "Imagina Player requires PHP %1$s or newer. This site runs PHP %2$s."
 msgstr "Imagina Player necesita PHP %1$s o superior. Este sitio usa PHP %2$s."
 
 #. translators: %s: the name of a custom field.
-#: src/Render/PlayerRenderer.php:1894
+#: src/Render/PlayerRenderer.php:1906
 msgid "Imagina Player: no audio file selected."
 msgstr "Imagina Player: no hay ningún archivo de audio seleccionado."
 
 #. translators: %s: the name of a custom field.
-#: src/Render/PlayerRenderer.php:1885
+#: src/Render/PlayerRenderer.php:1897
 msgid "Imagina Player: the file comes from the custom field “%s” of the post this block is shown on. This one has none, so visitors see nothing here."
 msgstr "Imagina Player: el archivo sale del campo personalizado «%s» de la entrada en la que se muestra este bloque. Esta no tiene ninguno, así que los visitantes no ven nada aquí."
 
-#: src/Render/PlaylistRenderer.php:66
+#: src/Render/PlaylistRenderer.php:67
 msgid "Imagina Player: this playlist has no tracks yet."
 msgstr "Imagina Player: esta lista aún no tiene pistas."
 
@@ -1453,7 +1529,7 @@ msgstr "Imagina Reproductor de Vídeo"
 msgid "In this episode"
 msgstr "En este episodio"
 
-#: assets/src/admin/App.tsx:37
+#: assets/src/admin/App.tsx:40
 msgid "Integrations"
 msgstr "Integraciones"
 
@@ -1482,6 +1558,10 @@ msgstr "Inscribirse en el curso"
 #: src/Integrations/Elementor/VideoWidget.php:334
 msgid "Keep playing in a corner while scrolling"
 msgstr "Seguir reproduciendo en una esquina al desplazarse"
+
+#: assets/src/admin/StatsPanel.tsx:934
+msgid "Keep statistics for"
+msgstr "Guardar las estadísticas durante"
 
 #: src/Assets.php:292
 msgid "Keep watching"
@@ -1520,6 +1600,11 @@ msgstr "Grande"
 msgid "Larger files are never analysed in the browser: decoding expands audio to raw samples in memory, and an hour of stereo is well over a gigabyte."
 msgstr "Los archivos más grandes nunca se analizan en el navegador: descodificar expande el audio a muestras en memoria, y una hora en estéreo pasa del gigabyte."
 
+#. translators: %d: a number of days.
+#: assets/src/admin/StatsPanel.tsx:635
+msgid "Last %d days"
+msgstr "Últimos %d días"
+
 #. translators: 1: when, 2: a shortened email address, 3: why it failed.
 #: assets/src/admin/IntegrationsPanel.tsx:466
 msgid "Last attempt %1$s, %2$s, failed: %3$s"
@@ -1557,7 +1642,7 @@ msgstr "Déjalo vacío para usar el del preajuste."
 msgid "Leave it empty"
 msgstr "Dejarlo vacío"
 
-#: src/Render/PlayerRenderer.php:1122
+#: src/Render/PlayerRenderer.php:1134
 msgid "Leave this field empty"
 msgstr "Deja este campo vacío"
 
@@ -1647,8 +1732,10 @@ msgstr "Cargar la hoja de estilos incluida"
 msgid "Loading the preview…"
 msgstr "Cargando la vista previa…"
 
-#: assets/src/admin/App.tsx:152
+#: assets/src/admin/App.tsx:155
 #: assets/src/admin/LeadsPanel.tsx:168
+#: assets/src/admin/StatsPanel.tsx:359
+#: assets/src/admin/StatsPanel.tsx:676
 msgid "Loading…"
 msgstr "Cargando…"
 
@@ -1656,7 +1743,7 @@ msgstr "Cargando…"
 msgid "Loads the video from youtube-nocookie.com, which sets nothing until a visitor presses play. Turn this off only if you need YouTube’s own analytics for these videos."
 msgstr "Carga el vídeo desde youtube-nocookie.com, que no pone nada hasta que alguien pulsa reproducir. Desactívalo sólo si necesitas las analíticas de YouTube para estos vídeos."
 
-#: src/Render/PlayerRenderer.php:1533
+#: src/Render/PlayerRenderer.php:1545
 msgid "Locked"
 msgstr "Bloqueado"
 
@@ -1702,6 +1789,7 @@ msgstr[1] "Volver a medir estas ondas"
 msgid "Measured here, in this browser, and stored for every visitor. Nobody browsing your site downloads anything extra."
 msgstr "Se mide aquí, en este navegador, y se guarda para todos los visitantes. Nadie que navegue por tu sitio descarga nada extra."
 
+#: assets/src/admin/StatsPanel.tsx:781
 #: assets/src/editor/edit.tsx:614
 msgid "Media"
 msgstr "Medio"
@@ -1765,7 +1853,7 @@ msgstr "Faltan: %s. Se reescriben la próxima vez que se cree el directorio; la 
 msgid "Model"
 msgstr "Modelo"
 
-#: src/Render/PlayerRenderer.php:1787
+#: src/Render/PlayerRenderer.php:1799
 msgid "More"
 msgstr "Más"
 
@@ -1791,7 +1879,7 @@ msgid "Moves the file out of the public uploads folder and serves it through a s
 msgstr "Saca el archivo de la carpeta pública de subidas y lo sirve con un enlace firmado que caduca."
 
 #: src/Assets.php:278
-#: src/Render/PlayerRenderer.php:1754
+#: src/Render/PlayerRenderer.php:1766
 msgid "Mute"
 msgstr "Silenciar"
 
@@ -1847,7 +1935,7 @@ msgstr "Nuevo preajuste"
 
 #. translators: 1: current page, 2: total pages.
 #: assets/src/admin/LeadsPanel.tsx:288
-#: src/Render/PlaylistRenderer.php:208
+#: src/Render/PlaylistRenderer.php:209
 msgid "Next"
 msgstr "Siguiente"
 
@@ -1903,7 +1991,11 @@ msgstr "Sin comprobar: aún no hay ningún archivo protegido. Protege uno en Med
 msgid "Not checked: this site could not make a request to itself."
 msgstr "Sin comprobar: este sitio no pudo hacerse una petición a sí mismo."
 
-#: src/Render/PlayerRenderer.php:738
+#: assets/src/admin/StatsPanel.tsx:384
+msgid "Not enough viewings in this period to draw this."
+msgstr "No hay visionados suficientes en este periodo para dibujarlo."
+
+#: src/Render/PlayerRenderer.php:750
 msgid "Not started"
 msgstr "Sin empezar"
 
@@ -1911,6 +2003,10 @@ msgstr "Sin empezar"
 #: assets/src/editor/edit.tsx:2014
 msgid "Nothing"
 msgstr "Nada"
+
+#: assets/src/admin/StatsPanel.tsx:769
+msgid "Nothing counted in this period yet. Plays are counted on published pages from now on; plays in the editor and on this screen are not."
+msgstr "Aún no hay nada contado en este periodo. Las reproducciones se cuentan a partir de ahora en las páginas publicadas; las del editor y las de esta pantalla no."
 
 #. translators: %d: number of checks not confirmed.
 #: src/Protection/SelfCheck.php:539
@@ -1996,7 +2092,7 @@ msgstr "Una frase que diga por qué el visitante debería seguir leyendo."
 msgid "One that appears part-way through can always be closed, so the video is never stuck behind it. This decides it for one at the end."
 msgstr "Una que aparece a mitad siempre se puede cerrar, así el vídeo nunca queda bloqueado detrás. Esto decide para una al final."
 
-#: src/Rest/SettingsController.php:452
+#: src/Rest/SettingsController.php:464
 msgid "Only a Vimeo video has a picture that must be asked for."
 msgstr "Solo un vídeo de Vimeo tiene una imagen que haya que pedir."
 
@@ -2078,7 +2174,7 @@ msgstr "O su dirección"
 #: assets/src/editor/sources-panel.tsx:229
 #: src/Integrations/Elementor/VideoWidget.php:261
 #: src/Integrations/Elementor/VideoWidget.php:279
-#: src/Render/PlayerRenderer.php:858
+#: src/Render/PlayerRenderer.php:870
 msgid "Original"
 msgstr "Original"
 
@@ -2086,6 +2182,16 @@ msgstr "Original"
 msgid "Other qualities"
 msgstr "Otras calidades"
 
+#: assets/src/admin/StatsPanel.tsx:474
+msgid "Overlay"
+msgstr "Capa"
+
+#. translators: %d: the overlay's number in the block's list.
+#: assets/src/admin/StatsPanel.tsx:498
+msgid "Overlay %d"
+msgstr "Capa %d"
+
+#: assets/src/admin/StatsPanel.tsx:803
 #: src/Integrations/Elementor/PlayerWidget.php:325
 msgid "Overlays"
 msgstr "Capas"
@@ -2095,9 +2201,18 @@ msgstr "Capas"
 msgid "Overlays and calls to action"
 msgstr "Capas y llamadas a la acción"
 
+#: assets/src/admin/StatsPanel.tsx:469
+#: assets/src/admin/StatsPanel.tsx:727
+msgid "Overlays pressed"
+msgstr "Capas pulsadas"
+
 #: assets/src/admin/panels.tsx:779
 msgid "PHP (works everywhere)"
 msgstr "PHP (funciona en todas partes)"
+
+#: assets/src/admin/StatsPanel.tsx:784
+msgid "Page"
+msgstr "Página"
 
 #. translators: 1: current page, 2: total pages.
 #: assets/src/admin/LeadsPanel.tsx:277
@@ -2128,6 +2243,10 @@ msgstr "Pausar"
 msgid "Pauses when the tab goes to the background or the picture scrolls away. It does not start again by itself."
 msgstr "Pausa cuando la pestaña pasa a segundo plano o la imagen se sale de la pantalla. No vuelve a arrancar sola."
 
+#: assets/src/admin/StatsPanel.tsx:480
+msgid "Per play"
+msgstr "Por reproducción"
+
 #: assets/src/editor/edit.tsx:2247
 msgid "Percentage of the track. 100 means when it ends."
 msgstr "Porcentaje de la pista. 100 significa al terminar."
@@ -2138,7 +2257,7 @@ msgstr "Porcentaje de la pista. Si retrocedes por delante, vuelve a salir."
 
 #: assets/src/admin/panels.tsx:1324
 #: src/Integrations/Elementor/VideoWidget.php:328
-#: src/Render/PlayerRenderer.php:984
+#: src/Render/PlayerRenderer.php:996
 msgid "Picture in picture"
 msgstr "Imagen en imagen"
 
@@ -2151,8 +2270,8 @@ msgid "Pill"
 msgstr "Píldora"
 
 #: src/Assets.php:276
-#: src/Render/PlayerRenderer.php:814
-#: src/Render/PlayerRenderer.php:1670
+#: src/Render/PlayerRenderer.php:826
+#: src/Render/PlayerRenderer.php:1682
 msgid "Play"
 msgstr "Reproducir"
 
@@ -2181,7 +2300,7 @@ msgstr "Reproducción"
 #. translators: %d: number of seconds
 #: assets/src/admin/PresetsPanel.tsx:336
 #: assets/src/admin/panels.tsx:1271
-#: src/Render/PlayerRenderer.php:1736
+#: src/Render/PlayerRenderer.php:1748
 msgid "Playback speed"
 msgstr "Velocidad de reproducción"
 
@@ -2201,6 +2320,11 @@ msgstr "Vista previa del reproductor"
 msgid "Playlist"
 msgstr "Lista de reproducción"
 
+#: assets/src/admin/StatsPanel.tsx:688
+#: assets/src/admin/StatsPanel.tsx:787
+msgid "Plays"
+msgstr "Reproducciones"
+
 #: src/Blocks/Variations.php:84
 msgid "Plays by itself, without sound, round and round, with no button over the picture. For a header or a product shot."
 msgstr "Se reproduce solo, sin sonido, en bucle, sin botón sobre la imagen. Para una cabecera o un plano de producto."
@@ -2210,6 +2334,18 @@ msgstr "Se reproduce solo, sin sonido, en bucle, sin botón sobre la imagen. Par
 #: src/Integrations/Elementor/PlayerWidget.php:365
 msgid "Plays for"
 msgstr "Se reproduce para"
+
+#: assets/src/admin/StatsPanel.tsx:759
+msgid "Plays on every player of the site, day by day."
+msgstr "Reproducciones de todos los reproductores del sitio, día a día."
+
+#: assets/src/admin/StatsPanel.tsx:735
+msgid "Plays per day"
+msgstr "Reproducciones por día"
+
+#: assets/src/admin/StatsPanel.tsx:610
+msgid "Plays, time watched, how far viewers got and which overlays they pressed, for every player on a published page. Counts only: nothing that identifies a viewer is stored."
+msgstr "Reproducciones, tiempo visto, hasta dónde llegaron los espectadores y qué capas pulsaron, para cada reproductor de una página publicada. Solo recuentos: no se guarda nada que identifique a quien ve."
 
 #: src/Blocks/Variations.php:32
 msgid "Podcast episode"
@@ -2242,6 +2378,7 @@ msgid "Preload"
 msgstr "Precarga"
 
 #: assets/src/admin/LeadsPanel.tsx:156
+#: assets/src/admin/StatsPanel.tsx:661
 msgid "Preparing…"
 msgstr "Preparando…"
 
@@ -2256,17 +2393,21 @@ msgstr "Preajuste"
 msgid "Preset name"
 msgstr "Nombre del preajuste"
 
-#: assets/src/admin/App.tsx:30
+#: assets/src/admin/App.tsx:32
 #: assets/src/admin/PresetsPanel.tsx:133
 msgid "Presets"
 msgstr "Preajustes"
+
+#: assets/src/admin/StatsPanel.tsx:477
+msgid "Presses"
+msgstr "Pulsaciones"
 
 #: assets/src/admin/panels.tsx:1112
 msgid "Preview"
 msgstr "Vista previa"
 
 #: assets/src/admin/LeadsPanel.tsx:272
-#: src/Render/PlaylistRenderer.php:207
+#: src/Render/PlaylistRenderer.php:208
 msgid "Previous"
 msgstr "Anterior"
 
@@ -2290,7 +2431,7 @@ msgstr "Los archivos protegidos viven en"
 msgid "Protected media"
 msgstr "Archivos protegidos"
 
-#: assets/src/admin/App.tsx:35
+#: assets/src/admin/App.tsx:37
 msgid "Protection"
 msgstr "Protección"
 
@@ -2316,7 +2457,7 @@ msgstr "La protección está activada"
 msgid "Qualities and languages"
 msgstr "Calidades e idiomas"
 
-#: src/Render/PlayerRenderer.php:966
+#: src/Render/PlayerRenderer.php:978
 msgid "Quality"
 msgstr "Calidad"
 
@@ -2410,7 +2551,7 @@ msgid "Resume from %s"
 msgstr "Continuar desde %s"
 
 #. translators: %d: number of seconds
-#: src/Render/PlayerRenderer.php:1723
+#: src/Render/PlayerRenderer.php:1735
 msgid "Rewind %d seconds"
 msgstr "Retroceder %d segundos"
 
@@ -2451,7 +2592,7 @@ msgstr "Redondea todo el reproductor."
 msgid "Run the check"
 msgstr "Hacer la comprobación"
 
-#: src/Render/PlayerRenderer.php:1270
+#: src/Render/PlayerRenderer.php:1282
 msgid "Runs on the published page."
 msgstr "Se ejecuta en la página publicada."
 
@@ -2463,7 +2604,7 @@ msgstr "Se hace fuera de la petición de la página, así que nadie espera por e
 msgid "SMTP & API → API keys."
 msgstr "SMTP y API → Claves API."
 
-#: assets/src/admin/App.tsx:195
+#: assets/src/admin/App.tsx:198
 msgid "Save changes"
 msgstr "Guardar los cambios"
 
@@ -2471,16 +2612,16 @@ msgstr "Guardar los cambios"
 msgid "Save connections"
 msgstr "Guardar conexiones"
 
-#: assets/src/admin/App.tsx:116
+#: assets/src/admin/App.tsx:119
 msgid "Saved, with changes:"
 msgstr "Guardado, con cambios:"
 
-#: assets/src/admin/App.tsx:117
+#: assets/src/admin/App.tsx:120
 #: assets/src/admin/IntegrationsPanel.tsx:348
 msgid "Saved."
 msgstr "Guardado."
 
-#: assets/src/admin/App.tsx:194
+#: assets/src/admin/App.tsx:197
 #: assets/src/admin/IntegrationsPanel.tsx:343
 msgid "Saving…"
 msgstr "Guardando…"
@@ -2489,8 +2630,8 @@ msgstr "Guardando…"
 msgid "Scrub previews"
 msgstr "Vista previa al arrastrar"
 
-#: src/Render/PlayerRenderer.php:1321
-#: src/Render/PlayerRenderer.php:1322
+#: src/Render/PlayerRenderer.php:1333
+#: src/Render/PlayerRenderer.php:1334
 msgid "Search the transcript"
 msgstr "Buscar en la transcripción"
 
@@ -2498,7 +2639,7 @@ msgstr "Buscar en la transcripción"
 #: assets/src/editor/edit.tsx:78
 #: src/Assets.php:294
 #: src/Integrations/Elementor/VideoWidget.php:324
-#: src/Render/PlayerRenderer.php:958
+#: src/Render/PlayerRenderer.php:970
 msgid "Search what is said"
 msgstr "Buscar en lo que se dice"
 
@@ -2510,7 +2651,7 @@ msgstr "Segundos de quietud durante la reproducción. Cero los deja siempre visi
 msgid "Secret"
 msgstr "Secreto"
 
-#: assets/src/admin/App.tsx:211
+#: assets/src/admin/App.tsx:214
 msgid "Sections"
 msgstr "Secciones"
 
@@ -2518,7 +2659,7 @@ msgstr "Secciones"
 msgid "Sections of a page built around a player."
 msgstr "Secciones de página construidas alrededor de un reproductor."
 
-#: src/Render/PlayerRenderer.php:734
+#: src/Render/PlayerRenderer.php:746
 msgid "Seek"
 msgstr "Avanzar"
 
@@ -2564,7 +2705,7 @@ msgid "Server-side waveform generation is unavailable on this host."
 msgstr "La generación de ondas en el servidor no está disponible en este alojamiento."
 
 #: src/Admin/Dashboard.php:57
-#: src/Render/PlayerRenderer.php:976
+#: src/Render/PlayerRenderer.php:988
 msgid "Settings"
 msgstr "Ajustes"
 
@@ -2612,6 +2753,10 @@ msgstr "Mostrarlo entero"
 #: assets/src/editor/edit.tsx:219
 msgid "Show artist"
 msgstr "Mostrar el artista"
+
+#: assets/src/admin/StatsPanel.tsx:434
+msgid "Show as a table"
+msgstr "Ver como tabla"
 
 #: src/Integrations/Elementor/PlayerWidget.php:284
 msgid "Show at (percent of playback)"
@@ -2677,7 +2822,7 @@ msgstr "Solo se muestra a quien tiene la sesión iniciada, y solo el suyo, movi�
 msgid "Shown only to somebody signed in, and only their own. It moves every few seconds, so a screen recording carries the name of whoever made it. Picture-in-picture is turned off with it."
 msgstr "Solo se muestra a quien tiene la sesión iniciada, y solo el suyo. Se mueve cada pocos segundos, así una grabación de pantalla lleva el nombre de quien la hizo. Con él se desactiva la imagen dentro de imagen."
 
-#: src/Render/PlayerRenderer.php:1527
+#: src/Render/PlayerRenderer.php:1539
 msgid "Sign in"
 msgstr "Iniciar sesión"
 
@@ -2811,7 +2956,7 @@ msgstr "Empezar también en silencio"
 
 #. translators: %s: a time such as 12:40
 #: src/Assets.php:319
-#: src/Render/PlaylistRenderer.php:189
+#: src/Render/PlaylistRenderer.php:190
 msgid "Start over"
 msgstr "Empezar de nuevo"
 
@@ -2820,13 +2965,22 @@ msgstr "Empezar de nuevo"
 msgid "Starts at"
 msgstr "Empieza en"
 
+#: assets/src/admin/App.tsx:38
+#: assets/src/admin/StatsPanel.tsx:608
+msgid "Statistics"
+msgstr "Estadísticas"
+
 #: assets/src/admin/PresetsPanel.tsx:467
 #: assets/src/editor/edit.tsx:209
 #: src/Integrations/Elementor/AudioWidget.php:142
 msgid "Stick to the edge while scrolling"
 msgstr "Fijar al borde al desplazarse"
 
-#: src/Render/PlayerRenderer.php:1590
+#: assets/src/admin/StatsPanel.tsx:444
+msgid "Still watching"
+msgstr "Seguían viendo"
+
+#: src/Render/PlayerRenderer.php:1602
 msgid "Stop following"
 msgstr "Dejar de seguir"
 
@@ -2870,7 +3024,7 @@ msgstr "Pistas de subtítulos"
 #: assets/src/editor/edit.tsx:1794
 #: src/Integrations/Elementor/VideoWidget.php:208
 #: src/Integrations/Elementor/VideoWidget.php:320
-#: src/Render/PlayerRenderer.php:939
+#: src/Render/PlayerRenderer.php:951
 msgid "Subtitles"
 msgstr "Subtítulos"
 
@@ -3039,6 +3193,7 @@ msgid "The file could not be moved into the protected directory."
 msgstr "No se pudo meter el archivo en el directorio protegido."
 
 #: assets/src/admin/LeadsPanel.tsx:147
+#: assets/src/admin/StatsPanel.tsx:652
 msgid "The file could not be prepared. Reload the page and try again."
 msgstr "No se pudo preparar el archivo. Recarga la página y vuelve a intentarlo."
 
@@ -3186,19 +3341,24 @@ msgstr "El servicio respondió con el estado %d."
 msgid "The service did not answer with subtitles."
 msgstr "El servicio no respondió con subtítulos."
 
-#: assets/src/admin/App.tsx:58
+#: assets/src/admin/App.tsx:61
 msgid "The settings could not be loaded."
 msgstr "No se pudieron cargar los ajustes."
 
 #. translators: %s: the reason the site gave.
-#: assets/src/admin/App.tsx:137
+#: assets/src/admin/App.tsx:140
 msgid "The settings could not be saved."
 msgstr "No se pudieron guardar los ajustes."
 
 #. translators: %s: the reason the site gave.
-#: assets/src/admin/App.tsx:132
+#: assets/src/admin/App.tsx:135
 msgid "The settings could not be saved: %s"
 msgstr "No se pudieron guardar los ajustes: %s"
+
+#. translators: %s: a share of the viewers, as 64%.
+#: assets/src/admin/StatsPanel.tsx:427
+msgid "The share of viewers still watching at each point of the media."
+msgstr "La proporción de espectadores que seguía viendo en cada punto del contenido."
 
 #: src/Protection/SelfCheck.php:124
 msgid "The site’s own certificate"
@@ -3207,6 +3367,10 @@ msgstr "El certificado del propio sitio"
 #: assets/src/editor/subtitle-tools.tsx:344
 msgid "The sound is sent to the service set up under Imagina Player → Integrations, and the subtitles it writes are saved to the media library. It takes a few minutes for a long recording; you can keep editing."
 msgstr "El sonido se envía al servicio configurado en Imagina Player → Integraciones, y los subtítulos que escribe se guardan en la biblioteca de medios. Una grabación larga tarda unos minutos; puedes seguir editando."
+
+#: assets/src/admin/StatsPanel.tsx:565
+msgid "The statistics could not be loaded."
+msgstr "No se pudieron cargar las estadísticas."
 
 #: assets/src/editor/subtitle-tools.tsx:169
 msgid "The subtitles could not be saved to the media library."
@@ -3323,6 +3487,10 @@ msgstr "Esta dirección no es algo que el reproductor pueda mostrar. Admite enla
 msgid "This browser cannot measure audio."
 msgstr "Este navegador no puede medir audio."
 
+#: assets/src/admin/StatsPanel.tsx:344
+msgid "This could not be loaded."
+msgstr "No se pudo cargar."
+
 #: src/Rest/PeaksController.php:1517
 msgid "This file is already being measured. Try again in a minute."
 msgstr "Este archivo ya se está midiendo. Inténtalo de nuevo en un minuto."
@@ -3419,6 +3587,10 @@ msgstr "Atar cada enlace a la red del visitante"
 msgid "Time"
 msgstr "Tiempo"
 
+#: assets/src/admin/StatsPanel.tsx:692
+msgid "Time watched"
+msgstr "Tiempo visto"
+
 #: assets/src/admin/PresetsPanel.tsx:311
 msgid "Times"
 msgstr "Tiempos"
@@ -3443,6 +3615,10 @@ msgstr "Título"
 #: assets/src/editor/edit.tsx:71
 msgid "Title and artist"
 msgstr "Título y artista"
+
+#: assets/src/admin/StatsPanel.tsx:797
+msgid "To the end"
+msgstr "Hasta el final"
 
 #: src/Rest/LeadController.php:189
 #: src/Rest/StreamController.php:85
@@ -3473,7 +3649,7 @@ msgstr "Arriba a la derecha"
 msgid "Track %d"
 msgstr "Pista %d"
 
-#: assets/src/admin/App.tsx:34
+#: assets/src/admin/App.tsx:36
 #: assets/src/admin/panels.tsx:981
 msgid "Track details"
 msgstr "Detalles de la pista"
@@ -3496,7 +3672,7 @@ msgid "Transcribing…"
 msgstr "Transcribiendo…"
 
 #: assets/src/editor/subtitle-tools.tsx:317
-#: src/Render/PlayerRenderer.php:1320
+#: src/Render/PlayerRenderer.php:1332
 msgid "Transcript"
 msgstr "Transcripción"
 
@@ -3546,6 +3722,10 @@ msgstr "Quitar el silencio"
 #: assets/src/editor/edit.tsx:1385
 msgid "Unset uses the preset’s height."
 msgstr "Sin poner usa la altura del preajuste."
+
+#: assets/src/admin/StatsPanel.tsx:828
+msgid "Untitled"
+msgstr "Sin título"
 
 #: assets/src/editor/edit.tsx:540
 msgid "Upload a video, pick one from your media library, or paste a YouTube or Vimeo address, an MP4, or an HLS stream (.m3u8)."
@@ -3620,7 +3800,7 @@ msgstr "Vertical (9:16)"
 msgid "Very large"
 msgstr "Muy grande"
 
-#: assets/src/admin/App.tsx:33
+#: assets/src/admin/App.tsx:35
 #: assets/src/admin/PresetsPanel.tsx:185
 #: src/Integrations/Elementor/VideoWidget.php:66
 msgid "Video"
@@ -3695,20 +3875,24 @@ msgstr "Vimeo señaló una imagen en %s, un dominio en el que este sitio no conf
 #: assets/src/editor/edit.tsx:74
 #: src/Integrations/Elementor/AudioWidget.php:132
 #: src/Integrations/Elementor/VideoWidget.php:314
-#: src/Render/PlayerRenderer.php:1769
+#: src/Render/PlayerRenderer.php:1781
 msgid "Volume"
 msgstr "Volumen"
 
 #. translators: %s: YouTube or Vimeo.
-#: src/Render/PlayerRenderer.php:1391
+#: src/Render/PlayerRenderer.php:1403
 msgid "Watch this video on %s"
 msgstr "Ver este vídeo en %s"
 
 #. translators: 1: lessons watched, 2: lessons in the course.
 #: src/Assets.php:302
-#: src/Render/PlaylistRenderer.php:264
+#: src/Render/PlaylistRenderer.php:265
 msgid "Watched"
 msgstr "Vista"
+
+#: assets/src/admin/StatsPanel.tsx:712
+msgid "Watched to the end"
+msgstr "Vistos hasta el final"
 
 #: assets/src/editor/edit.tsx:1158
 #: src/Integrations/Elementor/VideoWidget.php:162
@@ -3740,7 +3924,7 @@ msgstr "Altura de la onda"
 msgid "Waveform, mirrored"
 msgstr "Onda, reflejada"
 
-#: assets/src/admin/App.tsx:32
+#: assets/src/admin/App.tsx:34
 #: assets/src/admin/panels.tsx:430
 #: assets/src/editor/playlist.tsx:317
 msgid "Waveforms"
@@ -3845,6 +4029,10 @@ msgstr "Para quién es, qué sabrá hacer al terminar y cuánto dura."
 msgid "Who may play a protected file"
 msgstr "Quién puede reproducir un archivo protegido"
 
+#: assets/src/admin/StatsPanel.tsx:379
+msgid "Who was still watching"
+msgstr "Quién seguía viendo"
+
 #. translators: %s: the rule's name.
 #: src/Integrations/Elementor/PlayerWidget.php:369
 msgid "Whoever can edit the page always sees the player. Everybody else who may not play it gets no part of the file: no address, no subtitles, no download."
@@ -3901,11 +4089,11 @@ msgstr "X-Sendfile (Apache/LiteSpeed)"
 msgid "YouTube and Vimeo"
 msgstr "YouTube y Vimeo"
 
-#: src/Rest/SettingsController.php:565
+#: src/Rest/SettingsController.php:577
 msgid "Your track title"
 msgstr "El título de tu pista"
 
-#: src/Rest/SettingsController.php:548
+#: src/Rest/SettingsController.php:560
 msgid "Your video title"
 msgstr "El título de tu vídeo"
 
@@ -4049,6 +4237,10 @@ msgstr "copia"
 #: src/Blocks/Variations.php:71
 msgid "course"
 msgstr "curso"
+
+#: assets/src/admin/StatsPanel.tsx:944
+msgid "days"
+msgstr "días"
 
 #. translators: %d: percentage downloaded.
 #: assets/src/admin/panels.tsx:264
@@ -4216,12 +4408,12 @@ msgstr "se pidieron demasiados archivos en los últimos minutos; espera un poco 
 msgid "video"
 msgstr "vídeo"
 
-#: src/Render/PlayerRenderer.php:1110
+#: src/Render/PlayerRenderer.php:1122
 msgid "you@example.com"
 msgstr "tu@ejemplo.com"
 
 #. translators: %s: what was typed.
-#: src/Rest/SettingsController.php:343
+#: src/Rest/SettingsController.php:355
 msgid "“%s” is not a colour, so a brand colour was left as it was."
 msgstr "«%s» no es un color, así que un color de marca se quedó como estaba."
 

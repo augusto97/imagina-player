@@ -35,6 +35,8 @@ $playlist = $plugin . 'build/imagina-playlist.js';
 $course   = $plugin . 'build/imagina-course.js';
 $extras   = $plugin . 'build/imagina-extras.js';
 $sources  = $plugin . 'build/imagina-sources.js';
+$stats    = $plugin . 'build/imagina-stats.js';
+$compute  = $plugin . 'build/imagina-compute.js';
 $hls   = $plugin . 'build/imagina-hls.js';
 $css   = $plugin . 'build/style-frontend.css';
 
@@ -90,6 +92,8 @@ $budgets = array(
 	'the more menu'    => array( $extras, 7.0 ),
 	// Fetched only by a video with other qualities or soundtracks.
 	'the qualities and soundtracks' => array( $sources, 6.0 ),
+	// Fetched by a player's first play, on a site that counts plays.
+	'the play counter' => array( $stats, 3.0 ),
 	/*
 	 * Raised from 24.0 in 1.15.0, deliberately. The stylesheet gained a block
 	 * that restates, for the elements this player owns, the handful of
@@ -223,6 +227,10 @@ $optional = array(
 	'imagina-player-course:'  => $course,
 	'imagina-player:bookmarks:' => $extras,
 	'imagina-player:quality'    => $sources,
+	'sendBeacon'                => $stats,
+	// Why a waveform was not measured: words only needed once the chunk that
+	// measures has loaded, and half a kilobyte of the core until 1.56.0.
+	'cross-origin reads'        => $compute,
 );
 
 foreach ( $video_only as $needle ) {

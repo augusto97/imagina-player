@@ -23,6 +23,8 @@ export interface PlayerConfig {
 	protectedId: number;
 	/** Present only for video. Its absence is what keeps the video chunk unloaded. */
 	video?: VideoConfig;
+	/** Present only when the site counts plays. */
+	stats?: StatsConfig;
 	/** Present only when a player carries one, for the same reason. */
 	layers?: Array< {
 		type: 'cta' | 'bar' | 'email';
@@ -31,6 +33,14 @@ export interface PlayerConfig {
 		skip: boolean;
 		list: string;
 	} >;
+}
+
+/** What a player reports its plays as, signed by the page. */
+export interface StatsConfig {
+	key: string;
+	post: number;
+	token: string;
+	title: string;
 }
 
 /**
@@ -176,6 +186,8 @@ export interface TrackChange {
 	poster?: string;
 	/** What this track's remembered state is keyed on; stable across loads. */
 	layerKey?: string;
+	/** How this track's plays are reported, when the site counts them. */
+	stats?: StatsConfig;
 	/** Set for a video a provider serves, which is switched by name. */
 	provider?: string;
 	providerId?: string;

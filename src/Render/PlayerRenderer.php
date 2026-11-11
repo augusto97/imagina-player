@@ -29,6 +29,7 @@ use ImaginaPlayer\Player\Config;
 use ImaginaPlayer\Player\Skins;
 use ImaginaPlayer\Player\Video;
 use ImaginaPlayer\Settings;
+use ImaginaPlayer\Stats\Stats;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -279,6 +280,17 @@ final class PlayerRenderer {
 				 */
 				$client_config['video']['providerBare'] = ! empty( $video_config['provider_bare'] );
 			}
+		}
+
+		/*
+		 * Counting plays: the player's name, the page it is on, and a token
+		 * for the pair, so the report can be told from an invented one. Absent
+		 * when counting is off, which keeps the counting chunk unloaded.
+		 */
+		$stats = '' === $client_config['layerKey'] ? null : Stats::client( (string) $client_config['layerKey'], Stats::current_post() );
+
+		if ( null !== $stats ) {
+			$client_config['stats'] = $stats + array( 'title' => $track->title );
 		}
 
 		/**

@@ -316,6 +316,18 @@ final class SettingsController {
 			}
 		}
 
+		if ( isset( $incoming['stats'] ) && is_array( $incoming['stats'] ) ) {
+			$stats = self::with_current( $incoming['stats'], $settings['stats'] );
+
+			$settings['stats']['enabled']   = ! empty( $stats['enabled'] );
+			$settings['stats']['keep_days'] = max( 30, min( 3650, (int) ( $stats['keep_days'] ?? 400 ) ) );
+
+			$note(
+				(int) ( $stats['keep_days'] ?? 400 ) !== (int) $settings['stats']['keep_days'],
+				__( 'How long statistics are kept was held between 30 days and ten years.', 'imagina-player' )
+			);
+		}
+
 		if ( isset( $incoming['advanced'] ) && is_array( $incoming['advanced'] ) ) {
 			$advanced = self::with_current( $incoming['advanced'], $settings['advanced'] );
 
@@ -693,6 +705,7 @@ final class SettingsController {
 				'max_client_mb'     => (int) round( (int) $peaks['max_client_bytes'] / MB_IN_BYTES ),
 			),
 			'protection' => $settings['protection'],
+			'stats'      => $settings['stats'],
 			'advanced'   => $settings['advanced'],
 			'branding'   => $settings['branding'],
 			'schema'     => array(

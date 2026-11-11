@@ -33,6 +33,11 @@
 	--ip-warn: #b45309;
 	--ip-radius: 10px;
 
+	/* The one series a statistics chart draws. The brand cyan, deepened
+	   until it clears 3:1 on white and keeps enough colour not to read as
+	   grey: checked, not chosen by eye. */
+	--ip-chart: #0891b2;
+
 	margin: 0 0 0 -20px;
 	background: var(--ip-ground);
 	color: var(--ip-ink);
@@ -947,6 +952,10 @@
 /* Captured emails. A table, not a dashboard: the questions are who signed up,
    from which offer, and can I have it as a spreadsheet. */
 .imgpa-tablewrap {
+	/* The containing block for the screen-reader labels in the header,
+	   which are positioned absolutely: without it they escape the scroll
+	   and widen the whole page on a phone. */
+	position: relative;
 	overflow-x: auto;
 	margin-top: 14px;
 	border: 1px solid var(--ip-line);
@@ -1043,3 +1052,162 @@
 	color: #d63638;
 	font-size: 12px;
 }
+
+/* Statistics. Figures first, then one chart, then the table they come from;
+   a player's own audience opens under its row. The same exception as above:
+   these headings and cells only add to what the shared rules set. */
+/* stylelint-disable no-descending-specificity */
+.imgpa-stats {
+	margin-top: 16px;
+	transition: opacity 0.15s;
+}
+
+/* A new period loads over the old one, dimmed, rather than blanking it. */
+.imgpa-stats.is-loading {
+	opacity: 0.55;
+}
+
+.imgpa-stats h3,
+.imgpa-stats__detail h3 {
+	margin: 22px 0 6px;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.imgpa-tiles {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+	gap: 10px;
+	margin: 0;
+}
+
+.imgpa-tile {
+	padding: 12px 14px;
+	border: 1px solid var(--ip-line);
+	border-radius: 8px;
+	background: var(--ip-surface);
+}
+
+.imgpa-tile dt {
+	font-size: 12px;
+	color: var(--ip-muted);
+}
+
+.imgpa-tile dd {
+	margin: 4px 0 0;
+	font-size: 24px;
+	font-weight: 600;
+	line-height: 1.2;
+	color: var(--ip-ink);
+}
+
+.imgpa-chart {
+	position: relative;
+	width: 100%;
+	min-height: 40px;
+}
+
+.imgpa-chart svg {
+	display: block;
+	overflow: visible;
+	touch-action: pan-y;
+}
+
+.imgpa-chart svg:focus-visible {
+	outline: 2px solid var(--ip-accent-strong);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.imgpa-chart__grid {
+	stroke: var(--ip-line);
+	stroke-width: 1;
+	shape-rendering: crispedges;
+}
+
+.imgpa-chart__tick {
+	font-size: 11px;
+	fill: var(--ip-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.imgpa-chart__line {
+	fill: none;
+	stroke: var(--ip-chart);
+	stroke-width: 2;
+	stroke-linejoin: round;
+	stroke-linecap: round;
+}
+
+.imgpa-chart__area {
+	fill: var(--ip-chart);
+	opacity: 0.1;
+}
+
+.imgpa-chart__cross {
+	stroke: var(--ip-muted);
+	stroke-width: 1;
+	shape-rendering: crispedges;
+}
+
+.imgpa-chart__dot {
+	fill: var(--ip-chart);
+	stroke: var(--ip-surface);
+	stroke-width: 2;
+}
+
+.imgpa-chart__tip {
+	position: absolute;
+	top: 0;
+	transform: translate(-50%, -100%);
+	display: flex;
+	flex-direction: column;
+	padding: 6px 10px;
+	border: 1px solid var(--ip-line);
+	border-radius: 6px;
+	background: var(--ip-surface);
+	box-shadow: 0 2px 8px rgb(17 24 39 / 8%);
+	pointer-events: none;
+	white-space: nowrap;
+	font-size: 12px;
+}
+
+/* Divisions rather than `strong` and `span`, which the colour reset at the
+   top of the file outranks. */
+.imgpa-chart__value {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--ip-ink);
+}
+
+.imgpa-chart__label {
+	color: var(--ip-muted);
+}
+
+.imgpa-table--stats .is-num {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+.imgpa-table__detail > td {
+	padding: 4px 16px 18px;
+	background: var(--ip-ground);
+}
+
+.imgpa-stats__detail .imgpa-table {
+	min-width: 0;
+	margin-top: 6px;
+	background: var(--ip-surface);
+}
+
+.imgpa-stats__table {
+	margin-top: 8px;
+}
+
+.imgpa-stats__table summary {
+	cursor: pointer;
+	color: var(--ip-accent-strong);
+	font-size: 12px;
+}
+
+/* stylelint-enable no-descending-specificity */

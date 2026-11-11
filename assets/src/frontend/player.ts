@@ -100,9 +100,9 @@ export class Player {
 
 	readonly media: PlayerMedia;
 
-	private readonly config: PlayerConfig;
+	readonly config: PlayerConfig;
 
-	private readonly runtime: RuntimeData;
+	readonly runtime: RuntimeData;
 
 	private readonly playButton: HTMLButtonElement | null;
 
@@ -174,6 +174,15 @@ export class Player {
 
 	/** Set once the layer chunk has loaded; absent unless one was configured. */
 	private layers: { destroy: () => void } | null = null;
+
+	/**
+	 * Counting plays, once the first one has loaded it: null while it
+	 * loads, so a second play does not load it twice.
+	 */
+	private audience?: {
+		switchTrack: () => void;
+		destroy: () => void;
+	} | null;
 
 	/**
 	 * @param root    The player element.
@@ -673,12 +682,12 @@ export class Player {
 			return null;
 		}
 
-		let computePeaks: typeof import('./compute').computePeaks;
+		let compute: typeof import('./compute');
 
 		try {
-			( { computePeaks } = await import(
+			compute = await import(
 				/* webpackChunkName: "imagina-compute" */ './compute'
-			) );
+			);
 		} catch {
 			return null;
 		}
@@ -687,7 +696,7 @@ export class Player {
 			return null;
 		}
 
-		const computed = await computePeaks(
+		const computed = await compute.computePeaks(
 			this.media.currentSrc || this.media.src,
 			this.config.resolution,
 			{
@@ -697,31 +706,8 @@ export class Player {
 		);
 
 		if ( typeof computed === 'string' ) {
-			/*
-			 * Say why once, in the console: a silent flat waveform is otherwise
-			 * impossible to explain from the outside.
-			 *
-			 * Each reason has a different answer, and they used to share one
-			 * message. A file on a bucket that refuses cross-origin reads was
-			 * reported as too large, which sends somebody to the size settings
-			 * to fix a permissions problem — and nothing they do there can help.
-			 */
-			const said: Partial< Record< string, string > > = {
-				'too-large':
-					'this file is too large to analyse in the browser. Generate the waveform on the server (Settings → Imagina Player → Waveforms), or from the block editor.',
-				unreachable:
-					'the browser was not allowed to read this file, so it cannot measure it. It is on another domain that does not permit cross-origin reads. Generate the waveform from the block editor instead — that route goes through this site.',
-				timeout:
-					'reading this file took too long, so no waveform was measured.',
-				'unknown-size':
-					'the server did not say how big this file is, so it was not downloaded to be measured. Generate the waveform on the server or from the block editor.',
-			};
-
-			const why = said[ computed ];
-
-			if ( why && window.console ) {
-				window.console.info( 'Imagina Player: ' + why );
-			}
+			// Why, said once in the console, by the chunk that knows.
+			compute.explain( computed );
 
 			return null;
 		}
@@ -822,6 +808,23 @@ export class Player {
 		// Colours can change after a theme swap or a dark-mode toggle.
 		this.applyWaveColors();
 		this.waveform?.resize();
+
+		/*
+		 * Counting how this player is watched, loaded by its first play —
+		 * and not at all when the site does not count, or before anybody
+		 * presses play.
+		 */
+		if ( this.config.stats && undefined === this.audience ) {
+			this.audience = null;
+
+			import( /* webpackChunkName: "imagina-stats" */ './stats' )
+				.then( ( { Audience } ) => {
+					this.audience = this.destroyed
+						? null
+						: new Audience( this );
+				} )
+				.catch( () => undefined );
+		}
 	}
 
 	private onPause(): void {
@@ -943,7 +946,7 @@ export class Player {
 		}
 	}
 
-	private duration(): number {
+	duration(): number {
 		if (
 			Number.isFinite( this.media.duration ) &&
 			this.media.duration > 0
@@ -1414,6 +1417,8 @@ export class Player {
 	loadTrack( track: TrackChange, play = true ): void {
 		this.savePosition();
 		this.hideResume();
+		this.audience?.switchTrack();
+		this.config.stats = track.stats;
 
 		this.config.peaksKey = track.peaksKey ?? '';
 		this.config.duration = track.duration ?? 0;
@@ -1504,6 +1509,7 @@ export class Player {
 		this.unbindPositionSaving?.();
 		this.sticky?.destroy();
 		this.layers?.destroy();
+		this.audience?.destroy();
 		this.resizeObserver?.disconnect();
 		this.video?.destroy();
 		// A provider stand-in holds an iframe and a polling timer; neither

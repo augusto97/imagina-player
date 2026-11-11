@@ -129,6 +129,20 @@ final class Clip {
 	}
 
 	/**
+	 * Every player in blocks already parsed, in the order they appear.
+	 *
+	 * @param array<int, array<string, mixed>> $blocks
+	 * @return array<int, array<string, mixed>>
+	 */
+	public static function all( array $blocks ): array {
+		$found = array();
+
+		self::collect( $blocks, $found );
+
+		return $found;
+	}
+
+	/**
 	 * @param array<int, array<string, mixed>>  $blocks
 	 * @param array<int, array<string, mixed>> $found
 	 */

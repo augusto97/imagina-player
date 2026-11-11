@@ -295,3 +295,72 @@ export function testIntegration(
 		data: { service },
 	} ) as Promise< { ok: boolean; message: string } >;
 }
+
+/** One player on one page, over a period. */
+export interface StatsRow {
+	key: string;
+	post: number;
+	title: string;
+	duration: number;
+	plays: number;
+	seconds: number;
+	complete: number;
+	click: number;
+	page: string;
+	pageUrl: string;
+}
+
+export interface StatsSummary {
+	enabled: boolean;
+	rows: StatsRow[];
+	/** Day (Y-m-d, UTC) => plays, every day of the period present. */
+	daily: Record< string, number >;
+}
+
+export interface StatsDetail {
+	/** Share of viewings still going at each hundredth of the file, 0 to 1. */
+	retention: number[];
+	reach: number[];
+	/** Layer index => presses. */
+	clicks: Record< string, number >;
+	layers: Array< { type: string; label: string } >;
+}
+
+export function loadStats( days: number ): Promise< StatsSummary > {
+	return apiFetch( {
+		path: `/imagina-player/v1/stats?days=${ days }`,
+	} ) as Promise< StatsSummary >;
+}
+
+export function loadStatsDetail(
+	key: string,
+	post: number,
+	days: number
+): Promise< StatsDetail > {
+	return apiFetch( {
+		path: `/imagina-player/v1/stats/detail?key=${ encodeURIComponent(
+			key
+		) }&post=${ post }&days=${ days }`,
+	} ) as Promise< StatsDetail >;
+}
+
+export async function downloadStats( days: number ): Promise< void > {
+	const response = ( await apiFetch( {
+		path: `/imagina-player/v1/stats/export?days=${ days }`,
+		parse: false,
+	} ) ) as Response;
+
+	if ( ! response.ok ) {
+		throw new Error( 'export-' + response.status );
+	}
+
+	const url = URL.createObjectURL( await response.blob() );
+	const link = document.createElement( 'a' );
+
+	link.href = url;
+	link.download = 'imagina-player-stats.csv';
+	document.body.appendChild( link );
+	link.click();
+	link.remove();
+	window.setTimeout( () => URL.revokeObjectURL( url ), 1000 );
+}

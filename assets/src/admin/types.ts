@@ -53,6 +53,10 @@ export interface SettingsPayload {
 		delivery: string;
 		xaccel_prefix: string;
 	};
+	stats: {
+		enabled: boolean;
+		keep_days: number;
+	};
 	advanced: {
 		load_frontend_css: boolean;
 		lazy_init: boolean;

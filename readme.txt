@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.55.0
+Stable tag: 1.56.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -216,6 +216,14 @@ Imagina Player → Integrations — OpenAI's Whisper, Groq or your own Whisper
 server — and use "Transcribe automatically". Chapters can be pasted as they
 appear in a YouTube description.
 
+= Does it count plays? =
+
+Yes, under Imagina Player → Statistics: plays, time watched, how much of each
+video or episode was watched, where viewers stopped, and which overlays they
+pressed, for every player and page, with a CSV download. It is counted on your
+own site, and only as totals: no cookie is set and nothing that identifies a
+viewer is kept.
+
 = Is there a sleep timer? =
 
 Yes, in the audio player's **More** menu, the three dots beside the volume,
@@ -253,6 +261,44 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.56.0 =
+A new feature: how players are watched, counted on the site itself.
+
+* New: **Statistics**, under Imagina Player → Statistics. For every player on
+  a published page: its plays, the time watched, the average share of it
+  watched, how many watched it to the end (nine tenths of its length), and how
+  many times each overlay was pressed — over the last 7, 30, 90 or 365 days,
+  with the plays per day drawn as a chart. **Details** on a row draws how many
+  were still watching at each point of the video or episode, says when half had
+  stopped, and lists the overlays by the names the block gives them, with
+  their presses per play. **Download as CSV** gives the period as a
+  spreadsheet.
+* Counts, not people: a row is a player, a page and a day. No address, cookie
+  or account is kept with the counts, so there is nothing personal to keep,
+  export or erase. The limit on reports below remembers a network for ten
+  minutes, by a hash of the first part of its address, never the address.
+  Days older than the period set under Counting — 400 days to begin with — are
+  deleted once a day, and counting can be switched off there. Uninstalling the
+  plugin removes the statistics with everything else.
+* How it arrives: a player loads the counter, 2.5 KB, on its first play, and
+  sends one small report when the page is closed or hidden, when a playlist
+  moves to another track, when the media ends, and every five minutes of
+  watching. Plays in the block editor, on the settings screen and in
+  Elementor's or the Customizer's preview are not counted.
+* Security: a report carries a token the page was drawn with, for that player
+  on that page, so a script cannot invent players or pages to count; what a
+  report says is held to what it could mean — a play is one play, time watched
+  no more than the file could have played — and one network can send 300
+  reports in ten minutes. Only administrators can read the statistics.
+* Changed: the core bundle is 8.7 KB gzipped, down from 8.9, with the
+  counter's hook in it. The console's explanations of why a waveform could not
+  be measured in the browser moved to the chunk that measures, which is the
+  only one that needs them.
+* Fixed: on a phone, the tables under Emails and Statistics widened the whole
+  settings screen by about two hundred pixels. The hidden labels in their
+  header escaped the box that scrolls.
+* Changed: the strings for all of this translated into Spanish.
 
 = 1.55.0 =
 A new feature: subtitles and chapters made without leaving the block.

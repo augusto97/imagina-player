@@ -146,6 +146,8 @@ function imagina_player_uninstall_site(): void {
 		// Where captured addresses are sent, with the API keys, and how it went.
 		'imagina_player_integrations',
 		'imagina_player_integration_log',
+		// The version of the statistics tables.
+		'imagina_player_stats_db',
 	) as $option ) {
 		delete_option( $option );
 	}
@@ -159,8 +161,9 @@ function imagina_player_uninstall_site(): void {
 		delete_metadata( 'user', 0, 'imagina_player_progress', '', true );
 	}
 
-	// Waveforms cached against external URLs, and the captured addresses.
-	foreach ( array( 'imagina_player_peaks', 'imagina_player_leads' ) as $table ) {
+	// Waveforms cached against external URLs, the captured addresses, and the
+	// play counts.
+	foreach ( array( 'imagina_player_peaks', 'imagina_player_leads', 'imagina_player_stats', 'imagina_player_stats_media' ) as $table ) {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- own tables, fixed names.
 		$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . $table );
 	}
@@ -169,7 +172,7 @@ function imagina_player_uninstall_site(): void {
 	 * Transients, by prefix. There is no core call for "every transient starting
 	 * with", and waiting for them to expire leaves rows behind for up to a month.
 	 */
-	foreach ( array( 'imgp_vimeo_thumb_', 'imagina_peaks_queued_', 'imagina_peaks_lock_', 'imagina_peaks_running_', 'imgp_lead_', 'imgp_stream_net_', 'imgp_proxy_user_' ) as $prefix ) {
+	foreach ( array( 'imgp_vimeo_thumb_', 'imagina_peaks_queued_', 'imagina_peaks_lock_', 'imagina_peaks_running_', 'imgp_lead_', 'imgp_stream_net_', 'imgp_proxy_user_', 'imgp_stats_net_', 'imgp_tx_' ) as $prefix ) {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- uninstall, runs once.
 		$wpdb->query(
 			$wpdb->prepare(
@@ -185,6 +188,7 @@ function imagina_player_uninstall_site(): void {
 	wp_clear_scheduled_hook( 'imagina_player_vimeo_thumbnail' );
 	wp_clear_scheduled_hook( 'imagina_player_deliver_lead' );
 	wp_clear_scheduled_hook( 'imagina_player_transcribe' );
+	wp_clear_scheduled_hook( 'imagina_player_purge_stats' );
 }
 
 if ( is_multisite() && function_exists( 'get_sites' ) ) {

@@ -13,6 +13,7 @@ import {
 import { IntegrationsPanel } from './IntegrationsPanel';
 import { LeadsPanel } from './LeadsPanel';
 import { PresetsPanel } from './PresetsPanel';
+import { StatsPanel } from './StatsPanel';
 import type { Preset, SettingsPayload } from './types';
 
 type Section =
@@ -22,6 +23,7 @@ type Section =
 	| 'video'
 	| 'metadata'
 	| 'protection'
+	| 'stats'
 	| 'leads'
 	| 'integrations'
 	| 'advanced';
@@ -33,6 +35,7 @@ const SECTIONS: Array< { id: Section; label: string } > = [
 	{ id: 'video', label: __( 'Video', 'imagina-player' ) },
 	{ id: 'metadata', label: __( 'Track details', 'imagina-player' ) },
 	{ id: 'protection', label: __( 'Protection', 'imagina-player' ) },
+	{ id: 'stats', label: __( 'Statistics', 'imagina-player' ) },
 	{ id: 'leads', label: __( 'Emails', 'imagina-player' ) },
 	{ id: 'integrations', label: __( 'Integrations', 'imagina-player' ) },
 	{ id: 'advanced', label: __( 'Advanced', 'imagina-player' ) },
@@ -262,6 +265,9 @@ export function App() {
 							settings={ settings }
 							onChange={ patch }
 						/>
+					) }
+					{ 'stats' === section && (
+						<StatsPanel settings={ settings } onChange={ patch } />
 					) }
 					{ 'leads' === section && <LeadsPanel /> }
 					{ 'integrations' === section && <IntegrationsPanel /> }

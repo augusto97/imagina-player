@@ -42,6 +42,39 @@ export type ComputeFailure =
 	/** Nobody asked: the caller set a budget of nothing. */
 	| 'not-attempted';
 
+/**
+ * Say why a waveform was not measured, once, in the console: a silent flat
+ * waveform is otherwise impossible to explain from the outside.
+ *
+ * Each reason has a different answer, and they used to share one message. A
+ * file on a bucket that refuses cross-origin reads was reported as too large,
+ * which sends somebody to the size settings to fix a permissions problem —
+ * and nothing they do there can help.
+ *
+ * Here rather than in the player, which only needs these words after this
+ * chunk has loaded: they were half a kilobyte of every page's core.
+ *
+ * @param reason Why nothing was measured.
+ */
+export function explain( reason: ComputeFailure ): void {
+	const said: Partial< Record< ComputeFailure, string > > = {
+		'too-large':
+			'this file is too large to analyse in the browser. Generate the waveform on the server (Settings → Imagina Player → Waveforms), or from the block editor.',
+		unreachable:
+			'the browser was not allowed to read this file, so it cannot measure it. It is on another domain that does not permit cross-origin reads. Generate the waveform from the block editor instead — that route goes through this site.',
+		timeout:
+			'reading this file took too long, so no waveform was measured.',
+		'unknown-size':
+			'the server did not say how big this file is, so it was not downloaded to be measured. Generate the waveform on the server or from the block editor.',
+	};
+
+	const why = said[ reason ];
+
+	if ( why && window.console ) {
+		window.console.info( 'Imagina Player: ' + why );
+	}
+}
+
 export interface ComputeResult {
 	peaks: Float32Array;
 	duration: number;

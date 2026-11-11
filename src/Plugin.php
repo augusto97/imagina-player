@@ -77,6 +77,7 @@ final class Plugin {
 			'blocks'      => new BlockRegistrar(),
 			'patterns'    => new Blocks\Patterns(),
 			'clips'       => new Share\ClipShare(),
+			'stats'       => new Stats\Stats(),
 			'shortcodes'  => new PlayerShortcode(),
 			'timestamps'  => new TimeShortcode(),
 			'dashboard'   => new Dashboard(),
@@ -184,6 +185,7 @@ final class Plugin {
 		 */
 		PeaksRepository::install_table();
 		LeadRepository::install_table();
+		Stats\StatsRepository::install_table();
 
 		update_option( 'imagina_player_version', VERSION, false );
 		update_option( self::MARKER_OPTION, self::current_marker(), true );
@@ -197,7 +199,7 @@ final class Plugin {
 	 * them runs the upgrade once and the comparison is one autoloaded read.
 	 */
 	private static function current_marker(): string {
-		return VERSION . '|' . PeaksRepository::DB_VERSION . '|' . LeadRepository::DB_VERSION;
+		return VERSION . '|' . PeaksRepository::DB_VERSION . '|' . LeadRepository::DB_VERSION . '|' . Stats\StatsRepository::DB_VERSION;
 	}
 
 	public static function on_activation(): void {
@@ -209,6 +211,7 @@ final class Plugin {
 
 		PeaksRepository::install_table();
 		LeadRepository::install_table();
+		Stats\StatsRepository::install_table();
 
 		// Front-end assets are versioned by plugin version; flush page caches that key on rewrite rules.
 		flush_rewrite_rules();

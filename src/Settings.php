@@ -269,6 +269,15 @@ final class Settings {
 				'delivery'      => 'php',
 				'xaccel_prefix' => '/imagina-protected/',
 			),
+			/*
+			 * Counting plays. On by default: nothing that identifies a viewer
+			 * is stored, only how many plays each player had and how far they
+			 * got, so there is nothing for a visitor to consent to.
+			 */
+			'stats'      => array(
+				'enabled'   => true,
+				'keep_days' => 400,
+			),
 		);
 	}
 

@@ -27,6 +27,7 @@ use ImaginaPlayer\Player\Config;
 use ImaginaPlayer\Player\CourseProgress;
 use ImaginaPlayer\Protection\Vault;
 use ImaginaPlayer\Settings;
+use ImaginaPlayer\Stats\Stats;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -290,8 +291,11 @@ final class PlaylistRenderer {
 		$key    = (string) $item['peaksKey'];
 		$record = '' === $key ? null : $this->peaks->get( $key );
 
+		$layer_key = substr( md5( (string) $item['stableKey'] ), 0, 12 );
+		$stats     = Stats::client( $layer_key, Stats::current_post() );
+
 		$track = array(
-			'layerKey'    => substr( md5( (string) $item['stableKey'] ), 0, 12 ),
+			'layerKey'    => $layer_key,
 			'src'         => $item['src'],
 			'title'       => $item['title'],
 			'artist'      => $item['artist'],
@@ -302,6 +306,10 @@ final class PlaylistRenderer {
 			'peaks'       => is_array( $record ) ? (string) $record['peaks'] : '',
 			'protectedId' => Vault::is_protected( $item['id'] ) ? $item['id'] : 0,
 		);
+
+		if ( null !== $stats ) {
+			$track['stats'] = $stats + array( 'title' => (string) $item['title'] );
+		}
 
 		// A provider's video is switched through the provider's own player,
 		// which needs its name for the video rather than an address.
