@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.57.0
+Stable tag: 1.57.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -261,6 +261,14 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.57.1 =
+* Fixed: on a phone, a video paused part-way with subtitles on had the play
+  disc in the middle sitting on top of the line being read — which is what
+  people pause for. On a small picture, with subtitles on, the disc now steps
+  aside once the video has started; the bar's play button is right there and
+  a tap on the picture still plays it. A larger picture, with room for both,
+  keeps the disc.
 
 = 1.57.0 =
 A visual audit of every player, list, overlay and screen, in a browser at a

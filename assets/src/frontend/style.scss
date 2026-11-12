@@ -1619,6 +1619,21 @@
 		width: 1.5rem;
 		height: 1.5rem;
 	}
+
+	/*
+	 * Paused part-way with subtitles on, on a small picture, the line being
+	 * read is in the middle — lifted over the bar — and the disc sat on top
+	 * of it. People pause to read it, so the words win: the disc steps
+	 * aside, the bar's play button is right there, and the picture itself
+	 * still answers a tap.
+	 */
+	.imgp--video.is-started:not(.is-playing):has(.imgp__vbtn--captions.is-active) .imgp__bigplay {
+
+		&::before,
+		svg {
+			opacity: 0;
+		}
+	}
 }
 
 /* On a touch screen the disc in the middle is the pause button too, shown

@@ -114,6 +114,13 @@ $players = array(
 		)
 	),
 	'stacked' => $renderer->render( array( 'src' => 'https://cdn.example.com/v.mp4', 'title' => 'Clase 3: Iluminación', 'skin' => 'stacked' ) ),
+	'phone'   => $renderer->render(
+		array(
+			'src'    => 'https://cdn.example.com/v.mp4',
+			'title'  => 'Clase',
+			'tracks' => array( array( 'src' => 'https://cdn.example.com/es.vtt', 'srclang' => 'es', 'label' => 'Español' ) ),
+		)
+	),
 );
 
 $items  = array();
@@ -131,7 +138,7 @@ foreach ( $players as $name => $html ) {
 $page = <<<HTML
 <!doctype html><html><head><meta charset="utf-8">
 <link rel="stylesheet" href="./style-frontend.css">
-<style>html,body{margin:0;font:16px/1.5 sans-serif}.w{width:645px;margin:0 0 30px}#course{width:1000px}</style>
+<style>html,body{margin:0;font:16px/1.5 sans-serif}.w{width:645px;margin:0 0 30px}#course{width:1000px}#phone{width:360px}</style>
 </head><body>
 <script>
 window.addEventListener('error', function (e) {
@@ -222,6 +229,26 @@ function box(el) { var r = el.getBoundingClientRect(); return { l: r.left, r: r.
 	await wait(300);
 	out.wave = { narrow: narrow, wide: Math.round(box(canvas).w), pixels: canvas.width };
 
+	// Paused part-way with subtitles on, on a phone-sized picture: the disc
+	// steps aside for the line being read, and the picture still answers.
+	var phone = document.querySelector('#phone .imgp');
+	var big = phone.querySelector('.imgp__bigplay');
+	var disc = function () { return getComputedStyle(big, '::before').opacity; };
+	out.discBefore = disc();
+	phone.classList.add('is-started');
+	var cc = phone.querySelector('.imgp__vbtn--captions');
+	if (cc) { cc.classList.add('is-active'); }
+	await wait(50);
+	out.discReading = disc();
+	out.tapTarget = Math.round(box(big).w) + 'x' + Math.round(box(big).h);
+	big.click();
+	await wait(50);
+	out.resumed = !phone.querySelector('video').paused;
+	document.querySelector('#phone').style.width = '645px';
+	phone.querySelector('video').pause();
+	await wait(300);
+	out.discWide = disc();
+
 	// On a phone: the card's cover shrinks and the title takes two lines.
 	document.querySelector('#card').style.width = '360px';
 	await wait(300);
@@ -291,6 +318,9 @@ if ( ! is_array( $out ) || isset( $out['error'] ) ) {
 	check( 'a course’s progress runs across the top, not beside the video', $out['progress']['width'] >= $out['progress']['list'] - 2 && true === $out['progress']['above'], json_encode( $out['progress'] ) );
 	check( 'the stacked bar leaves its title out where it would be cut to a word', 'none' === $out['stackedTitle'] );
 	check( 'a waveform grows with its player', 360 === $out['wave']['narrow'] && 645 === $out['wave']['wide'] && $out['wave']['pixels'] >= 645, json_encode( $out['wave'] ) );
+	check( 'paused with subtitles on a small picture, the disc steps aside for the words', '0' === (string) $out['discReading'] && '0' !== (string) $out['discBefore'], $out['discBefore'] . ' → ' . $out['discReading'] );
+	check( 'and the picture still answers a tap', true === $out['resumed'] && '360x203' === $out['tapTarget'], $out['tapTarget'] );
+	check( 'on a picture with room for both, the disc stays', '0' !== (string) $out['discWide'], (string) $out['discWide'] );
 	check( 'on a phone the card’s cover makes room', 72 === $out['phoneCover'], $out['phoneCover'] . 'px' );
 	check( 'and the title takes two lines rather than one cut short', 2 === $out['phoneTitleLines'], (string) $out['phoneTitleLines'] );
 }
