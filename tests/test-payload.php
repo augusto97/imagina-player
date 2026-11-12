@@ -146,7 +146,15 @@ $budgets = array(
 	 * audio buttons' own rule — and still four tenths of a kilobyte on the
 	 * wire, which is why the compressed budget below moves with it.
 	 */
-	'the stylesheet'  => array( $css, 58.0 ),
+	/*
+	 * And to 60.0 in 1.57.0, for the visual audit: the one-line skins' times
+	 * either side of the line, the call to action's filled button, the
+	 * current card marked on its picture, a course's progress across the top,
+	 * subtitles with a floor on a phone, two-line titles on a phone, and the
+	 * rules that put the card's small cover and a caption's size back past
+	 * the ones that had been winning. A quarter of a kilobyte on the wire.
+	 */
+	'the stylesheet'  => array( $css, 60.0 ),
 );
 
 foreach ( $budgets as $label => $budget ) {
@@ -186,8 +194,8 @@ $compressed = array(
 	// the pair that has to hold.
 	// Raised to 6.5 in 1.43.0, 7.5 in 1.44.0, 8.0 in 1.45.0 and 10.0 in
 	// 1.48.0, with the raw budget above; see there for what to do about it.
-	// And to 10.5 in 1.51.0, with the raw one.
-	'the stylesheet'  => array( $css, 10.5 ),
+	// And to 10.5 in 1.51.0, with the raw one, and to 11.0 in 1.57.0.
+	'the stylesheet'  => array( $css, 11.0 ),
 );
 
 foreach ( $compressed as $label => $budget ) {

@@ -327,7 +327,8 @@ $expected = array(
 	'Subtitles',
 	'Chapters and previews',
 	'Overlays and calls to action',
-	'Advanced',
+	// Not "Advanced", which is the name of the panel WordPress adds itself.
+	'File download',
 );
 
 check(

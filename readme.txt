@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.56.0
+Stable tag: 1.57.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -261,6 +261,45 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.57.0 =
+A visual audit of every player, list, overlay and screen, in a browser at a
+desktop's width and a phone's, on a light page and a dark one.
+
+* Fixed: **Compact** and **Pill** had two dark time badges laid over the ends
+  of their line, which on a desktop left about ten pixels of bar between them.
+  The times now sit either side of the line, the line takes the room between
+  — and the pointer aims at the line it sees.
+* Fixed: a **waveform stayed the width it was first measured**: turning a
+  phone, widening a window or floating the player along the foot of the page
+  left it half the width of its player. It now follows the player, and the
+  floating one stops short of its close button.
+* Fixed: on a phone the **Card** skin kept its desktop cover beside a title
+  cut to "Episo…" — the rule meant to shrink it had never won. The cover is
+  smaller there, and on a phone every audio title takes up to two lines
+  rather than one cut short.
+* Fixed: with every control switched on, a title was squeezed to "Episodio
+  12: C…". It keeps room to be read and the controls take a line of their
+  own.
+* Changed: a **call to action's button** is filled, in the light one of the
+  accent and its label colour, rather than an outline on the near-black
+  panel — the email gate's button and a locked video's offer too. "Sign in",
+  when it is the only way through, is a button rather than a footnote.
+* Fixed: a **course's progress** sat in a narrow column beside the video in
+  the layout with the lessons beside it; it runs across the top.
+* Changed: the **slider's** arrow at an end it cannot go past is hidden rather
+  than faded over the first card, and the **playing card** in a grid, rail or
+  slider is ringed on its picture rather than boxed in with its title.
+* Fixed: **subtitles on a phone** were eight or nine pixels high, a twentieth
+  of the picture's height; each size now has a floor.
+* Fixed: a **caption over the picture** took the size of a call to action's
+  headline, a third of the height of a small video.
+* Fixed: the **Stacked** video bar showed its title cut to "Clase 3:…" on a
+  picture the width of a blog column; it shows it where there is room.
+* Changed: the unplayed part of a plain progress bar is visible on white.
+* Changed: in the block editor, a few settings stood flush against the label
+  below them, and the video block had two panels called "Advanced" — its own
+  is now **File download**.
 
 = 1.56.0 =
 A new feature: how players are watched, counted on the site itself.

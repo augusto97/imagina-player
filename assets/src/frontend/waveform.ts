@@ -140,8 +140,16 @@ export class Waveform {
 			canvas.height = Math.round( rect.height * dpr );
 		}
 
-		this.canvas.style.width = `${ rect.width }px`;
-		this.canvas.style.height = `${ rect.height }px`;
+		/*
+		 * The box's own size, written on the element so a theme's
+		 * `canvas { height: auto }` cannot take over — as a share, not in
+		 * pixels. In pixels it froze the canvas at the width it was first
+		 * measured: the waveform stayed half the width of a player that had
+		 * grown, when a phone was turned, a window widened or the player
+		 * floated along the foot of the page.
+		 */
+		this.canvas.style.width = '100%';
+		this.canvas.style.height = '100%';
 
 		this.paintBars();
 		this.composite( true );

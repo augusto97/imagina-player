@@ -34,6 +34,12 @@
 	   being a sheet of brand colour with a brand-coloured button on top. */
 	--imgp-layer-bg: color-mix(in srgb, var(--imgp-accent) 14%, #0e1116);
 
+	/* A button on that surface. The factory accent is as dark as the panel,
+	   so its button is the light one with the accent for a label; the server
+	   sets these for an accent of the site's own, by how light it is. */
+	--imgp-cta: var(--imgp-on-accent);
+	--imgp-on-cta: var(--imgp-accent);
+
 	position: relative;
 	display: block;
 	box-sizing: border-box;
@@ -56,6 +62,8 @@
 	--imgp-accent: #e5e7eb;
 	--imgp-on-accent: #111827;
 	--imgp-wave: #4b5563;
+	--imgp-cta: var(--imgp-accent);
+	--imgp-on-cta: var(--imgp-on-accent);
 }
 
 .imgp__media {
@@ -98,7 +106,10 @@
 	height: 6px;
 	transform: translateY(-50%);
 	border-radius: 999px;
-	background: color-mix(in srgb, var(--imgp-wave) 25%, transparent);
+
+	/* At a quarter of the factory waveform grey the unplayed line was all but
+	   white on white: the bar skin looked like a player with no bar. */
+	background: color-mix(in srgb, var(--imgp-wave) 70%, transparent);
 	overflow: hidden;
 }
 
@@ -255,6 +266,13 @@
 	   title ellipsises instead. */
 	flex: 1 1 0;
 	min-width: 0;
+}
+
+/* Beside the play button the title keeps room to be read: with every control
+   switched on it was squeezed to "Episodio 12: C…". At this width the
+   controls move to a line of their own instead. */
+.imgp__bar > .imgp__meta {
+	min-width: min(9rem, 40%);
 }
 
 .imgp__artist {
@@ -475,7 +493,9 @@
 	background: var(--imgp-bg, #fff);
 	box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.18);
 
+	/* Short of the close button in the corner, which it ran under. */
 	.imgp__scrubber {
+		width: calc(100% - 2.75rem);
 		height: 2.25rem;
 	}
 
@@ -502,8 +522,14 @@
 		--imgp-gap: 0.5rem;
 	}
 
+	/* Two lines rather than one cut short: on a phone a single line kept
+	   "Episodio 12: Cómo …" of a title worth reading. */
 	.imgp__title {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
 		font-size: 1.05rem;
+		white-space: normal;
 	}
 
 	.imgp__play {
@@ -525,9 +551,12 @@
 		padding: 0.6rem;
 	}
 
-	.imgp--skin-card > .imgp__thumb img {
-		width: 4rem;
-		height: 4rem;
+	/* With the player's own class twice: the skin's rule further down the
+	   file has the same weight, came later and always won, so on a phone the
+	   cover kept its desktop size and left the title "Episo…". */
+	.imgp.imgp--skin-card > .imgp__thumb img {
+		width: 4.5rem;
+		height: 4.5rem;
 	}
 
 	/* With four controls there is no width left for a title worth reading, so
@@ -620,16 +649,22 @@
 	row-gap: 0.5rem;
 	min-width: 0;
 
+	/* The title and the line share what the controls leave, the line a
+	   little more: it is the part that has to be long enough to aim at. */
 	.imgp__meta {
-		flex: 0 1 auto;
+		flex: 1 1 0;
 		max-width: 40%;
-		min-width: 0;
+		min-width: min(8rem, 30%);
 	}
 
 	.imgp__scrubber {
-		flex: 1 1 8rem;
+		flex: 1.4 1 11rem;
 		width: auto;
-		min-width: 4rem;
+		min-width: 8rem;
+	}
+
+	.imgp__volume-slider {
+		width: 4rem;
 	}
 
 	.imgp__controls {
@@ -684,15 +719,6 @@
 		width: 2.75rem;
 		height: 2.75rem;
 	}
-
-	.imgp__time {
-		top: 50%;
-		transform: translateY(-50%);
-	}
-
-	.imgp__time--current {
-		transform: translate(0, -50%);
-	}
 }
 
 /* A rounded bar meant to sit inline with body copy. The far end has more room
@@ -735,17 +761,36 @@
 		height: 2.25rem;
 		border-radius: 50%;
 	}
+}
+
+/* The one-line skins: the times either side and the line between them. They
+   were two dark badges laid over the ends of the line, which on a desktop
+   left a stub of bar about ten pixels long between them. The pointer maths
+   go by the seek area, so it is inset with the line. */
+:is(.imgp--skin-compact, .imgp--skin-pill) {
+
+	.imgp__scrubber:has(.imgp__time) :is(.imgp__track, .imgp__seek) {
+		inset-inline: 3.25rem;
+	}
 
 	.imgp__time {
 		top: 50%;
-		font-size: 0.7rem;
-		color: var(--imgp-text);
+		padding: 0;
+		font-size: 0.75rem;
+		color: var(--imgp-meta);
 		background: none;
 		transform: translateY(-50%);
 	}
 
+	/* Stays put: the playhead already shows where it is. */
 	.imgp__time--current {
-		transform: translate(0, -50%);
+		left: auto !important;
+		right: calc(100% + 0.5rem);
+	}
+
+	.imgp__time--total {
+		right: auto;
+		left: calc(100% + 0.5rem);
 	}
 }
 
@@ -1503,7 +1548,16 @@
 
 @container (max-width: 36rem) {
 
-	.imgp--video .imgp__volume-slider,
+	.imgp--video .imgp__volume-slider {
+		display: none;
+	}
+}
+
+/* The stacked bar's title, only where it has room to be read: on a picture
+   the width of a blog column it was "Clase 3:…" between the clock and the
+   speed. */
+@container (max-width: 48rem) {
+
 	.imgp--video.imgp--skin-stacked .imgp__bar .imgp__meta {
 		display: none;
 	}
@@ -1719,18 +1773,22 @@
 	   site's colours everywhere except the words a viewer reads for the whole
 	   length of the video. */
 	color: var(--imgp-cc, #fff);
-	font-size: 1em;
+
+	/* The browser sizes cues from the picture's height, a twentieth of it:
+	   on a phone that is eight or nine pixels, subtitles nobody can read.
+	   Each size keeps a floor. */
+	font-size: max(1em, 15px);
 }
 
 /* Size and backing come from the settings screen. A solid band is the only
    one that holds up over any footage; a shadow is lighter but fails over a
    bright, busy shot, which is why it is a choice and not the default. */
 .imgp--cc-small .imgp__media::cue {
-	font-size: 0.8em;
+	font-size: max(0.8em, 13px);
 }
 
 .imgp--cc-large .imgp__media::cue {
-	font-size: 1.3em;
+	font-size: max(1.3em, 18px);
 }
 
 .imgp--ccbg-shadow .imgp__media::cue {
@@ -1741,7 +1799,7 @@
 /* One more size, because "medium or large" is not a range: a lecture watched
    on a phone and a film watched on a television want different answers. */
 .imgp--cc-xlarge .imgp__media::cue {
-	font-size: 1.6em;
+	font-size: max(1.6em, 21px);
 }
 
 .imgp--ccbg-none .imgp__media::cue {
@@ -2014,20 +2072,16 @@
 	padding: 0.6rem 1.15rem;
 
 	/*
-	 * An edge, because the panel behind it is near-black on purpose and so is
-	 * the factory accent. Measured, the button's own colour separated from the
-	 * panel at 1.43:1 — the label was perfectly readable and the button was not
-	 * visible as a thing to press at all, just words floating over the video.
-	 * A hairline in the label's own colour keeps whatever accent the site chose
-	 * and still draws the shape.
+	 * Filled with whichever of the accent and its label colour is the light
+	 * one. The panel behind it is near-black on purpose, and so is the
+	 * factory accent: a hairline round an accent-coloured button made it
+	 * legible but not the thing to press — an outline is what a secondary
+	 * button looks like, and this is the only button there is.
 	 */
-	border: 1px solid var(--imgp-on-accent, #fff);
+	border: 0;
 	border-radius: 0.4rem;
-	background: var(--imgp-accent);
-
-	/* Worked out from the accent on the server rather than assumed to be white,
-	   because a bright accent with a white label is unreadable. */
-	color: var(--imgp-on-accent, #fff);
+	background: var(--imgp-cta);
+	color: var(--imgp-on-cta);
 	font: inherit;
 	font-size: 0.92rem;
 	font-weight: 600;
@@ -2281,8 +2335,20 @@
 	box-shadow: inset -4px 0 0 var(--imgp-accent);
 }
 
-.imgp-playlist--grid .imgp-playlist__item.is-current .imgp-playlist__link {
-	box-shadow: inset 0 0 0 2px var(--imgp-accent);
+/* A card is marked on its picture, with a ring, and by the weight of its
+   title — not by a box round the whole card, which sat tight on the words
+   under it and made the playing one look like a selected form field. */
+:is(.imgp-playlist--grid, .imgp-playlist--rail, .imgp-playlist--slider) .imgp-playlist__item.is-current {
+
+	.imgp-playlist__link {
+		background: none;
+	}
+
+	.imgp-playlist__cover {
+		border-radius: 0.35rem;
+		outline: 2px solid var(--imgp-accent);
+		outline-offset: 2px;
+	}
 }
 
 .imgp-playlist__art {
@@ -2436,6 +2502,16 @@
 	line-height: 1.4 !important;
 }
 
+/* A caption over the picture is a label, not a headline: the size above
+   made "En directo" a third of the height of a small video. */
+.imgp .imgp__layer--text .imgp__layer-title {
+	font-size: 1rem !important;
+}
+
+.imgp .imgp__layer--text .imgp__layer-text {
+	font-size: inherit !important;
+}
+
 /* Beside audio, and in the bar, the same three are a size smaller — restated
    after the rules above so they still win, exactly as they do without a
    theme in the way. */
@@ -2560,14 +2636,14 @@
 }
 
 /* The one button with padding of its own, restated so the blanket reset above
-   cannot flatten it — including its border, which on a near-black panel is
+   cannot flatten it — including its fill, which on a near-black panel is
    what makes it read as a button rather than as floating words. */
 .imgp .imgp__layer-button {
 	padding: 0.6rem 1.15rem !important;
-	border: 1px solid var(--imgp-on-accent, #fff) !important;
+	border: 0 !important;
 	border-radius: 0.4rem !important;
-	background-color: var(--imgp-accent) !important;
-	color: var(--imgp-on-accent, #fff) !important;
+	background-color: var(--imgp-cta) !important;
+	color: var(--imgp-on-cta) !important;
 	text-decoration: none !important;
 }
 
@@ -2709,7 +2785,7 @@
 .imgp-playlist.imgp-playlist--grid .imgp-playlist__item.is-current .imgp-playlist__link,
 .imgp-playlist.imgp-playlist--rail .imgp-playlist__item.is-current .imgp-playlist__link,
 .imgp-playlist.imgp-playlist--slider .imgp-playlist__item.is-current .imgp-playlist__link {
-	box-shadow: inset 0 0 0 2px var(--imgp-accent) !important;
+	box-shadow: none !important;
 }
 
 .imgp-playlist button.imgp-playlist__nav {
@@ -3327,6 +3403,19 @@ button.imgp-time:focus-visible {
 	inset-inline-end: 0.15rem;
 }
 
+/* On a phone-sized picture a caption at full size covered a third of it. */
+@container (max-width: 30rem) {
+
+	.imgp__layer--text {
+		padding: 0.35rem 0.55rem;
+		font-size: 0.75rem;
+	}
+
+	.imgp .imgp__layer--text .imgp__layer-title {
+		font-size: 0.85rem !important;
+	}
+}
+
 /* A picture over the picture, as a share of its width. */
 .imgp__layer--image {
 	width: var(--imgp-layer-width, 25%);
@@ -3745,7 +3834,7 @@ button.imgp-time:focus-visible {
 	align-items: flex-start;
 }
 
-.imgp-playlist--side .imgp-playlist__heading {
+.imgp-playlist--side :is(.imgp-playlist__heading, .imgp-playlist__progress) {
 	flex: 1 0 100%;
 }
 
@@ -3867,11 +3956,6 @@ button.imgp-time:focus-visible {
 	font-size: 0.85rem;
 }
 
-.imgp-playlist--rail .imgp-playlist__item.is-current .imgp-playlist__link,
-.imgp-playlist--slider .imgp-playlist__item.is-current .imgp-playlist__link {
-	box-shadow: inset 0 0 0 2px var(--imgp-accent);
-}
-
 /* The slider's arrows, over the ends of the row and level with the middle of
    the pictures — worked out from the card's width, which sets the picture's
    height, rather than a share of a strip whose height changes with how many
@@ -3892,15 +3976,18 @@ button.imgp-time:focus-visible {
 	color: #fff;
 	cursor: pointer;
 	box-shadow: 0 4px 14px rgb(0 0 0 / 30%);
+	transition: opacity 0.2s;
 }
 
 .imgp-playlist__nav[hidden] {
 	display: none;
 }
 
+/* Gone at the end it cannot go past. A faded disc over the first card read
+   as a glitch, not as a button with nothing to do. */
 .imgp-playlist__nav:disabled {
-	opacity: 0.35;
-	cursor: default;
+	opacity: 0;
+	pointer-events: none;
 }
 
 .imgp-playlist__nav .imgp__icon {
@@ -4091,8 +4178,24 @@ button.imgp-time:focus-visible {
 	text-decoration: none !important;
 }
 
-.imgp--video .imgp__locked-button {
-	box-shadow: 0 0 0 1px rgb(255 255 255 / 25%) !important;
+/* Signing in, when that is the only way through, is the button; beside a
+   button to buy, it stays the quieter link. */
+.imgp .imgp__locked-login:only-child {
+	padding: 0.5rem 1.1rem !important;
+	border-radius: 0.4rem;
+	background: var(--imgp-accent);
+	color: var(--imgp-on-accent, #fff) !important;
+	font-weight: 600;
+	text-decoration: none !important;
+}
+
+/* Over the picture the offer sits on a dark veil, like a call to action
+   does, and takes the same light button. */
+.imgp--video .imgp__locked-button,
+.imgp--video .imgp__locked-login:only-child {
+	background: var(--imgp-cta) !important;
+	color: var(--imgp-on-cta) !important;
+	text-shadow: none;
 }
 
 .imgp .imgp__locked-login {

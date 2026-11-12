@@ -378,7 +378,6 @@ msgstr "Añade el suscriptor, o lo actualiza, y lo mete en los grupos indicados.
 
 #: assets/src/admin/App.tsx:41
 #: assets/src/admin/panels.tsx:1741
-#: assets/src/editor/edit.tsx:2673
 msgid "Advanced"
 msgstr "Avanzado"
 
@@ -386,7 +385,7 @@ msgstr "Avanzado"
 msgid "Also removes “Save video as” and casting the raw file to a device. It has no effect on a player that deliberately offers a download."
 msgstr "También quita «Guardar vídeo como» y enviar el archivo a un dispositivo. No afecta a un reproductor que ofrece la descarga a propósito."
 
-#: assets/src/editor/edit.tsx:2685
+#: assets/src/editor/edit.tsx:2687
 msgid "Also removes “Save video as” and casting the raw file. It has no effect on a player that deliberately offers a download."
 msgstr "También quita «Guardar vídeo como» y enviar el archivo original. No afecta a un reproductor que ofrece la descarga a propósito."
 
@@ -590,7 +589,7 @@ msgstr "Entre %1$s y %2$s."
 msgid "Big play button over the picture"
 msgstr "Botón grande de reproducir sobre la imagen"
 
-#: assets/src/editor/edit.tsx:2681
+#: assets/src/editor/edit.tsx:2683
 #: src/Integrations/Elementor/VideoWidget.php:332
 msgid "Block the browser download"
 msgstr "Bloquear la descarga del navegador"
@@ -1222,6 +1221,10 @@ msgstr "Archivo"
 #: assets/src/editor/sources-panel.tsx:82
 msgid "File address"
 msgstr "Dirección del archivo"
+
+#: assets/src/editor/edit.tsx:2675
+msgid "File download"
+msgstr "Descarga del archivo"
 
 #: assets/src/admin/panels.tsx:673
 msgid "Files you mark as protected move out of the public uploads folder and are served through a signed link that expires. Mark a file on its own screen in the media library."

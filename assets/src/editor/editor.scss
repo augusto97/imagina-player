@@ -75,6 +75,25 @@
 	font-size: 12px;
 }
 
+/* --- Spacing in the sidebar ----------------------------------------------
+   The inspector spaces a control from the next one only when the two are
+   siblings. A control wrapped in a group, a row of a list and the buttons
+   under a list each ended flush against the next label. */
+
+.imgp-editor__group,
+.imgp-editor__row,
+.imgp-editor__tools {
+	margin-bottom: 16px;
+}
+
+.imgp-editor__tools {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	margin-top: 8px;
+}
+
 /* --- Preview ------------------------------------------------------------ */
 
 .imgp-editor__preview {

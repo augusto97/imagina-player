@@ -130,6 +130,16 @@ final class Config {
 
 		if ( $plain_accent ) {
 			unset( $vars['--imgp-on-accent'] );
+		} else {
+			/*
+			 * A call to action sits on a near-black panel, so its button takes
+			 * the accent only when the accent stands out from black; a dark
+			 * one swaps with its label, and the button is the light one with
+			 * the brand colour for its words.
+			 */
+			$light                  = self::luminance( (string) $config['accent'] ) >= 0.1;
+			$vars['--imgp-cta']    = $light ? 'var(--imgp-accent)' : 'var(--imgp-on-accent)';
+			$vars['--imgp-on-cta'] = $light ? 'var(--imgp-on-accent)' : 'var(--imgp-accent)';
 		}
 
 		return $vars;
@@ -159,6 +169,17 @@ final class Config {
 	 * @param string $color A CSS colour, ideally `#rgb` or `#rrggbb`.
 	 */
 	public static function readable_on( string $color ): string {
+		return self::luminance( $color ) > 0.179 ? '#111111' : '#ffffff';
+	}
+
+	/**
+	 * Relative luminance, 0 for black to 1 for white, by the WCAG definition.
+	 * Anything that is not `#rgb` or `#rrggbb` counts as black, so it is
+	 * treated as the dark colour most players use.
+	 *
+	 * @param string $color A CSS colour.
+	 */
+	public static function luminance( string $color ): float {
 		$hex = ltrim( trim( $color ), '#' );
 
 		if ( 3 === strlen( $hex ) ) {
@@ -166,7 +187,7 @@ final class Config {
 		}
 
 		if ( 6 !== strlen( $hex ) || ! ctype_xdigit( $hex ) ) {
-			return '#ffffff';
+			return 0.0;
 		}
 
 		$channels = array();
@@ -179,9 +200,7 @@ final class Config {
 				: pow( ( $value + 0.055 ) / 1.055, 2.4 );
 		}
 
-		$luminance = 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2];
-
-		return $luminance > 0.179 ? '#111111' : '#ffffff';
+		return 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2];
 	}
 
 	/**

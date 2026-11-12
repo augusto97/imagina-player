@@ -2,7 +2,7 @@
 # This file is distributed under the same licence as the Imagina Player plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: Imagina Player 1.56.0\n"
+"Project-Id-Version: Imagina Player 1.57.0\n"
 "Report-Msgid-Bugs-To: https://github.com/augusto97/imagina-player\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -373,7 +373,6 @@ msgstr ""
 
 #: assets/src/admin/App.tsx:41
 #: assets/src/admin/panels.tsx:1741
-#: assets/src/editor/edit.tsx:2673
 msgid "Advanced"
 msgstr ""
 
@@ -381,7 +380,7 @@ msgstr ""
 msgid "Also removes “Save video as” and casting the raw file to a device. It has no effect on a player that deliberately offers a download."
 msgstr ""
 
-#: assets/src/editor/edit.tsx:2685
+#: assets/src/editor/edit.tsx:2687
 msgid "Also removes “Save video as” and casting the raw file. It has no effect on a player that deliberately offers a download."
 msgstr ""
 
@@ -585,7 +584,7 @@ msgstr ""
 msgid "Big play button over the picture"
 msgstr ""
 
-#: assets/src/editor/edit.tsx:2681
+#: assets/src/editor/edit.tsx:2683
 #: src/Integrations/Elementor/VideoWidget.php:332
 msgid "Block the browser download"
 msgstr ""
@@ -1216,6 +1215,10 @@ msgstr ""
 #: assets/src/admin/panels.tsx:390
 #: assets/src/editor/sources-panel.tsx:82
 msgid "File address"
+msgstr ""
+
+#: assets/src/editor/edit.tsx:2675
+msgid "File download"
 msgstr ""
 
 #: assets/src/admin/panels.tsx:673

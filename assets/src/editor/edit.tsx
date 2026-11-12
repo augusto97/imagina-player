@@ -2668,9 +2668,11 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					setAttributes={ setAttributes }
 				/>
 
+				{ /* Not "Advanced": WordPress adds a panel of that name to
+				     every block, and two of them read as a mistake. */ }
 				{ isVideo && ! isProvider && (
 					<PanelBody
-						title={ __( 'Advanced', 'imagina-player' ) }
+						title={ __( 'File download', 'imagina-player' ) }
 						initialOpen={ false }
 					>
 						{ /* Not offered for a provider: the file is not on this
