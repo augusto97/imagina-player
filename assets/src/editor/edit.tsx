@@ -1596,7 +1596,10 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								? [
 										[
 											'accent',
-											__( 'Button', 'imagina-player' ),
+											__(
+												'Button background',
+												'imagina-player'
+											),
 											colour(
 												presetValues.accent,
 												'#1f2937'
@@ -1604,7 +1607,10 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 										],
 										[
 											'buttonIconColor',
-											__( 'Icon', 'imagina-player' ),
+											__(
+												'Icon colour',
+												'imagina-player'
+											),
 											readableOn(
 												colour(
 													attributes.accent ||

@@ -99,11 +99,15 @@ final class AudioWidget extends PlayerWidget {
 			$switches[ $attribute ] = self::label( $attribute, $label );
 		}
 
-		$this->tristate_controls( 'controls_section', __( 'Controls', 'imagina-player' ), $switches );
+		// A lone button has no controls to show and nothing to skip.
+		$this->tristate_controls( 'controls_section', __( 'Controls', 'imagina-player' ), $switches, array( 'skin!' => 'button' ) );
 
 		$this->start_controls_section(
 			'skip_section',
-			array( 'label' => __( 'Skipping', 'imagina-player' ) )
+			array(
+				'label'     => __( 'Skipping', 'imagina-player' ),
+				'condition' => array( 'skin!' => 'button' ),
+			)
 		);
 		$this->add_control( 'skip_seconds', array( 'label' => __( 'Skip by (seconds)', 'imagina-player' ), 'type' => Controls_Manager::NUMBER, 'min' => 1, 'max' => 120, 'default' => '' ) );
 		$this->end_controls_section();
@@ -167,11 +171,34 @@ final class AudioWidget extends PlayerWidget {
 			'buttonStyle'  => (string) ( $settings['button_style'] ?? 'filled' ),
 			'buttonLabel'  => (string) ( $settings['button_label'] ?? '' ),
 			'buttonIconColor' => (string) ( $settings['button_icon_color'] ?? '' ),
-			'accent'       => (string) ( $settings['accent'] ?? '' ),
+			'accent'       => self::accent_from( $settings ),
 			'borderRadius' => self::number_from( $settings['border_radius'] ?? '', 'px' ),
 			'skipSeconds'  => self::number_from( $settings['skip_seconds'] ?? '' ),
 			'layers'       => self::layers_from( $settings['layers'] ?? array() ),
 		) + self::access_from( $settings );
+	}
+
+	/**
+	 * The accent, which a lone button offers as "Button background". A button
+	 * drawn in 1.58.1, when the button took the accent control's colour,
+	 * keeps that colour until a background is chosen.
+	 *
+	 * @param array<string, mixed> $settings Widget settings.
+	 */
+	private static function accent_from( array $settings ): string {
+		if ( 'button' !== ( $settings['skin'] ?? '' ) ) {
+			return (string) ( $settings['accent'] ?? '' );
+		}
+
+		foreach ( array( 'button_color', 'accent', 'saved_accent' ) as $key ) {
+			$colour = $settings[ $key ] ?? '';
+
+			if ( is_string( $colour ) && '' !== $colour ) {
+				return $colour;
+			}
+		}
+
+		return '';
 	}
 
 	public function markup( array $settings ): string {

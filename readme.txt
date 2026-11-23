@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.58.1
+Stable tag: 1.58.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -233,6 +233,11 @@ square or a square, filled or an outline, in your colours, with words beside
 it such as "Listen live" if you want them. Nothing is loaded until it is
 pressed, and resuming a live stream rejoins the broadcast where it is now.
 
+To keep it floating in a corner of every screen, in Elementor set the widget's
+**Advanced → Position** to **Fixed** and give it an offset from the edges. The
+button keeps its size and colours there; under the pointer it lifts a little
+with a halo of its own colour.
+
 = Is there a sleep timer? =
 
 Yes, in the audio player's **More** menu, the three dots beside the volume,
@@ -270,6 +275,25 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.58.2 =
+The play-button-only skin, fixed in a corner, and under the pointer.
+
+* Fixed: a button placed in a box with no width of its own — Elementor's
+  **Position: Fixed**, a floating corner, an item in a row of a flex container
+  — lost its fill: it shrank to a sliver beside its icon, and a pill with words
+  was cut off after a letter. It keeps its size and colours wherever it is put.
+* New: a **hover effect**. Under the pointer the button lifts a little, with a
+  halo of its own colour; an outline fills in, its icon turning to the colour
+  that reads on it. Only where there is a pointer, so a tap on a phone leaves
+  nothing stuck on, and without the lift for anyone who asked for less motion.
+* New in Elementor: a **Button background** colour control, beside the icon's
+  colour. The button took its colour from the accent control further down,
+  which was not to be found; for this skin that control, the corner radius and
+  the Controls and Skipping sections are no longer shown. A button saved
+  before with an accent colour keeps it until a background is chosen.
+* Changed: in the block editor, the button's colours are called **Button
+  background** and **Icon colour**.
 
 = 1.58.1 =
 The play-button-only skin gets its own colours and look.

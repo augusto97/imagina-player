@@ -207,6 +207,26 @@ check( 'the video widget renders a video player for a YouTube address', str_cont
 $list_html = $list->render_to_string( array( 'items' => array( array( 'media' => array( 'id' => 77, 'url' => 'https://example.test/uploads/track.mp3' ), 'title' => 'One' ) ) ) );
 check( 'the playlist widget renders a playlist', str_contains( $list_html, 'imgp-playlist' ) );
 
+echo PHP_EOL . '# The play-button-only skin' . PHP_EOL;
+
+check( 'its background has a control of its own, beside the icon’s', 'color' === ( $audio_controls['button_color']['type'] ?? '' ) && array( 'skin' => 'button' ) === ( $audio_controls['button_color']['condition'] ?? null ) && 'Button background' === $audio_controls['button_color']['label'] && 'Icon colour' === ( $audio_controls['button_icon_color']['label'] ?? '' ) );
+$keys = array_keys( $audio_controls );
+check( 'placed before the icon’s', array_search( 'button_color', $keys, true ) + 1 === array_search( 'button_icon_color', $keys, true ) );
+check( 'and the accent and corner radius, which it does not use, are hidden', array( 'skin!' => 'button' ) === ( $audio_controls['accent']['condition'] ?? null ) && array( 'skin!' => 'button' ) === ( $audio_controls['border_radius']['condition'] ?? null ) );
+check( 'as are the controls and skipping, which it has none of', array( 'skin!' => 'button' ) === ( $audio_controls['controls_section']['condition'] ?? null ) && array( 'skin!' => 'button' ) === ( $audio_controls['skip_section']['condition'] ?? null ) );
+
+$radio  = array( 'source' => 'url', 'url' => array( 'url' => 'https://radio.example.test/live' ), 'title' => 'Radio' );
+$button = $audio->render_to_string( $radio + array( 'skin' => 'button', 'button_color' => '#7c3aed' ) );
+check( 'the background chosen is the button’s colour', str_contains( $button, 'imgp--skin-button' ) && str_contains( $button, '--imgp-accent:#7c3aed' ) );
+$both = $audio->render_to_string( $radio + array( 'skin' => 'button', 'button_color' => '#7c3aed', 'accent' => '#0e7490' ) );
+check( 'over an accent saved before', str_contains( $both, '--imgp-accent:#7c3aed' ) && ! str_contains( $both, '#0e7490' ) );
+$earlier = $audio->render_to_string( $radio + array( 'skin' => 'button', 'accent' => '#0e7490' ) );
+check( 'a button drawn in 1.58.1 with the accent keeps its colour, hidden control and all', str_contains( $earlier, '--imgp-accent:#0e7490' ) );
+$wave = $audio->render_to_string( $radio + array( 'skin' => 'wave', 'button_color' => '#7c3aed', 'accent' => '#0e7490' ) );
+check( 'another skin keeps the accent, whatever a button was once given', str_contains( $wave, '--imgp-accent:#0e7490' ) && ! str_contains( $wave, '#7c3aed' ) );
+$film = $video->render_to_string( array( 'source' => 'url', 'url' => array( 'url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' ), 'accent' => '#0e7490' ) );
+check( 'and the video widget its accent, which no skin of its hides', str_contains( $film, '--imgp-accent:#0e7490' ) );
+
 $GLOBALS['stub_caps'] = array();
 check( 'an empty widget prints nothing for visitors', '' === $audio->render_to_string( array() ) );
 unset( $GLOBALS['stub_caps'] );

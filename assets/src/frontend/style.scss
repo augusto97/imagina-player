@@ -810,6 +810,16 @@
 	display: flex;
 }
 
+/* As wide as the button, wherever it is put. Every player answers questions
+   about its own width, and a box that does takes no width from what is in
+   it: in a box with no width of its own — Elementor's "Position: Fixed", a
+   floating corner, an item of a flex row — the player came out zero wide,
+   and the button, which may be no wider than its player, a sliver beside
+   its icon. A lone button has no width questions to answer. */
+.imgp.imgp--skin-button {
+	container-type: normal;
+}
+
 .imgp--button-center .imgp__solo {
 	justify-content: center;
 }
@@ -839,6 +849,12 @@
 .imgp--skin-button .imgp__play {
 	width: var(--imgp-button-size);
 	height: var(--imgp-button-size);
+	transition:
+		transform 0.18s ease,
+		box-shadow 0.18s ease,
+		background-color 0.18s ease,
+		color 0.18s ease,
+		filter 0.18s ease;
 
 	.imgp__icon {
 		width: var(--imgp-button-glyph);
@@ -884,6 +900,33 @@
 
 .imgp.imgp--button-labelled.imgp--button-circle .imgp__play {
 	border-radius: 999px !important;
+}
+
+/* Under the pointer: a halo of its own colour and a little lift, so a button
+   on its own says it can be pressed. An outline fills in. Only where there
+   is a pointer to hover with: a tap on a phone would leave it stuck on. */
+@media (hover: hover) {
+
+	.imgp.imgp--skin-button .imgp__play:hover {
+		box-shadow: 0 0 0 calc(var(--imgp-button-size) * 0.1) color-mix(in srgb, var(--imgp-accent) 24%, transparent) !important;
+		transform: scale(1.06);
+	}
+
+	.imgp.imgp--button-outline .imgp__play:hover {
+		background-color: var(--imgp-accent) !important;
+		color: var(--imgp-on-accent, #fff) !important;
+	}
+}
+
+.imgp.imgp--skin-button .imgp__play:active {
+	transform: scale(0.95);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.imgp.imgp--skin-button .imgp__play:is(:hover, :active) {
+		transform: none;
+	}
 }
 
 /* Connecting. A stream can take seconds to answer, and a button that does

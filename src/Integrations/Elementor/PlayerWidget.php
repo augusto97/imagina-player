@@ -72,8 +72,20 @@ abstract class PlayerWidget extends Widget_Base {
 
 	protected function render(): void {
 		$settings = $this->get_settings_for_display();
+		$settings = is_array( $settings ) ? $settings : array();
 
-		echo $this->markup( is_array( $settings ) ? $settings : array() ); // phpcs:ignore WordPress.Security.EscapeOutput -- the renderer escapes everything it prints.
+		/*
+		 * Elementor leaves a control its condition hides out of the settings
+		 * for display, value and all. A lone button drawn in 1.58.1 took its
+		 * colour from the accent control, which that skin hides now, so the
+		 * colour saved there is read from what was stored.
+		 */
+		if ( empty( $settings['accent'] ) ) {
+			$saved                    = $this->get_settings( 'accent' );
+			$settings['saved_accent'] = is_string( $saved ) ? $saved : '';
+		}
+
+		echo $this->markup( $settings ); // phpcs:ignore WordPress.Security.EscapeOutput -- the renderer escapes everything it prints.
 	}
 
 	/* ---- Controls shared by the audio and video widgets ------------------ */
@@ -259,13 +271,29 @@ abstract class PlayerWidget extends Widget_Base {
 				)
 			);
 
+			/*
+			 * The button's colour is the accent, under its own name: offered
+			 * as "Accent colour" below the icon's, it was not found. It is
+			 * mapped onto the accent, and the accent control is hidden here.
+			 */
+			$this->add_control(
+				'button_color',
+				array(
+					'label'       => __( 'Button background', 'imagina-player' ),
+					'type'        => Controls_Manager::COLOR,
+					'alpha'       => false,
+					'description' => __( 'With the outline style, the colour of its edge. Leave empty to use the preset’s.', 'imagina-player' ),
+					'condition'   => array( 'skin' => 'button' ),
+				)
+			);
+
 			$this->add_control(
 				'button_icon_color',
 				array(
-					'label'       => __( 'Icon', 'imagina-player' ),
+					'label'       => __( 'Icon colour', 'imagina-player' ),
 					'type'        => Controls_Manager::COLOR,
 					'alpha'       => false,
-					'description' => __( 'The button itself takes the accent colour below.', 'imagina-player' ),
+					'description' => __( 'Leave empty for white or black, whichever reads on the button; an outline’s icon takes the button’s colour.', 'imagina-player' ),
 					'condition'   => array( 'skin' => 'button' ),
 				)
 			);
@@ -274,6 +302,7 @@ abstract class PlayerWidget extends Widget_Base {
 		$this->add_control(
 			'accent',
 			array(
+				'condition'   => array( 'skin!' => 'button' ),
 				'label'       => __( 'Accent colour', 'imagina-player' ),
 				'type'        => Controls_Manager::COLOR,
 				/*
@@ -290,6 +319,8 @@ abstract class PlayerWidget extends Widget_Base {
 		$this->add_control(
 			'border_radius',
 			array(
+				// A lone button has a shape of its own instead.
+				'condition' => array( 'skin!' => 'button' ),
 				'label'   => __( 'Corner radius (px)', 'imagina-player' ),
 				'type'    => Controls_Manager::NUMBER,
 				'min'     => 0,
@@ -304,10 +335,11 @@ abstract class PlayerWidget extends Widget_Base {
 	/**
 	 * One three-way choice per control: the preset's answer, on, or off.
 	 *
-	 * @param array<string, string> $switches Attribute name => label.
+	 * @param array<string, string> $switches  Attribute name => label.
+	 * @param array<string, string> $condition When the section is offered.
 	 */
-	protected function tristate_controls( string $section, string $label, array $switches ): void {
-		$this->start_controls_section( $section, array( 'label' => $label ) );
+	protected function tristate_controls( string $section, string $label, array $switches, array $condition = array() ): void {
+		$this->start_controls_section( $section, array( 'label' => $label ) + ( $condition ? array( 'condition' => $condition ) : array() ) );
 
 		foreach ( $switches as $attribute => $text ) {
 			$this->add_control(

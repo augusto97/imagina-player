@@ -57,7 +57,14 @@ abstract class Widget_Base {
 		$this->section = '';
 	}
 
+	/** As Elementor's: a control takes its section's condition with it. */
 	public function add_control( string $id, array $args ): void {
+		$section = $this->controls[ $this->section ]['condition'] ?? array();
+
+		if ( '' !== $this->section && array() !== $section ) {
+			$args['condition'] = ( $args['condition'] ?? array() ) + $section;
+		}
+
 		$this->controls[ $id ] = $args + array( 'section' => $this->section );
 	}
 
@@ -70,8 +77,37 @@ abstract class Widget_Base {
 
 	protected function register_controls(): void {}
 
+	/**
+	 * As Elementor's: a setting whose control's condition is not met is null,
+	 * whatever was saved for it. Conditions are `key => value` and
+	 * `key! => value`, the two this plugin uses.
+	 */
 	public function get_settings_for_display() {
-		return $this->settings;
+		if ( array() === $this->controls ) {
+			$this->get_controls();
+		}
+
+		$out = $this->settings;
+
+		foreach ( $this->settings as $key => $value ) {
+			foreach ( (array) ( $this->controls[ $key ]['condition'] ?? array() ) as $field => $wanted ) {
+				$negated = '!' === substr( (string) $field, -1 );
+				$field   = rtrim( (string) $field, '!' );
+				$actual  = $this->settings[ $field ] ?? ( $this->controls[ $field ]['default'] ?? '' );
+				$met     = is_array( $wanted ) ? in_array( $actual, $wanted, true ) : $actual === $wanted;
+
+				if ( $met === $negated ) {
+					$out[ $key ] = null;
+				}
+			}
+		}
+
+		return $out;
+	}
+
+	/** Every saved setting, hidden or not, or one of them. */
+	public function get_settings( $key = null ) {
+		return null === $key ? $this->settings : ( $this->settings[ $key ] ?? null );
 	}
 
 	/** Elementor's own id for the element, fixed when it is added to a page. */

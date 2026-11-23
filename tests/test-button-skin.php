@@ -109,6 +109,14 @@ check( 'the other skins are as they were', ! str_contains( $wave, 'imgp--button-
 $short = $renderer->render( PlayerShortcode::attributes( array( 'src' => $station, 'title' => 'Radio', 'skin' => 'button', 'button_size' => 'small', 'button_align' => 'end' ) ) );
 check( 'the shortcode takes it, with its size and side', str_contains( $short, 'imgp--skin-button' ) && str_contains( $short, 'imgp--button-small imgp--button-end' ) );
 
+$css = (string) file_get_contents( $root . '/build/style-frontend.css' );
+check( 'a lone button is no width container, so a box with no width does not crush it', (bool) preg_match( '/\.imgp\.imgp--skin-button\{container-type:normal\}/', $css ) );
+check( 'its hover only where there is a pointer to hover with, so a tap leaves none stuck on', (bool) preg_match( '/@media\s*\(hover:\s*hover\)\{\.imgp\.imgp--skin-button \.imgp__play:hover\{/', $css ) );
+
+// The block's colour swatches on this skin name the button's fill as such.
+$edit = (string) file_get_contents( $root . '/assets/src/editor/edit.tsx' );
+check( 'the block editor offers "Button background" and "Icon colour"', (bool) preg_match( "/'accent',\s*__\(\s*'Button background'/", $edit ) && (bool) preg_match( "/'buttonIconColor',\s*__\(\s*'Icon colour'/", $edit ) );
+
 echo PHP_EOL . '# In a browser' . PHP_EOL;
 
 $browser = find_browser();
@@ -142,6 +150,15 @@ $sections = '';
 foreach ( $players as $name => $player ) {
 	$sections .= '<section class="w" id="' . $name . '">' . $player . '</section>';
 }
+
+/*
+ * Boxes with no width of their own: Elementor's "Position: Fixed" in a
+ * corner, a fixed pill, an item of a flex row. A player is a container for
+ * its own width queries, which made it zero wide in each.
+ */
+$sections .= '<section id="corner" style="position:fixed;right:24px;bottom:24px">' . $renderer->render( array( 'src' => $station, 'title' => 'Radio', 'skin' => 'button', 'accent' => '#facc15', 'buttonShape' => 'square' ) ) . '</section>'
+	. '<section id="floatpill" style="position:fixed;left:24px;bottom:24px">' . $renderer->render( array( 'src' => $station, 'title' => 'Radio', 'skin' => 'button', 'accent' => '#dc2626', 'buttonLabel' => 'Escuchar en vivo' ) ) . '</section>'
+	. '<section id="row" style="display:flex;align-items:center;gap:12px;width:600px"><span>Radio</span><span style="flex:1"></span>' . $renderer->render( array( 'src' => $station, 'title' => 'Radio', 'skin' => 'button', 'buttonSize' => 'small' ) ) . '<span>En vivo</span></section>';
 
 $page = <<<HTML
 <!doctype html><html><head><meta charset="utf-8">
@@ -207,6 +224,9 @@ function box(el) { var r = el.getBoundingClientRect(); return { l: Math.round(r.
 	out.pill = look('pill');
 	out.outline = look('outline');
 	out.square = look('square');
+	out.corner = look('corner');
+	out.floatpill = look('floatpill');
+	out.row = look('row');
 	var pill = document.querySelector('#pill .imgp__play');
 	pill.click();
 	await wait(50);
@@ -290,6 +310,20 @@ const { chromium } = require( 'playwright' );
 	out.clickRing = await ring( '#square .imgp__play' );
 	await page.keyboard.press( 'Tab' );
 	out.keyRing = await page.evaluate( () => ( { style: getComputedStyle( document.activeElement ).outlineStyle, visible: document.activeElement.matches( ':focus-visible' ) } ) );
+	// Under the pointer.
+	const hovered = async ( selector ) => {
+		// A button crushed to nothing cannot be hovered: the checks on its size say why.
+		await page.hover( selector, { timeout: 3000 } ).catch( () => undefined );
+		await page.waitForTimeout( 300 );
+		return page.$eval( selector, ( el ) => { const cs = getComputedStyle( el ); return { shadow: cs.boxShadow, transform: cs.transform, bg: cs.backgroundColor, color: cs.color }; } );
+	};
+	out.hoverFilled = await hovered( '#corner .imgp__play' );
+	out.hoverOutline = await hovered( '#outline .imgp__play' );
+	await page.mouse.move( 1, 1 );
+	await page.waitForTimeout( 300 );
+	out.restOutline = await page.$eval( '#outline .imgp__play', ( el ) => ( { shadow: getComputedStyle( el ).boxShadow, bg: getComputedStyle( el ).backgroundColor } ) );
+	await page.emulateMedia( { reducedMotion: 'reduce' } );
+	out.hoverStill = await hovered( '#corner .imgp__play' );
 	console.log( 'RESULTS:' + JSON.stringify( out ) );
 	await browser.close();
 } )().catch( ( error ) => { console.log( 'RUNNER:' + error.message ); process.exit( 1 ); } );
@@ -330,6 +364,13 @@ if ( ! is_array( $out ) || isset( $out['error'] ) ) {
 	check( 'pressed, the words still name it, and it says it is pressed', null === $out['pillNamed']['label'] && 'true' === $out['pillNamed']['pressed'] && 'Escuchar en vivo' === $out['pillNamed']['text'], json_encode( $out['pillNamed'] ) );
 	check( 'a click leaves no ring, whatever the theme draws on focus', true === $out['clickRing']['focused'] && 'none' === $out['clickRing']['style'], json_encode( $out['clickRing'] ) );
 	check( 'while the keyboard keeps its own', true === $out['keyRing']['visible'] && 'solid' === $out['keyRing']['style'], json_encode( $out['keyRing'] ) );
+	check( 'fixed in a corner, in a box with no width, it keeps its size and its fill', 56 === $out['corner']['w'] && 56 === $out['corner']['h'] && 'rgb(250, 204, 21)' === $out['corner']['bg'], json_encode( $out['corner'] ) );
+	check( 'and so does a fixed pill, words and all', $out['floatpill']['w'] === $out['pill']['w'] && 'rgb(220, 38, 38)' === $out['floatpill']['bg'], json_encode( array( $out['floatpill'], $out['pill'] ) ) );
+	check( 'and a button in a row of a flex container', 40 === $out['row']['w'], json_encode( $out['row'] ) );
+	check( 'hovered, a halo of its own colour and a little lift', str_contains( $out['hoverFilled']['shadow'], '0px 0px 0px 5.6px' ) && 'matrix(1.06, 0, 0, 1.06, 0, 0)' === $out['hoverFilled']['transform'], json_encode( $out['hoverFilled'] ) );
+	check( 'an outline fills in, its icon in the colour that reads on it', 'rgb(124, 58, 237)' === $out['hoverOutline']['bg'] && 'rgb(255, 255, 255)' === $out['hoverOutline']['color'] && 'none' !== $out['hoverOutline']['shadow'], json_encode( $out['hoverOutline'] ) );
+	check( 'and empties again when the pointer leaves', 'rgba(0, 0, 0, 0)' === $out['restOutline']['bg'] && 'none' === $out['restOutline']['shadow'], json_encode( $out['restOutline'] ) );
+	check( 'with reduced motion, the halo without the lift', 'none' === $out['hoverStill']['transform'] && 'none' !== $out['hoverStill']['shadow'], json_encode( $out['hoverStill'] ) );
 }
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;
