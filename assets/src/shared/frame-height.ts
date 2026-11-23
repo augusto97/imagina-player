@@ -35,8 +35,15 @@ export const FRAME_HEIGHT_MAX = 4000;
 export const FRAME_HEIGHT_SCRIPT =
 	'(function(){' +
 	'var last=-1;' +
-	'function height(){var d=document.documentElement,b=document.body;' +
-	'return Math.ceil(Math.max(d?d.scrollHeight:0,b?b.scrollHeight:0));}' +
+	/*
+	 * The body's own height and its margins — never the document's, which is
+	 * at least as tall as the frame already is: a preview could grow and
+	 * never shrink, and a button forty pixels tall sat in a box of a hundred
+	 * and fifty.
+	 */
+	'function height(){var b=document.body;if(!b){return 0;}' +
+	'var s=getComputedStyle(b);' +
+	'return Math.ceil(b.scrollHeight+parseFloat(s.marginTop)+parseFloat(s.marginBottom));}' +
 	'function report(){var h=height();if(h===last||!(h>0)){return;}last=h;' +
 	'window.parent.postMessage({type:"' +
 	FRAME_HEIGHT_TYPE +

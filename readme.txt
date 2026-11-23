@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.57.1
+Stable tag: 1.58.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -224,6 +224,14 @@ pressed, for every player and page, with a CSV download. It is counted on your
 own site, and only as totals: no cookie is set and nothing that identifies a
 viewer is kept.
 
+= Can it be just a play button, for a radio station? =
+
+Yes. Choose the **Play button only** skin, in the block's Appearance panel or
+in a preset, and paste the station's stream address. The page shows one
+button that plays and pauses, in a small, medium or large size; nothing is
+loaded until it is pressed, and resuming a live stream rejoins the broadcast
+where it is now.
+
 = Is there a sleep timer? =
 
 Yes, in the audio player's **More** menu, the three dots beside the volume,
@@ -261,6 +269,34 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.58.0 =
+A new skin: a play button and nothing else, for a radio station.
+
+* New: the **Play button only** skin. One button that plays and pauses — no
+  bar, no times, no volume, no cover — for a radio station, or a sound a page
+  plays without a player on show. Small, medium or large, at the start, the
+  middle or the end of its column, in the block's Appearance panel, in
+  Elementor, or in a shortcode: `[imagina_player src="https://radio.example.com/live"
+  skin="button" button_size="large" button_align="center"]`. A screen reader
+  hears what it plays, and the pointer is shown its title.
+* New: a **station picks up where the broadcast is**. A live stream paused
+  and resumed is asked for again, at the live edge, rather than played on
+  from the minutes the browser had kept — or failing on a connection the
+  station had closed. A file, on any skin, still carries on from where it
+  stopped.
+* New: while a stream connects — which can take a few seconds — a ring turns
+  round the play button of any audio player until the sound starts, so it is
+  not pressed again (which would stop it).
+* Changed: the button-only skin asks for nothing until it is pressed, so a
+  page with a station on it does not open a connection, or count a listener,
+  for every visitor.
+* Changed: in the block editor, a station's address with no file name —
+  `:8000/live`, `/stream` — is not reported as something the player cannot
+  play on the button-only skin, and the offer to measure a waveform is made
+  only on a skin that draws one.
+* Fixed: a preview in the block editor could grow but never shrink back,
+  so a short player sat in a box a hundred and fifty pixels tall.
 
 = 1.57.1 =
 * Fixed: on a phone, a video paused part-way with subtitles on had the play

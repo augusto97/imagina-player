@@ -20,6 +20,11 @@ interface Props {
 	src: string;
 	/** True for the video block, whose expectations are narrower. */
 	isVideoBlock: boolean;
+	/**
+	 * An audio block drawn as a button alone, which is how a radio station
+	 * is put on a page: its address is a stream, often with no file name.
+	 */
+	isStream?: boolean;
 }
 
 /**
@@ -61,9 +66,16 @@ export function SourceStatus( { src }: Pick< Props, 'src' > ) {
  * @param props              Component props.
  * @param props.src          The address the block holds.
  * @param props.isVideoBlock Whether this is the video block.
+ * @param props.isStream     Whether the block expects a station's stream.
  */
-export function SourceWarning( { src, isVideoBlock }: Props ) {
+export function SourceWarning( { src, isVideoBlock, isStream }: Props ) {
 	if ( 'canvas' !== placement( src ) ) {
+		return null;
+	}
+
+	// An address on the web with no file name, on a block made for a
+	// station: a stream, and nothing to warn about.
+	if ( isStream && ! isVideoBlock && /^https?:\/\//i.test( src ) ) {
 		return null;
 	}
 

@@ -1207,7 +1207,26 @@ export class Player {
 	}
 
 	toggle(): void {
+		const element = this.element;
+
 		if ( this.media.paused ) {
+			/*
+			 * A live stream — a radio station — picks up where the broadcast
+			 * is now, not where it was paused: the browser holds the minutes
+			 * it had buffered, and after a long pause a connection the
+			 * station has already closed. Asked for again, it starts at the
+			 * live edge. A stream hls.js plays is a blob and manages that
+			 * itself.
+			 */
+			if (
+				element &&
+				Infinity === element.duration &&
+				element.currentTime > 0 &&
+				! element.src.startsWith( 'blob:' )
+			) {
+				element.src = this.signedSrc || element.src;
+			}
+
 			void this.media.play().catch( ( error: unknown ) => {
 				if ( ! isBenignRefusal( error ) ) {
 					void this.recoverSource();

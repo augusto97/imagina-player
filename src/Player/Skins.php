@@ -35,7 +35,7 @@ final class Skins {
 	/**
 	 * Skins with no scrubber at all.
 	 */
-	private const NO_SCRUBBER = array( 'minimal' );
+	private const NO_SCRUBBER = array( 'minimal', 'button' );
 
 	/** What a video skin decides, and the one it starts with. */
 	public const DEFAULT_VIDEO_SKIN = 'theater';
@@ -110,6 +110,7 @@ final class Skins {
 				'pill'          => __( 'Pill', 'imagina-player' ),
 				'bar'           => __( 'Progress bar', 'imagina-player' ),
 				'minimal'       => __( 'Minimal', 'imagina-player' ),
+				'button'        => __( 'Play button only', 'imagina-player' ),
 			)
 		);
 	}
@@ -129,6 +130,7 @@ final class Skins {
 			'pill'          => __( 'A rounded bar that sits inline with your text.', 'imagina-player' ),
 			'bar'           => __( 'A plain progress bar. The lightest option.', 'imagina-player' ),
 			'minimal'       => __( 'Play button and title only, with no scrubber.', 'imagina-player' ),
+			'button'        => __( 'One button that plays and pauses, and nothing else. For a radio station or a sound that needs no player on the page.', 'imagina-player' ),
 		);
 	}
 
@@ -165,7 +167,7 @@ final class Skins {
 	/**
 	 * How the parts are arranged.
 	 *
-	 * Three arrangements cover every skin, and they differ in DOM order, not
+	 * Four arrangements cover every skin, and they differ in DOM order, not
 	 * only in CSS: a cover image that leads a card cannot be the same node that
 	 * sits inside a control row, and CSS ordering alone leaves the pieces in the
 	 * wrong reading order for a screen reader.
@@ -173,11 +175,13 @@ final class Skins {
 	 * - `stacked` scrubber above, controls below.
 	 * - `card`    cover art leading, everything else beside it.
 	 * - `inline`  one row: play, title, scrubber, controls.
+	 * - `button`  the play button and nothing else.
 	 */
 	public static function layout( string $skin ): string {
 		return match ( $skin ) {
 			'card'             => 'card',
 			'compact', 'pill'  => 'inline',
+			'button'           => 'button',
 			default            => 'stacked',
 		};
 	}

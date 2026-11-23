@@ -26,6 +26,12 @@ final class Attributes {
 
 	public const INHERIT = '';
 
+	/** How big the play-button-only skin draws its button. */
+	public const BUTTON_SIZES = array( 'small', 'medium', 'large' );
+
+	/** Where in its column that button sits. */
+	public const BUTTON_ALIGNS = array( 'start', 'center', 'end' );
+
 	/**
 	 * Preset keys that a single instance may override, mapped to the attribute
 	 * name used by blocks and shortcodes.
@@ -263,6 +269,16 @@ final class Attributes {
 				'type'    => 'string',
 				'default' => self::INHERIT,
 			),
+			// The play-button-only skin: how big the button is, and which side
+			// of its column it sits on.
+			'buttonSize'         => array(
+				'type'    => 'string',
+				'default' => 'medium',
+			),
+			'buttonAlign'        => array(
+				'type'    => 'string',
+				'default' => 'start',
+			),
 			'videoCaptionBg'     => array(
 				'type'    => 'string',
 				'default' => self::INHERIT,
@@ -456,6 +472,8 @@ final class Attributes {
 		$out['audioTracks']  = self::sanitize_audio_tracks( (array) $out['audioTracks'] );
 		$out['audioLabel']   = self::label( (string) $out['audioLabel'] );
 		$out['layers']      = Layers::sanitize( (array) $out['layers'] );
+		$out['buttonSize']  = in_array( $out['buttonSize'], self::BUTTON_SIZES, true ) ? $out['buttonSize'] : 'medium';
+		$out['buttonAlign'] = in_array( $out['buttonAlign'], self::BUTTON_ALIGNS, true ) ? $out['buttonAlign'] : 'start';
 
 		$out['accessRule']    = Access::rule( (string) $out['accessRule'] );
 		$out['accessIds']     = implode( ',', Access::ids( (string) $out['accessIds'] ) );

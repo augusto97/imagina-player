@@ -136,6 +136,9 @@ function editorData(): EditorData {
 	);
 }
 
+/** The skins that draw a waveform, as `Skins::WAVEFORM` lists them. */
+const WAVEFORM_SKINS = [ 'wave', 'wave-centered', 'card' ];
+
 /**
  * What the block's own preset says, falling back to the default preset and
  * then to the factory's, so "Site: on" means what this block will do.
@@ -404,6 +407,9 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 	const presetValues = presetSays( data, preset );
 	const videoSite = videoSays( data );
 
+	// The skin this block is drawn with: its own, or its preset's.
+	const skin = String( attributes.skin || presetValues.skin || 'wave' );
+
 	/*
 	 * After a different file is put in, the subtitles, chapters, poster and
 	 * storyboard of the old one are still on the block. Kept, since a new cut
@@ -624,7 +630,14 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					     where the editing tools are.
 					*/ }
 					<SourceStatus src={ src } />
-					<SourceWarning src={ src } isVideoBlock={ isVideoBlock } />
+					<SourceWarning
+						src={ src }
+						isVideoBlock={ isVideoBlock }
+						// A station's address often has no file name at all —
+						// `:8000/live`, `/stream` — and on the button-only
+						// skin that is what to expect, not a fault.
+						isStream={ ! isVideo && 'button' === skin }
+					/>
 
 					{ replaced && (
 						<Notice
@@ -692,7 +705,12 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								? []
 								: [ src ]
 						}
-						disabled={ isVideo }
+						// Only for a skin that draws one. A missing waveform is
+						// nothing to report on a button or a plain bar, and a
+						// station has no end to measure.
+						disabled={
+							isVideo || ! WAVEFORM_SKINS.includes( skin )
+						}
 						onMeasured={ () => setRefresh( ( n ) => n + 1 ) }
 					/>
 
@@ -1053,6 +1071,81 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 							setAttributes( { skin: value } )
 						}
 					/>
+					{ /* The play-button-only skin's two questions, asked only
+					     of a block that is drawn that way — by its own choice
+					     or by its preset's. */ }
+					{ ! isVideo && 'button' === skin && (
+						<>
+							<SelectControl
+								__nextHasNoMarginBottom
+								label={ __( 'Button size', 'imagina-player' ) }
+								value={
+									String(
+										attributes.buttonSize ?? 'medium'
+									) as 'medium'
+								}
+								options={ [
+									{
+										value: 'small',
+										label: __( 'Small', 'imagina-player' ),
+									},
+									{
+										value: 'medium',
+										label: __( 'Medium', 'imagina-player' ),
+									},
+									{
+										value: 'large',
+										label: __( 'Large', 'imagina-player' ),
+									},
+								] }
+								onChange={ ( value: string ) =>
+									setAttributes( { buttonSize: value } )
+								}
+							/>
+							<SelectControl
+								__nextHasNoMarginBottom
+								label={ __(
+									'Button position',
+									'imagina-player'
+								) }
+								help={ __(
+									'The title is read out to screen readers and shown when the pointer rests on the button.',
+									'imagina-player'
+								) }
+								value={
+									String(
+										attributes.buttonAlign ?? 'start'
+									) as 'start'
+								}
+								options={ [
+									{
+										value: 'start',
+										label: __(
+											'At the start of the line',
+											'imagina-player'
+										),
+									},
+									{
+										value: 'center',
+										label: __(
+											'Centred',
+											'imagina-player'
+										),
+									},
+									{
+										value: 'end',
+										label: __(
+											'At the end of the line',
+											'imagina-player'
+										),
+									},
+								] }
+								onChange={ ( value: string ) =>
+									setAttributes( { buttonAlign: value } )
+								}
+							/>
+						</>
+					) }
 					{ data.settingsUrl && (
 						<p>
 							<ExternalLink href={ data.settingsUrl }>
@@ -1359,7 +1452,7 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 						</>
 					) }
 
-					{ ! isVideo && (
+					{ ! isVideo && 'button' !== skin && (
 						<>
 							<RangeControl
 								__nextHasNoMarginBottom
@@ -1519,62 +1612,70 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					/>
 				</PanelBody>
 
-				<PanelBody
-					title={ __( 'Controls', 'imagina-player' ) }
-					initialOpen={ false }
-				>
-					<p className="imgp-editor__note">
-						{ isVideo
-							? __(
-									'Which controls this player shows. Left on Site, each one follows the video settings for the whole site, and says what those are.',
-									'imagina-player'
-							  )
-							: __(
-									'Which controls this player shows. Left on Site, each one follows this block’s preset, and says what that is.',
-									'imagina-player'
-							  ) }
-					</p>
+				{ /* A button alone shows none of these. */ }
+				{ ( isVideo || 'button' !== skin ) && (
+					<PanelBody
+						title={ __( 'Controls', 'imagina-player' ) }
+						initialOpen={ false }
+					>
+						<p className="imgp-editor__note">
+							{ isVideo
+								? __(
+										'Which controls this player shows. Left on Site, each one follows the video settings for the whole site, and says what those are.',
+										'imagina-player'
+								  )
+								: __(
+										'Which controls this player shows. Left on Site, each one follows this block’s preset, and says what that is.',
+										'imagina-player'
+								  ) }
+						</p>
 
-					{ isVideo ? (
-						<TristateList
-							items={ VIDEO_CONTROLS.filter(
-								( [ attribute ] ) =>
-									! isProvider ||
-									! NOT_FOR_PROVIDERS.includes( attribute )
-							) }
-							values={ attributes }
-							site={ videoSite }
-							onChange={ ( attribute, value ) =>
-								setAttributes( { [ attribute ]: value } )
-							}
-						/>
-					) : (
-						<TristateList
-							items={ visibilityToggles( data )
-								.filter(
-									( { key } ) =>
-										controlApplies( key, isVideo ) &&
-										! BEHAVIOUR.includes( key )
-								)
-								.map(
-									( { key, attribute } ) =>
-										[ attribute, humanise( key ) ] as const
+						{ isVideo ? (
+							<TristateList
+								items={ VIDEO_CONTROLS.filter(
+									( [ attribute ] ) =>
+										! isProvider ||
+										! NOT_FOR_PROVIDERS.includes(
+											attribute
+										)
 								) }
-							values={ attributes }
-							site={ Object.fromEntries(
-								visibilityToggles( data ).map(
-									( { key, attribute } ) => [
-										attribute,
-										Boolean( presetValues[ key ] ),
-									]
-								)
-							) }
-							onChange={ ( attribute, value ) =>
-								setAttributes( { [ attribute ]: value } )
-							}
-						/>
-					) }
-				</PanelBody>
+								values={ attributes }
+								site={ videoSite }
+								onChange={ ( attribute, value ) =>
+									setAttributes( { [ attribute ]: value } )
+								}
+							/>
+						) : (
+							<TristateList
+								items={ visibilityToggles( data )
+									.filter(
+										( { key } ) =>
+											controlApplies( key, isVideo ) &&
+											! BEHAVIOUR.includes( key )
+									)
+									.map(
+										( { key, attribute } ) =>
+											[
+												attribute,
+												humanise( key ),
+											] as const
+									) }
+								values={ attributes }
+								site={ Object.fromEntries(
+									visibilityToggles( data ).map(
+										( { key, attribute } ) => [
+											attribute,
+											Boolean( presetValues[ key ] ),
+										]
+									)
+								) }
+								onChange={ ( attribute, value ) =>
+									setAttributes( { [ attribute ]: value } )
+								}
+							/>
+						) }
+					</PanelBody>
+				) }
 
 				<PanelBody
 					title={ __( 'Playback', 'imagina-player' ) }

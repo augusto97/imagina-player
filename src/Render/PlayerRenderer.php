@@ -90,6 +90,23 @@ final class PlayerRenderer {
 		 */
 		$skin = Skins::resolve( (string) $config['skin'], $track->is_video() );
 
+		/*
+		 * A button and nothing else: there is no bar to float along the
+		 * page, no cover to show, and no position to come back to — a radio
+		 * station is wherever the broadcast is now, and a button cannot offer
+		 * "carry on from 12:40" anyway.
+		 */
+		if ( 'button' === $skin ) {
+			$config['sticky']            = false;
+			$config['remember_position'] = false;
+			$config['show_thumbnail']    = false;
+
+			// Nothing on the page needs the length, and a station asked for
+			// it is a connection opened — and a listener counted — for every
+			// visitor who never presses play.
+			$config['preload'] = 'none';
+		}
+
 		// Given the resolved skin, so that whether a waveform is measured and
 		// whether one is drawn are decided from the same answer.
 		$peaks_payload = $this->peaks_payload( $track, $config, $skin );
@@ -138,6 +155,7 @@ final class PlayerRenderer {
 		$classes = array(
 			'imgp',
 			'imgp--skin-' . $skin,
+			'button' === $skin ? 'imgp--button-' . $atts['buttonSize'] . ' imgp--button-' . $atts['buttonAlign'] : '',
 			// Audio only: a video's picture is its poster, and the cover was
 			// never printed for one, so the class promised a thumbnail that
 			// was not there.
@@ -424,6 +442,10 @@ final class PlayerRenderer {
 			? $this->part_transcript()
 			: '';
 
+		if ( 'button' === $layout ) {
+			$parts['play'] = $this->part_play( $id . '-name', $track->title );
+		}
+
 		if ( 'theater' === $layout ) {
 			$video_settings = $video_config;
 
@@ -502,6 +524,17 @@ final class PlayerRenderer {
 					$parts['play'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['meta'], // phpcs:ignore WordPress.Security.EscapeOutput
 					$parts['controls'] // phpcs:ignore WordPress.Security.EscapeOutput
+				);
+			} elseif ( 'button' === $layout ) {
+				/*
+				 * The button, and the name of what it plays for a screen
+				 * reader, which would otherwise hear "Play" and nothing about
+				 * what. On screen the name is the button's tooltip.
+				 */
+				printf(
+					'<div class="imgp__solo">%s%s</div>',
+					$parts['play'], // phpcs:ignore WordPress.Security.EscapeOutput -- assembled from escaped parts.
+					'' === $track->title ? '' : '<span class="imgp__sr" id="' . esc_attr( $id . '-name' ) . '">' . esc_html( $track->title ) . '</span>'
 				);
 			} elseif ( 'inline' === $layout ) {
 				printf(
@@ -1673,7 +1706,11 @@ final class PlayerRenderer {
 		return (string) ob_get_clean();
 	}
 
-	private function part_play(): string {
+	/**
+	 * @param string $described_by The element that names what it plays.
+	 * @param string $tooltip      That name, for the pointer.
+	 */
+	private function part_play( string $described_by = '', string $tooltip = '' ): string {
 		ob_start();
 		?>
 		<button
@@ -1681,6 +1718,10 @@ final class PlayerRenderer {
 			class="imgp__play"
 			aria-label="<?php esc_attr_e( 'Play', 'imagina-player' ); ?>"
 			aria-pressed="false"
+			<?php if ( '' !== $tooltip ) : ?>
+				aria-describedby="<?php echo esc_attr( $described_by ); ?>"
+				title="<?php echo esc_attr( $tooltip ); ?>"
+			<?php endif; ?>
 		>
 			<?php
 			echo Icons::get( 'play', 'imgp__icon--play' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG.

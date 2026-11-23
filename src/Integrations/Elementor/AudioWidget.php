@@ -161,6 +161,8 @@ final class AudioWidget extends PlayerWidget {
 			'startTime'    => (float) ( $settings['start_time'] ?? 0 ),
 			'preset'       => (string) ( $settings['preset'] ?? 'default' ),
 			'skin'         => (string) ( $settings['skin'] ?? '' ),
+			'buttonSize'   => (string) ( $settings['button_size'] ?? 'medium' ),
+			'buttonAlign'  => (string) ( $settings['button_align'] ?? 'start' ),
 			'accent'       => (string) ( $settings['accent'] ?? '' ),
 			'borderRadius' => self::number_from( $settings['border_radius'] ?? '', 'px' ),
 			'skipSeconds'  => self::number_from( $settings['skip_seconds'] ?? '' ),

@@ -330,9 +330,9 @@ final class BlockRegistrar {
 				array(
 					'presets'     => $presets,
 					'skins'       => Settings::skins(),
-					// Separately, because a skin belongs to a medium: the seven
-					// above all arrange a waveform and a row of transport
-					// buttons, which is not what a video needs.
+					// Separately, because a skin belongs to a medium: the ones
+					// above arrange a waveform, a row of transport buttons or
+					// a play button alone, which is not what a video needs.
 					'videoSkins'  => \ImaginaPlayer\Player\Skins::video(),
 					'overrides'      => Attributes::override_map(),
 					'presetShape'    => Settings::preset_defaults(),

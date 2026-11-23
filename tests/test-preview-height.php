@@ -125,15 +125,18 @@ const modulePath = process.argv[ 2 ];
 		`<script>${ m.FRAME_HEIGHT_SCRIPT }</script></body></html>`;
 	const other = `<!doctype html><html><body><script>setInterval(function(){window.parent.postMessage({type:"${ m.FRAME_HEIGHT_TYPE }",height:3000},"*");},50);</script></body></html>`;
 	const silent = `<!doctype html><html><body><div style="height:700px"></div></body></html>`;
+	const small = `<!doctype html><html><body style="margin:4px"><div style="height:56px"></div><script>${ m.FRAME_HEIGHT_SCRIPT }</script></body></html>`;
 
 	await page.setContent( `<!doctype html><html><body>
 		<script>var exports = {}; ${ moduleSource }; window.fh = exports;</script>
 		<iframe id="a" sandbox="allow-scripts" style="height:150px;width:600px" srcdoc="${ inner.replace( /"/g, '&quot;' ) }"></iframe>
 		<iframe id="b" sandbox="allow-scripts" style="height:150px;width:600px" srcdoc="${ other.replace( /"/g, '&quot;' ) }"></iframe>
 		<iframe id="c" sandbox="allow-scripts" style="height:150px;width:600px" srcdoc="${ silent.replace( /"/g, '&quot;' ) }"></iframe>
+		<iframe id="e" sandbox="allow-scripts" style="height:150px;width:600px" srcdoc="${ small.replace( /"/g, '&quot;' ) }"></iframe>
 		<iframe id="canvas" style="height:300px;width:700px" srcdoc="${ ( '<!doctype html><html><body><iframe id=&quot;d&quot; sandbox=&quot;allow-scripts&quot; style=&quot;height:150px;width:600px&quot; srcdoc=&quot;' + inner.replace( /&/g, '&amp;' ).replace( /"/g, '&amp;quot;' ) + '&quot;></iframe></body></html>' ) }"></iframe>
 		<script>
-			window.reports = { a: [], c: [] };
+			window.reports = { a: [], c: [], e: [] };
+			window.fh.listenForFrameHeight( () => document.getElementById( 'e' ), ( h ) => window.reports.e.push( h ) );
 			window.fh.listenForFrameHeight( () => document.getElementById( 'a' ), ( h ) => { window.reports.a.push( h ); document.getElementById( 'a' ).style.height = h + 'px'; } );
 			window.fh.listenForFrameHeight( () => document.getElementById( 'c' ), ( h ) => window.reports.c.push( h ) );
 			// The editor's arrangement: the block, and its preview frame, live in the
@@ -183,6 +186,11 @@ JS
 		check( 'so the frame is as tall as its content', ( $result['frameHeight'] ?? 0 ) >= 900, (string) ( $result['frameHeight'] ?? '' ) );
 		check( 'a report from another frame is ignored, however often it insists', ! in_array( 3000, $a, true ) && ! in_array( 3000, $result['reports']['c'] ?? array(), true ), json_encode( $result['reports'] ) );
 		check( 'a frame without the script reports nothing', array() === ( $result['reports']['c'] ?? array( 1 ) ) );
+
+		// A button is short, and a frame that starts taller than it has to
+		// say so: measuring the document gave the frame's own height back.
+		$e = $result['reports']['e'] ?? array();
+		check( 'a frame shorter than it started says so, and shrinks to its content', count( $e ) >= 1 && 64 === end( $e ), json_encode( $e ) );
 
 		$d = $result['reports']['d'] ?? array();
 		check( 'a frame inside the editor’s canvas frame is heard from the editor above it', count( $d ) >= 1 && end( $d ) >= 900, json_encode( $d ) );

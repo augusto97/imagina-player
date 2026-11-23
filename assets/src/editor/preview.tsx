@@ -202,7 +202,9 @@ export function Preview( {
 		() =>
 			listenForFrameHeight(
 				() => frame.current,
-				( reported ) => setHeight( Math.max( 90, reported + 2 ) )
+				// No floor beyond the content's own: a button on its own
+				// is under fifty pixels tall.
+				( reported ) => setHeight( reported + 2 )
 			),
 		[]
 	);

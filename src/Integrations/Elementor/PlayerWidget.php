@@ -188,6 +188,39 @@ abstract class PlayerWidget extends Widget_Base {
 			)
 		);
 
+		// The play-button-only skin's two questions, shown once it is chosen.
+		if ( 'audio' === $medium ) {
+			$this->add_control(
+				'button_size',
+				array(
+					'label'     => __( 'Button size', 'imagina-player' ),
+					'type'      => Controls_Manager::SELECT,
+					'default'   => 'medium',
+					'options'   => array(
+						'small'  => __( 'Small', 'imagina-player' ),
+						'medium' => __( 'Medium', 'imagina-player' ),
+						'large'  => __( 'Large', 'imagina-player' ),
+					),
+					'condition' => array( 'skin' => 'button' ),
+				)
+			);
+
+			$this->add_control(
+				'button_align',
+				array(
+					'label'     => __( 'Button position', 'imagina-player' ),
+					'type'      => Controls_Manager::SELECT,
+					'default'   => 'start',
+					'options'   => array(
+						'start'  => __( 'At the start of the line', 'imagina-player' ),
+						'center' => __( 'Centred', 'imagina-player' ),
+						'end'    => __( 'At the end of the line', 'imagina-player' ),
+					),
+					'condition' => array( 'skin' => 'button' ),
+				)
+			);
+		}
+
 		$this->add_control(
 			'accent',
 			array(

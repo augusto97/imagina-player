@@ -802,6 +802,84 @@
 	}
 }
 
+/* The play button and nothing else: a radio station, or a sound a page plays
+   without a player on show. Three sizes, and a side of its column. The sizes
+   are set whatever the width, so a phone does not shrink the button an
+   author chose to make large. */
+.imgp--skin-button .imgp__solo {
+	display: flex;
+}
+
+.imgp--button-center .imgp__solo {
+	justify-content: center;
+}
+
+.imgp--button-end .imgp__solo {
+	justify-content: flex-end;
+}
+
+.imgp--button-small .imgp__play {
+	width: 2.5rem;
+	height: 2.5rem;
+
+	.imgp__icon {
+		width: 1.1rem;
+		height: 1.1rem;
+	}
+}
+
+.imgp--button-medium .imgp__play {
+	width: 3.5rem;
+	height: 3.5rem;
+}
+
+.imgp--button-large .imgp__play {
+	width: 5rem;
+	height: 5rem;
+
+	.imgp__icon {
+		width: 2.3rem;
+		height: 2.3rem;
+	}
+}
+
+/* Connecting. A stream can take seconds to answer, and a button that does
+   nothing for that long gets pressed again — which stops it. A ring turns
+   round the button until the sound starts. */
+.imgp--audio .imgp__play {
+	position: relative;
+}
+
+/* The ring says it; the faded button that says "waiting" elsewhere would
+   fade the ring with it. */
+.imgp--audio.is-playing.is-buffering .imgp__play {
+	opacity: 1;
+}
+
+.imgp--audio.is-playing.is-buffering .imgp__play::after {
+	content: "";
+	position: absolute;
+	inset: -6px;
+	border: 2px solid color-mix(in srgb, var(--imgp-accent) 18%, transparent);
+	border-top-color: var(--imgp-accent);
+	border-radius: 50%;
+	animation: imgp-spin 0.9s linear infinite;
+}
+
+@keyframes imgp-spin {
+
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.imgp--audio.is-playing.is-buffering .imgp__play::after {
+		animation-duration: 2.4s;
+	}
+}
+
 /* stylelint-enable no-descending-specificity */
 
 /* stylelint-disable no-descending-specificity */
