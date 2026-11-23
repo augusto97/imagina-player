@@ -219,6 +219,56 @@ abstract class PlayerWidget extends Widget_Base {
 					'condition' => array( 'skin' => 'button' ),
 				)
 			);
+
+			$this->add_control(
+				'button_shape',
+				array(
+					'label'     => __( 'Shape', 'imagina-player' ),
+					'type'      => Controls_Manager::SELECT,
+					'default'   => 'circle',
+					'options'   => array(
+						'circle'  => __( 'Circle', 'imagina-player' ),
+						'rounded' => __( 'Rounded square', 'imagina-player' ),
+						'square'  => __( 'Square', 'imagina-player' ),
+					),
+					'condition' => array( 'skin' => 'button' ),
+				)
+			);
+
+			$this->add_control(
+				'button_style',
+				array(
+					'label'     => __( 'Style', 'imagina-player' ),
+					'type'      => Controls_Manager::SELECT,
+					'default'   => 'filled',
+					'options'   => array(
+						'filled'  => __( 'Filled', 'imagina-player' ),
+						'outline' => __( 'Outline', 'imagina-player' ),
+					),
+					'condition' => array( 'skin' => 'button' ),
+				)
+			);
+
+			$this->add_control(
+				'button_label',
+				array(
+					'label'       => __( 'Text beside the icon', 'imagina-player' ),
+					'type'        => Controls_Manager::TEXT,
+					'description' => __( 'Optional, such as “Listen live”. Empty leaves the icon on its own.', 'imagina-player' ),
+					'condition'   => array( 'skin' => 'button' ),
+				)
+			);
+
+			$this->add_control(
+				'button_icon_color',
+				array(
+					'label'       => __( 'Icon', 'imagina-player' ),
+					'type'        => Controls_Manager::COLOR,
+					'alpha'       => false,
+					'description' => __( 'The button itself takes the accent colour below.', 'imagina-player' ),
+					'condition'   => array( 'skin' => 'button' ),
+				)
+			);
 		}
 
 		$this->add_control(

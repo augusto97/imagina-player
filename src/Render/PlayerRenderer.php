@@ -155,7 +155,8 @@ final class PlayerRenderer {
 		$classes = array(
 			'imgp',
 			'imgp--skin-' . $skin,
-			'button' === $skin ? 'imgp--button-' . $atts['buttonSize'] . ' imgp--button-' . $atts['buttonAlign'] : '',
+			'button' === $skin ? 'imgp--button-' . $atts['buttonSize'] . ' imgp--button-' . $atts['buttonAlign'] . ' imgp--button-' . $atts['buttonShape'] . ' imgp--button-' . $atts['buttonStyle'] : '',
+			'button' === $skin && '' !== $atts['buttonLabel'] ? 'imgp--button-labelled' : '',
 			// Audio only: a video's picture is its poster, and the cover was
 			// never printed for one, so the class promised a thumbnail that
 			// was not there.
@@ -381,6 +382,10 @@ final class PlayerRenderer {
 			$vars['--imgp-on-progress'] = Config::readable_on( $vars['--imgp-progress'] );
 		}
 
+		if ( 'button' === $skin && '' !== $atts['buttonIconColor'] ) {
+			$vars['--imgp-button-icon'] = $atts['buttonIconColor'];
+		}
+
 		$style = Config::style_attribute( $vars );
 
 		// Layout follows the *medium*, not the skin. Every audio skin arranges a
@@ -443,7 +448,7 @@ final class PlayerRenderer {
 			: '';
 
 		if ( 'button' === $layout ) {
-			$parts['play'] = $this->part_play( $id . '-name', $track->title );
+			$parts['play'] = $this->part_play( $id . '-name', $track->title, (string) $atts['buttonLabel'] );
 		}
 
 		if ( 'theater' === $layout ) {
@@ -1709,14 +1714,20 @@ final class PlayerRenderer {
 	/**
 	 * @param string $described_by The element that names what it plays.
 	 * @param string $tooltip      That name, for the pointer.
+	 * @param string $label        Words beside the icon. They name the
+	 *                             button, so there is no separate label to
+	 *                             say "Play" over them; pressed or not is
+	 *                             what it says to a screen reader.
 	 */
-	private function part_play( string $described_by = '', string $tooltip = '' ): string {
+	private function part_play( string $described_by = '', string $tooltip = '', string $label = '' ): string {
 		ob_start();
 		?>
 		<button
 			type="button"
 			class="imgp__play"
-			aria-label="<?php esc_attr_e( 'Play', 'imagina-player' ); ?>"
+			<?php if ( '' === $label ) : ?>
+				aria-label="<?php esc_attr_e( 'Play', 'imagina-player' ); ?>"
+			<?php endif; ?>
 			aria-pressed="false"
 			<?php if ( '' !== $tooltip ) : ?>
 				aria-describedby="<?php echo esc_attr( $described_by ); ?>"
@@ -1727,6 +1738,9 @@ final class PlayerRenderer {
 			echo Icons::get( 'play', 'imgp__icon--play' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG.
 			echo Icons::get( 'pause', 'imgp__icon--pause' ); // phpcs:ignore WordPress.Security.EscapeOutput -- static SVG.
 			?>
+			<?php if ( '' !== $label ) : ?>
+				<span class="imgp__play-label"><?php echo esc_html( $label ); ?></span>
+			<?php endif; ?>
 		</button>
 		<?php
 

@@ -82,8 +82,22 @@ check( 'medium and at the start, unless told otherwise', str_contains( $html, 'i
 $large = $renderer->render( array( 'src' => $station, 'title' => 'Radio', 'skin' => 'button', 'buttonSize' => 'large', 'buttonAlign' => 'center' ) );
 check( 'a size and a side of its column', str_contains( $large, 'imgp--button-large imgp--button-center' ) );
 
-$odd = Attributes::sanitize( array( 'buttonSize' => 'huge" onclick="x', 'buttonAlign' => 'left' ) );
-check( 'anything else is the default', 'medium' === $odd['buttonSize'] && 'start' === $odd['buttonAlign'] );
+$odd = Attributes::sanitize( array( 'buttonSize' => 'huge" onclick="x', 'buttonAlign' => 'left', 'buttonShape' => 'star', 'buttonStyle' => 'neon', 'buttonIconColor' => 'red;background:url(x)', 'buttonLabel' => '<b>Escuchar</b> ' . str_repeat( 'a', 90 ) ) );
+check( 'anything else is the default', 'medium' === $odd['buttonSize'] && 'start' === $odd['buttonAlign'] && 'circle' === $odd['buttonShape'] && 'filled' === $odd['buttonStyle'] );
+check( 'a colour that is not one is dropped', '' === $odd['buttonIconColor'] );
+check( 'words without markup, and a few of them', ! str_contains( $odd['buttonLabel'], '<' ) && 60 === mb_strlen( $odd['buttonLabel'] ) );
+
+echo PHP_EOL . '# Its look' . PHP_EOL;
+
+check( 'a filled circle unless told otherwise', str_contains( $html, 'imgp--button-circle imgp--button-filled' ) && ! str_contains( $html, 'imgp--button-labelled' ) );
+
+$styled = $renderer->render( array( 'src' => $station, 'title' => 'Radio', 'skin' => 'button', 'buttonShape' => 'rounded', 'buttonStyle' => 'outline', 'buttonIconColor' => '#facc15', 'accent' => '#dc2626', 'buttonLabel' => 'Escuchar en vivo' ) );
+check( 'a shape and a style', str_contains( $styled, 'imgp--button-rounded imgp--button-outline' ) );
+check( 'the icon’s own colour', str_contains( $styled, '--imgp-button-icon:#facc15' ) );
+check( 'the button’s colour is the accent, as on every player', str_contains( $styled, '--imgp-accent:#dc2626' ) );
+check( 'words beside the icon', str_contains( $styled, 'imgp--button-labelled' ) && str_contains( $styled, '<span class="imgp__play-label">Escuchar en vivo</span>' ) );
+check( 'which name the button themselves: no "Play" laid over them', ! preg_match( '/class="imgp__play"[^>]*aria-label=/s', $styled ) && str_contains( $styled, 'aria-pressed="false"' ) );
+check( 'with no words, it is still called "Play"', (bool) preg_match( '/class="imgp__play"\s+aria-label="Play"/s', $html ) );
 
 $untitled = $renderer->render( array( 'src' => 'https://radio.example.com/emisora-central.mp3', 'skin' => 'button' ) );
 preg_match( '/aria-describedby="([^"]+)"/', $untitled, $named );
@@ -116,6 +130,9 @@ foreach ( (array) glob( $root . '/build/*.{js,css}', GLOB_BRACE ) as $asset ) {
 }
 
 $players = array(
+	'pill'    => $renderer->render( array( 'src' => $station, 'title' => 'Radio', 'skin' => 'button', 'accent' => '#dc2626', 'buttonLabel' => 'Escuchar en vivo' ) ),
+	'outline' => $renderer->render( array( 'src' => $station, 'title' => 'Radio', 'skin' => 'button', 'accent' => '#7c3aed', 'buttonStyle' => 'outline', 'buttonShape' => 'rounded' ) ),
+	'square'  => $renderer->render( array( 'src' => $station, 'title' => 'Radio', 'skin' => 'button', 'accent' => '#facc15', 'buttonIconColor' => '#111111', 'buttonShape' => 'square' ) ),
 	'small'  => $renderer->render( array( 'src' => $station, 'title' => 'Radio', 'skin' => 'button', 'buttonSize' => 'small' ) ),
 	'medium' => $renderer->render( array( 'src' => $station, 'title' => 'Radio', 'skin' => 'button', 'buttonAlign' => 'center' ) ),
 	'large'  => $renderer->render( array( 'src' => 'https://cdn.example.com/episodio.mp3', 'title' => 'Episodio', 'skin' => 'button', 'buttonSize' => 'large', 'buttonAlign' => 'end' ) ),
@@ -129,7 +146,9 @@ foreach ( $players as $name => $player ) {
 $page = <<<HTML
 <!doctype html><html><head><meta charset="utf-8">
 <link rel="stylesheet" href="./style-frontend.css">
-<style>html,body{margin:0;font:16px/1.5 sans-serif}.w{width:600px;margin:0 0 20px}</style>
+<style>html,body{margin:0;font:16px/1.5 sans-serif}.w{width:600px;margin:0 0 20px}
+/* What a block theme does: a ring on whatever has focus, a click included. */
+:where(body *:focus){outline:2px solid #f0f}</style>
 </head><body>
 <script>
 window.addEventListener('error', function (e) {
@@ -178,6 +197,21 @@ function box(el) { var r = el.getBoundingClientRect(); return { l: Math.round(r.
 		var button = document.querySelector('#' + name + ' .imgp__play');
 		out[name] = { box: box(button), column: box(document.querySelector('#' + name)) };
 	});
+
+	// Its look, as drawn.
+	var look = function (name) {
+		var b = document.querySelector('#' + name + ' .imgp__play');
+		var cs = getComputedStyle(b);
+		return { w: Math.round(b.getBoundingClientRect().width), h: Math.round(b.getBoundingClientRect().height), radius: cs.borderTopLeftRadius, bg: cs.backgroundColor, border: cs.borderTopWidth + ' ' + cs.borderTopColor, color: cs.color };
+	};
+	out.pill = look('pill');
+	out.outline = look('outline');
+	out.square = look('square');
+	var pill = document.querySelector('#pill .imgp__play');
+	pill.click();
+	await wait(50);
+	out.pillNamed = { label: pill.getAttribute('aria-label'), pressed: pill.getAttribute('aria-pressed'), text: pill.textContent.trim() };
+	pill.click();
 
 	// Pressed: it plays, and says so.
 	var station = document.querySelector('#medium .imgp');
@@ -248,7 +282,15 @@ const { chromium } = require( 'playwright' );
 	const page = await browser.newPage( { viewport: { width: 900, height: 900 } } );
 	await page.goto( 'file://' + process.argv[ 2 ] );
 	await page.waitForFunction( () => /RESULT:/.test( document.body.innerText ), null, { timeout: 30000 } );
-	console.log( 'RESULTS:' + ( await page.textContent( 'pre:last-of-type' ) ).replace( /^RESULT:/, '' ) );
+	const out = JSON.parse( ( await page.textContent( 'pre:last-of-type' ) ).replace( /^RESULT:/, '' ) );
+	// A real click, then the keyboard: the theme's ring for a click must not
+	// show, and the keyboard's own ring must.
+	const ring = ( selector ) => page.$eval( selector, ( el ) => ( { style: getComputedStyle( el ).outlineStyle, focused: el.matches( ':focus' ) } ) );
+	await page.click( '#square .imgp__play' );
+	out.clickRing = await ring( '#square .imgp__play' );
+	await page.keyboard.press( 'Tab' );
+	out.keyRing = await page.evaluate( () => ( { style: getComputedStyle( document.activeElement ).outlineStyle, visible: document.activeElement.matches( ':focus-visible' ) } ) );
+	console.log( 'RESULTS:' + JSON.stringify( out ) );
 	await browser.close();
 } )().catch( ( error ) => { console.log( 'RUNNER:' + error.message ); process.exit( 1 ); } );
 JS
@@ -282,6 +324,12 @@ if ( ! is_array( $out ) || isset( $out['error'] ) ) {
 	check( 'a station resumed is asked for afresh, at the live edge', 1 === $out['rejoined']['loads'] && 0 === (int) $out['rejoined']['t'] && false === $out['rejoined']['paused'], json_encode( $out['rejoined'] ) );
 	check( 'a file carries on from where it stopped', 0 === $out['file']['loads'] && 30 === (int) $out['file']['t'], json_encode( $out['file'] ) );
 	check( 'on a phone the size chosen is kept', 80 === $out['phoneLarge'] );
+	check( 'with words, a circle becomes a pill in the accent', $out['pill']['w'] > 2 * $out['pill']['h'] && 56 === $out['pill']['h'] && '999px' === $out['pill']['radius'] && 'rgb(220, 38, 38)' === $out['pill']['bg'] && 'rgb(255, 255, 255)' === $out['pill']['color'], json_encode( $out['pill'] ) );
+	check( 'an outline: no fill, an edge and an icon in the accent', 'rgba(0, 0, 0, 0)' === $out['outline']['bg'] && '2px rgb(124, 58, 237)' === $out['outline']['border'] && 'rgb(124, 58, 237)' === $out['outline']['color'] && '15.68px' === $out['outline']['radius'], json_encode( $out['outline'] ) );
+	check( 'a square, with the icon in its own colour', '0px' === $out['square']['radius'] && 'rgb(250, 204, 21)' === $out['square']['bg'] && 'rgb(17, 17, 17)' === $out['square']['color'], json_encode( $out['square'] ) );
+	check( 'pressed, the words still name it, and it says it is pressed', null === $out['pillNamed']['label'] && 'true' === $out['pillNamed']['pressed'] && 'Escuchar en vivo' === $out['pillNamed']['text'], json_encode( $out['pillNamed'] ) );
+	check( 'a click leaves no ring, whatever the theme draws on focus', true === $out['clickRing']['focused'] && 'none' === $out['clickRing']['style'], json_encode( $out['clickRing'] ) );
+	check( 'while the keyboard keeps its own', true === $out['keyRing']['visible'] && 'solid' === $out['keyRing']['style'], json_encode( $out['keyRing'] ) );
 }
 
 echo PHP_EOL . ( $failures ? "{$failures} FAILURE(S)" : 'All checks passed.' ) . PHP_EOL;

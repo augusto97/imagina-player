@@ -4,7 +4,7 @@ Tags: audio, waveform, player, podcast, music
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.58.0
+Stable tag: 1.58.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -228,9 +228,10 @@ viewer is kept.
 
 Yes. Choose the **Play button only** skin, in the block's Appearance panel or
 in a preset, and paste the station's stream address. The page shows one
-button that plays and pauses, in a small, medium or large size; nothing is
-loaded until it is pressed, and resuming a live stream rejoins the broadcast
-where it is now.
+button that plays and pauses — small, medium or large, a circle, a rounded
+square or a square, filled or an outline, in your colours, with words beside
+it such as "Listen live" if you want them. Nothing is loaded until it is
+pressed, and resuming a live stream rejoins the broadcast where it is now.
 
 = Is there a sleep timer? =
 
@@ -269,6 +270,30 @@ with a poster, fullscreen, subtitles in VTT or SRT, chapters, HLS, and the same
 download protection the audio player has.
 
 == Changelog ==
+
+= 1.58.1 =
+The play-button-only skin gets its own colours and look.
+
+* New: the button's **colour** (the accent) and its **icon's colour**, in the
+  block's Appearance panel — the colours of a waveform, a title and an artist
+  are no longer offered for a player that has none of them. Left unset, the
+  icon is worked out from the button: dark on a light one, white on a dark
+  one.
+* New: its **shape** — a circle, a rounded square or a square — and its
+  **style**, filled or an outline.
+* New: **text beside the icon**, such as "Listen live": a circle with words
+  becomes a pill. The words name the button for a screen reader, which hears
+  whether it is pressed.
+* The same in Elementor, and in the shortcode: `button_shape`, `button_style`,
+  `button_label` and `button_icon_color`.
+* Changed: settings a button does nothing with — rounded corners, preload,
+  floating while scrolling, remembering the position, waveform height and the
+  list of controls — are not offered for it.
+* Changed: while a station connects, a pill or a square keeps its shape and its
+  edge breathes, where a circle has the turning ring.
+* Fixed: on a block theme, a play button pressed with the mouse kept a ring in
+  its icon's colour — the theme's ring for whatever has focus. A click leaves
+  none now; the keyboard keeps its own.
 
 = 1.58.0 =
 A new skin: a play button and nothing else, for a radio station.

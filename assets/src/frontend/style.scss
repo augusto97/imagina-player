@@ -818,29 +818,72 @@
 	justify-content: flex-end;
 }
 
-.imgp--button-small .imgp__play {
-	width: 2.5rem;
-	height: 2.5rem;
+.imgp--button-small {
+	--imgp-button-size: 2.5rem;
+	--imgp-button-glyph: 1.1rem;
+	--imgp-button-font: 0.875rem;
+}
+
+.imgp--button-medium {
+	--imgp-button-size: 3.5rem;
+	--imgp-button-glyph: 1.6rem;
+	--imgp-button-font: 1rem;
+}
+
+.imgp--button-large {
+	--imgp-button-size: 5rem;
+	--imgp-button-glyph: 2.3rem;
+	--imgp-button-font: 1.25rem;
+}
+
+.imgp--skin-button .imgp__play {
+	width: var(--imgp-button-size);
+	height: var(--imgp-button-size);
 
 	.imgp__icon {
-		width: 1.1rem;
-		height: 1.1rem;
+		width: var(--imgp-button-glyph);
+		height: var(--imgp-button-glyph);
 	}
 }
 
-.imgp--button-medium .imgp__play {
-	width: 3.5rem;
-	height: 3.5rem;
+/* Its look. The defence against themes further down pins every play button
+   round, filled with the accent and painted with the accent's label colour,
+   so these say otherwise with the same insistence. The button's colour is
+   the accent; the icon's is its own, or worked out from the accent. */
+.imgp.imgp--skin-button .imgp__play {
+	color: var(--imgp-button-icon, var(--imgp-on-accent, #fff)) !important;
 }
 
-.imgp--button-large .imgp__play {
-	width: 5rem;
-	height: 5rem;
+.imgp.imgp--button-rounded .imgp__play {
+	border-radius: calc(var(--imgp-button-size) * 0.28) !important;
+}
 
-	.imgp__icon {
-		width: 2.3rem;
-		height: 2.3rem;
-	}
+.imgp.imgp--button-square .imgp__play {
+	border-radius: 0 !important;
+}
+
+.imgp.imgp--button-outline .imgp__play {
+	border: 2px solid var(--imgp-accent) !important;
+	background-color: transparent !important;
+	color: var(--imgp-button-icon, var(--imgp-accent)) !important;
+}
+
+/* Words beside the icon: "Escuchar en vivo". A circle becomes a pill. */
+.imgp.imgp--button-labelled .imgp__play {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5em;
+	width: auto;
+	padding-block: 0 !important;
+	padding-inline: 0.85em 1.2em !important;
+	font-size: var(--imgp-button-font);
+	font-weight: 600;
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.imgp.imgp--button-labelled.imgp--button-circle .imgp__play {
+	border-radius: 999px !important;
 }
 
 /* Connecting. A stream can take seconds to answer, and a button that does
@@ -870,6 +913,21 @@
 
 	to {
 		transform: rotate(360deg);
+	}
+}
+
+/* A ring turning round a pill or a square is a circle that does not fit
+   it: those keep their own shape, and the edge breathes instead. */
+:is(.imgp--button-labelled, .imgp--button-rounded, .imgp--button-square).is-playing.is-buffering .imgp__play::after {
+	border-color: var(--imgp-accent);
+	border-radius: inherit;
+	animation-name: imgp-pulse;
+}
+
+@keyframes imgp-pulse {
+
+	50% {
+		opacity: 0.2;
 	}
 }
 
@@ -2681,6 +2739,14 @@
 .imgp .imgp__unstick {
 	background-color: rgb(0 0 0 / 55%) !important;
 	color: #fff !important;
+}
+
+/* A block theme outlines whatever has focus, a click included —
+   `:where(.wp-site-blocks *:focus)` — so a pressed play button kept a ring in
+   its icon's colour. The keyboard's focus keeps its ring, drawn by each
+   control on `:focus-visible`; a click leaves none. */
+.imgp :focus:not(:focus-visible) {
+	outline: none;
 }
 
 .imgp .imgp__play {

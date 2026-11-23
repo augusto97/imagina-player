@@ -32,6 +32,11 @@ final class Attributes {
 	/** Where in its column that button sits. */
 	public const BUTTON_ALIGNS = array( 'start', 'center', 'end' );
 
+	/** Its shape, and whether it is filled or drawn as an outline. */
+	public const BUTTON_SHAPES = array( 'circle', 'rounded', 'square' );
+
+	public const BUTTON_STYLES = array( 'filled', 'outline' );
+
 	/**
 	 * Preset keys that a single instance may override, mapped to the attribute
 	 * name used by blocks and shortcodes.
@@ -279,6 +284,25 @@ final class Attributes {
 				'type'    => 'string',
 				'default' => 'start',
 			),
+			// Its look: the shape, filled or an outline, words beside the
+			// icon if any, and the icon's own colour — the button's colour is
+			// the accent, as it is on every player.
+			'buttonShape'        => array(
+				'type'    => 'string',
+				'default' => 'circle',
+			),
+			'buttonStyle'        => array(
+				'type'    => 'string',
+				'default' => 'filled',
+			),
+			'buttonLabel'        => array(
+				'type'    => 'string',
+				'default' => '',
+			),
+			'buttonIconColor'    => array(
+				'type'    => 'string',
+				'default' => '',
+			),
 			'videoCaptionBg'     => array(
 				'type'    => 'string',
 				'default' => self::INHERIT,
@@ -474,6 +498,10 @@ final class Attributes {
 		$out['layers']      = Layers::sanitize( (array) $out['layers'] );
 		$out['buttonSize']  = in_array( $out['buttonSize'], self::BUTTON_SIZES, true ) ? $out['buttonSize'] : 'medium';
 		$out['buttonAlign'] = in_array( $out['buttonAlign'], self::BUTTON_ALIGNS, true ) ? $out['buttonAlign'] : 'start';
+		$out['buttonShape'] = in_array( $out['buttonShape'], self::BUTTON_SHAPES, true ) ? $out['buttonShape'] : 'circle';
+		$out['buttonStyle'] = in_array( $out['buttonStyle'], self::BUTTON_STYLES, true ) ? $out['buttonStyle'] : 'filled';
+		$out['buttonLabel'] = mb_substr( sanitize_text_field( (string) $out['buttonLabel'] ), 0, 60 );
+		$out['buttonIconColor'] = Settings::sanitize_color( (string) $out['buttonIconColor'], '' );
 
 		$out['accessRule']    = Access::rule( (string) $out['accessRule'] );
 		$out['accessIds']     = implode( ',', Access::ids( (string) $out['accessIds'] ) );

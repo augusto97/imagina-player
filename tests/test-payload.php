@@ -154,7 +154,14 @@ $budgets = array(
 	 * rules that put the card's small cover and a caption's size back past
 	 * the ones that had been winning. A quarter of a kilobyte on the wire.
 	 */
-	'the stylesheet'  => array( $css, 60.0 ),
+	/*
+	 * And to 62.0 in 1.58.1, for the play-button-only skin's look: three
+	 * sizes from one variable, a rounded square, a square, an outline, the
+	 * icon's own colour, words beside the icon, and a ring or a breathing
+	 * edge while a station connects. Plus the rule that stops a block
+	 * theme's focus ring showing after a click.
+	 */
+	'the stylesheet'  => array( $css, 62.0 ),
 );
 
 foreach ( $budgets as $label => $budget ) {
@@ -194,8 +201,9 @@ $compressed = array(
 	// the pair that has to hold.
 	// Raised to 6.5 in 1.43.0, 7.5 in 1.44.0, 8.0 in 1.45.0 and 10.0 in
 	// 1.48.0, with the raw budget above; see there for what to do about it.
-	// And to 10.5 in 1.51.0, with the raw one, and to 11.0 in 1.57.0.
-	'the stylesheet'  => array( $css, 11.0 ),
+	// And to 10.5 in 1.51.0, with the raw one, to 11.0 in 1.57.0 and to
+	// 11.5 in 1.58.1.
+	'the stylesheet'  => array( $css, 11.5 ),
 );
 
 foreach ( $compressed as $label => $budget ) {

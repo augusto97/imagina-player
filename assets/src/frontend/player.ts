@@ -799,11 +799,7 @@ export class Player {
 		}
 
 		this.root.classList.add( 'is-playing' );
-		this.playButton?.setAttribute( 'aria-pressed', 'true' );
-		this.playButton?.setAttribute(
-			'aria-label',
-			this.runtime.i18n.pause ?? 'Pause'
-		);
+		this.pressed( true );
 
 		// Colours can change after a theme swap or a dark-mode toggle.
 		this.applyWaveColors();
@@ -829,11 +825,28 @@ export class Player {
 
 	private onPause(): void {
 		this.root.classList.remove( 'is-playing' );
-		this.playButton?.setAttribute( 'aria-pressed', 'false' );
-		this.playButton?.setAttribute(
-			'aria-label',
-			this.runtime.i18n.play ?? 'Play'
-		);
+		this.pressed( false );
+	}
+
+	/**
+	 * Say whether it is playing, on the play button. Words beside its icon
+	 * name the button themselves — "Play" laid over them would hide them from
+	 * a screen reader — so a button with words only says it is pressed.
+	 *
+	 * @param on Whether it is playing now.
+	 */
+	private pressed( on: boolean ): void {
+		const button = this.playButton;
+
+		button?.setAttribute( 'aria-pressed', String( on ) );
+
+		if ( button?.hasAttribute( 'aria-label' ) ) {
+			button.setAttribute(
+				'aria-label',
+				( on ? this.runtime.i18n.pause : this.runtime.i18n.play ) ??
+					( on ? 'Pause' : 'Play' )
+			);
+		}
 	}
 
 	/**

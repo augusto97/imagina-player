@@ -136,6 +136,32 @@ function editorData(): EditorData {
 	);
 }
 
+/**
+ * The icon colour a player works out for itself on a given accent — dark on a
+ * light one, white on a dark one — as `Config::readable_on()` does, so the
+ * picker opens on what the button will actually show.
+ *
+ * @param hex A `#rrggbb` colour.
+ */
+function readableOn( hex: string ): string {
+	const channel = ( at: number ): number => {
+		const value = parseInt( hex.slice( at, at + 2 ), 16 ) / 255;
+
+		return value <= 0.03928
+			? value / 12.92
+			: Math.pow( ( value + 0.055 ) / 1.055, 2.4 );
+	};
+
+	if ( ! /^#[0-9a-f]{6}$/i.test( hex ) ) {
+		return '#ffffff';
+	}
+
+	const luminance =
+		0.2126 * channel( 1 ) + 0.7152 * channel( 3 ) + 0.0722 * channel( 5 );
+
+	return luminance > 0.179 ? '#111111' : '#ffffff';
+}
+
 /** The skins that draw a waveform, as `Skins::WAVEFORM` lists them. */
 const WAVEFORM_SKINS = [ 'wave', 'wave-centered', 'card' ];
 
@@ -1144,6 +1170,75 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 									setAttributes( { buttonAlign: value } )
 								}
 							/>
+							<SelectControl
+								__nextHasNoMarginBottom
+								label={ __( 'Shape', 'imagina-player' ) }
+								value={
+									String(
+										attributes.buttonShape ?? 'circle'
+									) as 'circle'
+								}
+								options={ [
+									{
+										value: 'circle',
+										label: __( 'Circle', 'imagina-player' ),
+									},
+									{
+										value: 'rounded',
+										label: __(
+											'Rounded square',
+											'imagina-player'
+										),
+									},
+									{
+										value: 'square',
+										label: __( 'Square', 'imagina-player' ),
+									},
+								] }
+								onChange={ ( value: string ) =>
+									setAttributes( { buttonShape: value } )
+								}
+							/>
+							<SelectControl
+								__nextHasNoMarginBottom
+								label={ __( 'Style', 'imagina-player' ) }
+								value={
+									String(
+										attributes.buttonStyle ?? 'filled'
+									) as 'filled'
+								}
+								options={ [
+									{
+										value: 'filled',
+										label: __( 'Filled', 'imagina-player' ),
+									},
+									{
+										value: 'outline',
+										label: __(
+											'Outline',
+											'imagina-player'
+										),
+									},
+								] }
+								onChange={ ( value: string ) =>
+									setAttributes( { buttonStyle: value } )
+								}
+							/>
+							<TextControl
+								__nextHasNoMarginBottom
+								label={ __(
+									'Text beside the icon',
+									'imagina-player'
+								) }
+								help={ __(
+									'Optional, such as “Listen live”. Empty leaves the icon on its own.',
+									'imagina-player'
+								) }
+								value={ String( attributes.buttonLabel ?? '' ) }
+								onChange={ ( value: string ) =>
+									setAttributes( { buttonLabel: value } )
+								}
+							/>
 						</>
 					) }
 					{ data.settingsUrl && (
@@ -1154,21 +1249,27 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 						</p>
 					) }
 
-					<TextControl
-						__nextHasNoMarginBottom
-						type="number"
-						min={ 0 }
-						max={ 40 }
-						label={ __( 'Rounded corners (px)', 'imagina-player' ) }
-						help={ __(
-							'Empty uses the preset. Rounds the picture, the bar and the floating card together.',
-							'imagina-player'
-						) }
-						value={ String( attributes.borderRadius ?? '' ) }
-						onChange={ ( value: string ) =>
-							setAttributes( { borderRadius: value } )
-						}
-					/>
+					{ /* A button's shape says this for it. */ }
+					{ 'button' !== skin && (
+						<TextControl
+							__nextHasNoMarginBottom
+							type="number"
+							min={ 0 }
+							max={ 40 }
+							label={ __(
+								'Rounded corners (px)',
+								'imagina-player'
+							) }
+							help={ __(
+								'Empty uses the preset. Rounds the picture, the bar and the floating card together.',
+								'imagina-player'
+							) }
+							value={ String( attributes.borderRadius ?? '' ) }
+							onChange={ ( value: string ) =>
+								setAttributes( { borderRadius: value } )
+							}
+						/>
+					) }
 
 					{ isVideo && (
 						<>
@@ -1491,119 +1592,164 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 
 					<Swatches
 						items={
-							/*
-							 * Each starts on the colour this block will
-							 * actually get — its preset's, or the site's
-							 * video settings — so the picker opens on
-							 * what is there rather than on the factory's.
-							 */
-							(
-								[
-									[
-										'accent',
-										__( 'Accent', 'imagina-player' ),
-										colour(
-											presetValues.accent,
-											'#1f2937'
-										),
-									],
-									[
-										'waveColor',
-										__( 'Waveform', 'imagina-player' ),
-										colour(
-											presetValues.wave_color,
-											'#c9ced6'
-										),
-									],
-									[
-										'waveProgress',
-										__(
-											'Played portion',
-											'imagina-player'
-										),
-										colour(
-											presetValues.wave_progress,
-											'#1f2937'
-										),
-									],
-									[
-										'videoChromeColor',
-										__( 'Control bar', 'imagina-player' ),
-										colour(
-											data.video?.chrome_color,
-											'#000000'
-										),
-									],
-									[
-										'videoControlColor',
-										__(
-											'Buttons and times',
-											'imagina-player'
-										),
-										colour(
-											data.video?.control_color,
-											'#ffffff'
-										),
-									],
-									[
-										'videoProgressColor',
-										__(
-											'Played portion',
-											'imagina-player'
-										),
-										colour(
-											data.video?.progress_color,
+							'button' === skin && ! isVideo
+								? [
+										[
+											'accent',
+											__( 'Button', 'imagina-player' ),
 											colour(
 												presetValues.accent,
-												'#ffffff'
-											)
-										),
-									],
-									[
-										'videoCaptionColor',
-										__( 'Subtitles', 'imagina-player' ),
-										colour(
-											data.video?.caption_color,
-											'#ffffff'
-										),
-									],
-									[
-										'controlColor',
-										__( 'Buttons', 'imagina-player' ),
-										colour(
-											presetValues.control_color,
-											'#374151'
-										),
-									],
-									[
-										'textColor',
-										__( 'Title', 'imagina-player' ),
-										colour(
-											presetValues.text_color,
-											'#111827'
-										),
-									],
-									[
-										'metaColor',
-										__( 'Artist', 'imagina-player' ),
-										colour(
-											presetValues.meta_color,
-											'#6b7280'
-										),
-									],
-								] as const
-							 ).filter(
-								( [ attribute ] ) =>
-									/*
-									 * One list, filtered by the shared rule, so a
-									 * colour cannot appear on a block where it
-									 * paints nothing — and cannot be forgotten on
-									 * one where it does.
-									 */
-									colourApplies( attribute, isVideo ) &&
-									( isVideo ||
-										! attribute.startsWith( 'video' ) )
-							)
+												'#1f2937'
+											),
+										],
+										[
+											'buttonIconColor',
+											__( 'Icon', 'imagina-player' ),
+											readableOn(
+												colour(
+													attributes.accent ||
+														presetValues.accent,
+													'#1f2937'
+												)
+											),
+										],
+								  ]
+								: /*
+								   * Each starts on the colour this block will
+								   * actually get — its preset's, or the site's
+								   * video settings — so the picker opens on
+								   * what is there rather than on the factory's.
+								   */
+								  (
+										[
+											[
+												'accent',
+												__(
+													'Accent',
+													'imagina-player'
+												),
+												colour(
+													presetValues.accent,
+													'#1f2937'
+												),
+											],
+											[
+												'waveColor',
+												__(
+													'Waveform',
+													'imagina-player'
+												),
+												colour(
+													presetValues.wave_color,
+													'#c9ced6'
+												),
+											],
+											[
+												'waveProgress',
+												__(
+													'Played portion',
+													'imagina-player'
+												),
+												colour(
+													presetValues.wave_progress,
+													'#1f2937'
+												),
+											],
+											[
+												'videoChromeColor',
+												__(
+													'Control bar',
+													'imagina-player'
+												),
+												colour(
+													data.video?.chrome_color,
+													'#000000'
+												),
+											],
+											[
+												'videoControlColor',
+												__(
+													'Buttons and times',
+													'imagina-player'
+												),
+												colour(
+													data.video?.control_color,
+													'#ffffff'
+												),
+											],
+											[
+												'videoProgressColor',
+												__(
+													'Played portion',
+													'imagina-player'
+												),
+												colour(
+													data.video?.progress_color,
+													colour(
+														presetValues.accent,
+														'#ffffff'
+													)
+												),
+											],
+											[
+												'videoCaptionColor',
+												__(
+													'Subtitles',
+													'imagina-player'
+												),
+												colour(
+													data.video?.caption_color,
+													'#ffffff'
+												),
+											],
+											[
+												'controlColor',
+												__(
+													'Buttons',
+													'imagina-player'
+												),
+												colour(
+													presetValues.control_color,
+													'#374151'
+												),
+											],
+											[
+												'textColor',
+												__( 'Title', 'imagina-player' ),
+												colour(
+													presetValues.text_color,
+													'#111827'
+												),
+											],
+											[
+												'metaColor',
+												__(
+													'Artist',
+													'imagina-player'
+												),
+												colour(
+													presetValues.meta_color,
+													'#6b7280'
+												),
+											],
+										] as const
+								   ).filter(
+										( [ attribute ] ) =>
+											/*
+											 * One list, filtered by the shared rule, so a
+											 * colour cannot appear on a block where it
+											 * paints nothing — and cannot be forgotten on
+											 * one where it does.
+											 */
+											colourApplies(
+												attribute,
+												isVideo
+											) &&
+											( isVideo ||
+												! attribute.startsWith(
+													'video'
+												) )
+								  )
 						}
 						values={ attributes }
 						onChange={ ( attribute: string, value: string ) =>
@@ -1736,7 +1882,8 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 								</Button>
 							</Notice>
 						) }
-					{ ! isProvider && (
+					{ /* A button preloads nothing, whatever this says. */ }
+					{ ! isProvider && 'button' !== skin && (
 						<SelectControl
 							__nextHasNoMarginBottom
 							label={ __( 'Preload', 'imagina-player' ) }
@@ -1842,36 +1989,40 @@ export function Edit( { attributes, setAttributes, name }: EditProps ) {
 					{ /* Sticking to the corner and picking up where the
 					     listener left off are behaviour, not controls, and
 					     were in the list of buttons. */ }
-					<TristateList
-						items={ visibilityToggles( data )
-							.filter(
-								( { key } ) =>
-									BEHAVIOUR.includes( key ) &&
-									controlApplies( key, isVideo )
-							)
-							.map(
-								( { key, attribute } ) =>
-									[
-										attribute,
-										humanise( key, isVideo ),
-									] as const
-							) }
-						values={ attributes }
-						onOff
-						site={ Object.fromEntries(
-							visibilityToggles( data )
-								.filter( ( { key } ) =>
-									BEHAVIOUR.includes( key )
+					{ /* Neither applies to a button: it never floats, and a
+					     station has no place to come back to. */ }
+					{ 'button' !== skin && (
+						<TristateList
+							items={ visibilityToggles( data )
+								.filter(
+									( { key } ) =>
+										BEHAVIOUR.includes( key ) &&
+										controlApplies( key, isVideo )
 								)
-								.map( ( { key, attribute } ) => [
-									attribute,
-									Boolean( presetValues[ key ] ),
-								] )
-						) }
-						onChange={ ( attribute, value ) =>
-							setAttributes( { [ attribute ]: value } )
-						}
-					/>
+								.map(
+									( { key, attribute } ) =>
+										[
+											attribute,
+											humanise( key, isVideo ),
+										] as const
+								) }
+							values={ attributes }
+							onOff
+							site={ Object.fromEntries(
+								visibilityToggles( data )
+									.filter( ( { key } ) =>
+										BEHAVIOUR.includes( key )
+									)
+									.map( ( { key, attribute } ) => [
+										attribute,
+										Boolean( presetValues[ key ] ),
+									] )
+							) }
+							onChange={ ( attribute, value ) =>
+								setAttributes( { [ attribute ]: value } )
+							}
+						/>
+					) }
 
 					{ isVideo && (
 						<TristateList
